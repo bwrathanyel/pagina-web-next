@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 :root {
-  /* Lotus 360 brand tokens — approved direction, fixed (not OS-theme adaptive).
-     Dusk = header/footer/hero. Sand = catalog & product content. */
+  /* Lotus 360 brand tokens — approved direction.
+     Dusk = header/footer/hero, stays dark in both themes (brand signature).
+     Sand/card/ink = catalog & product content, theme-adaptive below. */
   --color-dusk: #12262b;
   --color-dusk-2: #1c3238;
   --color-dusk-text: #eaf1ef;
@@ -10,6 +11,7 @@
 
   --color-sand: #fbf3e7;
   --color-sand-2: #f1e5d2;
+  --color-card: #fffdf8;
 
   --color-coral: #ff6b4a;
   --color-gold: #ffb648;
@@ -24,6 +26,41 @@
   --color-whatsapp: #0f7a40;
 }
 
+/* Dark mode: only the light "sand/card/ink" surfaces invert. Dusk sections
+   and accent colors (coral/gold/seafoam/whatsapp) are already dark-safe and
+   stay fixed — matches the approved brand direction, not a naive invert. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-sand: #1a1611;
+    --color-sand-2: #241f18;
+    --color-card: #221d17;
+    --color-seafoam-bg: #1c332f;
+    --color-seafoam-text: #8fd4c9;
+    --color-ink: #f3ebe0;
+    --color-ink-soft: #b8ab9a;
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-sand: #1a1611;
+  --color-sand-2: #241f18;
+  --color-card: #221d17;
+  --color-seafoam-bg: #1c332f;
+  --color-seafoam-text: #8fd4c9;
+  --color-ink: #f3ebe0;
+  --color-ink-soft: #b8ab9a;
+}
+
+:root[data-theme="light"] {
+  --color-sand: #fbf3e7;
+  --color-sand-2: #f1e5d2;
+  --color-card: #fffdf8;
+  --color-seafoam-bg: #e4eeec;
+  --color-seafoam-text: #255954;
+  --color-ink: #241f1a;
+  --color-ink-soft: #6b5e50;
+}
+
 @theme inline {
   --color-dusk: var(--color-dusk);
   --color-dusk-2: var(--color-dusk-2);
@@ -31,6 +68,7 @@
   --color-dusk-text-soft: var(--color-dusk-text-soft);
   --color-sand: var(--color-sand);
   --color-sand-2: var(--color-sand-2);
+  --color-card: var(--color-card);
   --color-coral: var(--color-coral);
   --color-gold: var(--color-gold);
   --color-seafoam: var(--color-seafoam);
@@ -49,6 +87,7 @@
 body {
   background: var(--color-sand);
   color: var(--color-ink);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 :focus-visible {

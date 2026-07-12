@@ -9,7 +9,7 @@ interface Props {
 }
 
 const inputClass =
-  "w-full rounded-xl border border-ink/15 bg-white px-4 py-3 text-base text-ink placeholder:text-ink-soft/60";
+  "w-full rounded-xl border border-ink/15 bg-card px-4 py-3 text-base text-ink placeholder:text-ink-soft/60";
 
 export function CampoRenderer({ campo, valor, onChange }: Props) {
   const label = (
@@ -110,7 +110,7 @@ export function CampoRenderer({ campo, valor, onChange }: Props) {
 
     case "checkbox":
       return (
-        <label className="flex min-h-11 items-center gap-3 rounded-xl border border-ink/15 bg-white px-4 py-3">
+        <label className="flex min-h-11 items-center gap-3 rounded-xl border border-ink/15 bg-card px-4 py-3">
           <input
             type="checkbox"
             checked={Boolean(valor)}
@@ -159,7 +159,7 @@ export function CampoRenderer({ campo, valor, onChange }: Props) {
                   onClick={() => onChange(campo.key, o.value)}
                   className={
                     "flex min-h-11 items-start gap-3 rounded-xl border-2 px-4 py-3 text-left " +
-                    (sel ? "border-coral bg-coral/10" : "border-ink/10 bg-white")
+                    (sel ? "border-coral bg-coral/10" : "border-ink/10 bg-card")
                   }
                 >
                   {o.emoji ? <span className="text-xl">{o.emoji}</span> : null}
@@ -198,7 +198,7 @@ export function CampoRenderer({ campo, valor, onChange }: Props) {
                   onClick={() => toggle(o.value)}
                   className={
                     "inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-medium " +
-                    (sel ? "border-transparent bg-gradient-to-br from-coral to-gold text-btn-ink" : "border-ink/15 bg-white text-ink")
+                    (sel ? "border-transparent bg-gradient-to-br from-coral to-gold text-btn-ink" : "border-ink/15 bg-card text-ink")
                   }
                 >
                   {o.label}

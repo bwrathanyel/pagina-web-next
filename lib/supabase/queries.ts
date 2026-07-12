@@ -4,15 +4,15 @@ import { CATEGORIA_A_TIPO } from "@/types/supabase";
 
 // Columns are always named explicitly — never `select=*` and never
 // `fuente_archivo` (internal Drive path, not for public consumption).
-const PRODUCTO_SELECT =
+export const PRODUCTO_SELECT =
   "id,tipo,nombre,destino,descripcion,requisitos," +
   "tarifas(precio_texto,precio_desde_usd,vigencia_texto,vigente)," +
-  "producto_fotos(storage_path,orden,es_principal,activo,width,height)";
+  "producto_fotos(id,storage_path,orden,es_principal,activo,width,height)";
 
-const PROMOCION_SELECT =
+export const PROMOCION_SELECT =
   "id,titulo,precio_texto,precio_desde_usd,vigencia_texto,ninos_gratis_cantidad,incluye_tags," +
-  "producto:productos(id,nombre,destino,producto_fotos(storage_path,orden,es_principal,activo))," +
-  "promocion_fotos(storage_path,orden,es_principal,activo)";
+  "producto:productos(id,nombre,destino,producto_fotos(id,storage_path,orden,es_principal,activo))," +
+  "promocion_fotos(id,storage_path,orden,es_principal,activo)";
 
 export async function getProductosPorTipo(tipo: ProductoTipo): Promise<Producto[]> {
   const sb = supabaseServer();

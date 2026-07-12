@@ -36,7 +36,7 @@ export function ServiciosGrid() {
         <Link
           key={s.href}
           href={s.href}
-          className={`flex min-h-11 flex-col items-center gap-2 rounded-2xl border-2 bg-white px-4 py-6 text-center ${s.border}`}
+          className={`flex min-h-11 flex-col items-center gap-2 rounded-2xl border-2 bg-card px-4 py-6 text-center ${s.border}`}
         >
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={s.color} aria-hidden="true">
             {s.icon}

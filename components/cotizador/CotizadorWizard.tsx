@@ -1,11 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { WIZARD_CONFIG } from "@/components/cotizador/wizardConfig";
 import { CampoRenderer } from "@/components/cotizador/fields/CampoRenderer";
 import type { Respuestas, TipoCotizacion } from "@/components/cotizador/types";
 import { ASESOR_BOLETERIA, elegirAsesor } from "@/lib/asesores";
-import { armarBoleteria, armarFullday, armarHospedaje, armarPaquete } from "@/lib/leads/buildCotizacion";
+import {
+  armarBoleteria,
+  armarFullday,
+  armarHospedaje,
+  armarPaquete,
+  armarPersonalizado,
+} from "@/lib/leads/buildCotizacion";
 import { enviarACRM } from "@/lib/leads/ingestWebLead";
 import { enviarASheetMonkey } from "@/lib/leads/sheetMonkey";
 import { detectarProcedencia, esInstagramInApp } from "@/lib/utils/procedencia";
@@ -15,6 +21,7 @@ const TITULOS: Record<TipoCotizacion, string> = {
   boleteria: "Cotiza tu vuelo",
   fullday: "Reserva tu grupo",
   paquete: "Consulta tu paquete",
+  personalizado: "Cotizador Personalizado",
 };
 
 function defaultsDe(tipo: TipoCotizacion): Respuestas {
@@ -44,6 +51,10 @@ export function CotizadorWizard({
   });
   const [enviado, setEnviado] = useState(false);
   const [waHref, setWaHref] = useState<string | null>(null);
+  // Ref, no state: un doble-click antes del próximo render vería el mismo
+  // `enviado` (closure viejo) y mandaría el lead dos veces — el ref se lee
+  // sincrónico, sin esperar a que React re-renderice.
+  const enviandoRef = useRef(false);
 
   const paso = pasos[pasoActual];
   const esUltimo = pasoActual === pasos.length - 1;
@@ -62,6 +73,8 @@ export function CotizadorWizard({
   }
 
   function enviar() {
+    if (enviandoRef.current) return;
+    enviandoRef.current = true;
     const nombreFullday = productoNombre ?? (respuestas.destino as string) ?? "Full Day";
     const resultado =
       tipo === "hospedaje"
@@ -70,7 +83,9 @@ export function CotizadorWizard({
           ? armarBoleteria(respuestas)
           : tipo === "fullday"
             ? armarFullday(respuestas, nombreFullday)
-            : armarPaquete(respuestas);
+            : tipo === "personalizado"
+              ? armarPersonalizado(respuestas)
+              : armarPaquete(respuestas);
 
     const asesor = tipo === "boleteria" ? ASESOR_BOLETERIA : elegirAsesor();
     const telefono = (respuestas.telefono as string) || "No especificado";
@@ -100,7 +115,7 @@ export function CotizadorWizard({
 
   if (enviado && waHref) {
     return (
-      <div className="rounded-2xl border border-ink/10 bg-white p-6 text-center">
+      <div className="rounded-2xl border border-ink/10 bg-card p-6 text-center">
         <p className="mb-2 font-display text-2xl font-semibold text-ink">¡Listo!</p>
         <p className="mb-5 text-ink-soft">
           Ya armamos tu solicitud. Envíala por WhatsApp y un asesor te responde.
@@ -118,7 +133,7 @@ export function CotizadorWizard({
   }
 
   return (
-    <div className="rounded-2xl border border-ink/10 bg-white p-6">
+    <div className="rounded-2xl border border-ink/10 bg-card p-6">
       <p className="mb-1 font-mono text-xs uppercase tracking-wide text-ink-soft">
         {TITULOS[tipo]} · Paso {pasoActual + 1} de {pasos.length}
       </p>

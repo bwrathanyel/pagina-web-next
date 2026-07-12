@@ -51,7 +51,7 @@ function campoNinos(edadMax = 11): CampoDef[] {
   ];
 }
 
-const DESTINOS_VENEZUELA: import("@/components/cotizador/types").OpcionCampo[] = [
+export const DESTINOS_VENEZUELA: import("@/components/cotizador/types").OpcionCampo[] = [
   { value: "Isla de Margarita", label: "Isla de Margarita", desc: "Playas paradisíacas, duty free y vida nocturna", emoji: "🏖️" },
   { value: "Morrocoy", label: "Morrocoy", desc: "Cayos de arena blanca y snorkel de clase mundial", emoji: "🐠" },
   { value: "Los Roques", label: "Los Roques", desc: "Archipiélago virgen ideal para desconectar", emoji: "🏝️" },
@@ -285,6 +285,52 @@ export const WIZARD_CONFIG: Record<TipoCotizacion, PasoDef[]> = {
     },
     {
       titulo: "Contacto y notas",
+      campos: [CAMPO_TELEFONO, CAMPO_NOTAS],
+    },
+  ],
+
+  // El único lugar del sitio con el wizard completo desde cero — cuando
+  // ya se eligió un producto o promoción concreta (ficha, carrito), ese
+  // destino/tipo ya se sabe y no se vuelve a preguntar acá.
+  personalizado: [
+    {
+      titulo: "¿Qué tipo de experiencia buscás?",
+      campos: [
+        {
+          key: "tipoServicio",
+          label: "Servicio",
+          tipo: "cards",
+          required: true,
+          default: "Hospedaje",
+          opciones: [
+            { value: "Hospedaje", label: "Hospedaje", desc: "Hotel, resort, posada o apartamento", emoji: "🏨" },
+            { value: "Full Day / Tour", label: "Full Day / Tour", desc: "Excursión de un día o varios", emoji: "🌴" },
+            { value: "Boletería aérea", label: "Boletería aérea", desc: "Vuelos nacionales o internacionales", emoji: "✈️" },
+            { value: "Paquete completo", label: "Paquete completo", desc: "Vuelo + hospedaje + actividades", emoji: "🌍" },
+            { value: "No estoy seguro", label: "No estoy seguro/a", desc: "Contame qué tenés en mente y te asesoramos", emoji: "💬" },
+          ],
+        },
+        CAMPO_NOMBRE,
+      ],
+    },
+    {
+      titulo: "¿A dónde quieres ir?",
+      campos: [
+        { key: "destino", label: "Destino", tipo: "cards", opciones: DESTINOS_VENEZUELA, required: true, default: "Isla de Margarita" },
+        { key: "destinoOtro", label: "Escribe tu destino ideal", tipo: "text", condicion: (r) => r.destino === "Extranjero" || r.destino === undefined },
+      ],
+    },
+    {
+      titulo: "Presupuesto y fechas",
+      campos: [
+        { key: "presupuesto", label: "Presupuesto total aproximado (USD)", tipo: "slider", min: 50, max: 3000, step: 50, default: 500 },
+        { key: "fechaAprox", label: "Fecha aproximada de viaje", tipo: "date" },
+        { key: "adultos", label: "Adultos", tipo: "number", min: 1, max: 50, default: 2, required: true },
+        ...campoNinos(),
+      ],
+    },
+    {
+      titulo: "Contacto",
       campos: [CAMPO_TELEFONO, CAMPO_NOTAS],
     },
   ],

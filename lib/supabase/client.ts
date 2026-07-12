@@ -1,11 +1,11 @@
 "use client";
 
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 
-/** Browser read client — only for client components that need catalog
- * data without a server round-trip (e.g. wizard precarga). */
+/** Browser client — cookie-backed session (auth) + catalog reads from
+ * client components. Safe to call repeatedly; @supabase/ssr caches per tab. */
 export function supabaseBrowser() {
-  return createClient(
+  return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   );

@@ -5,7 +5,8 @@ import { CatalogoGrid } from "@/components/catalogo/CatalogoGrid";
 import { ProductoCard } from "@/components/catalogo/ProductoCard";
 import { PromocionCard } from "@/components/catalogo/PromocionCard";
 import { getProductosPorCategoria, getPromociones } from "@/lib/supabase/queries";
-import { CATEGORIAS, type Categoria } from "@/types/supabase";
+import { agruparPorDestino } from "@/lib/supabase/agruparPorDestino";
+import { CATEGORIAS, type Categoria, type Producto, type Promocion } from "@/types/supabase";
 
 export const revalidate = 300;
 
@@ -45,10 +46,12 @@ export default async function CatalogoPage({
   if (!isCategoria(categoria)) notFound();
 
   const label = CATEGORIAS.find((c) => c.slug === categoria)!.label;
-  const items =
-    categoria === "promociones"
-      ? await getPromociones()
-      : await getProductosPorCategoria(categoria);
+  const esPromociones = categoria === "promociones";
+  const items = esPromociones ? await getPromociones() : await getProductosPorCategoria(categoria);
+
+  const grupos = esPromociones
+    ? agruparPorDestino(items as Promocion[], (p) => p.producto?.destino ?? null)
+    : agruparPorDestino(items as Producto[], (p) => p.destino);
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-10">
@@ -67,15 +70,20 @@ export default async function CatalogoPage({
           contamos qué hay.
         </p>
       ) : (
-        <CatalogoGrid>
-          {categoria === "promociones"
-            ? (items as Awaited<ReturnType<typeof getPromociones>>).map((p) => (
-                <PromocionCard key={p.id} promocion={p} />
-              ))
-            : (items as Awaited<ReturnType<typeof getProductosPorCategoria>>).map((p) => (
-                <ProductoCard key={p.id} producto={p} />
-              ))}
-        </CatalogoGrid>
+        <div className="flex flex-col gap-10">
+          {grupos.map(({ destino, items: itemsDelGrupo }) => (
+            <section key={destino}>
+              <h2 className="mb-4 font-display text-xl font-semibold text-ink">{destino}</h2>
+              <CatalogoGrid>
+                {esPromociones
+                  ? (itemsDelGrupo as Promocion[]).map((p) => (
+                      <PromocionCard key={p.id} promocion={p} />
+                    ))
+                  : (itemsDelGrupo as Producto[]).map((p) => <ProductoCard key={p.id} producto={p} />)}
+              </CatalogoGrid>
+            </section>
+          ))}
+        </div>
       )}
     </main>
   );

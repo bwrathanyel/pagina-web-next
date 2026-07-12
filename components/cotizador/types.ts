@@ -1,4 +1,4 @@
-export type TipoCotizacion = "fullday" | "hospedaje" | "boleteria" | "paquete";
+export type TipoCotizacion = "fullday" | "hospedaje" | "boleteria" | "paquete" | "personalizado";
 
 export interface OpcionCampo {
   value: string;

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { CATEGORIAS } from "@/types/supabase";
 import { whatsappHref } from "@/lib/whatsapp";
+import { HeaderControls } from "@/components/layout/HeaderControls";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
@@ -27,6 +28,12 @@ export function Navbar() {
               {label}
             </Link>
           ))}
+          <Link
+            href="/cotizador-personalizado"
+            className="font-body text-sm text-dusk-text-soft hover:text-dusk-text"
+          >
+            Cotizador Personalizado
+          </Link>
           <a
             href={whatsappHref("Hola! Vengo de su página web.")}
             target="_blank"
@@ -35,9 +42,12 @@ export function Navbar() {
           >
             WhatsApp
           </a>
+          <HeaderControls />
         </nav>
 
-        <button
+        <div className="flex items-center md:hidden">
+          <HeaderControls />
+          <button
           type="button"
           className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-dusk-text md:hidden"
           aria-expanded={open}
@@ -62,7 +72,8 @@ export function Navbar() {
               />
             )}
           </svg>
-        </button>
+          </button>
+        </div>
       </div>
 
       {open ? (
@@ -81,6 +92,13 @@ export function Navbar() {
               {label}
             </Link>
           ))}
+          <Link
+            href="/cotizador-personalizado"
+            onClick={() => setOpen(false)}
+            className="flex min-h-11 items-center font-body text-dusk-text"
+          >
+            Cotizador Personalizado
+          </Link>
           <a
             href={whatsappHref("Hola! Vengo de su página web.")}
             target="_blank"

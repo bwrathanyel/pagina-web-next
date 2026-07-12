@@ -17,7 +17,7 @@ export interface ResultadoCotizacion {
  * line entirely (conditional fields). */
 type Linea = [string, string] | false | null | undefined;
 
-function armarMensajes(titulo: string, lineas: Linea[], cierre?: string): { emoji: string; texto: string } {
+export function armarMensajes(titulo: string, lineas: Linea[], cierre?: string): { emoji: string; texto: string } {
   const validas = lineas.filter((l): l is [string, string] => Boolean(l));
   const emoji = [titulo, "", ...validas.map(([e, c]) => `${e} ${c}`), ...(cierre ? ["", cierre] : [])].join("\n");
   const texto = [
@@ -178,6 +178,42 @@ export function armarPaquete(r: Respuestas): ResultadoCotizacion {
     servicio: "Consulta de paquete",
     personas: `${adultos + ninos} persona(s)`,
     consulta: `Consulta de paquete${r.notas ? ` · ${r.notas}` : ""}`,
+    mensajeEmoji,
+    mensajeTexto,
+  };
+}
+
+export function armarPersonalizado(r: Respuestas): ResultadoCotizacion {
+  const destino = s(r, "destino") === "Extranjero" ? s(r, "destinoOtro", "Extranjero") : s(r, "destino", s(r, "destinoOtro"));
+  const servicio = s(r, "tipoServicio", "No especificado");
+  const adultos = n(r, "adultos", 1);
+  const ninos = n(r, "ninos", 0);
+  const presupuesto = n(r, "presupuesto", 500);
+  // El slider (wizardConfig.ts, max:3000) muestra "Sin límite" en pantalla
+  // al llegar al tope — el mensaje al asesor tiene que decir lo mismo, si
+  // no el asesor recibe "$3000" como techo fijo en vez de "sin techo real".
+  const presTexto = presupuesto >= 3000 ? "Sin límite" : `$${presupuesto} USD`;
+
+  const { emoji: mensajeEmoji, texto: mensajeTexto } = armarMensajes(
+    "🧭 *COTIZADOR PERSONALIZADO - LOTUS 360*",
+    [
+      ["👤", `*Nombre:* ${s(r, "nombre")}`],
+      ["🧳", `*Tipo de servicio:* ${servicio}`],
+      ["📍", `*Destino:* ${destino}`],
+      r.fechaAprox ? ["📅", `*Fecha aproximada:* ${r.fechaAprox}`] : null,
+      ["👥", `*Adultos:* ${adultos} | *Niños:* ${ninos}`],
+      ninos > 0 ? ["👶", `*Edades niños:* ${s(r, "edadesNinos", "No especificadas")}`] : null,
+      ["💰", `*Presupuesto aproximado:* ${presTexto}`],
+      s(r, "notas") ? ["📝", `*Notas:* ${r.notas}`] : null,
+    ],
+    "✅ *Armar propuesta a medida. ¡Gracias!*",
+  );
+
+  return {
+    destino,
+    servicio,
+    personas: `${adultos + ninos} persona(s)`,
+    consulta: `Cotizador personalizado: ${servicio}${r.notas ? ` · ${r.notas}` : ""}`,
     mensajeEmoji,
     mensajeTexto,
   };

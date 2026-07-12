@@ -4,6 +4,9 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { WhatsAppFloatButton } from "@/components/layout/WhatsAppFloatButton";
 import { jsonLdScript, buildTravelAgencyJsonLd } from "@/lib/seo/jsonld";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { AuthProvider } from "@/components/providers/AuthProvider";
+import { AdminEditToggle } from "@/components/admin/AdminEditToggle";
 import "./globals.css";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://destinoyeventoslotus360.com";
@@ -72,6 +75,7 @@ export default function RootLayout({
   return (
     <html
       lang="es-VE"
+      suppressHydrationWarning
       className={`${fraunces.variable} ${figtree.variable} ${spaceMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-sand text-ink font-body">
@@ -79,10 +83,15 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={jsonLdScript(buildTravelAgencyJsonLd())}
         />
-        <Navbar />
-        <div className="flex-1">{children}</div>
-        <Footer />
-        <WhatsAppFloatButton />
+        <ThemeProvider>
+          <AuthProvider>
+            <Navbar />
+            <div className="flex-1">{children}</div>
+            <Footer />
+            <WhatsAppFloatButton />
+            <AdminEditToggle />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

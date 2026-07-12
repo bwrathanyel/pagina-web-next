@@ -1,6 +1,7 @@
 export type ProductoTipo = "hotel" | "destino" | "paquete" | "info";
 
 export interface Foto {
+  id: number;
   storage_path: string;
   orden: number;
   es_principal: boolean;
@@ -52,9 +53,11 @@ export const CATEGORIA_A_TIPO: Record<Exclude<Categoria, "promociones">, Product
   "guias-tours": "destino",
 };
 
+// Promociones primero a propósito: es lo primero que debe ver el usuario
+// al entrar al catálogo, Hoteles pasa a segundo lugar.
 export const CATEGORIAS: { slug: Categoria; label: string }[] = [
+  { slug: "promociones", label: "Promociones" },
   { slug: "hoteles", label: "Hoteles" },
   { slug: "paquetes", label: "Paquetes" },
   { slug: "guias-tours", label: "Guías / Tours" },
-  { slug: "promociones", label: "Promociones" },
 ];
