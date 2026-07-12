@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+:root {
+  /* Lotus 360 brand tokens — approved direction, fixed (not OS-theme adaptive).
+     Dusk = header/footer/hero. Sand = catalog & product content. */
+  --color-dusk: #12262b;
+  --color-dusk-2: #1c3238;
+  --color-dusk-text: #eaf1ef;
+  --color-dusk-text-soft: #a9bfbc;
+
+  --color-sand: #fbf3e7;
+  --color-sand-2: #f1e5d2;
+
+  --color-coral: #ff6b4a;
+  --color-gold: #ffb648;
+  --color-seafoam: #3e827d;
+  --color-seafoam-text: #255954;
+  --color-seafoam-bg: #e4eeec;
+
+  --color-ink: #241f1a;
+  --color-ink-soft: #6b5e50;
+  --color-btn-ink: #3a1505;
+
+  --color-whatsapp: #0f7a40;
+}
+
+@theme inline {
+  --color-dusk: var(--color-dusk);
+  --color-dusk-2: var(--color-dusk-2);
+  --color-dusk-text: var(--color-dusk-text);
+  --color-dusk-text-soft: var(--color-dusk-text-soft);
+  --color-sand: var(--color-sand);
+  --color-sand-2: var(--color-sand-2);
+  --color-coral: var(--color-coral);
+  --color-gold: var(--color-gold);
+  --color-seafoam: var(--color-seafoam);
+  --color-seafoam-text: var(--color-seafoam-text);
+  --color-seafoam-bg: var(--color-seafoam-bg);
+  --color-ink: var(--color-ink);
+  --color-ink-soft: var(--color-ink-soft);
+  --color-btn-ink: var(--color-btn-ink);
+  --color-whatsapp: var(--color-whatsapp);
+
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+}
+
+body {
+  background: var(--color-sand);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-coral);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
