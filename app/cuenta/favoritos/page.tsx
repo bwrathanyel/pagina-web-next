@@ -48,11 +48,11 @@ function FavoritosLista() {
       {cargando ? (
         <p className="text-ink-soft">Cargando…</p>
       ) : error ? (
-        <p className="text-coral">No pudimos cargar tus favoritos. Recargá la página.</p>
+        <p className="text-coral">No pudimos cargar tus favoritos. Recarga la página.</p>
       ) : productos.length === 0 && promociones.length === 0 ? (
         <p className="text-ink-soft">
-          Todavía no guardaste nada. Tocá el corazón en cualquier hotel, tour o promoción del
-          catálogo para guardarlo acá.
+          Todavía no has guardado nada. Toca el corazón en cualquier hotel, tour o promoción del
+          catálogo para verlo aquí.
         </p>
       ) : (
         <CatalogoGrid>

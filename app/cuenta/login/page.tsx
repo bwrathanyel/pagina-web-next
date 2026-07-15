@@ -29,7 +29,7 @@ export default function LoginPage() {
   return (
     <main className="mx-auto max-w-md px-5 py-12">
       <h1 className="mb-1 font-display text-3xl font-semibold text-ink">Iniciar sesión</h1>
-      <p className="mb-6 text-ink-soft">Accedé a tus favoritos y tu carrito guardado.</p>
+      <p className="mb-6 text-ink-soft">Accede a tus favoritos y a tu carrito guardado.</p>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <div>
@@ -78,7 +78,7 @@ export default function LoginPage() {
       </form>
 
       <p className="mt-6 text-sm text-ink-soft">
-        ¿No tenés cuenta?{" "}
+        ¿No tienes cuenta?{" "}
         <Link href="/cuenta/registro" className="font-semibold text-coral">
           Registrate
         </Link>

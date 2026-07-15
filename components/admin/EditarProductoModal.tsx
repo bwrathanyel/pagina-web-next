@@ -36,7 +36,7 @@ export function EditarProductoModal({
         p_requisitos: requisitos,
       });
       if (rpcError || !data?.ok) {
-        setError("No se pudo guardar. Probá de nuevo.");
+        setError("No se pudo guardar. Inténtalo de nuevo.");
         return;
       }
       onGuardado({ nombre, descripcion, requisitos });

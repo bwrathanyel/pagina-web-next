@@ -32,7 +32,7 @@ export default function RestablecerPage() {
     const { error } = await supabaseBrowser().auth.updateUser({ password });
     setCargando(false);
     if (error) {
-      setError("No se pudo actualizar la contraseña. Probá de nuevo.");
+      setError("No se pudo actualizar la contraseña. Inténtalo de nuevo.");
       return;
     }
     router.push("/cuenta");
@@ -56,7 +56,7 @@ export default function RestablecerPage() {
 
   return (
     <main className="mx-auto max-w-md px-5 py-12">
-      <h1 className="mb-1 font-display text-3xl font-semibold text-ink">Elegí una nueva contraseña</h1>
+      <h1 className="mb-1 font-display text-3xl font-semibold text-ink">Elige una nueva contraseña</h1>
 
       <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-4">
         <div>

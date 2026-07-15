@@ -44,7 +44,7 @@ function ConfiguracionForm() {
     const { error: rpcError } = await supabaseBrowser().rpc("web_actualizar_perfil", { p_nombre: nombre });
     setGuardando(false);
     if (rpcError) {
-      setError("No se pudo guardar. Probá de nuevo.");
+      setError("No se pudo guardar. Inténtalo de nuevo.");
       return;
     }
     setGuardado(true);

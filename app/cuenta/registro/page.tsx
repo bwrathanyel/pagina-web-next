@@ -34,7 +34,7 @@ export default function RegistroPage() {
       setError(
         signUpError.message.includes("already registered")
           ? "Ese correo ya tiene una cuenta — iniciá sesión."
-          : "No se pudo crear la cuenta. Probá de nuevo.",
+          : "No se pudo crear la cuenta. Inténtalo de nuevo.",
       );
       return;
     }
@@ -117,9 +117,9 @@ export default function RegistroPage() {
       </form>
 
       <p className="mt-6 text-sm text-ink-soft">
-        ¿Ya tenés cuenta?{" "}
+        ¿Ya tienes cuenta?{" "}
         <Link href="/cuenta/login" className="font-semibold text-coral">
-          Iniciá sesión
+          Inicia sesión
         </Link>
       </p>
     </main>

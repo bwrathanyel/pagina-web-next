@@ -94,7 +94,7 @@ export function ProductoCard({ producto }: { producto: Producto }) {
                 </button>
               </div>
               {errorVisibilidad ? (
-                <p className="mt-2 text-xs text-coral">No se pudo cambiar. Probá de nuevo.</p>
+                <p className="mt-2 text-xs text-coral">No se pudo cambiar. Inténtalo de nuevo.</p>
               ) : null}
             </div>
           ) : undefined

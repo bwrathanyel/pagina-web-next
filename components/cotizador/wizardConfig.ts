@@ -294,7 +294,7 @@ export const WIZARD_CONFIG: Record<TipoCotizacion, PasoDef[]> = {
   // destino/tipo ya se sabe y no se vuelve a preguntar acá.
   personalizado: [
     {
-      titulo: "¿Qué tipo de experiencia buscás?",
+      titulo: "¿Qué tipo de experiencia buscas?",
       campos: [
         {
           key: "tipoServicio",
@@ -307,7 +307,7 @@ export const WIZARD_CONFIG: Record<TipoCotizacion, PasoDef[]> = {
             { value: "Full Day / Tour", label: "Full Day / Tour", desc: "Excursión de un día o varios", emoji: "🌴" },
             { value: "Boletería aérea", label: "Boletería aérea", desc: "Vuelos nacionales o internacionales", emoji: "✈️" },
             { value: "Paquete completo", label: "Paquete completo", desc: "Vuelo + hospedaje + actividades", emoji: "🌍" },
-            { value: "No estoy seguro", label: "No estoy seguro/a", desc: "Contame qué tenés en mente y te asesoramos", emoji: "💬" },
+            { value: "No estoy seguro", label: "No estoy seguro/a", desc: "Cuéntanos qué tienes en mente y te asesoramos", emoji: "💬" },
           ],
         },
         CAMPO_NOMBRE,

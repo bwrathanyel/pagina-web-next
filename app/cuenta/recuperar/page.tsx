@@ -19,7 +19,7 @@ export default function RecuperarPage() {
     });
     setCargando(false);
     if (error) {
-      setError("No se pudo enviar el correo. Probá de nuevo.");
+      setError("No se pudo enviar el correo. Inténtalo de nuevo.");
       return;
     }
     setEnviado(true);

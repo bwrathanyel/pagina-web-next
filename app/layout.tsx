@@ -40,7 +40,7 @@ const spaceMono = localFont({
 
 const TITLE = "Destino y Eventos Lotus 360 · Agencia de Viajes en Venezuela";
 const DESCRIPTION =
-  "Tu agencia de viajes #1 en Carabobo. Hospedaje, boletería aérea, full days, tours y eventos corporativos en Venezuela. ¡Escápate con nosotros!";
+  "Agencia de viajes en Venezuela especializada en hospedaje, boletería aérea, full days, tours y experiencias corporativas.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

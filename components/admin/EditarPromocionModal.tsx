@@ -34,7 +34,7 @@ export function EditarPromocionModal({
         p_vigencia_texto: vigenciaTexto,
       });
       if (rpcError || !data?.ok) {
-        setError("No se pudo guardar. Probá de nuevo.");
+        setError("No se pudo guardar. Inténtalo de nuevo.");
         return;
       }
       onGuardado({ titulo, vigenciaTexto });
