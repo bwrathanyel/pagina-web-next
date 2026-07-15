@@ -74,12 +74,14 @@ export function TicketCard({
   return (
     <div
       className={
-        "relative rounded-2xl bg-card shadow-[0_10px_28px_-14px_rgba(36,31,26,0.28)] " +
+        "group relative flex h-full flex-col overflow-hidden rounded-[1.5rem] border border-ink/10 bg-card " +
+        "shadow-[0_18px_50px_-30px_rgba(36,31,26,0.5)] transition duration-300 " +
+        "hover:-translate-y-1 hover:border-ink/15 hover:shadow-[0_24px_58px_-28px_rgba(36,31,26,0.45)] " +
         (oculto ? "opacity-50" : "")
       }
     >
-      <div className="relative aspect-[4/3] overflow-hidden rounded-t-2xl bg-sand-2">
-        <span className="absolute left-3 top-3 z-10 rounded-full bg-dusk/85 px-2.5 py-1 font-mono text-[0.68rem] uppercase tracking-wide text-dusk-text">
+      <div className="relative aspect-[16/10] overflow-hidden bg-sand-2">
+        <span className="absolute left-4 top-4 z-10 rounded-lg border border-white/15 bg-dusk/90 px-3 py-1.5 font-mono text-[0.66rem] font-bold uppercase tracking-[0.12em] text-dusk-text shadow-sm backdrop-blur-sm">
           {badge}
         </span>
         {onToggleFavorito ? (
@@ -89,7 +91,7 @@ export function TicketCard({
             aria-label={favorito ? `Quitar ${nombre} de favoritos` : `Guardar ${nombre} en favoritos`}
             aria-pressed={favorito === true}
             className={
-              "absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-dusk/85 " +
+              "absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-dusk/90 shadow-sm backdrop-blur-sm transition hover:scale-105 " +
               (favorito ? "text-coral" : "text-dusk-text")
             }
           >
@@ -102,13 +104,11 @@ export function TicketCard({
             alt={nombre}
             fill
             sizes="(min-width: 700px) 33vw, 100vw"
-            className="object-cover"
+            className="object-cover transition duration-500 group-hover:scale-[1.035]"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center overflow-hidden bg-gradient-to-br from-seafoam-bg via-sand-2 to-card">
-            <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full border border-seafoam/15" />
-            <div className="absolute -bottom-12 -left-8 h-44 w-44 rounded-full border border-coral/15" />
-            <div className="relative text-center text-ink-soft">
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-seafoam-bg via-sand-2 to-card">
+            <div className="relative rounded-2xl border border-ink/10 bg-card/65 px-8 py-6 text-center text-ink-soft shadow-sm backdrop-blur-sm">
               <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" className="mx-auto mb-3" aria-hidden="true">
                 <rect x="3" y="5" width="18" height="14" rx="2" />
                 <circle cx="8.5" cy="10" r="1.5" />
@@ -120,33 +120,35 @@ export function TicketCard({
         )}
       </div>
 
-      <div className="relative mx-4 border-t-2 border-dashed border-ink/20">
-        <span className="absolute -left-6 -top-2 h-4 w-4 rounded-full bg-sand" aria-hidden="true" />
-        <span className="absolute -right-6 -top-2 h-4 w-4 rounded-full bg-sand" aria-hidden="true" />
-      </div>
+      <div className="flex flex-1 flex-col px-5 pb-5 pt-5 sm:px-6 sm:pb-6">
+        {destino ? (
+          <p className="mb-2 font-mono text-[0.68rem] font-bold uppercase tracking-[0.13em] text-coral">
+            {destino}
+          </p>
+        ) : null}
+        <h3 className="font-body text-lg font-bold leading-snug text-ink">{nombre}</h3>
 
-      <div className="px-5 pb-5 pt-4">
-        <p className="font-body text-base font-bold text-ink">{nombre}</p>
-        {destino ? <p className="mb-3 text-sm text-ink-soft">{destino}</p> : <div className="mb-3" />}
-
-        <span
+        <div
           className={
-            "mb-3 inline-block rounded-full px-2.5 py-1 font-mono text-[0.82rem] " +
+            "mb-5 mt-4 rounded-xl border px-4 py-3 " +
             (precioMuted
-              ? "bg-seafoam-bg text-seafoam-text"
-              : "bg-gradient-to-br from-coral to-gold text-btn-ink")
+              ? "border-seafoam/20 bg-seafoam-bg text-seafoam-text"
+              : "border-coral/20 bg-coral/10 text-ink")
           }
         >
-          {precioLabel}
-        </span>
+          <p className="mb-1 font-mono text-[0.62rem] font-bold uppercase tracking-[0.12em] opacity-70">
+            {precioMuted ? "Disponibilidad" : "Tarifa referencial"}
+          </p>
+          <p className="text-sm font-bold leading-snug">{precioLabel}</p>
+        </div>
 
-        <div className="flex gap-2">
+        <div className="mt-auto flex gap-2">
           {href ? (
             <Link
               href={href}
-              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full border border-ink px-4 text-sm font-semibold text-ink"
+              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-ink/20 px-3 text-sm font-bold text-ink transition hover:border-ink hover:bg-ink hover:text-card"
             >
-              Ver detalle
+              Ver detalles
             </Link>
           ) : null}
           {onToggleCarrito ? (
@@ -156,8 +158,10 @@ export function TicketCard({
               aria-label={enCarrito ? `Quitar ${nombre} del carrito` : `Añadir ${nombre} al carrito`}
               aria-pressed={enCarrito}
               className={
-                "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border " +
-                (enCarrito ? "border-coral bg-coral/10 text-coral" : "border-ink/20 text-ink")
+                "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border transition " +
+                (enCarrito
+                  ? "border-coral bg-coral/10 text-coral"
+                  : "border-ink/20 text-ink hover:border-ink hover:bg-sand-2")
               }
             >
               <CartIcon />
@@ -168,9 +172,10 @@ export function TicketCard({
             target="_blank"
             rel="noopener noreferrer"
             aria-label={`Cotizar ${nombre} por WhatsApp`}
-            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-whatsapp text-white"
+            className="flex h-11 flex-shrink-0 items-center justify-center gap-2 rounded-xl bg-whatsapp px-3.5 text-sm font-bold text-white transition hover:brightness-95"
           >
             <WhatsappIcon />
+            <span>Cotizar</span>
           </a>
         </div>
 
