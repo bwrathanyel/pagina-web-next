@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fraunces, Figtree, Space_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { WhatsAppFloatButton } from "@/components/layout/WhatsAppFloatButton";
@@ -11,25 +11,31 @@ import "./globals.css";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://destinoyeventoslotus360.com";
 
-const fraunces = Fraunces({
+const fraunces = localFont({
+  src: "./fonts/fraunces-latin.woff2",
   variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["600", "700"],
+  weight: "600 700",
   display: "swap",
+  fallback: ["Georgia", "serif"],
+  adjustFontFallback: "Times New Roman",
 });
 
-const figtree = Figtree({
+const figtree = localFont({
+  src: "./fonts/figtree-latin.woff2",
   variable: "--font-body",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: "400 700",
   display: "swap",
+  fallback: ["Arial", "sans-serif"],
 });
 
-const spaceMono = Space_Mono({
+const spaceMono = localFont({
+  src: [
+    { path: "./fonts/space-mono-400-latin.woff2", weight: "400" },
+    { path: "./fonts/space-mono-700-latin.woff2", weight: "700" },
+  ],
   variable: "--font-mono",
-  subsets: ["latin"],
-  weight: ["400", "700"],
   display: "swap",
+  fallback: ["Courier New", "monospace"],
 });
 
 const TITLE = "Destino y Eventos Lotus 360 · Agencia de Viajes en Venezuela";

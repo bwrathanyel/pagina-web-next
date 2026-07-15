@@ -4,7 +4,7 @@ import { type NextRequest, NextResponse } from "next/server";
 /** Refreshes the Supabase auth session cookie on every request — standard
  * @supabase/ssr pattern. Without this, sessions silently expire mid-visit
  * because Server Components can't write cookies themselves. */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Web pública Lotus 360
 
-## Getting Started
+Nueva web pública de Destino y Eventos Lotus 360. Combina catálogo y promociones
+desde Supabase, cotizadores, carrito, favoritos, cuenta de cliente y herramientas de
+edición para administradores.
 
-First, run the development server:
+## Stack y arquitectura
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Next.js 16 con App Router, React 19 y TypeScript estricto.
+- Tailwind CSS 4 para estilos.
+- Supabase para catálogo, autenticación, favoritos y roles.
+- Netlify con `@netlify/plugin-nextjs` como plataforma prevista de despliegue.
+- Fuentes locales en `app/fonts/`; el build no depende de Google Fonts.
+- `proxy.ts` refresca la sesión de Supabase en las rutas configuradas.
+
+Las áreas principales son:
+
+- `app/`: rutas, layouts, metadata y endpoint `/api/lead`.
+- `components/`: portada, catálogo, cotizadores, cuenta y controles administrativos.
+- `lib/supabase/`: clientes y consultas compartidas.
+- `lib/leads/`: construcción de solicitudes de cotización.
+- `types/`: tipos del catálogo y categorías canónicas.
+
+El CRM/Supabase es la fuente principal de leads y catálogo. El endpoint `/api/lead`
+envía la solicitud al backend configurado mediante `INGEST_LEAD_URL`; no deben
+hardcodearse secretos, teléfonos de asesores ni reglas de asignación en el cliente.
+
+## Variables de entorno
+
+Crear `.env.local` solo en el entorno local. Nunca versionar sus valores.
+
+| Variable | Uso |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | URL pública del proyecto Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clave pública protegida por RLS |
+| `NEXT_PUBLIC_SITE_URL` | URL canónica, sitemap, robots y JSON-LD |
+| `NEXT_PUBLIC_WHATSAPP_CORPORATIVO` | Contacto corporativo mostrado al cliente |
+| `INGEST_LEAD_URL` | Backend server-side que recibe solicitudes de leads |
+
+## Desarrollo y validación
+
+En Windows, usar `npm.cmd` si PowerShell bloquea `npm.ps1`.
+
+```powershell
+npm.cmd install
+npm.cmd run dev
+npm.cmd run lint
+npm.cmd run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+El build consulta Supabase para generar páginas estáticas de catálogo y productos, por
+lo que el entorno de CI necesita conectividad y las variables públicas configuradas.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Antes de considerar un cambio listo:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Ejecutar lint y build sin warnings nuevos.
+2. Revisar portada, navegación, catálogo y cotización en 390 px y escritorio.
+3. Verificar que no haya overflow horizontal ni errores de consola.
+4. Probar login, favoritos y controles admin cuando el cambio toque esas áreas.
+5. No usar datos reales de clientes como fixtures ni exponer PII en logs o URLs.
 
-## Learn More
+## Despliegue y rollback
 
-To learn more about Next.js, take a look at the following resources:
+`netlify.toml` fija Node 24, ejecuta `npm run build` y activa el plugin oficial de
+Next.js. Un commit local o un build verde no autorizan por sí solos un despliegue.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Para publicar:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Crear un deploy preview del commit candidato.
+2. Ejecutar smoke tests en móvil y escritorio.
+3. Confirmar variables por nombre, redirects, metadata y envío de leads.
+4. Promover el deploy solo con autorización explícita.
 
-## Deploy on Vercel
+Rollback: restaurar en Netlify el último deploy validado y, si hubo un cambio de
+dominio, revertir también la configuración DNS documentada. La web legacy no debe
+retirarse hasta completar el inventario de URLs y redirects 301.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Estado conocido
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- La web aún está en transición desde `CRM/redireccion-whatsapp`.
+- Faltan pruebas automatizadas para cotizadores, carrito, auth, admin y `/api/lead`.
+- Antes del cambio de dominio se requiere QA E2E, baseline de conversión y rollback
+  probado.

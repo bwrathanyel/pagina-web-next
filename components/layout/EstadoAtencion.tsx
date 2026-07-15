@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
+
+const suscribirHidratacion = () => () => {};
 
 function calcularEstado(): { online: boolean; texto: string } {
   const ahora = new Date();
@@ -20,13 +22,9 @@ function calcularEstado(): { online: boolean; texto: string } {
 /** Client-only: depends on the visitor's clock, so it renders nothing
  * during SSR and fills in on mount to avoid a hydration mismatch. */
 export function EstadoAtencion() {
-  const [estado, setEstado] = useState<{ online: boolean; texto: string } | null>(null);
-
-  useEffect(() => {
-    setEstado(calcularEstado());
-  }, []);
-
-  if (!estado) return null;
+  const hidratado = useSyncExternalStore(suscribirHidratacion, () => true, () => false);
+  if (!hidratado) return null;
+  const estado = calcularEstado();
 
   return (
     <span className="inline-flex items-center gap-1.5 font-mono text-xs text-dusk-text-soft">

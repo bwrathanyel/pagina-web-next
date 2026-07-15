@@ -7,36 +7,66 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 import { PRODUCTO_SELECT, PROMOCION_SELECT } from "@/lib/supabase/queries";
 import type { Producto, Promocion } from "@/types/supabase";
 
+type ProductoAdmin = Producto & { activo: boolean };
+type PromocionAdmin = Promocion & { revisado: boolean };
+
+async function consultarCatalogoAdmin(): Promise<{
+  productos: ProductoAdmin[];
+  promociones: PromocionAdmin[];
+}> {
+  const sb = supabaseBrowser();
+  const [{ data: prods, error: e1 }, { data: promos, error: e2 }] = await Promise.all([
+    sb.from("productos").select(`${PRODUCTO_SELECT},activo`).order("nombre"),
+    sb.from("promociones").select(`${PROMOCION_SELECT},revisado`).order("titulo"),
+  ]);
+  if (e1 || e2) throw new Error("catalogo-no-disponible");
+  return {
+    productos: (prods ?? []) as unknown as ProductoAdmin[],
+    promociones: (promos ?? []) as unknown as PromocionAdmin[],
+  };
+}
+
 /** Panel de administración: lista TODO (activo u oculto), sin el filtro que
  * usa el catálogo público — es el único lugar donde "Mostrar" de nuevo algo
  * que se ocultó es siempre alcanzable, sin depender de que el ítem oculto
  * aparezca en un listado que por diseño lo filtra. */
 function PanelAdmin() {
-  const [productos, setProductos] = useState<(Producto & { activo: boolean })[]>([]);
-  const [promociones, setPromociones] = useState<(Promocion & { revisado: boolean })[]>([]);
+  const [productos, setProductos] = useState<ProductoAdmin[]>([]);
+  const [promociones, setPromociones] = useState<PromocionAdmin[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   async function cargar() {
     setCargando(true);
     setError(null);
-    const sb = supabaseBrowser();
-    const [{ data: prods, error: e1 }, { data: promos, error: e2 }] = await Promise.all([
-      sb.from("productos").select(`${PRODUCTO_SELECT},activo`).order("nombre"),
-      sb.from("promociones").select(`${PROMOCION_SELECT},revisado`).order("titulo"),
-    ]);
-    if (e1 || e2) {
+    try {
+      const resultado = await consultarCatalogoAdmin();
+      setProductos(resultado.productos);
+      setPromociones(resultado.promociones);
+    } catch {
       setError("No se pudo cargar el catálogo completo.");
+    } finally {
       setCargando(false);
-      return;
     }
-    setProductos((prods ?? []) as unknown as (Producto & { activo: boolean })[]);
-    setPromociones((promos ?? []) as unknown as (Promocion & { revisado: boolean })[]);
-    setCargando(false);
   }
 
   useEffect(() => {
-    cargar();
+    let vigente = true;
+    consultarCatalogoAdmin()
+      .then((resultado) => {
+        if (!vigente) return;
+        setProductos(resultado.productos);
+        setPromociones(resultado.promociones);
+      })
+      .catch(() => {
+        if (vigente) setError("No se pudo cargar el catálogo completo.");
+      })
+      .finally(() => {
+        if (vigente) setCargando(false);
+      });
+    return () => {
+      vigente = false;
+    };
   }, []);
 
   async function toggleProducto(id: number) {

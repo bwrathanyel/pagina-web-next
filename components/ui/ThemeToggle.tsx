@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
+
+const suscribirHidratacion = () => () => {};
 
 function SunIcon() {
   return (
@@ -27,8 +29,7 @@ function MoonIcon() {
  * a client/server text mismatch. */
 export function ThemeToggle({ className = "" }: { className?: string }) {
   const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useSyncExternalStore(suscribirHidratacion, () => true, () => false);
 
   const esOscuro = mounted && resolvedTheme === "dark";
 

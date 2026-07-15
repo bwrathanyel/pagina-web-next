@@ -20,8 +20,6 @@ function FavoritosLista() {
   useEffect(() => {
     if (!user) return;
     let vigente = true;
-    setCargando(true);
-    setError(false);
     supabaseBrowser()
       .from("web_favoritos")
       .select(`producto_id, promocion_id, producto:productos(${PRODUCTO_SELECT}), promocion:promociones(${PROMOCION_SELECT})`)
