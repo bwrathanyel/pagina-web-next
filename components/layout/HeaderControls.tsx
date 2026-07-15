@@ -33,7 +33,7 @@ export function HeaderControls({ onNavigate }: { onNavigate?: () => void }) {
         href={user ? "/cuenta" : "/cuenta/login"}
         onClick={onNavigate}
         aria-label="Mi cuenta"
-        className="flex h-11 w-11 items-center justify-center rounded-full text-dusk-text"
+        className="flex h-11 w-11 items-center justify-center rounded-full text-ink transition-colors hover:bg-sand-2"
       >
         <UserIcon />
       </Link>
@@ -41,7 +41,7 @@ export function HeaderControls({ onNavigate }: { onNavigate?: () => void }) {
         href="/carrito"
         onClick={onNavigate}
         aria-label={`Carrito${cantidad > 0 ? `, ${cantidad} ítem(s)` : ""}`}
-        className="relative flex h-11 w-11 items-center justify-center rounded-full text-dusk-text"
+        className="relative flex h-11 w-11 items-center justify-center rounded-full text-ink transition-colors hover:bg-sand-2"
       >
         <CartIcon />
         {cantidad > 0 ? (

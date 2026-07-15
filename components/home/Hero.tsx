@@ -3,64 +3,67 @@ import Link from "next/link";
 import { whatsappHref } from "@/lib/whatsapp";
 
 export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
+  const fotoPrincipal = fotos[0];
+
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-dusk-2 to-dusk px-5 pt-8">
-      <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 pb-10 md:grid-cols-2 md:pb-16">
-        <div>
-          <h1 className="mb-4 max-w-[15ch] text-balance font-display text-4xl font-semibold leading-tight text-dusk-text md:text-5xl">
-            Tu próximo viaje, a un mensaje de distancia.
-          </h1>
-          <p className="mb-7 max-w-[38ch] text-dusk-text-soft">
-            Hoteles, paquetes y tours en Venezuela y el mundo — con un asesor real
-            respondiendo por WhatsApp.
+    <section className="relative overflow-hidden px-5 pb-16 pt-10 md:pb-24 md:pt-16">
+      <div className="pointer-events-none absolute -left-28 top-20 h-72 w-72 rounded-full bg-coral/10 blur-3xl" />
+      <div className="pointer-events-none absolute -right-24 bottom-8 h-80 w-80 rounded-full bg-gold/15 blur-3xl" />
+
+      <div className="relative mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[1.15fr_.85fr] lg:gap-20">
+        <div className="text-center lg:text-left">
+          <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-ink/10 bg-card px-4 py-2 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-ink-soft shadow-sm">
+            <span className="h-2 w-2 rounded-full bg-coral" aria-hidden="true" />
+            Agencia de viajes · Venezuela
           </p>
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href="/catalogo/hoteles"
-              className="inline-flex min-h-11 items-center justify-center rounded-full bg-gradient-to-br from-coral to-gold px-6 font-semibold text-btn-ink"
-            >
-              Ver catálogo
+
+          <h1 className="mx-auto max-w-[10ch] text-balance font-display text-[clamp(3.5rem,8vw,7.5rem)] font-semibold leading-[0.88] tracking-[-0.055em] text-ink lg:mx-0">
+            Viajes soñados
+            <span className="block text-coral">hechos realidad.</span>
+          </h1>
+
+          <div className="mx-auto mt-8 max-w-xl lg:mx-0 lg:grid lg:grid-cols-[1fr_auto] lg:items-end lg:gap-8">
+            <p className="text-balance text-base leading-7 text-ink-soft md:text-lg">
+              Tu próxima historia empieza aquí. Descubre hospedajes, escapadas y experiencias
+              con un asesor real acompañándote en cada paso.
+            </p>
+            <svg className="mx-auto mt-6 hidden text-coral lg:block" width="74" height="44" viewBox="0 0 74 44" fill="none" aria-hidden="true">
+              <path d="M2 5c17 1 25 4 35 13 7 6 13 13 28 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <path d="m57 24 9 8-11 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+            <Link href="/catalogo/promociones" className="inline-flex min-h-12 items-center justify-center rounded-full bg-coral px-7 font-semibold text-white shadow-[0_12px_28px_rgba(206,56,10,.22)] transition-transform hover:-translate-y-0.5">
+              Explorar promociones
             </Link>
-            <a
-              href={whatsappHref("Hola! Vengo de su página web.")}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex min-h-11 items-center gap-2 rounded-full border border-dusk-text/30 px-6 font-semibold text-dusk-text"
-            >
-              <span className="h-2 w-2 rounded-full bg-[#25D366]" aria-hidden="true" />
-              Escríbenos por WhatsApp
+            <a href={whatsappHref("Hola! Vengo de su página web y quiero planificar mi próximo viaje.")} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-ink/15 bg-card px-7 font-semibold text-ink transition-colors hover:border-ink/30">
+              Hablar con un asesor
+              <span aria-hidden="true">↗</span>
             </a>
           </div>
         </div>
 
-        <div className="relative h-[260px] md:h-[340px]">
-          {fotos[0] ? (
-            <div className="absolute left-[2%] top-0 z-20 w-[58%] -rotate-[7deg] overflow-hidden rounded-xl border-[3px] border-sand shadow-2xl">
-              <div className="relative aspect-[4/5]">
-                <Image src={fotos[0].url} alt={fotos[0].alt} fill sizes="30vw" className="object-cover" priority />
-              </div>
-            </div>
-          ) : null}
-          {fotos[1] ? (
-            <div className="absolute right-0 top-[12%] z-10 w-[52%] rotate-6 overflow-hidden rounded-xl border-[3px] border-sand shadow-2xl">
-              <div className="relative aspect-[4/5]">
-                <Image src={fotos[1].url} alt={fotos[1].alt} fill sizes="28vw" className="object-cover" />
-              </div>
-            </div>
-          ) : null}
-          {fotos[2] ? (
-            <div className="absolute bottom-[-4%] left-[22%] z-30 w-[46%] -rotate-2 overflow-hidden rounded-xl border-[3px] border-sand shadow-2xl">
-              <div className="relative aspect-[4/5]">
-                <Image src={fotos[2].url} alt={fotos[2].alt} fill sizes="24vw" className="object-cover" />
-              </div>
-            </div>
-          ) : null}
+        <div className="relative mx-auto w-full max-w-[470px]">
+          <div className="relative mx-auto aspect-[4/5] w-[82%] overflow-hidden rounded-[999px] border border-ink/10 bg-sand-2 shadow-[0_30px_80px_rgba(36,31,26,.18)]">
+            {fotoPrincipal ? (
+              <Image src={fotoPrincipal.url} alt={fotoPrincipal.alt} fill sizes="(min-width: 1024px) 36vw, 75vw" className="object-cover" priority />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-seafoam via-dusk-2 to-dusk" />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-dusk/35 via-transparent to-transparent" />
+          </div>
+
+          <div className="absolute -left-1 top-[18%] rounded-2xl border border-white/70 bg-white/85 px-4 py-3 text-left shadow-xl backdrop-blur-md sm:left-0">
+            <p className="font-mono text-[10px] uppercase tracking-wider text-[#71717a]">Atención</p>
+            <p className="mt-1 text-sm font-bold text-[#18181b]">Asesores reales</p>
+          </div>
+          <div className="absolute -right-1 bottom-[15%] rounded-2xl border border-white/70 bg-white/85 px-4 py-3 text-left shadow-xl backdrop-blur-md sm:right-0">
+            <p className="font-mono text-[10px] uppercase tracking-wider text-[#71717a]">Desde Venezuela</p>
+            <p className="mt-1 text-sm font-bold text-[#18181b]">Hacia el mundo</p>
+          </div>
         </div>
       </div>
-
-      <svg viewBox="0 0 1440 90" preserveAspectRatio="none" className="block h-auto w-full" aria-hidden="true">
-        <path d="M0,90 L0,50 L100,10 L165,44 L230,16 L290,46 L1440,46 L1440,90 Z" fill="var(--color-sand)" />
-      </svg>
     </section>
   );
 }

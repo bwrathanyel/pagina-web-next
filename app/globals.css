@@ -90,6 +90,15 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+::selection {
+  background: var(--color-coral);
+  color: white;
+}
+
 :focus-visible {
   outline: 2px solid var(--color-coral);
   outline-offset: 3px;
@@ -97,6 +106,10 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   * {
     animation-duration: 0.001ms !important;
     transition-duration: 0.001ms !important;

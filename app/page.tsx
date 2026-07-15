@@ -33,8 +33,28 @@ export default async function Home() {
     <>
       <Hero fotos={heroFotos} />
 
-      <section className="relative z-10 mx-auto -mt-6 max-w-6xl px-5 md:-mt-10">
+      <section className="mx-auto max-w-6xl px-5 py-16 md:py-24">
         <ServiciosGrid />
+      </section>
+
+      <section className="bg-coral px-5 py-12 text-white">
+        <div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-[1.3fr_1fr] md:items-center">
+          <h2 className="max-w-[18ch] text-balance font-display text-3xl font-semibold leading-tight md:text-5xl">
+            Viajar bien comienza con sentirte acompañado.
+          </h2>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            {[
+              ["Asesoría", "humana"],
+              ["Atención", "personalizada"],
+              ["Destinos", "sin fronteras"],
+            ].map(([titulo, detalle]) => (
+              <div key={titulo} className="border-l border-white/25 px-2 first:border-l-0">
+                <p className="font-display text-lg font-semibold md:text-2xl">{titulo}</p>
+                <p className="mt-1 text-xs text-white/75 md:text-sm">{detalle}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       <PromocionesDestacadas promociones={promociones} />
