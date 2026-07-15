@@ -3,6 +3,7 @@ import { ServiciosGrid } from "@/components/home/ServiciosGrid";
 import { PromocionesDestacadas } from "@/components/home/PromocionesDestacadas";
 import { CategoriasDestacadas } from "@/components/home/CategoriasDestacadas";
 import { PlanesCorporativos } from "@/components/home/PlanesCorporativos";
+import { ComoFunciona } from "@/components/home/ComoFunciona";
 import { fotosDe } from "@/lib/supabase/fotos";
 import { getProductosPorCategoria, getPromociones } from "@/lib/supabase/queries";
 import type { Categoria } from "@/types/supabase";
@@ -34,7 +35,7 @@ export default async function Home() {
       <Hero fotos={heroFotos} />
 
       <section className="mx-auto max-w-6xl px-5 py-16 md:py-24">
-        <ServiciosGrid />
+        <ServiciosGrid fotoHotel={fotosDe(hoteles[0]?.producto_fotos)[0] ?? null} />
       </section>
 
       <section className="bg-coral px-5 py-12 text-white">
@@ -58,6 +59,8 @@ export default async function Home() {
       </section>
 
       <PromocionesDestacadas promociones={promociones} />
+
+      <ComoFunciona />
 
       <CategoriasDestacadas fotos={fotosPorCategoria} />
 

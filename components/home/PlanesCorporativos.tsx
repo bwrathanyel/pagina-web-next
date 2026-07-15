@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { REDES } from "@/lib/social";
 import { whatsappHref } from "@/lib/whatsapp";
 
@@ -15,16 +16,18 @@ export function PlanesCorporativos() {
           </div>
         </div>
 
-        <div className="relative flex min-h-[360px] items-center justify-center overflow-hidden bg-gradient-to-br from-coral to-gold p-8">
-          <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full border border-white/25" />
-          <div className="absolute -bottom-24 -left-16 h-72 w-72 rounded-full border border-white/25" />
-          <div className="relative max-w-xs rotate-[-4deg] rounded-[28px] bg-white p-7 text-[#18181b] shadow-2xl">
-            <p className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-[#71717a]">Lotus 360 para empresas</p>
-            <p className="mt-5 font-display text-3xl font-semibold leading-tight">Un plan, un equipo, una experiencia inolvidable.</p>
-            <div className="mt-8 flex items-center gap-3 border-t border-black/10 pt-5">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f4f4f5] text-xl" aria-hidden="true">✦</span>
-              <p className="text-sm font-semibold">Diseñado alrededor de tus objetivos</p>
-            </div>
+        <div className="relative min-h-[390px] overflow-hidden lg:min-h-full">
+          <Image
+            src="/images/editorial/experiencia-corporativa.png"
+            alt="Equipo planificando una experiencia corporativa"
+            fill
+            sizes="(min-width: 1024px) 42vw, 100vw"
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+          <div className="absolute bottom-6 left-6 right-6 rounded-2xl border border-white/20 bg-black/30 p-5 text-white backdrop-blur-md">
+            <p className="font-display text-2xl font-semibold">Un plan que se siente propio.</p>
+            <p className="mt-1 text-sm text-white/75">Diseñado alrededor de tu equipo y tus objetivos.</p>
           </div>
         </div>
       </div>

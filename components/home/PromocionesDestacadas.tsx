@@ -20,7 +20,7 @@ export function PromocionesDestacadas({ promociones }: { promociones: Promocion[
         </Link>
       </div>
       <CatalogoGrid>
-        {promociones.slice(0, 6).map((p) => (
+        {promociones.slice(0, 3).map((p) => (
           <PromocionCard key={p.id} promocion={p} />
         ))}
       </CatalogoGrid>

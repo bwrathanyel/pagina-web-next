@@ -104,7 +104,20 @@ export function TicketCard({
             sizes="(min-width: 700px) 33vw, 100vw"
             className="object-cover"
           />
-        ) : null}
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center overflow-hidden bg-gradient-to-br from-seafoam-bg via-sand-2 to-card">
+            <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full border border-seafoam/15" />
+            <div className="absolute -bottom-12 -left-8 h-44 w-44 rounded-full border border-coral/15" />
+            <div className="relative text-center text-ink-soft">
+              <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" className="mx-auto mb-3" aria-hidden="true">
+                <rect x="3" y="5" width="18" height="14" rx="2" />
+                <circle cx="8.5" cy="10" r="1.5" />
+                <path d="m4 17 4.5-4 3.5 3 2.5-2 5.5 3" />
+              </svg>
+              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.14em]">Imagen por confirmar</p>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="relative mx-4 border-t-2 border-dashed border-ink/20">

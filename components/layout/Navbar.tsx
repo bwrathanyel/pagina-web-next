@@ -3,12 +3,16 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { CATEGORIAS } from "@/types/supabase";
 import { whatsappHref } from "@/lib/whatsapp";
 import { HeaderControls } from "@/components/layout/HeaderControls";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+
+  const esActiva = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   return (
     <header className="sticky top-0 z-30 px-4 pt-4">
@@ -23,16 +27,23 @@ export function Navbar() {
             <Link
               key={slug}
               href={`/catalogo/${slug}`}
-              className="font-body text-sm text-ink-soft hover:text-ink"
+              aria-current={esActiva(`/catalogo/${slug}`) ? "page" : undefined}
+              className={
+                "relative py-2 font-body text-sm transition-colors after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-left after:bg-coral after:transition-transform " +
+                (esActiva(`/catalogo/${slug}`)
+                  ? "text-ink after:scale-x-100"
+                  : "text-ink-soft after:scale-x-0 hover:text-ink hover:after:scale-x-100")
+              }
             >
               {label}
             </Link>
           ))}
           <Link
             href="/cotizador-personalizado"
-            className="font-body text-sm text-ink-soft hover:text-ink"
+            aria-current={esActiva("/cotizador-personalizado") ? "page" : undefined}
+            className="font-body text-sm font-semibold text-ink hover:text-coral"
           >
-            Cotizador Personalizado
+            Cotizar
           </Link>
           <a
             href={whatsappHref("Hola! Vengo de su página web.")}
@@ -87,17 +98,22 @@ export function Navbar() {
               key={slug}
               href={`/catalogo/${slug}`}
               onClick={() => setOpen(false)}
-              className="flex min-h-11 items-center font-body text-ink"
+              aria-current={esActiva(`/catalogo/${slug}`) ? "page" : undefined}
+              className={
+                "flex min-h-12 items-center justify-between border-b border-ink/8 font-body " +
+                (esActiva(`/catalogo/${slug}`) ? "font-semibold text-coral" : "text-ink")
+              }
             >
               {label}
+              <span aria-hidden="true">↗</span>
             </Link>
           ))}
           <Link
             href="/cotizador-personalizado"
             onClick={() => setOpen(false)}
-            className="flex min-h-11 items-center font-body text-ink"
+            className="flex min-h-12 items-center justify-between border-b border-ink/8 font-semibold text-ink"
           >
-            Cotizador Personalizado
+            Cotizador personalizado <span aria-hidden="true">↗</span>
           </Link>
           <a
             href={whatsappHref("Hola! Vengo de su página web.")}

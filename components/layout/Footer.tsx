@@ -3,6 +3,7 @@ import Link from "next/link";
 import { CATEGORIAS } from "@/types/supabase";
 import { REDES } from "@/lib/social";
 import { EstadoAtencion } from "@/components/layout/EstadoAtencion";
+import { whatsappHref } from "@/lib/whatsapp";
 
 function SocialIcon({ path }: { path: string }) {
   return (
@@ -23,8 +24,25 @@ const ICONS = {
 export function Footer() {
   return (
     <footer className="bg-dusk">
-      <div className="mx-auto max-w-6xl px-5 py-10">
-        <div className="mb-8 flex flex-wrap items-start justify-between gap-8">
+      <div className="mx-auto max-w-6xl px-5 py-12 md:py-16">
+        <div className="mb-12 grid gap-7 border-b border-dusk-text/12 pb-12 md:grid-cols-[1fr_auto] md:items-end">
+          <div>
+            <p className="mb-3 font-mono text-xs font-bold uppercase tracking-[0.18em] text-coral">Tu próximo viaje</p>
+            <p className="max-w-[15ch] text-balance font-display text-3xl font-semibold leading-tight text-dusk-text md:text-5xl">
+              Empieza con una buena conversación.
+            </p>
+          </div>
+          <a
+            href={whatsappHref("Hola! Vengo de su página web y quiero comenzar a planificar un viaje.")}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-12 items-center justify-center rounded-full bg-coral px-7 font-semibold text-white"
+          >
+            Hablar con un asesor
+          </a>
+        </div>
+
+        <div className="mb-10 grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_.8fr_1fr]">
           <div className="max-w-xs">
             <div className="mb-3 flex items-center gap-2.5">
               <Image src="/logo-lotus360.png" alt="Lotus 360" width={32} height={32} />
@@ -93,7 +111,7 @@ export function Footer() {
           </div>
         </div>
 
-        <p className="border-t border-dusk-text/10 pt-5 text-xs text-dusk-text-soft">
+        <p className="border-t border-dusk-text/10 pt-6 text-xs text-dusk-text-soft">
           © {new Date().getFullYear()} Lotus 360. Todos los derechos reservados.
         </p>
       </div>
