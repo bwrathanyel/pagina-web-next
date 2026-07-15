@@ -14,6 +14,11 @@ interface CotizacionOpcion {
   nombre: string;
   destino: string | null;
   precio: string;
+  precioUnitarioUsd: number | null;
+  calculoPrecio: "persona_noche" | null;
+  ninosGratis: number;
+  vigenciaTexto: string | null;
+  vigenciaFin: string | null;
   foto: string | null;
   esHotel: boolean;
   volverHref: string;
@@ -40,6 +45,24 @@ function fechaLegible(valor: string) {
   );
 }
 
+function sumarDias(valor: string, dias: number) {
+  if (!valor) return "";
+  const fecha = new Date(`${valor}T00:00:00Z`);
+  fecha.setUTCDate(fecha.getUTCDate() + dias);
+  return fecha.toISOString().slice(0, 10);
+}
+
+function contarNoches(entrada: string, salida: string) {
+  if (!entrada || !salida || salida <= entrada) return 0;
+  return Math.round((Date.parse(`${salida}T00:00:00Z`) - Date.parse(`${entrada}T00:00:00Z`)) / 86_400_000);
+}
+
+function telefonoPareceValido(valor: string) {
+  if (!/^[+\d\s().-]+$/.test(valor.trim())) return false;
+  const digitos = valor.replace(/\D/g, "");
+  return digitos.length >= 7 && digitos.length <= 15;
+}
+
 export function CotizacionOpcionForm({ opcion }: { opcion: CotizacionOpcion }) {
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
@@ -55,6 +78,13 @@ export function CotizacionOpcionForm({ opcion }: { opcion: CotizacionOpcion }) {
   const [confirmacion, setConfirmacion] = useState<Confirmacion | null>(null);
 
   const hoy = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const noches = useMemo(() => contarNoches(fechaEntrada, fechaSalida), [fechaEntrada, fechaSalida]);
+  const ninosPagos = Math.max(0, ninos - opcion.ninosGratis);
+  const viajerosPagos = adultos + ninosPagos;
+  const totalEstimado = opcion.calculoPrecio === "persona_noche" && opcion.precioUnitarioUsd != null && noches > 0
+    ? viajerosPagos * noches * opcion.precioUnitarioUsd
+    : null;
+  const promocionVencida = Boolean(opcion.vigenciaFin && opcion.vigenciaFin < hoy);
 
   function cambiarNinos(cantidad: number) {
     const segura = Math.max(0, Math.min(cantidad, 8));
@@ -65,8 +95,16 @@ export function CotizacionOpcionForm({ opcion }: { opcion: CotizacionOpcion }) {
   async function enviar(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (enviando) return;
+    if (!telefonoPareceValido(telefono)) {
+      setError("Escribe un número válido de 7 a 15 dígitos. Puedes usar formato 0412-1234567 o +58 412-1234567.");
+      return;
+    }
     if (fechaSalida && fechaEntrada && fechaSalida <= fechaEntrada) {
       setError("La fecha de salida debe ser posterior a la fecha de entrada.");
+      return;
+    }
+    if (opcion.vigenciaFin && (fechaEntrada > opcion.vigenciaFin || fechaSalida > opcion.vigenciaFin)) {
+      setError(`La estadía debe terminar, como máximo, el ${fechaLegible(opcion.vigenciaFin)}.`);
       return;
     }
 
@@ -84,6 +122,7 @@ export function CotizacionOpcionForm({ opcion }: { opcion: CotizacionOpcion }) {
       `Opción: ${opcion.nombre}`,
       `Fechas: ${fechas}`,
       `Viajeros: ${viajeros}`,
+      totalEstimado != null ? `Total referencial calculado: $${totalEstimado.toFixed(2)} USD` : "",
       ninos ? `Edades de niños: ${edadesTexto}` : "",
       email ? `Correo: ${email}` : "",
       notas ? `Notas: ${notas}` : "",
@@ -123,8 +162,15 @@ export function CotizacionOpcionForm({ opcion }: { opcion: CotizacionOpcion }) {
         whatsappHref: `https://wa.me/${asesor.telefono}?text=${encodeURIComponent(mensaje)}`,
         resumen: { fechas, viajeros, telefono: telefono.trim() },
       });
-    } catch {
-      setError("No pudimos registrar tu solicitud. Revisa el teléfono e inténtalo nuevamente.");
+    } catch (submitError) {
+      const codigo = submitError instanceof Error ? submitError.message : "";
+      setError(codigo === "crm_timeout"
+        ? "El CRM tardó demasiado en responder. No se registró la solicitud; espera unos segundos e inténtalo nuevamente."
+        : codigo === "crm_no_disponible"
+          ? "El CRM no está disponible temporalmente. Tus datos no se perdieron; inténtalo nuevamente en un momento."
+          : codigo === "datos_invalidos"
+            ? "Revisa el nombre y el teléfono antes de continuar."
+            : "No pudimos registrar la solicitud en el CRM. Inténtalo nuevamente en un momento.");
     } finally {
       setEnviando(false);
     }
@@ -177,6 +223,8 @@ export function CotizacionOpcionForm({ opcion }: { opcion: CotizacionOpcion }) {
           <h1 className="mt-2 font-display text-2xl font-semibold leading-tight text-ink">{opcion.nombre}</h1>
           {opcion.destino ? <p className="mt-2 text-ink-soft">{opcion.destino}</p> : null}
           <p className="mt-4 rounded-xl bg-seafoam-bg px-4 py-3 text-sm font-bold text-seafoam-text">{opcion.precio}</p>
+          {opcion.vigenciaTexto ? <p className="mt-3 text-sm leading-6 text-ink-soft"><strong className="text-ink">Vigencia:</strong> {opcion.vigenciaTexto}</p> : null}
+          {opcion.clase === "promocion" ? <p className="mt-2 text-sm leading-6 text-ink-soft"><strong className="text-ink">Niños gratis:</strong> {opcion.ninosGratis > 0 ? opcion.ninosGratis : "No indicado"}</p> : null}
         </div>
       </aside>
 
@@ -187,10 +235,10 @@ export function CotizacionOpcionForm({ opcion }: { opcion: CotizacionOpcion }) {
 
         <div className="mt-7 grid gap-5 sm:grid-cols-2">
           <label className="text-sm font-bold text-ink sm:col-span-2">Nombre y apellido<input required autoComplete="name" value={nombre} onChange={(e) => setNombre(e.target.value)} className={inputClass} placeholder="Escribe tu nombre completo" /></label>
-          <label className="text-sm font-bold text-ink">Teléfono<input required autoComplete="tel" inputMode="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} className={inputClass} placeholder="Ej: 0412-1234567" /></label>
+          <label className="text-sm font-bold text-ink">Teléfono<input required autoComplete="tel" inputMode="tel" value={telefono} onChange={(e) => { setTelefono(e.target.value); setError(null); }} className={inputClass} placeholder="Ej: 0412-1234567 o +58 412-1234567" /><span className="mt-1.5 block text-xs font-normal leading-5 text-ink-soft">Aceptamos formato nacional o internacional.</span></label>
           <label className="text-sm font-bold text-ink">Correo opcional<input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="tu@correo.com" /></label>
-          <label className="text-sm font-bold text-ink">{opcion.esHotel ? "Fecha de entrada" : "Fecha de viaje"}<input required type="date" min={hoy} value={fechaEntrada} onChange={(e) => setFechaEntrada(e.target.value)} className={inputClass} /></label>
-          <label className="text-sm font-bold text-ink">{opcion.esHotel ? "Fecha de salida" : "Regreso opcional"}<input required={opcion.esHotel} type="date" min={fechaEntrada || hoy} value={fechaSalida} onChange={(e) => setFechaSalida(e.target.value)} className={inputClass} /></label>
+          <label className="text-sm font-bold text-ink">{opcion.esHotel ? "Fecha de entrada" : "Fecha de viaje"}<input required type="date" min={hoy} max={opcion.vigenciaFin ?? undefined} value={fechaEntrada} onChange={(e) => { setFechaEntrada(e.target.value); if (fechaSalida && fechaSalida <= e.target.value) setFechaSalida(""); }} className={inputClass} /></label>
+          <label className="text-sm font-bold text-ink">{opcion.esHotel ? "Fecha de salida" : "Regreso opcional"}<input required={opcion.esHotel} type="date" min={fechaEntrada ? sumarDias(fechaEntrada, 1) : hoy} max={opcion.vigenciaFin ?? undefined} value={fechaSalida} onChange={(e) => setFechaSalida(e.target.value)} className={inputClass} /></label>
           <label className="text-sm font-bold text-ink">Adultos<input required type="number" min={1} max={50} value={adultos} onChange={(e) => setAdultos(Number(e.target.value))} className={inputClass} /></label>
           <label className="text-sm font-bold text-ink">Niños<input type="number" min={0} max={8} value={ninos} onChange={(e) => cambiarNinos(Number(e.target.value))} className={inputClass} /></label>
           {edades.map((edad, indice) => (
@@ -199,8 +247,22 @@ export function CotizacionOpcionForm({ opcion }: { opcion: CotizacionOpcion }) {
           <label className="text-sm font-bold text-ink sm:col-span-2">Solicitudes especiales<textarea rows={4} value={notas} onChange={(e) => setNotas(e.target.value)} className={`${inputClass} py-3`} placeholder="Habitaciones, alimentación, celebración o cualquier detalle útil" /></label>
         </div>
 
+        <section className="mt-6 rounded-2xl border border-seafoam/25 bg-seafoam-bg p-5" aria-live="polite">
+          <p className="font-mono text-[0.68rem] font-bold uppercase tracking-[0.12em] text-seafoam-text">Total de la estadía</p>
+          {totalEstimado != null ? (
+            <><p className="mt-2 font-display text-3xl font-semibold text-ink">${totalEstimado.toFixed(2)} USD</p><p className="mt-2 text-sm leading-6 text-ink-soft">{viajerosPagos} viajero(s) con tarifa × {noches} {noches === 1 ? "noche" : "noches"} × ${opcion.precioUnitarioUsd?.toFixed(2)}. {opcion.ninosGratis > 0 ? `${Math.min(ninos, opcion.ninosGratis)} niño(s) incluidos sin cargo.` : ""}</p></>
+          ) : opcion.calculoPrecio === "persona_noche" ? (
+            <><p className="mt-2 text-xl font-bold text-ink">Selecciona entrada y salida</p><p className="mt-1 text-sm leading-6 text-ink-soft">El total se actualizará automáticamente según noches, adultos y niños.</p></>
+          ) : (
+            <><p className="mt-2 text-xl font-bold text-ink">Total por confirmar</p><p className="mt-1 text-sm leading-6 text-ink-soft">Esta opción no tiene una tarifa única por persona y noche; el asesor calculará el total exacto.</p></>
+          )}
+          <p className="mt-3 border-t border-seafoam/25 pt-3 text-xs leading-5 text-ink-soft">Monto referencial sujeto a edades, acomodación, disponibilidad y condiciones finales de la promoción.</p>
+        </section>
+
+        {promocionVencida ? <p className="mt-5 rounded-xl bg-coral/10 px-4 py-3 text-sm font-semibold text-coral">La vigencia estructurada de esta promoción ya finalizó. Puedes volver al catálogo para elegir otra opción.</p> : null}
+
         {error ? <p className="mt-5 rounded-xl bg-coral/10 px-4 py-3 text-sm font-semibold text-coral" role="alert">{error}</p> : null}
-        <button type="submit" disabled={enviando} className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-coral px-6 font-bold text-white shadow-[0_12px_28px_rgba(206,56,10,.18)] disabled:opacity-60">
+        <button type="submit" disabled={enviando || promocionVencida} className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-coral px-6 font-bold text-white shadow-[0_12px_28px_rgba(206,56,10,.18)] disabled:opacity-60">
           {enviando ? "Registrando solicitud…" : "Finalizar cotización"}
         </button>
         <p className="mt-3 text-center text-xs leading-5 text-ink-soft">No solicitamos cédula ni datos de pago en este formulario.</p>

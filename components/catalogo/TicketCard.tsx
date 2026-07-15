@@ -10,6 +10,8 @@ export interface TicketCardProps {
   cotizarHref: string;
   precioLabel: string;
   precioMuted: boolean;
+  vigenciaLabel?: string | null;
+  ninosGratis?: number | null;
   enCarrito?: boolean;
   onToggleCarrito?: () => void;
   /** null = sesión no iniciada (el corazón igual se ve, pero al tocarlo
@@ -57,6 +59,8 @@ export function TicketCard({
   cotizarHref,
   precioLabel,
   precioMuted,
+  vigenciaLabel,
+  ninosGratis,
   enCarrito = false,
   onToggleCarrito,
   favorito = null,
@@ -127,6 +131,22 @@ export function TicketCard({
             {precioMuted ? "Disponibilidad" : "Tarifa referencial"}
           </p>
           <p className="text-sm font-bold leading-snug">{precioLabel}</p>
+          {vigenciaLabel !== undefined || ninosGratis !== undefined ? (
+            <dl className="mt-3 grid gap-2 border-t border-current/15 pt-3 text-xs">
+              <div className="flex items-start justify-between gap-3">
+                <dt className="font-mono font-bold uppercase tracking-[0.08em] opacity-65">Vigencia</dt>
+                <dd className="max-w-[68%] text-right font-bold leading-5">{vigenciaLabel || "Consultar vigencia"}</dd>
+              </div>
+              <div className="flex items-start justify-between gap-3">
+                <dt className="font-mono font-bold uppercase tracking-[0.08em] opacity-65">Niños gratis</dt>
+                <dd className="max-w-[68%] text-right font-bold leading-5">
+                  {ninosGratis && ninosGratis > 0
+                    ? `${ninosGratis} ${ninosGratis === 1 ? "niño" : "niños"}`
+                    : "No indicado"}
+                </dd>
+              </div>
+            </dl>
+          ) : null}
         </div>
 
         <div className="mt-auto flex gap-2">

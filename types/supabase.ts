@@ -34,6 +34,7 @@ export interface Promocion {
   precio_texto: string | null;
   precio_desde_usd: number | null;
   vigencia_texto: string | null;
+  fecha_fin_estimada: string | null;
   ninos_gratis_cantidad: number | null;
   incluye_tags: string[];
   producto:

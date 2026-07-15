@@ -10,7 +10,7 @@ export const PRODUCTO_SELECT =
   "producto_fotos(id,storage_path,orden,es_principal,activo,width,height)";
 
 export const PROMOCION_SELECT =
-  "id,titulo,precio_texto,precio_desde_usd,vigencia_texto,ninos_gratis_cantidad,incluye_tags," +
+  "id,titulo,precio_texto,precio_desde_usd,vigencia_texto,fecha_fin_estimada,ninos_gratis_cantidad,incluye_tags," +
   "producto:productos(id,tipo,nombre,destino,producto_fotos(id,storage_path,orden,es_principal,activo))," +
   "promocion_fotos(id,storage_path,orden,es_principal,activo,width,height)";
 

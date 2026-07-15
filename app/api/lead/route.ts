@@ -35,10 +35,14 @@ export async function POST(request: Request) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(datos),
-      signal: AbortSignal.timeout(20_000),
+      signal: AbortSignal.timeout(60_000),
     });
-  } catch {
-    return NextResponse.json({ ok: false, error: "crm_no_disponible" }, { status: 502 });
+  } catch (fetchError) {
+    const timeout = fetchError instanceof Error && (fetchError.name === "TimeoutError" || fetchError.name === "AbortError");
+    return NextResponse.json(
+      { ok: false, error: timeout ? "crm_timeout" : "crm_no_disponible" },
+      { status: timeout ? 504 : 502 },
+    );
   }
 
   const data = await upstream.json().catch(() => ({ ok: upstream.ok }));

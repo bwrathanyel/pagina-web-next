@@ -44,6 +44,8 @@ export function PromocionCard({ promocion }: { promocion: Promocion }) {
         cotizarHref={`/cotizar/promocion/${promocion.id}`}
         precioLabel={precioLabel}
         precioMuted={!promocion.precio_texto}
+        vigenciaLabel={promocion.vigencia_texto}
+        ninosGratis={promocion.ninos_gratis_cantidad}
         oculto={!visible}
         enCarrito={tieneItem(key)}
         onToggleCarrito={() =>
