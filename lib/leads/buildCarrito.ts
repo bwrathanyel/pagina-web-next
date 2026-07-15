@@ -15,7 +15,7 @@ export function armarCarrito(
   const destino = destinos.join(" · ") || "Varios";
 
   const { emoji: mensajeEmoji, texto: mensajeTexto } = armarMensajes(
-    "🛒 *SOLICITUD DESDE EL CARRITO - LOTUS 360*",
+    "🛒 *SOLICITUD DESDE EL CARRITO - DESTINO Y EVENTOS LOTUS 360*",
     [
       ["👤", `*Nombre:* ${nombre}`],
       ...items.map(

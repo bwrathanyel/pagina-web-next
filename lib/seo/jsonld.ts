@@ -16,8 +16,8 @@ export function buildTravelAgencyJsonLd() {
     description:
       "Agencia de viajes especializada en hospedaje, boletería aérea, full days y eventos corporativos en Venezuela.",
     url: `${SITE_URL}/`,
-    logo: `${SITE_URL}/logo-lotus360.png`,
-    image: `${SITE_URL}/logo-lotus360.png`,
+    logo: `${SITE_URL}/logo-lotus360-transparent.png`,
+    image: `${SITE_URL}/logo-lotus360-transparent.png`,
     telephone: "+58-424-4634041",
     email: REDES.email,
     address: {

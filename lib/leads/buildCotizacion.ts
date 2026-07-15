@@ -51,7 +51,7 @@ export function armarHospedaje(r: Respuestas): ResultadoCotizacion {
   const amenidades = (r.amenidades as string[]) ?? [];
 
   const { emoji: mensajeEmoji, texto: mensajeTexto } = armarMensajes(
-    "🌟 *COTIZACIÓN HOSPEDAJE - LOTUS 360*",
+    "🌟 *COTIZACIÓN HOSPEDAJE - DESTINO Y EVENTOS LOTUS 360*",
     [
       ["📍", `*Destino:* ${destino}`],
       ["👤", `*Nombre:* ${s(r, "nombre")}`],
@@ -93,7 +93,7 @@ export function armarBoleteria(r: Respuestas): ResultadoCotizacion {
   const flex = n(r, "flexibilidad", 0);
 
   const { emoji: mensajeEmoji, texto: mensajeTexto } = armarMensajes(
-    "✈️ *COTIZACIÓN DE VUELO - LOTUS 360*",
+    "✈️ *COTIZACIÓN DE VUELO - DESTINO Y EVENTOS LOTUS 360*",
     [
       ["👤", `*Nombre:* ${s(r, "nombre")}`],
       ["🔄", `*Tipo:* ${idaVuelta ? "Ida y Vuelta" : "Solo Ida"}`],
@@ -133,7 +133,7 @@ export function armarFullday(r: Respuestas, nombreProducto: string): ResultadoCo
   const total = totalCalc?.totalUsd ?? adultos * precio;
   const faltanGrupo = grupo < 15 ? 15 - grupo : 0;
 
-  const { emoji: mensajeEmoji, texto: mensajeTexto } = armarMensajes("🌴 *RESERVA TOUR PRIVADO - LOTUS 360*", [
+  const { emoji: mensajeEmoji, texto: mensajeTexto } = armarMensajes("🌴 *RESERVA TOUR PRIVADO - DESTINO Y EVENTOS LOTUS 360*", [
     ["📍", `*Tour:* ${nombreProducto}`],
     ["🔒", "*Modalidad:* Privado por grupo (mín. 15 personas)"],
     ["🎫", `*Plan:* ${plan} ($${precio} por persona)`],
@@ -161,7 +161,7 @@ export function armarPaquete(r: Respuestas): ResultadoCotizacion {
   const destino = s(r, "destino");
 
   const { emoji: mensajeEmoji, texto: mensajeTexto } = armarMensajes(
-    "🌍 *CONSULTA DE PAQUETE - LOTUS 360*",
+    "🌍 *CONSULTA DE PAQUETE - DESTINO Y EVENTOS LOTUS 360*",
     [
       ["📍", `*Destino:* ${destino}`],
       ["👤", `*Nombre:* ${s(r, "nombre")}`],
@@ -195,7 +195,7 @@ export function armarPersonalizado(r: Respuestas): ResultadoCotizacion {
   const presTexto = presupuesto >= 3000 ? "Sin límite" : `$${presupuesto} USD`;
 
   const { emoji: mensajeEmoji, texto: mensajeTexto } = armarMensajes(
-    "🧭 *COTIZADOR PERSONALIZADO - LOTUS 360*",
+    "🧭 *COTIZADOR PERSONALIZADO - DESTINO Y EVENTOS LOTUS 360*",
     [
       ["👤", `*Nombre:* ${s(r, "nombre")}`],
       ["🧳", `*Tipo de servicio:* ${servicio}`],

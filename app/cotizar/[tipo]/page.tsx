@@ -15,8 +15,8 @@ export function generateStaticParams() {
 }
 
 export const metadata: Metadata = {
-  title: "Cotizar | Lotus 360",
-  description: "Cotiza tu hospedaje, vuelo, tour o paquete con Lotus 360 en unos pasos.",
+  title: "Cotizar | Destino y Eventos Lotus 360",
+  description: "Cotiza tu hospedaje, vuelo, tour o paquete con Destino y Eventos Lotus 360 en unos pasos.",
 };
 
 export default async function CotizarPage({

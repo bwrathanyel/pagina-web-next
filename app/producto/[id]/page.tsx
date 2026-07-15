@@ -29,7 +29,7 @@ export async function generateMetadata({
   const tarifa = producto.tarifas.find((t) => t.vigente);
   const description = producto.descripcion
     ? producto.descripcion.slice(0, 155)
-    : `${producto.nombre}${producto.destino ? ` en ${producto.destino}` : ""}. Cotiza con Lotus 360.`;
+    : `${producto.nombre}${producto.destino ? ` en ${producto.destino}` : ""}. Cotiza con Destino y Eventos Lotus 360.`;
   return {
     title: producto.nombre,
     description,

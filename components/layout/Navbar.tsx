@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CATEGORIAS } from "@/types/supabase";
 import { whatsappHref } from "@/lib/whatsapp";
 import { HeaderControls } from "@/components/layout/HeaderControls";
+import { BrandMark } from "@/components/layout/BrandMark";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
@@ -16,13 +16,15 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-30 px-4 pt-4">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 rounded-full border border-ink/10 bg-card/90 px-4 py-2 shadow-[0_12px_35px_rgba(36,31,26,.10)] backdrop-blur-xl md:px-5">
-        <Link href="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
-          <Image src="/logo-lotus360.png" alt="Lotus 360" width={36} height={36} priority />
-          <span className="font-display text-lg font-bold text-ink">Lotus 360</span>
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 rounded-full border border-ink/10 bg-card/90 px-3 py-2 shadow-[0_12px_35px_rgba(36,31,26,.10)] backdrop-blur-xl sm:gap-4 sm:px-4 lg:px-5">
+        <Link href="/" className="flex min-w-0 items-center gap-2.5" onClick={() => setOpen(false)}>
+          <BrandMark priority />
+          <span className="max-w-[7rem] text-balance font-display text-[0.68rem] font-bold leading-[0.98] text-ink sm:max-w-[11.5rem] sm:text-base sm:leading-[1.05] lg:text-lg">
+            Destino y Eventos Lotus 360
+          </span>
         </Link>
 
-        <nav aria-label="Catálogo" className="hidden items-center gap-5 md:flex">
+        <nav aria-label="Catálogo" className="hidden items-center gap-5 lg:flex">
           {CATEGORIAS.map(({ slug, label }) => (
             <Link
               key={slug}
@@ -56,11 +58,11 @@ export function Navbar() {
           <HeaderControls />
         </nav>
 
-        <div className="flex items-center md:hidden">
+        <div className="flex items-center lg:hidden">
           <HeaderControls />
           <button
             type="button"
-            className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-ink md:hidden"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-ink lg:hidden"
             aria-expanded={open}
             aria-controls="mobile-menu"
             aria-label={open ? "Cerrar menú" : "Abrir menú"}
@@ -91,7 +93,7 @@ export function Navbar() {
         <nav
           id="mobile-menu"
           aria-label="Catálogo"
-          className="mx-auto mt-2 flex max-w-6xl flex-col gap-1 rounded-[28px] border border-ink/10 bg-card px-5 py-4 shadow-xl md:hidden"
+          className="mx-auto mt-2 flex max-w-6xl flex-col gap-1 rounded-[28px] border border-ink/10 bg-card px-5 py-4 shadow-xl lg:hidden"
         >
           {CATEGORIAS.map(({ slug, label }) => (
             <Link

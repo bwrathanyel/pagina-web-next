@@ -46,17 +46,24 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
     default: TITLE,
-    template: "%s | Lotus 360",
+    template: "%s | Destino y Eventos Lotus 360",
   },
   description: DESCRIPTION,
   alternates: { canonical: "/" },
-  icons: { icon: "/logo-lotus360.png", apple: "/logo-lotus360.png" },
+  icons: { icon: "/logo-lotus360-transparent.png", apple: "/logo-lotus360-transparent.png" },
   openGraph: {
     title: TITLE,
     description: DESCRIPTION,
     url: "/",
     siteName: "Destino y Eventos Lotus 360",
-    images: [{ url: "/logo-lotus360.png", width: 512, height: 512, alt: "Logo Lotus 360" }],
+    images: [
+      {
+        url: "/logo-lotus360-transparent.png",
+        width: 1024,
+        height: 1024,
+        alt: "Logo de Destino y Eventos Lotus 360",
+      },
+    ],
     locale: "es_VE",
     type: "website",
   },
@@ -64,7 +71,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: TITLE,
     description: DESCRIPTION,
-    images: ["/logo-lotus360.png"],
+    images: ["/logo-lotus360-transparent.png"],
   },
   other: {
     "geo.region": "VE-G",

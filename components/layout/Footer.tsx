@@ -1,9 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 import { CATEGORIAS } from "@/types/supabase";
 import { REDES } from "@/lib/social";
 import { EstadoAtencion } from "@/components/layout/EstadoAtencion";
 import { whatsappHref } from "@/lib/whatsapp";
+import { BrandMark } from "@/components/layout/BrandMark";
 
 function SocialIcon({ path }: { path: string }) {
   return (
@@ -45,8 +45,10 @@ export function Footer() {
         <div className="mb-10 grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_.8fr_1fr]">
           <div className="max-w-xs">
             <div className="mb-3 flex items-center gap-2.5">
-              <Image src="/logo-lotus360.png" alt="Lotus 360" width={32} height={32} />
-              <span className="font-display text-lg font-bold text-dusk-text">Lotus 360</span>
+              <BrandMark dark size="sm" />
+              <span className="max-w-[13rem] font-display text-lg font-bold leading-tight text-dusk-text">
+                Destino y Eventos Lotus 360
+              </span>
             </div>
             <p className="mb-3 text-sm text-dusk-text-soft">
               Agencia de viajes en Valencia, Venezuela — hospedaje, boletería y full days.
@@ -112,7 +114,7 @@ export function Footer() {
         </div>
 
         <p className="border-t border-dusk-text/10 pt-6 text-xs text-dusk-text-soft">
-          © {new Date().getFullYear()} Lotus 360. Todos los derechos reservados.
+          © {new Date().getFullYear()} Destino y Eventos Lotus 360. Todos los derechos reservados.
         </p>
       </div>
     </footer>

@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  /* Lotus 360 brand tokens — approved direction.
+  /* Destino y Eventos Lotus 360 brand tokens — approved direction.
      Dusk = header/footer/hero, stays dark in both themes (brand signature).
      Sand/card/ink = catalog & product content, theme-adaptive below. */
   --color-dusk: #12262b;

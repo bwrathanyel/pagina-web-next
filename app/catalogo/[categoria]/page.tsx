@@ -35,7 +35,7 @@ export async function generateMetadata({
   const { categoria } = await params;
   if (!isCategoria(categoria)) return {};
   const label = CATEGORIAS.find((c) => c.slug === categoria)!.label;
-  const description = `Catálogo de ${label.toLowerCase()} de Lotus 360 — precios, fotos y disponibilidad real.`;
+  const description = `Catálogo de ${label.toLowerCase()} de Destino y Eventos Lotus 360 — precios, fotos y disponibilidad real.`;
   return {
     title: label,
     description,
@@ -65,7 +65,9 @@ export default async function CatalogoPage({
       <header className="mb-7 overflow-hidden rounded-[32px] bg-dusk px-7 py-9 text-dusk-text md:px-10 md:py-12">
         <div className="flex flex-col justify-between gap-8 md:flex-row md:items-end">
           <div>
-            <p className="mb-3 font-mono text-xs font-bold uppercase tracking-[0.18em] text-coral">Catálogo Lotus 360</p>
+            <p className="mb-3 font-mono text-xs font-bold uppercase tracking-[0.18em] text-coral">
+              Catálogo Destino y Eventos Lotus 360
+            </p>
             <h1 className="font-display text-4xl font-semibold leading-none md:text-6xl">{label}</h1>
             <p className="mt-4 max-w-xl leading-7 text-dusk-text-soft">{DESCRIPCIONES[categoria]}</p>
           </div>
