@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { useAuth } from "@/components/providers/AuthProvider";
 import { DEFAULT_SITE_CONTENT, combinarContenido } from "@/lib/site-content/defaults";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { revalidarSitioPublico } from "@/lib/admin/revalidate";
 import type { SiteContent } from "@/lib/site-content/types";
 
 export type EditorTab = "inicio" | "navegacion" | "catalogo" | "pie" | "diseno" | "historial";
@@ -163,7 +164,13 @@ export function SiteContentProvider({ initialContent, children }: { initialConte
     setVersion(data.version ?? version + 1);
     setPublicado(content);
     publicadoRef.current = content;
-    setMessage(`Versión ${data.version ?? version + 1} publicada.`);
+    try {
+      await revalidarSitioPublico();
+      setMessage(`Versión ${data.version ?? version + 1} publicada y web actualizada.`);
+    } catch {
+      setMessage("La versión se publicó, pero la web pública no pudo actualizarse.");
+      return false;
+    }
     await loadHistory();
     return true;
   }, [content, dirty, loadHistory, saveDraft, version]);

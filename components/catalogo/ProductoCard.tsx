@@ -9,6 +9,7 @@ import { useFavoritos } from "@/lib/favoritos/useFavoritos";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { EditarProductoModal } from "@/components/admin/EditarProductoModal";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { revalidarSitioPublico } from "@/lib/admin/revalidate";
 import type { Producto } from "@/types/supabase";
 
 export const BADGE_POR_TIPO: Record<Producto["tipo"], string> = {
@@ -87,7 +88,12 @@ export function ProductoCard({ producto }: { producto: Producto }) {
                     const { data, error } = await supabaseBrowser().rpc("web_toggle_producto_activo", {
                       p_id: producto.id,
                     });
-                    if (data?.ok) setActivo(data.activo);
+                    if (data?.ok) {
+                      try {
+                        await revalidarSitioPublico();
+                        setActivo(data.activo);
+                      } catch { setErrorVisibilidad(true); }
+                    }
                     else if (error) setErrorVisibilidad(true);
                   }}
                   className="min-h-11 flex-1 rounded-full border border-ink/20 text-sm font-semibold text-ink"

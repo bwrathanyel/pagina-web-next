@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useMemo, useState } from "react";
 import { fotoUrl } from "@/lib/supabase/fotos";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { revalidarSitioPublico } from "@/lib/admin/revalidate";
 import type { Foto } from "@/types/supabase";
 
 type Tabla = "producto" | "promocion";
@@ -30,7 +31,10 @@ export function AdminFotoManager({ fotos, tabla, productoId }: { fotos: Foto[]; 
     const rpc = tabla === "producto" ? "web_toggle_producto_foto_activo" : "web_toggle_promocion_foto_activo";
     const { data, error: rpcError } = await supabaseBrowser().rpc(rpc, { p_foto_id: foto.id });
     if (rpcError || !data?.ok) return setError("No se pudo cambiar la visibilidad de la foto.");
-    setEstado((actual) => actual.map((item) => item.id === foto.id ? { ...item, activo: data.activo } : item));
+    try {
+      await revalidarSitioPublico();
+      setEstado((actual) => actual.map((item) => item.id === foto.id ? { ...item, activo: data.activo } : item));
+    } catch { setError("La foto se guardó, pero la web pública no pudo actualizarse."); }
   }
 
   async function hacerPrincipal(foto: Foto) {
@@ -41,7 +45,10 @@ export function AdminFotoManager({ fotos, tabla, productoId }: { fotos: Foto[]; 
       : { p_foto_id: foto.id, p_promocion_id: productoId };
     const { data, error: rpcError } = await supabaseBrowser().rpc(rpc, params);
     if (rpcError || !data?.ok) return setError("No se pudo elegir esa portada.");
-    setEstado((actual) => actual.map((item) => ({ ...item, es_principal: item.id === foto.id, activo: item.id === foto.id ? true : item.activo })));
+    try {
+      await revalidarSitioPublico();
+      setEstado((actual) => actual.map((item) => ({ ...item, es_principal: item.id === foto.id, activo: item.id === foto.id ? true : item.activo })));
+    } catch { setError("La portada se guardó, pero la web pública no pudo actualizarse."); }
   }
 
   async function mover(index: number, direccion: -1 | 1) {
@@ -58,7 +65,10 @@ export function AdminFotoManager({ fotos, tabla, productoId }: { fotos: Foto[]; 
     });
     setTrabajando(false);
     if (rpcError || !data?.ok) return setError("No se pudo guardar el nuevo orden.");
-    setEstado(siguiente.map((foto, orden) => ({ ...foto, orden })));
+    try {
+      await revalidarSitioPublico();
+      setEstado(siguiente.map((foto, orden) => ({ ...foto, orden })));
+    } catch { setError("El orden se guardó, pero la web pública no pudo actualizarse."); }
   }
 
   async function subir(file: File) {
@@ -85,10 +95,13 @@ export function AdminFotoManager({ fotos, tabla, productoId }: { fotos: Foto[]; 
     const { data, error: rpcError } = await sb.rpc(rpc, params);
     setTrabajando(false);
     if (rpcError || !data?.ok) return setError("La imagen subió, pero no se pudo asociar a esta opción.");
-    setEstado((actual) => [...actual, {
-      id: Number(data.id), storage_path: storagePath, orden: actual.length,
-      es_principal: Boolean(data.es_principal), activo: true, width: size.width, height: size.height,
-    }]);
+    try {
+      await revalidarSitioPublico();
+      setEstado((actual) => [...actual, {
+        id: Number(data.id), storage_path: storagePath, orden: actual.length,
+        es_principal: Boolean(data.es_principal), activo: true, width: size.width, height: size.height,
+      }]);
+    } catch { setError("La imagen se asoció, pero la web pública no pudo actualizarse."); }
   }
 
   return (

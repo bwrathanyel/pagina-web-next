@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { revalidarSitioPublico } from "@/lib/admin/revalidate";
 import type { Promocion } from "@/types/supabase";
 
 export type CambiosPromocion = { titulo: string; precioTexto: string; vigenciaTexto: string; ninosGratis: number; tags: string[] };
@@ -31,10 +32,19 @@ export function EditarPromocionModal({ promocion, onClose, onGuardado }: { promo
       p_ninos_gratis: ninosGratis,
       p_incluye_tags: listaTags,
     });
-    setGuardando(false);
-    if (rpcError || !data?.ok) return setError("No se pudo guardar. Revisa los datos e inténtalo de nuevo.");
-    onGuardado({ titulo, precioTexto, vigenciaTexto, ninosGratis, tags: listaTags });
-    onClose();
+    if (rpcError || !data?.ok) {
+      setGuardando(false);
+      return setError("No se pudo guardar. Revisa los datos e inténtalo de nuevo.");
+    }
+    try {
+      await revalidarSitioPublico();
+      onGuardado({ titulo, precioTexto, vigenciaTexto, ninosGratis, tags: listaTags });
+      onClose();
+    } catch {
+      setError("La promoción se guardó, pero no se pudo actualizar la web pública. Inténtalo nuevamente.");
+    } finally {
+      setGuardando(false);
+    }
   }
 
   return (

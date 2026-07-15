@@ -8,6 +8,7 @@ import { AdminFotoManager } from "@/components/admin/AdminFotoManager";
 import { EditarProductoModal, type CambiosProducto } from "@/components/admin/EditarProductoModal";
 import { EditarPromocionModal, type CambiosPromocion } from "@/components/admin/EditarPromocionModal";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { revalidarSitioPublico } from "@/lib/admin/revalidate";
 import { PRODUCTO_SELECT, PROMOCION_SELECT } from "@/lib/supabase/queries";
 import type { Producto, Promocion } from "@/types/supabase";
 
@@ -34,6 +35,7 @@ function PanelAdmin() {
   const [editandoPromocion, setEditandoPromocion] = useState<PromocionAdmin | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mensajeAccion, setMensajeAccion] = useState<string | null>(null);
 
   async function cargar() {
     setCargando(true);
@@ -66,12 +68,24 @@ function PanelAdmin() {
   const promocionesFiltradas = useMemo(() => promociones.filter((item) => !filtro || `${item.titulo} ${item.producto?.destino ?? ""}`.toLocaleLowerCase("es").includes(filtro)), [filtro, promociones]);
 
   async function toggleProducto(item: ProductoAdmin) {
-    const { data } = await supabaseBrowser().rpc("web_toggle_producto_activo", { p_id: item.id });
-    if (data?.ok) setProductos((actual) => actual.map((producto) => producto.id === item.id ? { ...producto, activo: data.activo } : producto));
+    setMensajeAccion(null);
+    const { data, error: rpcError } = await supabaseBrowser().rpc("web_toggle_producto_activo", { p_id: item.id });
+    if (rpcError || !data?.ok) return setMensajeAccion("No se pudo cambiar la visibilidad del producto.");
+    try {
+      await revalidarSitioPublico();
+      setProductos((actual) => actual.map((producto) => producto.id === item.id ? { ...producto, activo: data.activo } : producto));
+      setMensajeAccion(data.activo ? "Producto publicado y web actualizada." : "Producto ocultado y web actualizada.");
+    } catch { setMensajeAccion("El cambio se guardó, pero la web pública no pudo actualizarse."); }
   }
   async function togglePromocion(item: PromocionAdmin) {
-    const { data } = await supabaseBrowser().rpc("web_toggle_promocion_visible", { p_id: item.id });
-    if (data?.ok) setPromociones((actual) => actual.map((promocion) => promocion.id === item.id ? { ...promocion, revisado: data.revisado } : promocion));
+    setMensajeAccion(null);
+    const { data, error: rpcError } = await supabaseBrowser().rpc("web_toggle_promocion_visible", { p_id: item.id });
+    if (rpcError || !data?.ok) return setMensajeAccion("No se pudo cambiar la visibilidad de la promoción.");
+    try {
+      await revalidarSitioPublico();
+      setPromociones((actual) => actual.map((promocion) => promocion.id === item.id ? { ...promocion, revisado: data.revisado } : promocion));
+      setMensajeAccion(data.revisado ? "Promoción publicada y web actualizada." : "Promoción ocultada y web actualizada.");
+    } catch { setMensajeAccion("El cambio se guardó, pero la web pública no pudo actualizarse."); }
   }
   function aplicarProducto(id: number, cambios: CambiosProducto) {
     setProductos((actual) => actual.map((item) => item.id === id ? { ...item, nombre: cambios.nombre, tipo: cambios.tipo, destino: cambios.destino || null, descripcion: cambios.descripcion, requisitos: cambios.requisitos, tarifas: item.tarifas.length ? item.tarifas.map((tarifa, index) => index === 0 ? { ...tarifa, precio_texto: cambios.precioTexto, vigencia_texto: cambios.vigenciaTexto || null } : tarifa) : [{ precio_texto: cambios.precioTexto, precio_desde_usd: null, vigencia_texto: cambios.vigenciaTexto || null, vigente: true }] } : item));
@@ -92,6 +106,7 @@ function PanelAdmin() {
           <button type="button" onClick={() => setTab("promociones")} className={`min-h-10 rounded-xl px-4 text-sm font-bold ${tab === "promociones" ? "bg-card text-ink shadow-sm" : "text-ink-soft"}`}>Promos · {promociones.length}</button>
         </div>
       </div>
+      {mensajeAccion ? <p className="mb-5 rounded-2xl border border-ink/10 bg-card px-4 py-3 text-sm font-semibold text-ink" role="status">{mensajeAccion}</p> : null}
 
       <div className="space-y-5">
         {tab === "productos" ? productosFiltrados.map((item) => (

@@ -9,6 +9,7 @@ import { useFavoritos } from "@/lib/favoritos/useFavoritos";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { EditarPromocionModal } from "@/components/admin/EditarPromocionModal";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { revalidarSitioPublico } from "@/lib/admin/revalidate";
 import type { Promocion } from "@/types/supabase";
 
 export function PromocionCard({ promocion }: { promocion: Promocion }) {
@@ -85,7 +86,12 @@ export function PromocionCard({ promocion }: { promocion: Promocion }) {
                     const { data, error } = await supabaseBrowser().rpc("web_toggle_promocion_visible", {
                       p_id: promocion.id,
                     });
-                    if (data?.ok) setVisible(data.revisado);
+                    if (data?.ok) {
+                      try {
+                        await revalidarSitioPublico();
+                        setVisible(data.revisado);
+                      } catch { setErrorVisibilidad(true); }
+                    }
                     else if (error) setErrorVisibilidad(true);
                   }}
                   className="min-h-11 flex-1 rounded-full border border-ink/20 text-sm font-semibold text-ink"

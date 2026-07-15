@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { revalidarSitioPublico } from "@/lib/admin/revalidate";
 import type { Producto, ProductoTipo } from "@/types/supabase";
 
 export type CambiosProducto = {
@@ -50,10 +51,19 @@ export function EditarProductoModal({ producto, onClose, onGuardado }: { product
       p_precio_texto: campos.precioTexto,
       p_vigencia_texto: campos.vigenciaTexto,
     });
-    setGuardando(false);
-    if (rpcError || !data?.ok) return setError("No se pudo guardar. Revisa los datos e inténtalo de nuevo.");
-    onGuardado(campos);
-    onClose();
+    if (rpcError || !data?.ok) {
+      setGuardando(false);
+      return setError("No se pudo guardar. Revisa los datos e inténtalo de nuevo.");
+    }
+    try {
+      await revalidarSitioPublico();
+      onGuardado(campos);
+      onClose();
+    } catch {
+      setError("Los datos se guardaron, pero no se pudo actualizar la web pública. Inténtalo nuevamente.");
+    } finally {
+      setGuardando(false);
+    }
   }
 
   return (
