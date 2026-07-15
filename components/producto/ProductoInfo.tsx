@@ -6,6 +6,7 @@ import { BADGE_POR_TIPO } from "@/components/catalogo/ProductoCard";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { EditarProductoModal } from "@/components/admin/EditarProductoModal";
 import { AdminFotoManager } from "@/components/admin/AdminFotoManager";
+import { resumenBullets } from "@/lib/utils/resumenBullets";
 import type { Producto } from "@/types/supabase";
 
 export function ProductoInfo({ producto }: { producto: Producto }) {
@@ -38,7 +39,15 @@ export function ProductoInfo({ producto }: { producto: Producto }) {
         <p className="mb-5 -mt-3 text-sm text-ink-soft">{tarifaVigente.vigencia_texto}</p>
       ) : null}
 
-      {descripcion ? <p className="mb-4 whitespace-pre-line text-ink">{descripcion}</p> : null}
+      {descripcion ? (
+        <ul className="mb-4 space-y-1 text-ink">
+          {resumenBullets(descripcion).map((oracion, i) => (
+            <li key={i} className="relative pl-4 before:absolute before:left-0 before:text-coral before:content-['•']">
+              {oracion}
+            </li>
+          ))}
+        </ul>
+      ) : null}
       {requisitos ? (
         <div className="mb-5">
           <p className="mb-1 font-mono text-xs uppercase tracking-wide text-ink-soft">Requisitos</p>
