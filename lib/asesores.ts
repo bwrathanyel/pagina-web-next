@@ -28,3 +28,9 @@ export function elegirAsesor(): Asesor {
   }
   return ASESORES[ASESORES.length - 1];
 }
+
+export function asesorPorNombre(nombre: string | null | undefined): Asesor | null {
+  if (!nombre) return null;
+  const normalizado = nombre.trim().toLocaleLowerCase("es-VE");
+  return ASESORES.find((asesor) => asesor.nombre.toLocaleLowerCase("es-VE") === normalizado) ?? null;
+}

@@ -1,9 +1,12 @@
+"use client";
+
 import Link from "next/link";
-import { CATEGORIAS } from "@/types/supabase";
 import { REDES } from "@/lib/social";
 import { EstadoAtencion } from "@/components/layout/EstadoAtencion";
 import { whatsappHref } from "@/lib/whatsapp";
 import { BrandMark } from "@/components/layout/BrandMark";
+import { EditableText } from "@/components/admin/EditableText";
+import { useSiteContent } from "@/components/providers/SiteContentProvider";
 
 function SocialIcon({ path }: { path: string }) {
   return (
@@ -22,15 +25,15 @@ const ICONS = {
 };
 
 export function Footer() {
+  const { content } = useSiteContent();
+  const navItems = content.navigation.items.filter((item) => item.visible);
   return (
     <footer className="bg-dusk">
       <div className="mx-auto max-w-6xl px-5 py-12 md:py-16">
         <div className="mb-12 grid gap-7 border-b border-dusk-text/12 pb-12 md:grid-cols-[1fr_auto] md:items-end">
           <div>
-            <p className="mb-3 font-mono text-xs font-bold uppercase tracking-[0.18em] text-coral">Tu próximo viaje</p>
-            <p className="max-w-[15ch] text-balance font-display text-3xl font-semibold leading-tight text-dusk-text md:text-5xl">
-              Empieza con una buena conversación.
-            </p>
+            <EditableText path="footer.eyebrow" as="p" className="mb-3 font-mono text-xs font-bold uppercase tracking-[0.18em] text-coral" />
+            <EditableText path="footer.headline" as="p" multiline className="max-w-[15ch] text-balance font-display text-3xl font-semibold leading-tight text-dusk-text md:text-5xl" />
           </div>
           <a
             href={whatsappHref("Hola! Vengo de su página web y quiero comenzar a planificar un viaje.")}
@@ -38,7 +41,7 @@ export function Footer() {
             rel="noopener noreferrer"
             className="inline-flex min-h-12 items-center justify-center rounded-full bg-coral px-7 font-semibold text-white"
           >
-            Hablar con un asesor
+            {content.footer.ctaLabel}
           </a>
         </div>
 
@@ -47,12 +50,10 @@ export function Footer() {
             <div className="mb-3 flex items-center gap-2.5">
               <BrandMark dark size="sm" />
               <span className="max-w-[13rem] font-display text-lg font-bold leading-tight text-dusk-text">
-                Destino y Eventos Lotus 360
+                {content.brand.name}
               </span>
             </div>
-            <p className="mb-3 text-sm text-dusk-text-soft">
-              Agencia de viajes en Valencia, Venezuela — hospedaje, boletería y full days.
-            </p>
+            <EditableText path="footer.description" as="p" multiline className="mb-3 text-sm text-dusk-text-soft" />
             <EstadoAtencion />
           </div>
 
@@ -60,10 +61,10 @@ export function Footer() {
             <p className="mb-1 font-mono text-xs uppercase tracking-wide text-dusk-text-soft">
               Catálogo
             </p>
-            {CATEGORIAS.map(({ slug, label }) => (
+            {navItems.map(({ id, href, label }) => (
               <Link
-                key={slug}
-                href={`/catalogo/${slug}`}
+                key={id}
+                href={href}
                 className="text-sm text-dusk-text-soft hover:text-dusk-text"
               >
                 {label}
@@ -114,7 +115,7 @@ export function Footer() {
         </div>
 
         <p className="border-t border-dusk-text/10 pt-6 text-xs text-dusk-text-soft">
-          © {new Date().getFullYear()} Destino y Eventos Lotus 360. Todos los derechos reservados.
+          © {new Date().getFullYear()} {content.footer.copyright}
         </p>
       </div>
     </footer>

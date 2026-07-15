@@ -37,7 +37,7 @@ export interface Promocion {
   ninos_gratis_cantidad: number | null;
   incluye_tags: string[];
   producto:
-    | { id: number; nombre: string; destino: string | null; producto_fotos: Foto[] }
+    | { id: number; tipo: ProductoTipo; nombre: string; destino: string | null; producto_fotos: Foto[] }
     | null;
   promocion_fotos: Foto[];
 }

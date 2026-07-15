@@ -29,7 +29,8 @@ export function ProductoCard({ producto }: { producto: Producto }) {
   const [editando, setEditando] = useState(false);
   const [errorVisibilidad, setErrorVisibilidad] = useState(false);
 
-  const foto = fotosDe(producto.producto_fotos)[0] ?? null;
+  const fotos = fotosDe(producto.producto_fotos);
+  const foto = fotos[0] ?? null;
   const tarifaVigente = producto.tarifas.find((t) => t.vigente);
   const precioLabel = tarifaVigente?.precio_texto ?? "Consultar disponibilidad";
   const href = `/producto/${producto.id}`;
@@ -43,7 +44,8 @@ export function ProductoCard({ producto }: { producto: Producto }) {
         badge={BADGE_POR_TIPO[producto.tipo]}
         nombre={nombre}
         destino={producto.destino}
-        fotoUrl={foto}
+        fotos={fotos}
+        cotizarHref={`/cotizar/producto/${producto.id}`}
         precioLabel={precioLabel}
         precioMuted={!tarifaVigente}
         oculto={!activo}

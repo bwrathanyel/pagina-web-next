@@ -3,8 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { BADGE_POR_TIPO } from "@/components/catalogo/ProductoCard";
-import { whatsappHref } from "@/lib/whatsapp";
-import { tipoCotizacionDe } from "@/lib/cotizarTipo";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { EditarProductoModal } from "@/components/admin/EditarProductoModal";
 import { AdminFotoManager } from "@/components/admin/AdminFotoManager";
@@ -50,19 +48,11 @@ export function ProductoInfo({ producto }: { producto: Producto }) {
 
       <div className="flex flex-wrap gap-3">
         <Link
-          href={`/cotizar/${tipoCotizacionDe(producto)}?producto=${producto.id}`}
+          href={`/cotizar/producto/${producto.id}`}
           className="inline-flex min-h-11 items-center justify-center rounded-full bg-gradient-to-br from-coral to-gold px-6 font-semibold text-btn-ink"
         >
           Cotizar
         </Link>
-        <a
-          href={whatsappHref(`Hola! Quiero info de ${nombre}`)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex min-h-11 items-center justify-center rounded-full bg-whatsapp px-6 font-semibold text-white"
-        >
-          WhatsApp
-        </a>
         {puedeEditar ? (
           <button
             type="button"

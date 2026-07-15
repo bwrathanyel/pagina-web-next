@@ -24,9 +24,10 @@ export function PromocionCard({ promocion }: { promocion: Promocion }) {
 
   // Own photos first, hotel's photos as fallback, never invented — same
   // rule as the current site's fotosDe() priority.
-  const fotoPropia = fotosDe(promocion.promocion_fotos)[0];
-  const fotoHeredada = fotosDe(promocion.producto?.producto_fotos)[0];
-  const foto = fotoPropia ?? fotoHeredada ?? null;
+  const fotosPropias = fotosDe(promocion.promocion_fotos);
+  const fotosHeredadas = fotosDe(promocion.producto?.producto_fotos);
+  const fotos = fotosPropias.length > 0 ? fotosPropias : fotosHeredadas;
+  const foto = fotos[0] ?? null;
   const precioLabel = promocion.precio_texto ?? "Consultar disponibilidad";
   const href = promocion.producto ? `/producto/${promocion.producto.id}` : null;
   const key = `promocion-${promocion.id}`;
@@ -39,7 +40,8 @@ export function PromocionCard({ promocion }: { promocion: Promocion }) {
         badge="Promoción"
         nombre={titulo}
         destino={promocion.producto?.destino ?? null}
-        fotoUrl={foto}
+        fotos={fotos}
+        cotizarHref={`/cotizar/promocion/${promocion.id}`}
         precioLabel={precioLabel}
         precioMuted={!promocion.precio_texto}
         oculto={!visible}

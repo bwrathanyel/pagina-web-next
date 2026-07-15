@@ -3,14 +3,16 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CATEGORIAS } from "@/types/supabase";
 import { whatsappHref } from "@/lib/whatsapp";
 import { HeaderControls } from "@/components/layout/HeaderControls";
 import { BrandMark } from "@/components/layout/BrandMark";
+import { useSiteContent } from "@/components/providers/SiteContentProvider";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const { content } = useSiteContent();
+  const navItems = content.navigation.items.filter((item) => item.visible);
 
   const esActiva = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
@@ -20,19 +22,19 @@ export function Navbar() {
         <Link href="/" className="flex min-w-0 items-center gap-2.5" onClick={() => setOpen(false)}>
           <BrandMark priority />
           <span className="max-w-[7rem] text-balance font-display text-[0.68rem] font-bold leading-[0.98] text-ink sm:max-w-[11.5rem] sm:text-base sm:leading-[1.05] lg:text-lg">
-            Destino y Eventos Lotus 360
+            {content.brand.name}
           </span>
         </Link>
 
         <nav aria-label="Catálogo" className="hidden items-center gap-5 lg:flex">
-          {CATEGORIAS.map(({ slug, label }) => (
+          {navItems.map(({ id, href, label }) => (
             <Link
-              key={slug}
-              href={`/catalogo/${slug}`}
-              aria-current={esActiva(`/catalogo/${slug}`) ? "page" : undefined}
+              key={id}
+              href={href}
+              aria-current={esActiva(href) ? "page" : undefined}
               className={
                 "relative py-2 font-body text-sm transition-colors after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-left after:bg-coral after:transition-transform " +
-                (esActiva(`/catalogo/${slug}`)
+                (esActiva(href)
                   ? "text-ink after:scale-x-100"
                   : "text-ink-soft after:scale-x-0 hover:text-ink hover:after:scale-x-100")
               }
@@ -41,11 +43,11 @@ export function Navbar() {
             </Link>
           ))}
           <Link
-            href="/cotizador-personalizado"
-            aria-current={esActiva("/cotizador-personalizado") ? "page" : undefined}
+            href={content.navigation.quoteHref}
+            aria-current={esActiva(content.navigation.quoteHref) ? "page" : undefined}
             className="font-body text-sm font-semibold text-ink hover:text-coral"
           >
-            Cotizar
+            {content.navigation.quoteLabel}
           </Link>
           <a
             href={whatsappHref("Hola! Vengo de su página web.")}
@@ -53,7 +55,7 @@ export function Navbar() {
             rel="noopener noreferrer"
             className="inline-flex min-h-11 items-center rounded-full bg-coral px-5 text-sm font-semibold text-white"
           >
-            WhatsApp
+            {content.navigation.whatsappLabel}
           </a>
           <HeaderControls />
         </nav>
@@ -95,15 +97,15 @@ export function Navbar() {
           aria-label="Catálogo"
           className="mx-auto mt-2 flex max-w-6xl flex-col gap-1 rounded-[28px] border border-ink/10 bg-card px-5 py-4 shadow-xl lg:hidden"
         >
-          {CATEGORIAS.map(({ slug, label }) => (
+          {navItems.map(({ id, href, label }) => (
             <Link
-              key={slug}
-              href={`/catalogo/${slug}`}
+              key={id}
+              href={href}
               onClick={() => setOpen(false)}
-              aria-current={esActiva(`/catalogo/${slug}`) ? "page" : undefined}
+              aria-current={esActiva(href) ? "page" : undefined}
               className={
                 "flex min-h-12 items-center justify-between border-b border-ink/8 font-body " +
-                (esActiva(`/catalogo/${slug}`) ? "font-semibold text-coral" : "text-ink")
+                (esActiva(href) ? "font-semibold text-coral" : "text-ink")
               }
             >
               {label}
@@ -111,11 +113,11 @@ export function Navbar() {
             </Link>
           ))}
           <Link
-            href="/cotizador-personalizado"
+            href={content.navigation.quoteHref}
             onClick={() => setOpen(false)}
             className="flex min-h-12 items-center justify-between border-b border-ink/8 font-semibold text-ink"
           >
-            Cotizador personalizado <span aria-hidden="true">↗</span>
+            {content.navigation.quoteLabel} <span aria-hidden="true">↗</span>
           </Link>
           <a
             href={whatsappHref("Hola! Vengo de su página web.")}
@@ -123,7 +125,7 @@ export function Navbar() {
             rel="noopener noreferrer"
             className="mt-2 inline-flex min-h-11 items-center justify-center rounded-full bg-coral px-4 text-sm font-semibold text-white"
           >
-            Escríbenos por WhatsApp
+            {content.navigation.whatsappLabel}
           </a>
         </nav>
       ) : null}

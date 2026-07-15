@@ -7,6 +7,8 @@ import { jsonLdScript, buildTravelAgencyJsonLd } from "@/lib/seo/jsonld";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { AdminEditToggle } from "@/components/admin/AdminEditToggle";
+import { SiteContentProvider } from "@/components/providers/SiteContentProvider";
+import { getSiteContent } from "@/lib/site-content/server";
 import "./globals.css";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://destinoyeventoslotus360.com";
@@ -80,11 +82,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const siteContent = await getSiteContent();
+
   return (
     <html
       lang="es-VE"
@@ -98,11 +102,13 @@ export default function RootLayout({
         />
         <ThemeProvider>
           <AuthProvider>
-            <Navbar />
-            <div className="flex-1">{children}</div>
-            <Footer />
-            <WhatsAppFloatButton />
-            <AdminEditToggle />
+            <SiteContentProvider initialContent={siteContent}>
+              <Navbar />
+              <div className="flex-1">{children}</div>
+              <Footer />
+              <WhatsAppFloatButton />
+              <AdminEditToggle />
+            </SiteContentProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

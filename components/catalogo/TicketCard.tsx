@@ -1,13 +1,13 @@
-import Image from "next/image";
 import Link from "next/link";
-import { whatsappHref } from "@/lib/whatsapp";
+import { CardPhotoGallery } from "@/components/catalogo/CardPhotoGallery";
 
 export interface TicketCardProps {
   href: string | null;
   badge: string;
   nombre: string;
   destino: string | null;
-  fotoUrl: string | null;
+  fotos: string[];
+  cotizarHref: string;
   precioLabel: string;
   precioMuted: boolean;
   enCarrito?: boolean;
@@ -48,20 +48,13 @@ function CartIcon() {
   );
 }
 
-function WhatsappIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2zm0 18a8 8 0 0 1-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1 1 12 20zm4.4-5.9c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.6.1s-.7.8-.8.9-.3.2-.5.1a6.6 6.6 0 0 1-1.9-1.2 7 7 0 0 1-1.3-1.6c-.1-.2 0-.4.1-.5l.4-.4.2-.4v-.4c-.1-.1-.6-1.4-.8-1.9s-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2c0 1.3.9 2.6 1.1 2.8s1.7 2.7 4.1 3.7a5.6 5.6 0 0 0 2.4.6c.9 0 1.5-.4 1.7-.7a1.4 1.4 0 0 0 .1-.9c-.1-.1-.2-.2-.5-.3z" />
-    </svg>
-  );
-}
-
 export function TicketCard({
   href,
   badge,
   nombre,
   destino,
-  fotoUrl,
+  fotos,
+  cotizarHref,
   precioLabel,
   precioMuted,
   enCarrito = false,
@@ -98,14 +91,8 @@ export function TicketCard({
             <HeartIcon filled={favorito === true} />
           </button>
         ) : null}
-        {fotoUrl ? (
-          <Image
-            src={fotoUrl}
-            alt={nombre}
-            fill
-            sizes="(min-width: 700px) 33vw, 100vw"
-            className="object-cover transition duration-500 group-hover:scale-[1.035]"
-          />
+        {fotos.length > 0 ? (
+          <CardPhotoGallery fotos={fotos} alt={nombre} />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-seafoam-bg via-sand-2 to-card">
             <div className="relative rounded-2xl border border-ink/10 bg-card/65 px-8 py-6 text-center text-ink-soft shadow-sm backdrop-blur-sm">
@@ -167,16 +154,14 @@ export function TicketCard({
               <CartIcon />
             </button>
           ) : null}
-          <a
-            href={whatsappHref(`Hola! Quiero info de ${nombre}`)}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`Cotizar ${nombre} por WhatsApp`}
-            className="flex h-11 flex-shrink-0 items-center justify-center gap-2 rounded-xl bg-whatsapp px-3.5 text-sm font-bold text-white transition hover:brightness-95"
+          <Link
+            href={cotizarHref}
+            aria-label={`Cotizar ${nombre}`}
+            className="flex h-11 flex-shrink-0 items-center justify-center gap-2 rounded-xl bg-coral px-3.5 text-sm font-bold text-white transition hover:brightness-95"
           >
-            <WhatsappIcon />
+            <span aria-hidden="true">↗</span>
             <span>Cotizar</span>
-          </a>
+          </Link>
         </div>
 
         {pieAdmin}

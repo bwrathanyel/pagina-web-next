@@ -1,6 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { CATEGORIAS, type Categoria } from "@/types/supabase";
+import { EditableText } from "@/components/admin/EditableText";
 
 const FOTO_EDITORIAL: Record<Categoria, string> = {
   hoteles: "/images/editorial/escapada-caribe.png",
@@ -13,12 +16,8 @@ export function CategoriasDestacadas({ fotos }: { fotos: Record<string, string |
   return (
     <section className="bg-card px-5 py-16 md:py-24">
       <div className="mx-auto max-w-6xl">
-        <p className="mb-3 font-mono text-xs font-bold uppercase tracking-[0.16em] text-coral">
-          Encuentra tu manera de viajar
-        </p>
-        <h2 className="mb-8 max-w-[18ch] text-balance font-display text-3xl font-semibold leading-tight text-ink md:text-5xl">
-          Experiencias pensadas para ti.
-        </h2>
+        <EditableText path="home.categories.eyebrow" as="p" className="mb-3 font-mono text-xs font-bold uppercase tracking-[0.16em] text-coral" />
+        <EditableText path="home.categories.title" as="h2" className="mb-8 max-w-[18ch] text-balance font-display text-3xl font-semibold leading-tight text-ink md:text-5xl" />
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           {CATEGORIAS.map(({ slug, label }) => {
             const foto = fotos[slug] ?? FOTO_EDITORIAL[slug];
