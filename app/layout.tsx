@@ -13,6 +13,14 @@ import "./globals.css";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://destinoyeventoslotus360.com";
 
+// Fuerza SSR en cada visita para todo el árbol de rutas: el ISR estático de
+// Netlify se quedó sirviendo contenido vencido indefinidamente (Cache-Status
+// "hit; fwd=stale" minutos después del revalidate de 300s, confirmado con
+// curl en producción) — las ediciones de catálogo/contenido nunca llegaban
+// al público. Coste: sin caché estático por página; aceptado por prioridad
+// de correctitud sobre performance en este sitio.
+export const dynamic = "force-dynamic";
+
 const fraunces = localFont({
   src: "./fonts/fraunces-latin.woff2",
   variable: "--font-display",

@@ -48,8 +48,12 @@ npm.cmd run lint
 npm.cmd run build
 ```
 
-El build consulta Supabase para generar páginas estáticas de catálogo y productos, por
-lo que el entorno de CI necesita conectividad y las variables públicas configuradas.
+Home, catálogo, producto y cotizador se renderizan en vivo en cada visita (`dynamic =
+"force-dynamic"` en `app/layout.tsx`) — no HTML estático cacheado. El ISR con
+`revalidate` que se usaba antes se quedó sirviendo contenido vencido indefinidamente en
+Netlify (Cache-Status `hit; fwd=stale` mucho después del revalidate window, confirmado
+en producción el 2026-07-16); esto garantiza que las ediciones del panel admin/modo
+edición se vean de inmediato, a cambio de no tener caché estático por página.
 
 Antes de considerar un cambio listo:
 

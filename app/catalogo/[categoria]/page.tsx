@@ -9,8 +9,6 @@ import { getProductosPorCategoria, getPromociones } from "@/lib/supabase/queries
 import { agruparPorDestino } from "@/lib/supabase/agruparPorDestino";
 import { CATEGORIAS, type Categoria, type Producto, type Promocion } from "@/types/supabase";
 
-export const revalidate = 300;
-
 const SLUGS = CATEGORIAS.map((c) => c.slug);
 
 function isCategoria(value: string): value is Categoria {

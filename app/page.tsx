@@ -9,8 +9,6 @@ import { fotosDe } from "@/lib/supabase/fotos";
 import { getProductosPorCategoria, getPromociones } from "@/lib/supabase/queries";
 import type { Categoria } from "@/types/supabase";
 
-export const revalidate = 300;
-
 export default async function Home() {
   // Si Supabase falla acá, mejor una home con menos fotos que una home
   // rota entera — [] es un fallback seguro para todo lo que sigue.

@@ -4,8 +4,6 @@ import { CotizacionOpcionForm } from "@/components/cotizador/CotizacionOpcionFor
 import { fotosDe } from "@/lib/supabase/fotos";
 import { getPromocionPorId } from "@/lib/supabase/queries";
 
-export const revalidate = 300;
-
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const promocion = await getPromocionPorId(Number(id));
