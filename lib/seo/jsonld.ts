@@ -24,48 +24,94 @@ export function jsonLdScript(data: object) {
   return { __html: json };
 }
 
+// IDs estables para enlazar los nodos del @graph entre sí (la Organización es
+// el publisher del WebSite). Google usa estas entidades para el panel de marca.
+const ORG_ID = `${SITE_URL}/#organization`;
+const WEBSITE_ID = `${SITE_URL}/#website`;
+
+// Variantes con las que la gente busca el negocio — ayuda a que Google conecte
+// todas estas consultas con el sitio ("buscar nuestro nombre o similares").
+const ALTERNATE_NAMES = [
+  "Lotus 360",
+  "Lotus360",
+  "Destinos y Eventos Lotus 360",
+  "Destino y Eventos Lotus360",
+];
+
 export function buildTravelAgencyJsonLd() {
   return {
     "@context": "https://schema.org",
-    "@type": "TravelAgency",
-    name: "Destino y Eventos Lotus 360",
-    description:
-      "Agencia de viajes especializada en hospedaje, boletería aérea, full days y eventos corporativos en Venezuela.",
-    url: `${SITE_URL}/`,
-    logo: `${SITE_URL}/logo-lotus360-transparent.png`,
-    image: `${SITE_URL}/logo-lotus360-transparent.png`,
-    telephone: "+58-424-4634041",
-    email: REDES.email,
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: "Valencia",
-      addressLocality: "Valencia",
-      addressRegion: "Carabobo",
-      addressCountry: "VE",
-    },
-    geo: {
-      "@type": "GeoCoordinates",
-      latitude: 10.182,
-      longitude: -68.0034,
-    },
-    openingHoursSpecification: [
+    "@graph": [
       {
-        "@type": "OpeningHoursSpecification",
-        dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-        opens: "08:30",
-        closes: "19:00",
+        "@type": "TravelAgency",
+        "@id": ORG_ID,
+        name: "Destino y Eventos Lotus 360",
+        alternateName: ALTERNATE_NAMES,
+        description:
+          "Agencia de viajes especializada en hospedaje, boletería aérea, full days y eventos corporativos en Venezuela.",
+        url: `${SITE_URL}/`,
+        logo: `${SITE_URL}/logo-lotus360-transparent.png`,
+        image: `${SITE_URL}/logo-lotus360-transparent.png`,
+        telephone: "+58-424-4634041",
+        email: REDES.email,
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: "Valencia",
+          addressLocality: "Valencia",
+          addressRegion: "Carabobo",
+          addressCountry: "VE",
+        },
+        geo: {
+          "@type": "GeoCoordinates",
+          latitude: 10.182,
+          longitude: -68.0034,
+        },
+        areaServed: { "@type": "Country", name: "Venezuela" },
+        openingHoursSpecification: [
+          {
+            "@type": "OpeningHoursSpecification",
+            dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+            opens: "08:30",
+            closes: "19:00",
+          },
+          {
+            "@type": "OpeningHoursSpecification",
+            dayOfWeek: "Sunday",
+            opens: "10:00",
+            closes: "15:00",
+          },
+        ],
+        priceRange: "$$",
+        currenciesAccepted: "VES, USD",
+        paymentAccepted: "Transferencia, Efectivo, Pago Móvil",
+        sameAs: [REDES.facebook, REDES.instagram, REDES.tiktok],
       },
       {
-        "@type": "OpeningHoursSpecification",
-        dayOfWeek: "Sunday",
-        opens: "10:00",
-        closes: "15:00",
+        "@type": "WebSite",
+        "@id": WEBSITE_ID,
+        url: `${SITE_URL}/`,
+        name: "Destino y Eventos Lotus 360",
+        alternateName: ALTERNATE_NAMES,
+        inLanguage: "es-VE",
+        publisher: { "@id": ORG_ID },
       },
     ],
-    priceRange: "$$",
-    currenciesAccepted: "VES, USD",
-    paymentAccepted: "Transferencia, Efectivo, Pago Móvil",
-    sameAs: [REDES.facebook, REDES.instagram, REDES.tiktok],
+  };
+}
+
+// Migas de pan para el SERP (Inicio › Categoría › Producto). Google las puede
+// mostrar como ruta bajo el título del resultado, y refuerza la jerarquía del
+// sitio (favorece los sitelinks). `url` acepta ruta relativa o absoluta.
+export function buildBreadcrumbJsonLd(items: { name: string; url: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: item.url.startsWith("http") ? item.url : `${SITE_URL}${item.url}`,
+    })),
   };
 }
 

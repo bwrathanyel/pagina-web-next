@@ -7,6 +7,7 @@ import { ProductoCard } from "@/components/catalogo/ProductoCard";
 import { PromocionCard } from "@/components/catalogo/PromocionCard";
 import { getProductosPorCategoria, getPromociones } from "@/lib/supabase/queries";
 import { agruparPorDestino } from "@/lib/supabase/agruparPorDestino";
+import { jsonLdScript, buildBreadcrumbJsonLd } from "@/lib/seo/jsonld";
 import { CATEGORIAS, type Categoria, type Producto, type Promocion } from "@/types/supabase";
 
 const SLUGS = CATEGORIAS.map((c) => c.slug);
@@ -54,6 +55,15 @@ export default async function CatalogoPage({
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-10 md:py-14">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={jsonLdScript(
+          buildBreadcrumbJsonLd([
+            { name: "Inicio", url: "/" },
+            { name: label, url: `/catalogo/${categoria}` },
+          ]),
+        )}
+      />
       <CatalogHeader categoria={categoria} label={label} count={items.length} />
 
       <div className="mb-10">

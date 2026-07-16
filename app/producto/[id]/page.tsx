@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { FotoCarousel } from "@/components/catalogo/FotoCarousel";
 import { ProductoInfo } from "@/components/producto/ProductoInfo";
 import { fotosDe } from "@/lib/supabase/fotos";
-import { jsonLdScript, buildProductJsonLd } from "@/lib/seo/jsonld";
+import { jsonLdScript, buildProductJsonLd, buildBreadcrumbJsonLd } from "@/lib/seo/jsonld";
 import {
   getProductoPorId,
   getPromocionesPorProductoId,
@@ -64,6 +64,15 @@ export default async function ProductoPage({ params }: { params: Promise<{ id: s
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript(buildProductJsonLd(producto))}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={jsonLdScript(
+          buildBreadcrumbJsonLd([
+            { name: "Inicio", url: "/" },
+            { name: producto.nombre, url: `/producto/${producto.id}` },
+          ]),
+        )}
       />
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         <FotoCarousel fotos={fotos} alt={producto.nombre} />

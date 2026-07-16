@@ -60,7 +60,11 @@ export const metadata: Metadata = {
   },
   description: DESCRIPTION,
   alternates: { canonical: "/" },
-  icons: { icon: "/logo-lotus360-transparent.png", apple: "/logo-lotus360-transparent.png" },
+  // Los íconos los generan las convenciones de archivo de Next (app/favicon.ico,
+  // app/icon.png 192x192 múltiplo de 48 para cumplir el requisito de favicon de
+  // Google, app/apple-icon.png). No declarar icons aquí para no emitir un
+  // <link rel="icon"> duplicado apuntando a un PNG de 1024px (no múltiplo de 48,
+  // que hacía que Google mostrara el globo genérico en vez del logo).
   openGraph: {
     title: TITLE,
     description: DESCRIPTION,
