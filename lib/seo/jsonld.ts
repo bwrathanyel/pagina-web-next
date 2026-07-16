@@ -4,8 +4,24 @@ import type { Producto } from "@/types/supabase";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://destinoyeventoslotus360.com";
 
+const LINE_SEPARATOR = String.fromCharCode(8232);
+const PARAGRAPH_SEPARATOR = String.fromCharCode(8233);
+
 export function jsonLdScript(data: object) {
-  return { __html: JSON.stringify(data) };
+  // JSON.stringify no escapa "<" -- un nombre/descripcion de producto con
+  // "</script><script>..." cerraria el tag JSON-LD e inyectaria script real
+  // en la pagina (los valores vienen de la tabla productos, editable por
+  // admin y por el pipeline de tarifario). LINE_SEPARATOR/PARAGRAPH_SEPARATOR
+  // son JSON valido pero rompen el parseo como statement de JS en algunos
+  // motores -- se usan por charCode, no como literal, para no depender de
+  // que el editor/toolchain preserve el caracter Unicode crudo intacto.
+  const json = JSON.stringify(data)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .split(LINE_SEPARATOR).join("\\u2028")
+    .split(PARAGRAPH_SEPARATOR).join("\\u2029");
+  return { __html: json };
 }
 
 export function buildTravelAgencyJsonLd() {
