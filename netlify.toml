@@ -3,6 +3,11 @@
 
 [build.environment]
   NODE_VERSION = "24"
+  # Dominio público canónico. Sin esto, la build tomaba NEXT_PUBLIC_SITE_URL del
+  # panel de Netlify (apuntaba a lotus360.netlify.app), y canonical/og:url/JSON-LD/
+  # sitemap salían con el subdominio de Netlify en vez del dominio de marca —
+  # Google podía indexar el subdominio en lugar de destinoyeventoslotus360.com.
+  NEXT_PUBLIC_SITE_URL = "https://destinoyeventoslotus360.com"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
