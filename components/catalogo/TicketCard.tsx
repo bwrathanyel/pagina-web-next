@@ -89,7 +89,7 @@ export function TicketCard({
             aria-pressed={favorito === true}
             className={
               "absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-dusk/90 shadow-sm backdrop-blur-sm transition hover:scale-105 " +
-              (favorito ? "text-coral" : "text-dusk-text")
+              (favorito ? "text-coral-bright" : "text-dusk-text")
             }
           >
             <HeartIcon filled={favorito === true} />
@@ -135,18 +135,18 @@ export function TicketCard({
               : "border-coral/20 bg-coral/10 text-ink")
           }
         >
-          <p className="mb-1 font-mono text-[0.62rem] font-bold uppercase tracking-[0.12em] opacity-70">
+          <p className="mb-1 font-mono text-[0.62rem] font-bold uppercase tracking-[0.12em]">
             {precioMuted ? "Disponibilidad" : "Tarifa referencial"}
           </p>
           <p className="text-sm font-bold leading-snug">{precioLabel}</p>
           {vigenciaLabel !== undefined || ninosGratis !== undefined ? (
             <dl className="mt-3 grid gap-2 border-t border-current/15 pt-3 text-xs">
               <div className="flex items-start justify-between gap-3">
-                <dt className="font-mono font-bold uppercase tracking-[0.08em] opacity-65">Vigencia</dt>
+                <dt className="font-mono font-bold uppercase tracking-[0.08em]">Vigencia</dt>
                 <dd className="max-w-[68%] text-right font-bold leading-5">{vigenciaLabel || "Consultar vigencia"}</dd>
               </div>
               <div className="flex items-start justify-between gap-3">
-                <dt className="font-mono font-bold uppercase tracking-[0.08em] opacity-65">Niños gratis</dt>
+                <dt className="font-mono font-bold uppercase tracking-[0.08em]">Niños gratis</dt>
                 <dd className="max-w-[68%] text-right font-bold leading-5">
                   {ninosGratis && ninosGratis > 0
                     ? `${ninosGratis} ${ninosGratis === 1 ? "niño" : "niños"}`

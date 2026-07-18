@@ -32,7 +32,7 @@ export function Footer() {
       <div className="mx-auto max-w-6xl px-5 py-12 md:py-16">
         <div className="mb-12 grid gap-7 border-b border-dusk-text/12 pb-12 md:grid-cols-[1fr_auto] md:items-end">
           <div>
-            <EditableText path="footer.eyebrow" as="p" className="mb-3 font-mono text-xs font-bold uppercase tracking-[0.18em] text-coral" />
+            <EditableText path="footer.eyebrow" as="p" className="mb-3 font-mono text-xs font-bold uppercase tracking-[0.18em] text-coral-bright" />
             <EditableText path="footer.headline" as="p" multiline className="max-w-[15ch] text-balance font-display text-3xl font-semibold leading-tight text-dusk-text md:text-5xl" />
           </div>
           <a

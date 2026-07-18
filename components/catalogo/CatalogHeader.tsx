@@ -11,7 +11,7 @@ export function CatalogHeader({ categoria, label, count }: { categoria: Categori
           <EditableText
             path="catalog.eyebrow"
             as="p"
-            className="mb-3 font-mono text-xs font-bold uppercase tracking-[0.18em] text-coral"
+            className="mb-3 font-mono text-xs font-bold uppercase tracking-[0.18em] text-coral-bright"
           />
           <h1 className="font-display text-4xl font-semibold leading-none md:text-6xl">{label}</h1>
           <EditableText

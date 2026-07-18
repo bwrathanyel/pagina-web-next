@@ -17,7 +17,7 @@ export function PlanesCorporativos() {
     <section className="px-5 py-16 md:py-24">
       <div className="mx-auto grid max-w-6xl overflow-hidden rounded-[36px] bg-dusk text-dusk-text lg:grid-cols-[1fr_.72fr]">
         <div className="p-8 md:p-14">
-          <EditableText path="home.corporate.eyebrow" as="p" className="mb-4 font-mono text-xs font-bold uppercase tracking-[0.16em] text-coral" />
+          <EditableText path="home.corporate.eyebrow" as="p" className="mb-4 font-mono text-xs font-bold uppercase tracking-[0.16em] text-coral-bright" />
           <EditableText path="home.corporate.title" as="h2" className="max-w-[13ch] text-balance font-display text-4xl font-semibold leading-[1.05] md:text-6xl" />
           <EditableText path="home.corporate.description" as="p" multiline className="mt-6 max-w-xl leading-7 text-dusk-text-soft" />
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">

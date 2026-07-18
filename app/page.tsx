@@ -30,7 +30,7 @@ export default async function Home() {
   };
 
   return (
-    <>
+    <main>
       <Hero fotos={heroFotos} />
 
       <section className="mx-auto max-w-6xl px-5 py-16 md:py-24">
@@ -46,6 +46,6 @@ export default async function Home() {
       <CategoriasDestacadas fotos={fotosPorCategoria} />
 
       <PlanesCorporativos />
-    </>
+    </main>
   );
 }

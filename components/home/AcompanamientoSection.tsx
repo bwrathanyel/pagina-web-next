@@ -13,7 +13,7 @@ export function AcompanamientoSection() {
           {content.home.trust.stats.map((stat, index) => (
             <div key={index} className="border-l border-white/25 px-2 first:border-l-0">
               <EditableText path={`home.trust.stats.${index}.title`} as="p" className="font-display text-lg font-semibold md:text-2xl" />
-              <EditableText path={`home.trust.stats.${index}.detail`} as="p" className="mt-1 text-xs text-white/75 md:text-sm" />
+              <EditableText path={`home.trust.stats.${index}.detail`} as="p" className="mt-1 text-xs text-white/90 md:text-sm" />
             </div>
           ))}
         </div>

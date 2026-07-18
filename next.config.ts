@@ -2,11 +2,15 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    // El optimizador de imágenes de Next no corre en Workers (lo hacía el
-    // plugin de Netlify) -- sin esto, next/image intentaría pasar por
-    // /_next/image y fallaría en producción. remotePatterns queda igual,
-    // documenta el origen permitido aunque quede inerte con unoptimized.
-    unoptimized: true,
+    // El optimizador de imágenes de Next (el que corre en /_next/image) no
+    // funciona en Workers -- lo hacía el plugin de Netlify. En vez de servir
+    // todo a resolución completa (unoptimized:true), un loader personalizado
+    // reescribe cada URL de Supabase Storage al endpoint gratis de
+    // transformación de imágenes del propio proyecto (ya viene incluido,
+    // sin costo extra ni Cloudflare Images), pidiendo el ancho real que cada
+    // `sizes` ya declaraba pero que unoptimized ignoraba.
+    loader: "custom",
+    loaderFile: "./lib/supabase/imageLoader.ts",
     remotePatterns: [
       {
         protocol: "https",

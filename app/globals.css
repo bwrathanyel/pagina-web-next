@@ -13,7 +13,14 @@
   --color-sand-2: #f1e5d2;
   --color-card: #fffdf8;
 
-  --color-coral: #ff6b4a;
+  /* #ff6b4a fallaba contraste AA (2.55-2.81) como texto sobre sand y como
+     texto blanco sobre boton -- este terracota mas oscuro pasa AA (>=4.5)
+     en ambos usos. Mismo tono, mas oscuro; no es un color nuevo. */
+  --color-coral: #b8391a;
+  /* El coral original: sobre fondo oscuro (dusk, #12262b) SI pasaba AA
+     (5.57), lo rompia el oscurecido de arriba. Usar solo como texto sobre
+     bg-dusk (ver ComoFunciona/PlanesCorporativos/Footer). */
+  --color-coral-bright: #ff6b4a;
   --color-gold: #ffb648;
   --color-seafoam: #3e827d;
   --color-seafoam-text: #255954;
@@ -70,6 +77,7 @@
   --color-sand-2: var(--color-sand-2);
   --color-card: var(--color-card);
   --color-coral: var(--color-coral);
+  --color-coral-bright: var(--color-coral-bright);
   --color-gold: var(--color-gold);
   --color-seafoam: var(--color-seafoam);
   --color-seafoam-text: var(--color-seafoam-text);

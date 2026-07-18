@@ -5,6 +5,10 @@
 	"account_id": "d8f38ef40663c69dea073ad1745882e4",
 	"compatibility_date": "2026-07-18",
 	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	// Custom Domain (destinoyeventoslotus360.com) ya enganchado via API tras Fase
+	// 6 Paso B del plan de migracion. workers_dev:false retira el hostname
+	// publico *.workers.dev, que quedaria indexable/duplicado si no.
+	"workers_dev": false,
 	// Metricas de CPU por invocacion en Workers -> Logs (ver Fase 4 del plan de
 	// migracion: decide gratis vs Workers Paid segun cuanto se pase de 10ms).
 	"observability": { "enabled": true },
