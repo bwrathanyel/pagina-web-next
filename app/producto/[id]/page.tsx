@@ -26,22 +26,25 @@ export async function generateMetadata({
   const producto = await getProductoPorId(Number(id));
   if (!producto) return {};
   const tarifa = producto.tarifas.find((t) => t.vigente);
+  // "Nombre — Destino" mete el destino (la keyword long-tail real: "posada en
+  // Los Roques", "hotel en Margarita") en el title sin inventar texto.
+  const title = producto.destino ? `${producto.nombre} — ${producto.destino}` : producto.nombre;
   const description = producto.descripcion
     ? producto.descripcion.slice(0, 155)
-    : `${producto.nombre}${producto.destino ? ` en ${producto.destino}` : ""}. Cotiza con Destino y Eventos Lotus 360.`;
+    : `${producto.nombre}${producto.destino ? ` en ${producto.destino}` : ""}. Precios, fotos y disponibilidad real. Cotiza en línea o por WhatsApp, estés en Venezuela o en el exterior.`;
   return {
-    title: producto.nombre,
+    title,
     description,
     alternates: { canonical: `/producto/${producto.id}` },
     openGraph: {
-      title: producto.nombre,
+      title,
       description,
       url: `/producto/${producto.id}`,
       images: fotosDe(producto.producto_fotos).slice(0, 1),
     },
     twitter: {
       card: "summary_large_image",
-      title: producto.nombre,
+      title,
       description,
       images: fotosDe(producto.producto_fotos).slice(0, 1),
     },

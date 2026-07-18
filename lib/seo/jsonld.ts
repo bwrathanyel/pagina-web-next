@@ -48,7 +48,7 @@ export function buildTravelAgencyJsonLd() {
         name: "Destino y Eventos Lotus 360",
         alternateName: ALTERNATE_NAMES,
         description:
-          "Agencia de viajes especializada en hospedaje, boletería aérea, full days y eventos corporativos en Venezuela.",
+          "Agencia de viajes en Venezuela especializada en hospedaje, boletería aérea nacional, paquetes todo incluido y full days en Los Roques, Margarita, Canaima, Mérida y Morrocoy. Atendemos también a venezolanos en el exterior que compran viajes para sus familiares.",
         url: `${SITE_URL}/`,
         logo: `${SITE_URL}/logo-lotus360-transparent.png`,
         image: `${SITE_URL}/logo-lotus360-transparent.png`,
@@ -67,6 +67,20 @@ export function buildTravelAgencyJsonLd() {
           longitude: -68.0034,
         },
         areaServed: { "@type": "Country", name: "Venezuela" },
+        // Destinos/servicios sobre los que el negocio tiene oferta real — le da
+        // a Google señales de entidad para consultas long-tail tipo "posadas en
+        // Los Roques" o "full day Morrocoy" sin depender de autoridad de dominio.
+        knowsAbout: [
+          "Los Roques",
+          "Isla de Margarita",
+          "Canaima y Salto Ángel",
+          "Mérida",
+          "Morrocoy y Chichiriviche",
+          "Posadas y hoteles en Venezuela",
+          "Paquetes turísticos todo incluido",
+          "Boletos aéreos nacionales en Venezuela",
+          "Full days y tours en Venezuela",
+        ],
         openingHoursSpecification: [
           {
             "@type": "OpeningHoursSpecification",
@@ -128,6 +142,7 @@ export function buildProductJsonLd(producto: Producto) {
       `${producto.nombre}${producto.destino ? ` en ${producto.destino}` : ""}.`,
     image: fotos.length > 0 ? fotos : undefined,
     url: `${SITE_URL}/producto/${producto.id}`,
+    brand: { "@id": ORG_ID },
     offers: tarifa
       ? {
           "@type": "Offer",
@@ -135,7 +150,24 @@ export function buildProductJsonLd(producto: Producto) {
           price: tarifa.precio_desde_usd ?? undefined,
           availability: "https://schema.org/InStock",
           url: `${SITE_URL}/producto/${producto.id}`,
+          seller: { "@id": ORG_ID },
         }
       : undefined,
+  };
+}
+
+// Listado de productos de una página de catálogo. Ayuda a que Google entienda
+// la página como una colección navegable (y descubra los /producto/[id] aunque
+// el grid se renderice con componentes cliente).
+export function buildItemListJsonLd(items: { name: string; url: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      url: item.url.startsWith("http") ? item.url : `${SITE_URL}${item.url}`,
+    })),
   };
 }

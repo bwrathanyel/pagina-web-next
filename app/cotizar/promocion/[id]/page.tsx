@@ -8,9 +8,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const promocion = await getPromocionPorId(Number(id));
   if (!promocion) return {};
+  const destino = promocion.producto?.destino;
   return {
-    title: `Cotizar ${promocion.titulo}`,
-    description: `Solicita disponibilidad y tarifa para la promoción ${promocion.titulo}.`,
+    title: `Cotizar ${promocion.titulo}${destino ? ` en ${destino}` : ""}`,
+    description: `Solicita disponibilidad y tarifa real para la promoción ${promocion.titulo}${destino ? ` en ${destino}` : ""}. Respuesta por WhatsApp.`,
+    alternates: { canonical: `/cotizar/promocion/${promocion.id}` },
   };
 }
 

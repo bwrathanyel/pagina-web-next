@@ -8,9 +8,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const producto = await getProductoPorId(Number(id));
   if (!producto) return {};
+  const enDestino = producto.destino ? ` en ${producto.destino}` : "";
   return {
-    title: `Cotizar ${producto.nombre}`,
-    description: `Solicita disponibilidad y tarifa para ${producto.nombre}.`,
+    title: `Cotizar ${producto.nombre}${enDestino}`,
+    description: `Solicita disponibilidad y tarifa real para ${producto.nombre}${enDestino}. Respuesta por WhatsApp, también si compras desde el exterior.`,
+    alternates: { canonical: `/cotizar/producto/${producto.id}` },
   };
 }
 

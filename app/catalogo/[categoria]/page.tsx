@@ -7,10 +7,41 @@ import { ProductoCard } from "@/components/catalogo/ProductoCard";
 import { PromocionCard } from "@/components/catalogo/PromocionCard";
 import { getProductosPorCategoria, getPromociones } from "@/lib/supabase/queries";
 import { agruparPorDestino } from "@/lib/supabase/agruparPorDestino";
-import { jsonLdScript, buildBreadcrumbJsonLd } from "@/lib/seo/jsonld";
+import { jsonLdScript, buildBreadcrumbJsonLd, buildItemListJsonLd } from "@/lib/seo/jsonld";
 import { CATEGORIAS, type Categoria, type Producto, type Promocion } from "@/types/supabase";
 
 const SLUGS = CATEGORIAS.map((c) => c.slug);
+
+// SEO por categoría: los title/description apuntan a las búsquedas long-tail
+// reales del nicho ("posadas en Los Roques", "paquetes todo incluido Venezuela",
+// "full day Morrocoy", "boletos aéreos nacionales") en vez del label genérico.
+// heading es el h1 visible — misma intención, redactado natural.
+const SEO_POR_CATEGORIA: Record<Categoria, { title: string; description: string; heading: string }> = {
+  promociones: {
+    title: "Promociones y Ofertas de Viajes en Venezuela",
+    description:
+      "Ofertas de temporada en hoteles, posadas, full days y paquetes todo incluido: Los Roques, Margarita, Morrocoy y más. Precios reales, cotiza en línea o por WhatsApp.",
+    heading: "Promociones",
+  },
+  hoteles: {
+    title: "Hoteles y Posadas en Venezuela — Margarita, Los Roques, Morrocoy",
+    description:
+      "Reserva hoteles y posadas en Isla de Margarita, Los Roques, Morrocoy, Chichiriviche y Mérida. Fotos, precios y disponibilidad real — también si compras desde el exterior.",
+    heading: "Hoteles y posadas",
+  },
+  paquetes: {
+    title: "Paquetes Turísticos Todo Incluido en Venezuela",
+    description:
+      "Paquetes de viaje todo incluido en Venezuela: Los Roques, Canaima y Salto Ángel, Isla de Margarita y Mérida. Ideales para lunas de miel, familias y regalos a familiares.",
+    heading: "Paquetes turísticos",
+  },
+  "guias-tours": {
+    title: "Tours y Full Days en Venezuela — Los Roques, Canaima, Morrocoy",
+    description:
+      "Full days de playa y tours guiados por Venezuela: Los Roques, Canaima, Morrocoy y Chichiriviche, Mérida. Salidas con todo coordinado, cotiza tu fecha por WhatsApp.",
+    heading: "Guías / Tours",
+  },
+};
 
 function isCategoria(value: string): value is Categoria {
   return (SLUGS as string[]).includes(value);
@@ -27,13 +58,12 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { categoria } = await params;
   if (!isCategoria(categoria)) return {};
-  const label = CATEGORIAS.find((c) => c.slug === categoria)!.label;
-  const description = `Catálogo de ${label.toLowerCase()} de Destino y Eventos Lotus 360 — precios, fotos y disponibilidad real.`;
+  const { title, description } = SEO_POR_CATEGORIA[categoria];
   return {
-    title: label,
+    title,
     description,
     alternates: { canonical: `/catalogo/${categoria}` },
-    openGraph: { title: label, description, url: `/catalogo/${categoria}` },
+    openGraph: { title, description, url: `/catalogo/${categoria}` },
   };
 }
 
@@ -53,6 +83,12 @@ export default async function CatalogoPage({
     ? agruparPorDestino(items as Promocion[], (p) => p.producto?.destino ?? null)
     : agruparPorDestino(items as Producto[], (p) => p.destino);
 
+  const itemList = esPromociones
+    ? (items as Promocion[])
+        .filter((p) => p.producto)
+        .map((p) => ({ name: p.titulo, url: `/producto/${p.producto!.id}` }))
+    : (items as Producto[]).map((p) => ({ name: p.nombre, url: `/producto/${p.id}` }));
+
   return (
     <main className="mx-auto max-w-7xl px-5 py-10 md:py-14">
       <script
@@ -64,7 +100,17 @@ export default async function CatalogoPage({
           ]),
         )}
       />
-      <CatalogHeader categoria={categoria} label={label} count={items.length} />
+      {itemList.length > 0 ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={jsonLdScript(buildItemListJsonLd(itemList))}
+        />
+      ) : null}
+      <CatalogHeader
+        categoria={categoria}
+        label={SEO_POR_CATEGORIA[categoria].heading}
+        count={items.length}
+      />
 
       <div className="mb-10">
         <CategoriaTabs activa={categoria} />
