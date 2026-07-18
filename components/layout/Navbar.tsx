@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { whatsappHref } from "@/lib/whatsapp";
+import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
 import { HeaderControls } from "@/components/layout/HeaderControls";
 import { BrandMark } from "@/components/layout/BrandMark";
 import { useSiteContent } from "@/components/providers/SiteContentProvider";
@@ -49,14 +49,12 @@ export function Navbar() {
           >
             {content.navigation.quoteLabel}
           </Link>
-          <a
-            href={whatsappHref("Hola! Vengo de su página web.")}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex min-h-11 items-center rounded-full bg-coral px-5 text-sm font-semibold text-white"
+          <WhatsAppLeadButton
+            mensajeBase="Hola! Vengo de su página web."
+            triggerClassName="inline-flex min-h-11 items-center rounded-full bg-coral px-5 text-sm font-semibold text-white"
           >
             {content.navigation.whatsappLabel}
-          </a>
+          </WhatsAppLeadButton>
           <HeaderControls />
         </nav>
 
@@ -119,14 +117,12 @@ export function Navbar() {
           >
             {content.navigation.quoteLabel} <span aria-hidden="true">↗</span>
           </Link>
-          <a
-            href={whatsappHref("Hola! Vengo de su página web.")}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2 inline-flex min-h-11 items-center justify-center rounded-full bg-coral px-4 text-sm font-semibold text-white"
+          <WhatsAppLeadButton
+            mensajeBase="Hola! Vengo de su página web."
+            triggerClassName="mt-2 inline-flex min-h-11 items-center justify-center rounded-full bg-coral px-4 text-sm font-semibold text-white"
           >
             {content.navigation.whatsappLabel}
-          </a>
+          </WhatsAppLeadButton>
         </nav>
       ) : null}
     </header>

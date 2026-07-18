@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { whatsappHref } from "@/lib/whatsapp";
+import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
 import { EditableText } from "@/components/admin/EditableText";
 import { useSiteContent } from "@/components/providers/SiteContentProvider";
 
@@ -11,9 +11,8 @@ export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
   const { content } = useSiteContent();
   const hero = content.home.hero;
   const heroImage = hero.image || fotoPrincipal?.url;
-  const secondaryHref = hero.secondaryHref === "whatsapp"
-    ? whatsappHref("Hola! Vengo de su página web y quiero planificar mi próximo viaje.")
-    : hero.secondaryHref;
+  const esWhatsapp = hero.secondaryHref === "whatsapp";
+  const secondaryHref = hero.secondaryHref;
 
   return (
     <section className="relative overflow-hidden px-5 pb-16 pt-10 md:pb-24 md:pt-16">
@@ -44,10 +43,20 @@ export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
             <Link href={hero.primaryHref} className="inline-flex min-h-12 items-center justify-center rounded-full bg-coral px-7 font-semibold text-white shadow-[0_12px_28px_rgba(206,56,10,.22)] transition-transform hover:-translate-y-0.5">
               {hero.primaryLabel}
             </Link>
-            <a href={secondaryHref} target={secondaryHref.startsWith("http") ? "_blank" : undefined} rel={secondaryHref.startsWith("http") ? "noopener noreferrer" : undefined} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-ink/15 bg-card px-7 font-semibold text-ink transition-colors hover:border-ink/30">
-              {hero.secondaryLabel}
-              <span aria-hidden="true">↗</span>
-            </a>
+            {esWhatsapp ? (
+              <WhatsAppLeadButton
+                mensajeBase="Hola! Vengo de su página web y quiero planificar mi próximo viaje."
+                triggerClassName="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-ink/15 bg-card px-7 font-semibold text-ink transition-colors hover:border-ink/30"
+              >
+                {hero.secondaryLabel}
+                <span aria-hidden="true">↗</span>
+              </WhatsAppLeadButton>
+            ) : (
+              <a href={secondaryHref} target={secondaryHref.startsWith("http") ? "_blank" : undefined} rel={secondaryHref.startsWith("http") ? "noopener noreferrer" : undefined} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-ink/15 bg-card px-7 font-semibold text-ink transition-colors hover:border-ink/30">
+                {hero.secondaryLabel}
+                <span aria-hidden="true">↗</span>
+              </a>
+            )}
           </div>
         </div>
 

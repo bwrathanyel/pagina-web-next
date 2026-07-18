@@ -10,6 +10,7 @@ export interface RespuestaLeadCRM {
   ok: boolean;
   lead_id?: number;
   asesor?: string | null;
+  asesor_whatsapp?: string | null;
   error?: string;
 }
 
