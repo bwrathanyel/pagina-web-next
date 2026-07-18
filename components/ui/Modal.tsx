@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 
 export function Modal({
   titulo,
@@ -17,7 +18,12 @@ export function Modal({
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  return (
+  // Portal a document.body: un ancestro con backdrop-blur/filter (ej. el
+  // navbar) crea un containing block nuevo para position:fixed -- sin el
+  // portal, el modal quedaba encuadrado dentro de ese ancestro filtrado en
+  // vez de centrado en toda la pantalla (bug real reportado: se veía
+  // pegado arriba cuando se abría desde el botón de WhatsApp del navbar).
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div
         role="dialog"
@@ -39,6 +45,7 @@ export function Modal({
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
