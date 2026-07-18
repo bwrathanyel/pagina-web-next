@@ -158,6 +158,12 @@ export function CotizadorWizard({
         ))}
       </div>
 
+      {faltanRequeridos ? (
+        <p className="mt-4 text-sm text-ink-soft" role="status">
+          Completa los campos obligatorios (*) para continuar.
+        </p>
+      ) : null}
+
       <div className="mt-6 flex gap-3">
         {pasoActual > 0 ? (
           <button

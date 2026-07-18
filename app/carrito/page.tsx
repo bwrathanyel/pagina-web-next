@@ -110,7 +110,7 @@ export default function CarritoPage() {
               type="button"
               onClick={() => quitar(item.key)}
               aria-label={`Quitar ${item.nombre} del carrito`}
-              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-ink-soft"
+              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-sand-2 hover:text-coral"
             >
               ✕
             </button>

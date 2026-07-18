@@ -117,7 +117,15 @@ export function TicketCard({
             {destino}
           </p>
         ) : null}
-        <h3 className="font-body text-lg font-bold leading-snug text-ink">{nombre}</h3>
+        <h3 className="font-body text-lg font-bold leading-snug text-ink">
+          {href ? (
+            <Link href={href} className="transition-colors hover:text-coral">
+              {nombre}
+            </Link>
+          ) : (
+            nombre
+          )}
+        </h3>
 
         <div
           className={
