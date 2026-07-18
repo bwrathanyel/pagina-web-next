@@ -13,13 +13,17 @@ import "./globals.css";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://destinoyeventoslotus360.com";
 
-// Fuerza SSR en cada visita para todo el árbol de rutas: el ISR estático de
-// Netlify se quedó sirviendo contenido vencido indefinidamente (Cache-Status
-// "hit; fwd=stale" minutos después del revalidate de 300s, confirmado con
-// curl en producción) — las ediciones de catálogo/contenido nunca llegaban
-// al público. Coste: sin caché estático por página; aceptado por prioridad
-// de correctitud sobre performance en este sitio.
-export const dynamic = "force-dynamic";
+// Backstop de frescura, no la vía principal de actualización. La ruta normal
+// es la purga on-demand (revalidatePath en app/api/admin/revalidate/route.ts),
+// instantánea vía el tag cache de D1 + la cola de Durable Objects de OpenNext
+// (ver open-next.config.ts). Este valor solo acota el daño cuando esa purga
+// falla en silencio: los 11 call sites de revalidarSitioPublico() degradan a
+// un aviso en pantalla, así que una purga fallida dejaría la página vencida
+// para siempre -- que fue el bug real que motivó el force-dynamic anterior
+// (era un parche a un síntoma de Netlify, no la causa real). 3600s y no 300s:
+// ~360 re-renders/día en vez de ~4.300, contra un fallo que además ya se le
+// avisa al admin.
+export const revalidate = 3600;
 
 const fraunces = localFont({
   src: "./fonts/fraunces-latin.woff2",

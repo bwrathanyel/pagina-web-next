@@ -1,0 +1,53 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "pagina-web-next",
+	"main": ".open-next/worker.js",
+	"account_id": "d8f38ef40663c69dea073ad1745882e4",
+	"compatibility_date": "2026-07-18",
+	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	// Metricas de CPU por invocacion en Workers -> Logs (ver Fase 4 del plan de
+	// migracion: decide gratis vs Workers Paid segun cuanto se pase de 10ms).
+	"observability": { "enabled": true },
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"services": [
+		{
+			// Self-reference: necesario para que OpenNext pueda invocarse a si
+			// mismo (ISR/regeneracion en background). El nombre del servicio
+			// tiene que matchear "name" de arriba.
+			// https://opennext.js.org/cloudflare/caching
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "pagina-web-next"
+		}
+	],
+	"r2_buckets": [
+		{
+			"binding": "NEXT_INC_CACHE_R2_BUCKET",
+			"bucket_name": "pagina-web-next-cache"
+		}
+	],
+	"d1_databases": [
+		{
+			"binding": "NEXT_TAG_CACHE_D1",
+			"database_name": "pagina-web-next-tags",
+			// database_id se completa en la Fase 3 tras `wrangler d1 create`.
+			"database_id": "<PENDIENTE_FASE_3>"
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "NEXT_CACHE_DO_QUEUE",
+				"class_name": "DOQueueHandler"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": ["DOQueueHandler"]
+		}
+	]
+}
