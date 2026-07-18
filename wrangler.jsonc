@@ -33,7 +33,7 @@
 			"binding": "NEXT_TAG_CACHE_D1",
 			"database_name": "pagina-web-next-tags",
 			// database_id se completa en la Fase 3 tras `wrangler d1 create`.
-			"database_id": "<PENDIENTE_FASE_3>"
+			"database_id": "60092473-47c9-4645-b624-88439dcff2af"
 		}
 	],
 	"durable_objects": {
