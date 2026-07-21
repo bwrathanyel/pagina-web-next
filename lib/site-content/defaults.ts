@@ -66,7 +66,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       ],
     },
     promotions: { eyebrow: "Oportunidades para escapar", title: "Tu próxima aventura puede empezar hoy." },
-    hotSales: { eyebrow: "🔥 Ofertas imperdibles", title: "Lo más barato de cada hotel, en un solo lugar." },
+    hotSales: { eyebrow: "🔥 Ofertas imperdibles", title: "Las mejores promociones, en un solo lugar." },
     process: {
       eyebrow: "Así te acompañamos",
       title: "Menos vueltas. Más ganas de viajar.",

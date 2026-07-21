@@ -6,7 +6,7 @@ import { jsonLdScript, buildBreadcrumbJsonLd, buildItemListJsonLd } from "@/lib/
 
 const TITLE = "Hot Sales — Las Mejores Ofertas de Hoteles en Venezuela";
 const DESCRIPTION =
-  "La promoción más barata de cada hotel, en un solo lugar: Los Roques, Margarita, Morrocoy, Mérida y más. Precios reales, sin repetir hotel.";
+  "Las mejores promociones de hoteles en un solo lugar: Los Roques, Margarita, Morrocoy, Mérida y más. Precios reales, sin repetir hotel.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -44,7 +44,7 @@ export default async function HotSalesPage() {
             <p className="mb-3 font-mono text-xs font-bold uppercase tracking-[0.18em] text-coral-bright">🔥 Ofertas imperdibles</p>
             <h1 className="font-display text-4xl font-semibold leading-none md:text-6xl">Hot Sales</h1>
             <p className="mt-4 max-w-xl leading-7 text-dusk-text-soft">
-              La promoción más barata de cada hotel, ordenadas de menor a mayor precio. Sin repetir hotel, sin vueltas.
+              Las mejores promociones de cada hotel, ordenadas de menor a mayor precio. Sin repetir hotel, sin vueltas.
             </p>
           </div>
           <span className="w-fit rounded-full border border-dusk-text/15 px-4 py-2 font-mono text-xs text-dusk-text-soft">
