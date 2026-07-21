@@ -48,3 +48,4 @@ next-env.d.ts
 .dev.vars
 .dev.vars.*
 !.dev.vars.example
+.last_changelog_sha
