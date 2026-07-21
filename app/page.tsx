@@ -1,6 +1,8 @@
 import { Hero } from "@/components/home/Hero";
 import { ServiciosGrid } from "@/components/home/ServiciosGrid";
 import { PromocionesDestacadas } from "@/components/home/PromocionesDestacadas";
+import { HotSalesSection } from "@/components/home/HotSalesSection";
+import { promosHotSales } from "@/lib/promociones/hotSales";
 import { CategoriasDestacadas } from "@/components/home/CategoriasDestacadas";
 import { PlanesCorporativos } from "@/components/home/PlanesCorporativos";
 import { ComoFunciona } from "@/components/home/ComoFunciona";
@@ -40,6 +42,8 @@ export default async function Home() {
       <AcompanamientoSection />
 
       <PromocionesDestacadas promociones={promociones} />
+
+      <HotSalesSection pool={promosHotSales(promociones)} />
 
       <ComoFunciona />
 

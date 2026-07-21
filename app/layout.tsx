@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { WhatsAppFloatButton } from "@/components/layout/WhatsAppFloatButton";
+import { AsistenteVirtualButton } from "@/components/layout/AsistenteVirtualButton";
 import { jsonLdScript, buildTravelAgencyJsonLd } from "@/lib/seo/jsonld";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
@@ -123,6 +124,7 @@ export default async function RootLayout({
               <div className="flex-1">{children}</div>
               <Footer />
               <WhatsAppFloatButton />
+              <AsistenteVirtualButton />
               <AdminEditToggle />
             </SiteContentProvider>
           </AuthProvider>

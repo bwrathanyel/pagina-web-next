@@ -70,6 +70,7 @@ export interface SiteContent {
       stats: { title: string; detail: string }[];
     };
     promotions: { eyebrow: string; title: string };
+    hotSales: { eyebrow: string; title: string };
     process: {
       eyebrow: string;
       title: string;

@@ -10,6 +10,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { EditarProductoModal } from "@/components/admin/EditarProductoModal";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { revalidarSitioPublico } from "@/lib/admin/revalidate";
+import { formatearPrecioCliente } from "@/lib/utils/formatoPrecio";
 import type { Producto } from "@/types/supabase";
 
 export const BADGE_POR_TIPO: Record<Producto["tipo"], string> = {
@@ -33,7 +34,7 @@ export function ProductoCard({ producto }: { producto: Producto }) {
   const fotos = fotosDe(producto.producto_fotos);
   const foto = fotos[0] ?? null;
   const tarifaVigente = producto.tarifas.find((t) => t.vigente);
-  const precioLabel = tarifaVigente?.precio_texto ?? "Consultar disponibilidad";
+  const precioLabel = formatearPrecioCliente(tarifaVigente?.precio_texto) ?? "Consultar disponibilidad";
   const href = `/producto/${producto.id}`;
   const key = `producto-${producto.id}`;
   const puedeEditar = rol === "admin" && modoEdicion;

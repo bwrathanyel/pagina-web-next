@@ -19,6 +19,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   navigation: {
     items: [
       { id: "promociones", label: "Promociones", href: "/catalogo/promociones", visible: true },
+      { id: "hot-sales", label: "Hot Sales", href: "/catalogo/hot-sales", visible: true },
       { id: "hoteles", label: "Hoteles", href: "/catalogo/hoteles", visible: true },
       { id: "paquetes", label: "Paquetes", href: "/catalogo/paquetes", visible: true },
       { id: "guias", label: "Guías / Tours", href: "/catalogo/guias-tours", visible: true },
@@ -65,6 +66,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       ],
     },
     promotions: { eyebrow: "Oportunidades para escapar", title: "Tu próxima aventura puede empezar hoy." },
+    hotSales: { eyebrow: "🔥 Ofertas imperdibles", title: "Lo más barato de cada hotel, en un solo lugar." },
     process: {
       eyebrow: "Así te acompañamos",
       title: "Menos vueltas. Más ganas de viajar.",

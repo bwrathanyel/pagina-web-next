@@ -10,6 +10,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { EditarPromocionModal } from "@/components/admin/EditarPromocionModal";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { revalidarSitioPublico } from "@/lib/admin/revalidate";
+import { formatearPrecioCliente } from "@/lib/utils/formatoPrecio";
 import type { Promocion } from "@/types/supabase";
 
 export function PromocionCard({ promocion }: { promocion: Promocion }) {
@@ -29,7 +30,7 @@ export function PromocionCard({ promocion }: { promocion: Promocion }) {
   const fotosHeredadas = fotosDe(promocion.producto?.producto_fotos);
   const fotos = fotosPropias.length > 0 ? fotosPropias : fotosHeredadas;
   const foto = fotos[0] ?? null;
-  const precioLabel = promocion.precio_texto ?? "Consultar disponibilidad";
+  const precioLabel = formatearPrecioCliente(promocion.precio_texto) ?? "Consultar disponibilidad";
   const href = promocion.producto ? `/producto/${promocion.producto.id}` : null;
   const key = `promocion-${promocion.id}`;
   const puedeEditar = rol === "admin" && modoEdicion;

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { CotizacionOpcionForm } from "@/components/cotizador/CotizacionOpcionForm";
 import { fotosDe } from "@/lib/supabase/fotos";
 import { getProductoPorId } from "@/lib/supabase/queries";
+import { formatearPrecioCliente } from "@/lib/utils/formatoPrecio";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -30,7 +31,7 @@ export default async function CotizarProductoPage({ params }: { params: Promise<
           id: producto.id,
           nombre: producto.nombre,
           destino: producto.destino,
-          precio: tarifa?.precio_texto ?? "Consultar disponibilidad",
+          precio: formatearPrecioCliente(tarifa?.precio_texto) ?? "Consultar disponibilidad",
           precioUnitarioUsd: tarifa?.precio_desde_usd ?? null,
           calculoPrecio: tarifa?.precio_desde_usd != null && /por persona por noche/i.test(tarifa.precio_texto) ? "persona_noche" : null,
           ninosGratis: 0,

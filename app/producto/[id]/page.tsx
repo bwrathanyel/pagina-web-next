@@ -9,6 +9,7 @@ import {
   getPromocionesPorProductoId,
   getTodosLosProductoIds,
 } from "@/lib/supabase/queries";
+import { formatearPrecioCliente } from "@/lib/utils/formatoPrecio";
 
 export const dynamicParams = true;
 
@@ -95,7 +96,7 @@ export default async function ProductoPage({ params }: { params: Promise<{ id: s
               >
                 <p className="font-bold text-ink">{promo.titulo}</p>
                 {promo.precio_texto ? (
-                  <p className="font-mono text-sm text-seafoam-text">{promo.precio_texto}</p>
+                  <p className="font-mono text-sm text-seafoam-text">{formatearPrecioCliente(promo.precio_texto)}</p>
                 ) : null}
               </li>
             ))}
