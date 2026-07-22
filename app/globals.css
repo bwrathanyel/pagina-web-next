@@ -13,15 +13,19 @@
   --color-sand-2: #f1e5d2;
   --color-card: #fffdf8;
 
-  /* #ff6b4a fallaba contraste AA (2.55-2.81) como texto sobre sand y como
-     texto blanco sobre boton -- este terracota mas oscuro pasa AA (>=4.5)
-     en ambos usos. Mismo tono, mas oscuro; no es un color nuevo. */
-  --color-coral: #b8391a;
-  /* El coral original: sobre fondo oscuro (dusk, #12262b) SI pasaba AA
-     (5.57), lo rompia el oscurecido de arriba. Usar solo como texto sobre
-     bg-dusk (ver ComoFunciona/PlanesCorporativos/Footer). */
-  --color-coral-bright: #ff6b4a;
-  --color-gold: #ffb648;
+  /* Ajustado 2026-07-22 para que coincida con el naranja real del logo
+     (muestreado del PNG: #FC7300 arriba del degradé) -- antes era un tono
+     rojo-coral que no matcheaba. Oscurecido para texto legible: pasa AA
+     sobre sand (5.69) y como texto blanco sobre boton (6.26). */
+  --color-coral: #A83E00;
+  /* Naranja vivo real del logo. Sigue reservado SOLO para texto sobre fondo
+     oscuro (dusk, #12262b) -- ahí pasa AA (5.67). No usar como texto sobre
+     sand ni como fondo de boton con texto blanco (ver ComoFunciona/
+     PlanesCorporativos/Footer para los usos válidos). */
+  --color-coral-bright: #FC7300;
+  /* Dorado real del logo (muestreado: #FBC000 abajo del degradé). Antes era
+     un dorado pastel más claro. */
+  --color-gold: #FBC000;
   --color-seafoam: #3e827d;
   --color-seafoam-text: #255954;
   --color-seafoam-bg: #e4eeec;
