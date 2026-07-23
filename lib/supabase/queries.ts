@@ -2,6 +2,26 @@ import { supabaseServer } from "@/lib/supabase/server";
 import type { Categoria, Producto, Promocion, ProductoTipo } from "@/types/supabase";
 import { CATEGORIA_A_TIPO } from "@/types/supabase";
 
+// "Casa Vacacional Playa del Sur" vive así en productos.destino a propósito
+// (pedido real 2026-07-22) -- el bot de ventas de ManyChat lo usa como gate
+// de exclusividad textual para la colaboración paga (ver leadCoincideCasaPlayaSur
+// en manychat-sales-chat-deepseek/index.ts), así que ese valor NUNCA se toca
+// en la base. En la web pública se muestra como "Chichiriviche", su ubicación
+// real -- este mapeo aplica solo acá, en la capa de lectura para el sitio.
+const DESTINO_PUBLICO_OVERRIDE: Record<string, string> = {
+  "Casa Vacacional Playa del Sur": "Chichiriviche",
+};
+function destinoPublico<T extends { destino?: string | null }>(p: T): T {
+  if (!p?.destino || !(p.destino in DESTINO_PUBLICO_OVERRIDE)) return p;
+  return { ...p, destino: DESTINO_PUBLICO_OVERRIDE[p.destino] };
+}
+function conDestinoPublico(producto: Producto): Producto {
+  return destinoPublico(producto);
+}
+function promoConDestinoPublico(promo: Promocion): Promocion {
+  return promo.producto ? { ...promo, producto: destinoPublico(promo.producto) } : promo;
+}
+
 // Columns are always named explicitly — never `select=*` and never
 // `fuente_archivo` (internal Drive path, not for public consumption).
 export const PRODUCTO_SELECT =
@@ -23,7 +43,7 @@ export async function getProductosPorTipo(tipo: ProductoTipo): Promise<Producto[
     .eq("tipo", tipo)
     .order("nombre");
   if (error) throw error;
-  return (data ?? []) as unknown as Producto[];
+  return ((data ?? []) as unknown as Producto[]).map(conDestinoPublico);
 }
 
 export async function getProductosPorCategoria(
@@ -40,7 +60,7 @@ export async function getPromociones(): Promise<Promocion[]> {
     .eq("revisado", true)
     .order("precio_desde_usd", { ascending: true, nullsFirst: false });
   if (error) throw error;
-  return (data ?? []) as unknown as Promocion[];
+  return ((data ?? []) as unknown as Promocion[]).map(promoConDestinoPublico);
 }
 
 export async function getProductoPorId(id: number): Promise<Producto | null> {
@@ -52,7 +72,7 @@ export async function getProductoPorId(id: number): Promise<Producto | null> {
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
-  return data as unknown as Producto | null;
+  return data ? conDestinoPublico(data as unknown as Producto) : null;
 }
 
 export async function getPromocionPorId(id: number): Promise<Promocion | null> {
@@ -64,7 +84,7 @@ export async function getPromocionPorId(id: number): Promise<Promocion | null> {
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
-  return data as unknown as Promocion | null;
+  return data ? promoConDestinoPublico(data as unknown as Promocion) : null;
 }
 
 export async function getPromocionesPorProductoId(productoId: number): Promise<Promocion[]> {
@@ -75,7 +95,7 @@ export async function getPromocionesPorProductoId(productoId: number): Promise<P
     .eq("revisado", true)
     .eq("producto_id", productoId);
   if (error) throw error;
-  return (data ?? []) as unknown as Promocion[];
+  return ((data ?? []) as unknown as Promocion[]).map(promoConDestinoPublico);
 }
 
 /** All active product ids across the three sellable tipos (excludes
