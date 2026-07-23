@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { FotoCarousel } from "@/components/catalogo/FotoCarousel";
 import { ProductoInfo } from "@/components/producto/ProductoInfo";
+import { ProductoAccionesOverlay, ProductoFooterMobile } from "@/components/producto/ProductoAccionesMobile";
 import { fotosDe } from "@/lib/supabase/fotos";
 import { jsonLdScript, buildProductJsonLd, buildBreadcrumbJsonLd } from "@/lib/seo/jsonld";
 import {
@@ -64,7 +65,7 @@ export default async function ProductoPage({ params }: { params: Promise<{ id: s
   ];
 
   return (
-    <main className="mx-auto max-w-5xl px-5 py-10">
+    <main className="mx-auto max-w-5xl px-5 py-10 pb-28 lg:pb-10">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript(buildProductJsonLd(producto))}
@@ -79,9 +80,13 @@ export default async function ProductoPage({ params }: { params: Promise<{ id: s
         )}
       />
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-        <FotoCarousel fotos={fotos} alt={producto.nombre} />
+        <div className="relative">
+          <ProductoAccionesOverlay tipo="producto" id={producto.id} nombre={producto.nombre} />
+          <FotoCarousel fotos={fotos} alt={producto.nombre} />
+        </div>
         <ProductoInfo producto={producto} />
       </div>
+      <ProductoFooterMobile cotizarHref={`/cotizar/producto/${producto.id}`} />
 
       {promociones.length > 0 ? (
         <section className="mt-12">
