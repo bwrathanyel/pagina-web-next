@@ -1,8 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useCarritoStore } from "@/lib/carrito/store";
+import { useNotificacionesChat } from "@/lib/notificaciones/useNotificacionesChat";
+import { NotificacionesPanel } from "@/components/layout/NotificacionesPanel";
 
 function UserIcon() {
   return (
@@ -23,12 +26,44 @@ function CartIcon() {
   );
 }
 
+function BellIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+    </svg>
+  );
+}
+
 export function HeaderControls({ onNavigate }: { onNavigate?: () => void }) {
   const { user } = useAuth();
   const cantidad = useCarritoStore((s) => s.items.length);
+  const { notificaciones, noLeidas, marcarTodoLeido, refrescar } = useNotificacionesChat();
+  const [panelAbierto, setPanelAbierto] = useState(false);
 
   return (
     <div className="flex items-center gap-1">
+      <button
+        type="button"
+        onClick={() => {
+          refrescar();
+          setPanelAbierto(true);
+        }}
+        aria-label={`Notificaciones${noLeidas > 0 ? `, ${noLeidas} sin leer` : ""}`}
+        className="relative flex h-11 w-11 items-center justify-center rounded-full text-ink transition-colors hover:bg-sand-2"
+      >
+        <BellIcon />
+        {noLeidas > 0 ? (
+          <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-coral" aria-hidden="true" />
+        ) : null}
+      </button>
+      {panelAbierto ? (
+        <NotificacionesPanel
+          notificaciones={notificaciones}
+          onClose={() => setPanelAbierto(false)}
+          onMarcarLeido={marcarTodoLeido}
+        />
+      ) : null}
       <Link
         href={user ? "/cuenta" : "/cuenta/login"}
         onClick={onNavigate}
