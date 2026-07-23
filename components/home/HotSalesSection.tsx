@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { EditableText } from "@/components/admin/EditableText";
 import { PromocionCard } from "@/components/catalogo/PromocionCard";
@@ -20,9 +20,16 @@ function barajar<T>(arr: T[]): T[] {
 }
 
 export function HotSalesSection({ pool }: { pool: Promocion[] }) {
-  // Se baraja una sola vez al montar (lazy init) -- cada visita ve un orden
-  // distinto sin necesitar refetch al servidor.
-  const [orden] = useState(() => barajar(pool));
+  // Arranca con el orden tal cual llega del server (igual en SSR y en el
+  // primer render del cliente, sin mismatch de hidratación) y recién baraja
+  // después de montar -- un Math.random() en el init de useState corre
+  // distinto en server/cliente y React 19 lo detecta como mismatch real en
+  // cada carga (hallazgo real, auditoría 2026-07-23).
+  const [orden, setOrden] = useState(pool);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setOrden(barajar(pool));
+  }, [pool]);
   const [destino, setDestino] = useState<string | null>(null);
   const [visibles, setVisibles] = useState(POR_TANDA);
 

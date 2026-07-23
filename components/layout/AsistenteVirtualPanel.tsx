@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { CHAT_ACTUALIZADO_EVENTO } from "@/lib/notificaciones/useNotificacionesChat";
 
 const SESSION_KEY = "lotus360_chat_session_id";
 const HISTORIAL_KEY = "lotus360_chat_historial";
@@ -40,8 +41,13 @@ function LightboxFoto({ src, alt, onClose }: { src: string; alt: string; onClose
   const pellizco = useRef<number | null>(null);
   const escalaRef = useRef(1);
   const posRef = useRef({ x: 0, y: 0 });
-  escalaRef.current = escala;
-  posRef.current = pos;
+
+  useEffect(() => {
+    escalaRef.current = escala;
+  }, [escala]);
+  useEffect(() => {
+    posRef.current = pos;
+  }, [pos]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -143,8 +149,29 @@ function LightboxFoto({ src, alt, onClose }: { src: string; alt: string; onClose
   );
 }
 
+const MENSAJE_BIENVENIDA: Mensaje = {
+  rol: "ia",
+  texto: "¡Hola! 😊 Soy Lotus, tu asistente virtual. Contame qué viaje tenés en mente y te ayudo a armarlo.",
+};
+
+// Este panel nunca se renderiza en el server -- AsistenteVirtualButton solo
+// lo monta client-side tras un click (ver `{abierto && <AsistenteVirtualPanel .../>}`),
+// nunca durante hidratación -- así que leer localStorage en el init de
+// useState es seguro acá y evita el setState síncrono dentro de un efecto.
+function historialInicial(): Mensaje[] {
+  const guardado = localStorage.getItem(HISTORIAL_KEY);
+  if (guardado) {
+    try {
+      return JSON.parse(guardado);
+    } catch {
+      // historial corrupto -- arranca de cero, no rompe el chat
+    }
+  }
+  return [MENSAJE_BIENVENIDA];
+}
+
 export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
-  const [mensajes, setMensajes] = useState<Mensaje[]>([]);
+  const [mensajes, setMensajes] = useState<Mensaje[]>(historialInicial);
   const [texto, setTexto] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -154,20 +181,13 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     sessionIdRef.current = obtenerSessionId();
-    const guardado = localStorage.getItem(HISTORIAL_KEY);
-    if (guardado) {
-      try {
-        setMensajes(JSON.parse(guardado));
-      } catch {
-        // historial corrupto -- arranca de cero, no rompe el chat
-      }
-    } else {
-      setMensajes([{ rol: "ia", texto: "¡Hola! 😊 Soy Lotus, tu asistente virtual. Contame qué viaje tenés en mente y te ayudo a armarlo." }]);
-    }
   }, []);
 
   useEffect(() => {
-    if (mensajes.length) localStorage.setItem(HISTORIAL_KEY, JSON.stringify(mensajes));
+    if (mensajes.length) {
+      localStorage.setItem(HISTORIAL_KEY, JSON.stringify(mensajes));
+      window.dispatchEvent(new Event(CHAT_ACTUALIZADO_EVENTO));
+    }
     listaRef.current?.scrollTo({ top: listaRef.current.scrollHeight, behavior: "smooth" });
   }, [mensajes]);
 

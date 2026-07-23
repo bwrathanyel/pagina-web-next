@@ -4,6 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 
 const HISTORIAL_KEY = "lotus360_chat_historial";
 const VISTAS_KEY = "lotus360_notificaciones_vistas";
+/** El evento nativo "storage" no dispara en la misma pestaña que escribe --
+ * AsistenteVirtualPanel dispara este evento custom además de guardar en
+ * localStorage, así el badge de la campana se actualiza sin recargar
+ * (hallazgo real, auditoría 2026-07-23). */
+export const CHAT_ACTUALIZADO_EVENTO = "lotus360-chat-actualizado";
 
 interface MensajeIA {
   texto: string;
@@ -54,7 +59,11 @@ export function useNotificacionesChat() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     recalcular();
     window.addEventListener("storage", recalcular);
-    return () => window.removeEventListener("storage", recalcular);
+    window.addEventListener(CHAT_ACTUALIZADO_EVENTO, recalcular);
+    return () => {
+      window.removeEventListener("storage", recalcular);
+      window.removeEventListener(CHAT_ACTUALIZADO_EVENTO, recalcular);
+    };
   }, [recalcular]);
 
   const marcarTodoLeido = useCallback(() => {

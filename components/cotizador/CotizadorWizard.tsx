@@ -176,7 +176,10 @@ export function CotizadorWizard({
           onSiguiente={() => (esUltimo ? enviar() : setPasoActual((p) => p + 1))}
         />
       </div>
-      <div className="fixed inset-x-0 bottom-24 z-30 flex gap-3 border-t border-ink/10 bg-card/95 px-5 py-3 backdrop-blur-lg lg:hidden">
+      <div
+        className="fixed inset-x-0 z-30 flex gap-3 border-t border-ink/10 bg-card/95 px-5 py-3 backdrop-blur-lg lg:hidden"
+        style={{ bottom: "calc(6rem + env(safe-area-inset-bottom))" }}
+      >
         <BotonesWizard
           pasoActual={pasoActual}
           esUltimo={esUltimo}

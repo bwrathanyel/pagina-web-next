@@ -33,7 +33,7 @@ export function ProductoAccionesOverlay({
         type="button"
         onClick={() => router.back()}
         aria-label="Volver"
-        className="flex h-10 w-10 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-md"
+        className="flex h-11 w-11 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-md"
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M15 19l-7-7 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -47,7 +47,7 @@ export function ProductoAccionesOverlay({
         }}
         aria-label={favorito ? `Quitar ${nombre} de favoritos` : `Guardar ${nombre} en favoritos`}
         aria-pressed={favorito === true}
-        className={"flex h-10 w-10 items-center justify-center rounded-full bg-black/35 backdrop-blur-md " + (favorito ? "text-coral-bright" : "text-white")}
+        className={"flex h-11 w-11 items-center justify-center rounded-full bg-black/35 backdrop-blur-md " + (favorito ? "text-coral-bright" : "text-white")}
       >
         <HeartIcon filled={favorito === true} />
       </button>
@@ -59,7 +59,8 @@ export function ProductoAccionesOverlay({
 export function ProductoFooterMobile({ cotizarHref }: { cotizarHref: string }) {
   return (
     <div
-      className="fixed inset-x-0 bottom-24 z-30 border-t border-ink/10 bg-card/95 px-5 py-3 backdrop-blur-lg lg:hidden"
+      className="fixed inset-x-0 z-30 border-t border-ink/10 bg-card/95 px-5 py-3 backdrop-blur-lg lg:hidden"
+      style={{ bottom: "calc(6rem + env(safe-area-inset-bottom))" }}
     >
       <Link
         href={cotizarHref}

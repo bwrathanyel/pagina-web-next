@@ -1,10 +1,21 @@
+"use client";
+
+import { usePathname } from "next/navigation";
 import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
+import { tieneFooterStickyPropio } from "@/lib/layout/rutasConFooterSticky";
 
 export function WhatsAppFloatButton() {
+  const pathname = usePathname();
+  // En rutas con footer sticky propio (producto/cotizador/carrito) el FAB
+  // sube arriba de esa barra en vez de superponerse -- ver auditoría 2026-07-23.
+  const conFooterSticky = tieneFooterStickyPropio(pathname);
+
   return (
     <nav aria-label="Contacto rápido">
       <div
-        className="fixed bottom-24 right-5 z-40 lg:bottom-5"
+        className={
+          "fixed right-5 z-40 lg:bottom-5 " + (conFooterSticky ? "bottom-44" : "bottom-24")
+        }
         style={{
           marginBottom: "env(safe-area-inset-bottom)",
           marginRight: "env(safe-area-inset-right)",

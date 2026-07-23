@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { NotificacionChat } from "@/lib/notificaciones/useNotificacionesChat";
 
 export function NotificacionesPanel({
@@ -12,16 +12,25 @@ export function NotificacionesPanel({
   onClose: () => void;
   onMarcarLeido: () => void;
 }) {
-  useEffect(() => {
+  // Snapshot al abrir -- así los puntos de "no leída" siguen visibles
+  // mientras el panel está abierto en vez de desaparecer al instante
+  // (se marcan leídas recién al cerrar, ver auditoría 2026-07-23).
+  const [snapshot] = useState(notificaciones);
+
+  function cerrar() {
     onMarcarLeido();
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    onClose();
+  }
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && cerrar();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-end bg-black/40 sm:items-center sm:p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end justify-end bg-black/40 sm:items-center sm:p-4" onClick={cerrar}>
       <div
         className="flex h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl bg-sand sm:h-[85vh] sm:max-w-sm sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
@@ -29,7 +38,7 @@ export function NotificacionesPanel({
         <header className="flex items-center gap-3 border-b border-ink/10 bg-card px-4 py-3">
           <button
             type="button"
-            onClick={onClose}
+            onClick={cerrar}
             aria-label="Cerrar"
             className="flex h-10 w-10 items-center justify-center rounded-full text-ink"
           >
@@ -41,7 +50,7 @@ export function NotificacionesPanel({
         </header>
 
         <div className="flex-1 overflow-y-auto">
-          {notificaciones.length === 0 ? (
+          {snapshot.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
               <span className="flex h-14 w-14 items-center justify-center rounded-full bg-seafoam-bg text-seafoam-text" aria-hidden="true">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
@@ -54,7 +63,7 @@ export function NotificacionesPanel({
             </div>
           ) : (
             <ul>
-              {notificaciones.map((n) => (
+              {snapshot.map((n) => (
                 <li key={n.id} className="flex gap-3 border-b border-ink/8 px-4 py-4">
                   <span
                     aria-hidden="true"

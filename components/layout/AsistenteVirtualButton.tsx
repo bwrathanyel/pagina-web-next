@@ -1,16 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { AsistenteVirtualPanel } from "@/components/layout/AsistenteVirtualPanel";
+import { tieneFooterStickyPropio } from "@/lib/layout/rutasConFooterSticky";
 
 export function AsistenteVirtualButton() {
   const [abierto, setAbierto] = useState(false);
+  const pathname = usePathname();
+  const conFooterSticky = tieneFooterStickyPropio(pathname);
 
   return (
     <>
       <nav aria-label="Asistente virtual">
         <div
-          className="fixed bottom-40 right-5 z-40 lg:bottom-24"
+          className={
+            "fixed right-5 z-40 lg:bottom-24 " + (conFooterSticky ? "bottom-60" : "bottom-40")
+          }
           style={{
             marginBottom: "env(safe-area-inset-bottom)",
             marginRight: "env(safe-area-inset-right)",
