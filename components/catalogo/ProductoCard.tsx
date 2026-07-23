@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { TicketCard } from "@/components/catalogo/TicketCard";
-import { fotosDe } from "@/lib/supabase/fotos";
+import { fotosDe, esSoloReferencial } from "@/lib/supabase/fotos";
 import { useCarritoStore } from "@/lib/carrito/store";
 import { useFavoritos } from "@/lib/favoritos/useFavoritos";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -33,6 +33,7 @@ export function ProductoCard({ producto }: { producto: Producto }) {
 
   const fotos = fotosDe(producto.producto_fotos);
   const foto = fotos[0] ?? null;
+  const fotosReferenciales = esSoloReferencial(producto.producto_fotos);
   const tarifaVigente = producto.tarifas.find((t) => t.vigente);
   const precioLabel = formatearPrecioCliente(tarifaVigente?.precio_texto) ?? "Consultar disponibilidad";
   const href = `/producto/${producto.id}`;
@@ -47,6 +48,7 @@ export function ProductoCard({ producto }: { producto: Producto }) {
         nombre={nombre}
         destino={producto.destino}
         fotos={fotos}
+        fotosReferenciales={fotosReferenciales}
         cotizarHref={`/cotizar/producto/${producto.id}`}
         precioLabel={precioLabel}
         precioMuted={!tarifaVigente}

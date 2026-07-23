@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { TicketCard } from "@/components/catalogo/TicketCard";
-import { fotosDe } from "@/lib/supabase/fotos";
+import { fotosDe, esSoloReferencial } from "@/lib/supabase/fotos";
 import { useCarritoStore } from "@/lib/carrito/store";
 import { useFavoritos } from "@/lib/favoritos/useFavoritos";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -30,6 +30,10 @@ export function PromocionCard({ promocion }: { promocion: Promocion }) {
   const fotosHeredadas = fotosDe(promocion.producto?.producto_fotos);
   const fotos = fotosPropias.length > 0 ? fotosPropias : fotosHeredadas;
   const foto = fotos[0] ?? null;
+  const fotosReferenciales =
+    fotosPropias.length > 0
+      ? esSoloReferencial(promocion.promocion_fotos)
+      : esSoloReferencial(promocion.producto?.producto_fotos);
   const precioLabel = formatearPrecioCliente(promocion.precio_texto) ?? "Consultar disponibilidad";
   const href = promocion.producto ? `/producto/${promocion.producto.id}` : null;
   const key = `promocion-${promocion.id}`;
@@ -43,6 +47,7 @@ export function PromocionCard({ promocion }: { promocion: Promocion }) {
         nombre={titulo}
         destino={promocion.producto?.destino ?? null}
         fotos={fotos}
+        fotosReferenciales={fotosReferenciales}
         cotizarHref={`/cotizar/promocion/${promocion.id}`}
         precioLabel={precioLabel}
         precioMuted={!promocion.precio_texto}

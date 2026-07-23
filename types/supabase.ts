@@ -8,6 +8,10 @@ export interface Foto {
   activo: boolean;
   width?: number | null;
   height?: number | null;
+  // 'ia_referencial' = generada por IA cuando el producto no tenía NINGUNA
+  // foto real -- muestra el badge "Imagen referencial" en la tarjeta (ver
+  // CardPhotoGallery). Nunca reemplaza una foto real existente.
+  origen?: string | null;
 }
 
 export interface Tarifa {

@@ -7,6 +7,10 @@ export interface TicketCardProps {
   nombre: string;
   destino: string | null;
   fotos: string[];
+  // true cuando NINGUNA de estas fotos es real (todas generadas por IA
+  // porque el producto/promoción no tenía ninguna) -- muestra un badge de
+  // transparencia, nunca se oculta (ver esSoloReferencial en lib/supabase/fotos).
+  fotosReferenciales?: boolean;
   cotizarHref: string;
   precioLabel: string;
   precioMuted: boolean;
@@ -56,6 +60,7 @@ export function TicketCard({
   nombre,
   destino,
   fotos,
+  fotosReferenciales = false,
   cotizarHref,
   precioLabel,
   precioMuted,
@@ -77,7 +82,7 @@ export function TicketCard({
         (oculto ? "opacity-50" : "")
       }
     >
-      <div className="relative aspect-[16/10] overflow-hidden bg-sand-2">
+      <div className="relative aspect-[4/3] overflow-hidden bg-sand-2">
         <span className="absolute left-4 top-4 z-10 rounded-lg border border-white/15 bg-dusk/90 px-3 py-1.5 font-mono text-[0.66rem] font-bold uppercase tracking-[0.12em] text-dusk-text shadow-sm backdrop-blur-sm">
           {badge}
         </span>
@@ -96,7 +101,7 @@ export function TicketCard({
           </button>
         ) : null}
         {fotos.length > 0 ? (
-          <CardPhotoGallery fotos={fotos} alt={nombre} />
+          <CardPhotoGallery fotos={fotos} alt={nombre} referencial={fotosReferenciales} />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-seafoam-bg via-sand-2 to-card">
             <div className="relative rounded-2xl border border-ink/10 bg-card/65 px-8 py-6 text-center text-ink-soft shadow-sm backdrop-blur-sm">

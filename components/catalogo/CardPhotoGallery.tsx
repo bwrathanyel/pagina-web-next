@@ -3,7 +3,17 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
-export function CardPhotoGallery({ fotos, alt }: { fotos: string[]; alt: string }) {
+export function CardPhotoGallery({
+  fotos,
+  alt,
+  referencial = false,
+}: {
+  fotos: string[];
+  alt: string;
+  /** Transparencia: esta foto es generada por IA (el lugar no tenía ninguna
+   * foto real todavía), no una foto del establecimiento. Nunca se oculta. */
+  referencial?: boolean;
+}) {
   const [activa, setActiva] = useState(0);
   const [hoverActivo, setHoverActivo] = useState(false);
   const toque = useRef<{ x: number; y: number } | null>(null);
@@ -59,13 +69,19 @@ export function CardPhotoGallery({ fotos, alt }: { fotos: string[]; alt: string 
           sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
           priority={indice === 0}
           className={
-            "object-cover transition-[opacity,transform] duration-500 ease-out " +
+            "object-fill transition-[opacity,transform] duration-500 ease-out " +
             (indice === activa
               ? "scale-100 opacity-100"
               : "pointer-events-none scale-[1.015] opacity-0")
           }
         />
       ))}
+
+      {referencial ? (
+        <span className="absolute bottom-3 left-3 z-10 rounded-lg bg-dusk/80 px-2 py-1 font-mono text-[0.6rem] font-bold uppercase tracking-[0.06em] text-dusk-text backdrop-blur-sm">
+          Imagen referencial
+        </span>
+      ) : null}
 
       {fotos.length > 1 ? (
         <>

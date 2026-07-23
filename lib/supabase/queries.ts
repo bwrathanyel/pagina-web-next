@@ -27,12 +27,12 @@ function promoConDestinoPublico(promo: Promocion): Promocion {
 export const PRODUCTO_SELECT =
   "id,tipo,nombre,destino,descripcion,requisitos," +
   "tarifas(precio_texto,precio_desde_usd,vigencia_texto,vigente)," +
-  "producto_fotos(id,storage_path,orden,es_principal,activo,width,height)";
+  "producto_fotos(id,storage_path,orden,es_principal,activo,width,height,origen)";
 
 export const PROMOCION_SELECT =
   "id,titulo,precio_texto,precio_desde_usd,vigencia_texto,fecha_fin_estimada,ninos_gratis_cantidad,incluye_tags," +
-  "producto:productos(id,tipo,nombre,destino,producto_fotos(id,storage_path,orden,es_principal,activo))," +
-  "promocion_fotos(id,storage_path,orden,es_principal,activo,width,height)";
+  "producto:productos(id,tipo,nombre,destino,producto_fotos(id,storage_path,orden,es_principal,activo,origen))," +
+  "promocion_fotos(id,storage_path,orden,es_principal,activo,width,height,origen)";
 
 export async function getProductosPorTipo(tipo: ProductoTipo): Promise<Producto[]> {
   const sb = supabaseServer();
