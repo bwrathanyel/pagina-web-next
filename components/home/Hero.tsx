@@ -15,11 +15,57 @@ export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
   const secondaryHref = hero.secondaryHref;
 
   return (
-    <section className="relative overflow-hidden px-5 pb-16 pt-10 md:pb-24 md:pt-16">
+    <section className="relative overflow-hidden px-5 pb-8 pt-6 md:pb-24 md:pt-16">
+      {/* Hero card mobile-only -- versión "app" pedida en el rediseño (foto
+          full-bleed + gradiente + pill + CTA). Desktop mantiene el layout
+          original (círculo + badges flotantes) sin tocar. */}
+      <div className="relative mb-2 h-[300px] overflow-hidden rounded-[28px] bg-sand-2 lg:hidden">
+        {heroImage ? (
+          <Image src={heroImage} alt={fotoPrincipal?.alt ?? "Experiencia de viaje"} fill sizes="100vw" className="object-cover" priority />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-seafoam via-dusk-2 to-dusk" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-dusk/90 via-dusk/25 to-transparent" />
+        <p className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full bg-black/25 px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-white backdrop-blur-md">
+          <span className="h-1.5 w-1.5 rounded-full bg-coral-bright" aria-hidden="true" />
+          <EditableText path="home.hero.eyebrow" />
+        </p>
+        <div className="absolute inset-x-4 bottom-4">
+          <h1 className="max-w-[14ch] text-balance font-display text-[34px] font-semibold leading-[0.98] text-white">
+            <EditableText path="home.hero.title" />{" "}
+            <EditableText path="home.hero.accent" className="text-coral-bright" />
+          </h1>
+          <div className="mt-4 flex items-center gap-2">
+            <Link href={hero.primaryHref} className="flex min-h-11 flex-1 items-center justify-center rounded-full bg-coral px-5 text-sm font-semibold text-white">
+              {hero.primaryLabel}
+            </Link>
+            {esWhatsapp ? (
+              <WhatsAppLeadButton
+                mensajeBase="Hola! Vengo de su página web y quiero planificar mi próximo viaje."
+                triggerAriaLabel={hero.secondaryLabel}
+                triggerClassName="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-md"
+              >
+                <span aria-hidden="true">↗</span>
+              </WhatsAppLeadButton>
+            ) : (
+              <a
+                href={secondaryHref}
+                target={secondaryHref.startsWith("http") ? "_blank" : undefined}
+                rel={secondaryHref.startsWith("http") ? "noopener noreferrer" : undefined}
+                aria-label={hero.secondaryLabel}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-md"
+              >
+                <span aria-hidden="true">↗</span>
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+
       <div className="pointer-events-none absolute -left-28 top-20 h-72 w-72 rounded-full bg-coral/10 blur-3xl" />
       <div className="pointer-events-none absolute -right-24 bottom-8 h-80 w-80 rounded-full bg-gold/15 blur-3xl" />
 
-      <div className="relative mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[1.15fr_.85fr] lg:gap-20">
+      <div className="relative mx-auto hidden max-w-6xl items-center gap-12 lg:grid lg:grid-cols-[1.15fr_.85fr] lg:gap-20">
         <div className="text-center lg:text-left">
           <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-ink/10 bg-card px-4 py-2 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-ink-soft shadow-sm">
             <span className="h-2 w-2 rounded-full bg-coral" aria-hidden="true" />

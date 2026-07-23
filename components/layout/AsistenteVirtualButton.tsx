@@ -10,7 +10,7 @@ export function AsistenteVirtualButton() {
     <>
       <nav aria-label="Asistente virtual">
         <div
-          className="fixed bottom-24 right-5 z-40"
+          className="fixed bottom-40 right-5 z-40 lg:bottom-24"
           style={{
             marginBottom: "env(safe-area-inset-bottom)",
             marginRight: "env(safe-area-inset-right)",

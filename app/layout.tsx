@@ -4,6 +4,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { WhatsAppFloatButton } from "@/components/layout/WhatsAppFloatButton";
 import { AsistenteVirtualButton } from "@/components/layout/AsistenteVirtualButton";
+import { BottomTabBar } from "@/components/layout/BottomTabBar";
 import { jsonLdScript, buildTravelAgencyJsonLd } from "@/lib/seo/jsonld";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
@@ -121,11 +122,14 @@ export default async function RootLayout({
           <AuthProvider>
             <SiteContentProvider initialContent={siteContent}>
               <Navbar />
-              <div className="flex-1">{children}</div>
-              <Footer />
+              <div className="flex flex-1 flex-col pb-20 lg:pb-0">
+                <div className="flex-1">{children}</div>
+                <Footer />
+              </div>
               <WhatsAppFloatButton />
               <AsistenteVirtualButton />
               <AdminEditToggle />
+              <BottomTabBar />
             </SiteContentProvider>
           </AuthProvider>
         </ThemeProvider>

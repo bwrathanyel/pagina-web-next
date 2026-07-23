@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { EditableText } from "@/components/admin/EditableText";
 import { PromocionCard } from "@/components/catalogo/PromocionCard";
-import { CatalogoGrid } from "@/components/catalogo/CatalogoGrid";
 import { DestinoChips } from "@/components/catalogo/DestinoChips";
 import { destinosDelPool } from "@/lib/promociones/hotSales";
 import type { Promocion } from "@/types/supabase";
@@ -57,11 +56,13 @@ export function HotSalesSection({ pool }: { pool: Promocion[] }) {
         }}
       />
 
-      <CatalogoGrid>
+      <div className="-mx-5 flex gap-4 overflow-x-auto px-5 pb-1 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-7 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3">
         {visible.map((p) => (
-          <PromocionCard key={p.id} promocion={p} />
+          <div key={p.id} className="w-[70vw] max-w-[258px] shrink-0 snap-start sm:w-auto sm:max-w-none">
+            <PromocionCard promocion={p} />
+          </div>
         ))}
-      </CatalogoGrid>
+      </div>
 
       {visibles < filtradas.length && (
         <div className="mt-8 flex justify-center">

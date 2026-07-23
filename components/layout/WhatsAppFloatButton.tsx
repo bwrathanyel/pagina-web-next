@@ -4,7 +4,7 @@ export function WhatsAppFloatButton() {
   return (
     <nav aria-label="Contacto rápido">
       <div
-        className="fixed bottom-5 right-5 z-40"
+        className="fixed bottom-24 right-5 z-40 lg:bottom-5"
         style={{
           marginBottom: "env(safe-area-inset-bottom)",
           marginRight: "env(safe-area-inset-right)",
