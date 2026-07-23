@@ -87,8 +87,19 @@ export default function CarritoPage() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-5 py-10">
-      <h1 className="mb-6 font-display text-3xl font-semibold text-ink">Tu carrito</h1>
+    <main className="mx-auto max-w-2xl px-5 py-10 pb-28 lg:pb-10">
+      <div className="mb-6 flex items-center gap-3">
+        <Link
+          href="/cuenta"
+          aria-label="Volver a mi cuenta"
+          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-ink/10 text-ink"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 19l-7-7 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </Link>
+        <h1 className="font-display text-3xl font-semibold text-ink">Tu carrito</h1>
+      </div>
 
       <ul className="mb-8 flex flex-col gap-3">
         {items.map((item) => (
@@ -162,10 +173,20 @@ export default function CarritoPage() {
         <button
           type="submit"
           disabled={enviando}
-          className="min-h-11 rounded-full bg-gradient-to-br from-coral to-gold px-4 font-semibold text-btn-ink disabled:opacity-60"
+          className="hidden min-h-11 rounded-full bg-gradient-to-br from-coral to-gold px-4 font-semibold text-btn-ink disabled:opacity-60 lg:block"
         >
           {enviando ? "Enviando…" : "Enviar solicitud"}
         </button>
+
+        <div className="fixed inset-x-0 bottom-24 z-30 border-t border-ink/10 bg-card/95 px-5 py-3 backdrop-blur-lg lg:hidden">
+          <button
+            type="submit"
+            disabled={enviando}
+            className="flex min-h-12 w-full items-center justify-center rounded-full bg-gradient-to-br from-coral to-gold px-4 font-bold text-btn-ink disabled:opacity-60"
+          >
+            {enviando ? "Enviando…" : "Enviar solicitud"}
+          </button>
+        </div>
       </form>
     </main>
   );
