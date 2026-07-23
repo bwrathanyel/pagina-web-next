@@ -164,25 +164,63 @@ export function CotizadorWizard({
         </p>
       ) : null}
 
-      <div className="mt-6 flex gap-3">
-        {pasoActual > 0 ? (
-          <button
-            type="button"
-            onClick={() => setPasoActual((p) => p - 1)}
-            className="min-h-11 flex-1 rounded-full border border-ink/20 px-4 font-semibold text-ink"
-          >
-            Atrás
-          </button>
-        ) : null}
-        <button
-          type="button"
-          disabled={faltanRequeridos}
-          onClick={() => (esUltimo ? enviar() : setPasoActual((p) => p + 1))}
-          className="min-h-11 flex-1 rounded-full bg-gradient-to-br from-coral to-gold px-4 font-semibold text-btn-ink disabled:opacity-40"
-        >
-          {esUltimo ? "Enviar" : "Siguiente"}
-        </button>
+      {/* Desktop: botones inline, igual que siempre. Mobile: mismos botones
+          pero en barra sticky arriba del bottom tab bar, así en pasos largos
+          (ej. hospedaje con amenidades) no hay que scrollear para avanzar. */}
+      <div className="mt-6 hidden gap-3 lg:flex">
+        <BotonesWizard
+          pasoActual={pasoActual}
+          esUltimo={esUltimo}
+          faltanRequeridos={faltanRequeridos}
+          onAtras={() => setPasoActual((p) => p - 1)}
+          onSiguiente={() => (esUltimo ? enviar() : setPasoActual((p) => p + 1))}
+        />
+      </div>
+      <div className="fixed inset-x-0 bottom-24 z-30 flex gap-3 border-t border-ink/10 bg-card/95 px-5 py-3 backdrop-blur-lg lg:hidden">
+        <BotonesWizard
+          pasoActual={pasoActual}
+          esUltimo={esUltimo}
+          faltanRequeridos={faltanRequeridos}
+          onAtras={() => setPasoActual((p) => p - 1)}
+          onSiguiente={() => (esUltimo ? enviar() : setPasoActual((p) => p + 1))}
+        />
       </div>
     </div>
+  );
+}
+
+function BotonesWizard({
+  pasoActual,
+  esUltimo,
+  faltanRequeridos,
+  onAtras,
+  onSiguiente,
+}: {
+  pasoActual: number;
+  esUltimo: boolean;
+  faltanRequeridos: boolean;
+  onAtras: () => void;
+  onSiguiente: () => void;
+}) {
+  return (
+    <>
+      {pasoActual > 0 ? (
+        <button
+          type="button"
+          onClick={onAtras}
+          className="min-h-11 flex-1 rounded-full border border-ink/20 px-4 font-semibold text-ink"
+        >
+          Atrás
+        </button>
+      ) : null}
+      <button
+        type="button"
+        disabled={faltanRequeridos}
+        onClick={onSiguiente}
+        className="min-h-11 flex-1 rounded-full bg-gradient-to-br from-coral to-gold px-4 font-semibold text-btn-ink disabled:opacity-40"
+      >
+        {esUltimo ? "Enviar" : "Siguiente"}
+      </button>
+    </>
   );
 }

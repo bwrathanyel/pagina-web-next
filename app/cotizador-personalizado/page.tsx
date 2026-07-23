@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function CotizadorPersonalizadoPage() {
   return (
-    <main className="mx-auto max-w-xl px-5 py-10">
+    <main className="mx-auto max-w-xl px-5 py-10 pb-28 lg:pb-10">
       <div className="mb-6 text-center">
         <p className="mb-1 font-mono text-xs uppercase tracking-wide text-coral">A tu medida</p>
         <h1 className="font-display text-3xl font-semibold text-ink">Cotizador Personalizado</h1>

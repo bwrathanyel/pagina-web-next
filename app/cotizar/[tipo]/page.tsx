@@ -75,7 +75,7 @@ export default async function CotizarPage({
   const producto = productoId ? await getProductoPorId(Number(productoId)) : null;
 
   return (
-    <main className="mx-auto max-w-xl px-5 py-10">
+    <main className="mx-auto max-w-xl px-5 py-10 pb-28 lg:pb-10">
       {producto ? (
         <p className="mb-4 rounded-xl bg-seafoam-bg px-4 py-2.5 text-sm text-seafoam-text">
           Cotizando para <strong>{producto.nombre}</strong>
