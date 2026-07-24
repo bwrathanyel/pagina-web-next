@@ -14,8 +14,17 @@ export function Navbar() {
 
   const esActiva = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
+  // El pill (logo+wordmark+campana+carrito) solo tiene sentido en Home dentro
+  // del diseño mobile "app-like": el resto de pantallas tiene su propio header.
+  // En desktop (lg+) se mantiene en TODAS las rutas como hasta ahora.
+  const esHome = pathname === "/";
+
   return (
-    <header className="sticky top-0 z-30 px-4 pt-4">
+    <header
+      className={
+        "sticky top-0 z-30 px-4 pt-4 " + (esHome ? "" : "hidden lg:block")
+      }
+    >
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 rounded-full border border-ink/10 bg-card/90 px-3 py-2 shadow-[0_12px_35px_rgba(36,31,26,.10)] backdrop-blur-xl sm:gap-4 sm:px-4 lg:px-5">
         <Link href="/" className="flex min-w-0 items-center gap-2.5">
           <BrandMark priority />

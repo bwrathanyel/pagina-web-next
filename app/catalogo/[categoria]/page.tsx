@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { CategoriaTabs } from "@/components/catalogo/CategoriaTabs";
 import { CatalogHeader } from "@/components/catalogo/CatalogHeader";
+import { CatalogoMobileHeader } from "@/components/catalogo/CatalogoMobileHeader";
 import { CatalogoGrid } from "@/components/catalogo/CatalogoGrid";
 import { ProductoCard } from "@/components/catalogo/ProductoCard";
 import { PromocionCard } from "@/components/catalogo/PromocionCard";
@@ -106,14 +107,18 @@ export default async function CatalogoPage({
           dangerouslySetInnerHTML={jsonLdScript(buildItemListJsonLd(itemList))}
         />
       ) : null}
-      <CatalogHeader
-        categoria={categoria}
-        label={SEO_POR_CATEGORIA[categoria].heading}
-        count={items.length}
-      />
+      <CatalogoMobileHeader activa={categoria} />
 
-      <div className="mb-10">
-        <CategoriaTabs activa={categoria} />
+      <div className="hidden lg:block">
+        <CatalogHeader
+          categoria={categoria}
+          label={SEO_POR_CATEGORIA[categoria].heading}
+          count={items.length}
+        />
+
+        <div className="mb-10">
+          <CategoriaTabs activa={categoria} />
+        </div>
       </div>
 
       {items.length === 0 ? (

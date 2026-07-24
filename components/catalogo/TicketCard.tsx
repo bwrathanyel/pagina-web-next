@@ -83,7 +83,7 @@ export function TicketCard({
       }
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-sand-2">
-        <span className="absolute left-4 top-4 z-10 rounded-lg border border-white/15 bg-dusk/90 px-3 py-1.5 font-mono text-[0.66rem] font-bold uppercase tracking-[0.12em] text-dusk-text shadow-sm backdrop-blur-sm">
+        <span className="absolute left-3 top-3 z-10 rounded-full border border-white/15 bg-dusk/90 px-3 py-1.5 font-mono text-[0.62rem] font-bold uppercase tracking-[0.1em] text-dusk-text shadow-sm backdrop-blur-sm">
           {badge}
         </span>
         {onToggleFavorito ? (
@@ -93,7 +93,7 @@ export function TicketCard({
             aria-label={favorito ? `Quitar ${nombre} de favoritos` : `Guardar ${nombre} en favoritos`}
             aria-pressed={favorito === true}
             className={
-              "absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-dusk/90 shadow-sm backdrop-blur-sm transition hover:scale-105 " +
+              "absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-dusk/90 shadow-sm backdrop-blur-sm transition hover:scale-105 " +
               (favorito ? "text-coral-bright" : "text-dusk-text")
             }
           >
@@ -116,13 +116,13 @@ export function TicketCard({
         )}
       </div>
 
-      <div className="flex flex-1 flex-col px-5 pb-5 pt-5 sm:px-6 sm:pb-6">
+      <div className="flex flex-1 flex-col px-4 pb-4 pt-4 sm:px-5 sm:pb-5">
         {destino ? (
-          <p className="mb-2 font-mono text-[0.68rem] font-bold uppercase tracking-[0.13em] text-coral">
+          <p className="mb-1.5 font-mono text-[0.66rem] font-bold uppercase tracking-[0.12em] text-coral">
             {destino}
           </p>
         ) : null}
-        <h3 className="font-body text-lg font-bold leading-snug text-ink">
+        <h3 className="font-body text-base font-bold leading-snug text-ink sm:text-lg">
           {href ? (
             <Link href={href} className="transition-colors hover:text-coral">
               {nombre}
@@ -132,45 +132,32 @@ export function TicketCard({
           )}
         </h3>
 
-        <div
+        <p
           className={
-            "mb-5 mt-4 rounded-xl border px-4 py-3 " +
-            (precioMuted
-              ? "border-seafoam/20 bg-seafoam-bg text-seafoam-text"
-              : "border-coral/20 bg-coral/10 text-ink")
+            "mt-2 text-sm font-bold leading-snug " +
+            (precioMuted ? "text-ink-soft" : "text-ink")
           }
         >
-          <p className="mb-1 font-mono text-[0.62rem] font-bold uppercase tracking-[0.12em]">
-            {precioMuted ? "Disponibilidad" : "Tarifa referencial"}
+          {precioLabel}
+        </p>
+        {vigenciaLabel ? (
+          <p className="mt-1 text-xs text-ink-soft">{vigenciaLabel}</p>
+        ) : null}
+        {ninosGratis && ninosGratis > 0 ? (
+          <p className="mt-0.5 text-xs text-ink-soft">
+            {ninosGratis} {ninosGratis === 1 ? "niño gratis" : "niños gratis"}
           </p>
-          <p className="text-sm font-bold leading-snug">{precioLabel}</p>
-          {vigenciaLabel !== undefined || ninosGratis !== undefined ? (
-            <dl className="mt-3 grid gap-2 border-t border-current/15 pt-3 text-xs">
-              <div className="flex items-start justify-between gap-3">
-                <dt className="font-mono font-bold uppercase tracking-[0.08em]">Vigencia</dt>
-                <dd className="max-w-[68%] text-right font-bold leading-5">{vigenciaLabel || "Consultar vigencia"}</dd>
-              </div>
-              <div className="flex items-start justify-between gap-3">
-                <dt className="font-mono font-bold uppercase tracking-[0.08em]">Niños gratis</dt>
-                <dd className="max-w-[68%] text-right font-bold leading-5">
-                  {ninosGratis && ninosGratis > 0
-                    ? `${ninosGratis} ${ninosGratis === 1 ? "niño" : "niños"}`
-                    : "No indicado"}
-                </dd>
-              </div>
-            </dl>
-          ) : null}
-        </div>
+        ) : null}
 
-        <div className="mt-auto flex gap-2">
-          {href ? (
-            <Link
-              href={href}
-              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-ink/20 px-3 text-sm font-bold text-ink transition hover:border-ink hover:bg-ink hover:text-card"
-            >
-              Ver detalles
-            </Link>
-          ) : null}
+        <div className="mt-4 flex gap-2">
+          <Link
+            href={cotizarHref}
+            aria-label={`Ver y cotizar ${nombre}`}
+            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full bg-coral px-4 text-sm font-bold text-white transition hover:brightness-95"
+          >
+            <span>Ver y cotizar</span>
+            <span aria-hidden="true">↗</span>
+          </Link>
           {onToggleCarrito ? (
             <button
               type="button"
@@ -178,7 +165,7 @@ export function TicketCard({
               aria-label={enCarrito ? `Quitar ${nombre} del carrito` : `Añadir ${nombre} al carrito`}
               aria-pressed={enCarrito}
               className={
-                "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border transition " +
+                "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border transition " +
                 (enCarrito
                   ? "border-coral bg-coral/10 text-coral"
                   : "border-ink/20 text-ink hover:border-ink hover:bg-sand-2")
@@ -187,14 +174,6 @@ export function TicketCard({
               <CartIcon />
             </button>
           ) : null}
-          <Link
-            href={cotizarHref}
-            aria-label={`Cotizar ${nombre}`}
-            className="flex h-11 flex-shrink-0 items-center justify-center gap-2 rounded-xl bg-coral px-3.5 text-sm font-bold text-white transition hover:brightness-95"
-          >
-            <span aria-hidden="true">↗</span>
-            <span>Cotizar</span>
-          </Link>
         </div>
 
         {pieAdmin}

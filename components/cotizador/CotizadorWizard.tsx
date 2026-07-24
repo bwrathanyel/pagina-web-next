@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { WIZARD_CONFIG } from "@/components/cotizador/wizardConfig";
 import { CampoRenderer } from "@/components/cotizador/fields/CampoRenderer";
 import type { Respuestas, TipoCotizacion } from "@/components/cotizador/types";
@@ -41,6 +42,7 @@ export function CotizadorWizard({
   tipo: TipoCotizacion;
   productoNombre?: string;
 }) {
+  const router = useRouter();
   const pasos = WIZARD_CONFIG[tipo];
   const [pasoActual, setPasoActual] = useState(0);
   const [respuestas, setRespuestas] = useState<Respuestas>(() => {
@@ -134,9 +136,21 @@ export function CotizadorWizard({
 
   return (
     <div className="rounded-2xl border border-ink/10 bg-card p-6">
-      <p className="mb-1 font-mono text-xs uppercase tracking-wide text-ink-soft">
-        {TITULOS[tipo]} · Paso {pasoActual + 1} de {pasos.length}
-      </p>
+      <div className="mb-1 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => (pasoActual > 0 ? setPasoActual((p) => p - 1) : router.back())}
+          aria-label="Volver"
+          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-ink-soft lg:hidden"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 19l-7-7 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        <p className="font-mono text-xs uppercase tracking-wide text-ink-soft">
+          {TITULOS[tipo]} · Paso {pasoActual + 1} de {pasos.length}
+        </p>
+      </div>
 
       <div className="mb-5 flex items-center gap-1.5" aria-hidden="true">
         {pasos.map((_, i) => (
