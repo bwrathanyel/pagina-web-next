@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import type { NotificacionChat } from "@/lib/notificaciones/useNotificacionesChat";
 
 export function NotificacionesPanel({
@@ -29,7 +30,11 @@ export function NotificacionesPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return (
+  // Portal a document.body -- el header (Navbar) tiene backdrop-blur-xl, que
+  // crea containing block nuevo para descendientes fixed (mismo efecto que
+  // "filter"). Sin portal, este panel quedaba encogido al tamaño del pill
+  // del header en vez de cubrir la pantalla (hallazgo real, 2026-07-23).
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-end bg-black/40 sm:items-center sm:p-4" onClick={cerrar}>
       <div
         className="flex h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl bg-sand sm:h-[85vh] sm:max-w-sm sm:rounded-2xl"
@@ -84,6 +89,7 @@ export function NotificacionesPanel({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
