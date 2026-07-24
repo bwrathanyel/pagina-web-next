@@ -1,7 +1,6 @@
 import { Hero } from "@/components/home/Hero";
 import { CategoriaAvatares } from "@/components/home/CategoriaAvatares";
 import { BuscarAfordancia } from "@/components/home/BuscarAfordancia";
-import { ServiciosGrid } from "@/components/home/ServiciosGrid";
 import { HotSalesSection } from "@/components/home/HotSalesSection";
 import { promosHotSales } from "@/lib/promociones/hotSales";
 import { CategoriasDestacadas } from "@/components/home/CategoriasDestacadas";
@@ -43,10 +42,6 @@ export default async function Home() {
       <HotSalesSection pool={promosHotSales(promociones)} />
 
       <AcompanamientoSection />
-
-      <section className="mx-auto max-w-6xl px-5 py-16 md:py-24">
-        <ServiciosGrid fotoHotel={fotosDe(hoteles[0]?.producto_fotos)[0] ?? null} />
-      </section>
 
       <CategoriasDestacadas fotos={fotosPorCategoria} />
 
