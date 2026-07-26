@@ -13,12 +13,6 @@ export interface ServiceCardContent {
   image: string;
 }
 
-export interface ProcessStepContent {
-  number: string;
-  title: string;
-  description: string;
-}
-
 export interface SiteContent {
   brand: {
     name: string;
@@ -71,15 +65,6 @@ export interface SiteContent {
     };
     promotions: { eyebrow: string; title: string };
     hotSales: { eyebrow: string; title: string };
-    process: {
-      eyebrow: string;
-      title: string;
-      description: string;
-      ctaLabel: string;
-      ctaHref: string;
-      steps: ProcessStepContent[];
-    };
-    categories: { eyebrow: string; title: string };
     corporate: {
       eyebrow: string;
       title: string;

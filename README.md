@@ -36,6 +36,8 @@ Crear `.env.local` solo en el entorno local. Nunca versionar sus valores.
 | `NEXT_PUBLIC_SITE_URL` | URL canónica, sitemap, robots y JSON-LD |
 | `NEXT_PUBLIC_WHATSAPP_CORPORATIVO` | Contacto corporativo mostrado al cliente |
 | `INGEST_LEAD_URL` | Backend server-side que recibe solicitudes de leads |
+| `POSTULAR_EMPLEO_URL` | Backend server-side que recibe postulaciones de "Trabaja con nosotros" |
+| `ENTREVISTA_EMPLEO_URL` | Backend de la IA entrevistadora de "Trabaja con nosotros" (usa el mismo `WEB_CHAT_API_KEY` como secreto) |
 
 ## Desarrollo y validación
 

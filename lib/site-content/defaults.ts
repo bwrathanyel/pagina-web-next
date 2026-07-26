@@ -23,6 +23,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       { id: "hoteles", label: "Hoteles", href: "/catalogo/hoteles", visible: true },
       { id: "paquetes", label: "Paquetes", href: "/catalogo/paquetes", visible: true },
       { id: "guias", label: "Guías / Tours", href: "/catalogo/guias-tours", visible: true },
+      { id: "empleo", label: "Trabaja con nosotros", href: "/trabaja-con-nosotros", visible: true },
     ],
     quoteLabel: "Cotizar",
     quoteHref: "/cotizador-personalizado",
@@ -67,19 +68,6 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     },
     promotions: { eyebrow: "Oportunidades para escapar", title: "Tu próxima aventura puede empezar hoy." },
     hotSales: { eyebrow: "🔥 Ofertas imperdibles", title: "Las mejores promociones, en un solo lugar." },
-    process: {
-      eyebrow: "Así te acompañamos",
-      title: "Menos vueltas. Más ganas de viajar.",
-      description: "La tecnología ordena el proceso; las decisiones importantes siguen siendo humanas.",
-      ctaLabel: "Empezar mi cotización",
-      ctaHref: "/cotizador-personalizado",
-      steps: [
-        { number: "01", title: "Cuéntanos qué imaginas", description: "Destino, fechas, personas y el tipo de experiencia que buscas. Solo lo esencial para empezar." },
-        { number: "02", title: "Diseñamos opciones contigo", description: "Un asesor revisa tu idea, aclara dudas y organiza alternativas que puedas comparar con calma." },
-        { number: "03", title: "Viaja acompañado", description: "Confirmas cuando estés listo y mantienes un contacto humano antes, durante y después del viaje." },
-      ],
-    },
-    categories: { eyebrow: "Encuentra tu manera de viajar", title: "Experiencias pensadas para ti." },
     corporate: {
       eyebrow: "Viajes y eventos corporativos",
       title: "Grandes experiencias para grandes equipos.",

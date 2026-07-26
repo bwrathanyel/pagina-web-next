@@ -3,10 +3,9 @@ import { CategoriaAvatares } from "@/components/home/CategoriaAvatares";
 import { BuscarAfordancia } from "@/components/home/BuscarAfordancia";
 import { HotSalesSection } from "@/components/home/HotSalesSection";
 import { promosHotSales } from "@/lib/promociones/hotSales";
-import { CategoriasDestacadas } from "@/components/home/CategoriasDestacadas";
 import { PlanesCorporativos } from "@/components/home/PlanesCorporativos";
-import { ComoFunciona } from "@/components/home/ComoFunciona";
 import { AcompanamientoSection } from "@/components/home/AcompanamientoSection";
+import { TrabajaConNosotrosBanner } from "@/components/home/TrabajaConNosotrosBanner";
 import { fotosDe } from "@/lib/supabase/fotos";
 import { getProductosPorCategoria, getPromociones } from "@/lib/supabase/queries";
 import type { Categoria } from "@/types/supabase";
@@ -43,9 +42,7 @@ export default async function Home() {
 
       <AcompanamientoSection />
 
-      <CategoriasDestacadas fotos={fotosPorCategoria} />
-
-      <ComoFunciona />
+      <TrabajaConNosotrosBanner />
 
       <PlanesCorporativos />
     </main>

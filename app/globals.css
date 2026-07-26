@@ -9,9 +9,13 @@
   --color-dusk-text: #eaf1ef;
   --color-dusk-text-soft: #a9bfbc;
 
-  --color-sand: #fbf3e7;
-  --color-sand-2: #f1e5d2;
-  --color-card: #fffdf8;
+  /* Claro "mate" (pedido del dueño, 2026-07-26): antes card era #fffdf8, casi
+     blanco puro -- deslumbraba en pantallas brillantes. Se bajó el brillo y se
+     desaturó apenas, manteniendo el crema cálido de marca. El contraste de
+     coral (#A83E00) sobre sand queda en ~5.5:1, sigue pasando AA. */
+  --color-sand: #f5f0e7;
+  --color-sand-2: #e9e2d5;
+  --color-card: #fcf8f1;
 
   /* Ajustado 2026-07-22 para que coincida con el naranja real del logo
      (muestreado del PNG: #FC7300 arriba del degradé) -- antes era un tono
@@ -39,19 +43,12 @@
 
 /* Dark mode: only the light "sand/card/ink" surfaces invert. Dusk sections
    and accent colors (coral/gold/seafoam/whatsapp) are already dark-safe and
-   stay fixed — matches the approved brand direction, not a naive invert. */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-sand: #1a1611;
-    --color-sand-2: #241f18;
-    --color-card: #221d17;
-    --color-seafoam-bg: #1c332f;
-    --color-seafoam-text: #8fd4c9;
-    --color-ink: #f3ebe0;
-    --color-ink-soft: #b8ab9a;
-  }
-}
-
+   stay fixed — matches the approved brand direction, not a naive invert.
+   Se aplica SOLO por data-theme="dark" explícito: desde 2026-07-26 el modo
+   por defecto del sitio es claro (pedido del dueño), así que ya no hay un
+   override por `prefers-color-scheme` -- con ese media query, un visitante
+   con el sistema en oscuro veía el sitio oscuro antes de que corriera el
+   script de next-themes, y también con JS desactivado. */
 :root[data-theme="dark"] {
   --color-sand: #1a1611;
   --color-sand-2: #241f18;
@@ -63,9 +60,9 @@
 }
 
 :root[data-theme="light"] {
-  --color-sand: #fbf3e7;
-  --color-sand-2: #f1e5d2;
-  --color-card: #fffdf8;
+  --color-sand: #f5f0e7;
+  --color-sand-2: #e9e2d5;
+  --color-card: #fcf8f1;
   --color-seafoam-bg: #e4eeec;
   --color-seafoam-text: #255954;
   --color-ink: #241f1a;

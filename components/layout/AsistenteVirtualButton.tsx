@@ -12,6 +12,10 @@ export function AsistenteVirtualButton() {
   const [mostrarTip, setMostrarTip] = useState(false);
   const pathname = usePathname();
   const conFooterSticky = tieneFooterStickyPropio(pathname);
+  // En "Trabaja con nosotros" ya vive la entrevista de RRHH (EntrevistaIA):
+  // dos chats de "Lotus" en la misma pantalla, uno de viajes y otro de
+  // empleo, confunden a quien entra buscando trabajo.
+  const ocultarEnEstaRuta = pathname?.startsWith("/trabaja-con-nosotros") ?? false;
 
   // La mayoría no entendía que el botón abre una IA con la que se puede
   // cotizar el viaje entero charlando -- pedido del dueño (2026-07-26): globo
@@ -25,14 +29,14 @@ export function AsistenteVirtualButton() {
     } catch {
       // sessionStorage bloqueado -- se muestra igual, no es crítico
     }
-    if (yaVisto) return;
+    if (yaVisto || ocultarEnEstaRuta) return;
     const aparece = setTimeout(() => setMostrarTip(true), 2200);
     const desaparece = setTimeout(() => setMostrarTip(false), 9000);
     return () => {
       clearTimeout(aparece);
       clearTimeout(desaparece);
     };
-  }, []);
+  }, [ocultarEnEstaRuta]);
 
   function ocultarTip() {
     setMostrarTip(false);
@@ -42,6 +46,8 @@ export function AsistenteVirtualButton() {
       // sessionStorage bloqueado -- no pasa nada, solo puede reaparecer
     }
   }
+
+  if (ocultarEnEstaRuta) return null;
 
   return (
     <>
