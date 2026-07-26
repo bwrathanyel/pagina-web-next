@@ -261,13 +261,14 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-end bg-black/40 sm:items-center sm:p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 sm:flex sm:items-center sm:justify-center sm:bg-black/40 sm:p-4" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Lotus, tu asistente virtual para tus viajes"
         onClick={(e) => e.stopPropagation()}
-        className="flex h-[92vh] w-full flex-col rounded-t-2xl bg-card shadow-2xl sm:h-[640px] sm:max-w-sm sm:rounded-2xl"
+        className="fixed bottom-24 right-4 z-50 flex h-[70vh] max-h-[600px] w-[90vw] max-w-[360px] flex-col overflow-hidden rounded-2xl bg-card shadow-2xl ring-1 ring-black/10 sm:static sm:h-[640px] sm:w-full sm:max-w-sm sm:ring-0"
+        style={{ marginBottom: "env(safe-area-inset-bottom)", marginRight: "env(safe-area-inset-right)" }}
       >
         <div className="flex items-center justify-between rounded-t-2xl bg-seafoam px-4 py-3 text-white">
           <div>
