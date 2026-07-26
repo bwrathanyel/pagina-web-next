@@ -15,13 +15,32 @@ interface Mensaje {
   opcion_precio?: string | null;
 }
 
-function obtenerSessionId(): string {
-  let id = localStorage.getItem(SESSION_KEY);
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem(SESSION_KEY, id);
+// crypto.randomUUID() no existe en algunos navegadores embebidos (in-app
+// browser de Instagram/Facebook con motor viejo) -- ahí tiraba un TypeError
+// sin capturar dentro de un useEffect, que React escala directo al error
+// boundary y muestra "Something went wrong" / recargar página apenas alguien
+// tocaba el botón de la IA (hallazgo real, 2026-07-26). Mismo in-app browser
+// a veces bloquea localStorage.setItem -- todo el bloque va con try/catch.
+function idAleatorio(): string {
+  try {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  } catch {
+    // sigue abajo con el fallback
   }
-  return id;
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+function obtenerSessionId(): string {
+  try {
+    let id = localStorage.getItem(SESSION_KEY);
+    if (!id) {
+      id = idAleatorio();
+      localStorage.setItem(SESSION_KEY, id);
+    }
+    return id;
+  } catch {
+    // localStorage bloqueado -- el chat funciona igual, solo no persiste la sesión entre recargas
+    return idAleatorio();
+  }
 }
 
 function distancia(a: Touch, b: Touch): number {
@@ -159,13 +178,17 @@ const MENSAJE_BIENVENIDA: Mensaje = {
 // nunca durante hidratación -- así que leer localStorage en el init de
 // useState es seguro acá y evita el setState síncrono dentro de un efecto.
 function historialInicial(): Mensaje[] {
-  const guardado = localStorage.getItem(HISTORIAL_KEY);
-  if (guardado) {
-    try {
-      return JSON.parse(guardado);
-    } catch {
-      // historial corrupto -- arranca de cero, no rompe el chat
+  try {
+    const guardado = localStorage.getItem(HISTORIAL_KEY);
+    if (guardado) {
+      try {
+        return JSON.parse(guardado);
+      } catch {
+        // historial corrupto -- arranca de cero, no rompe el chat
+      }
     }
+  } catch {
+    // localStorage bloqueado (in-app browser restringido) -- arranca de cero
   }
   return [MENSAJE_BIENVENIDA];
 }
@@ -185,7 +208,11 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     if (mensajes.length) {
-      localStorage.setItem(HISTORIAL_KEY, JSON.stringify(mensajes));
+      try {
+        localStorage.setItem(HISTORIAL_KEY, JSON.stringify(mensajes));
+      } catch {
+        // localStorage bloqueado -- no persiste el historial pero el chat sigue andando
+      }
       window.dispatchEvent(new Event(CHAT_ACTUALIZADO_EVENTO));
     }
     listaRef.current?.scrollTo({ top: listaRef.current.scrollHeight, behavior: "smooth" });

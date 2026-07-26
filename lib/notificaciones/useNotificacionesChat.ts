@@ -43,7 +43,12 @@ export function useNotificacionesChat() {
 
   const recalcular = useCallback(() => {
     const ia = leerHistorialIA();
-    const vistas = Number(localStorage.getItem(VISTAS_KEY) ?? "0");
+    let vistas = 0;
+    try {
+      vistas = Number(localStorage.getItem(VISTAS_KEY) ?? "0");
+    } catch {
+      // localStorage bloqueado (in-app browser restringido) -- sigue con 0
+    }
     const lista: NotificacionChat[] = ia
       .map((m, i) => ({
         id: i,
@@ -68,7 +73,11 @@ export function useNotificacionesChat() {
 
   const marcarTodoLeido = useCallback(() => {
     const total = leerHistorialIA().length;
-    localStorage.setItem(VISTAS_KEY, String(total));
+    try {
+      localStorage.setItem(VISTAS_KEY, String(total));
+    } catch {
+      // localStorage bloqueado -- no persiste "leído" pero no rompe nada
+    }
     recalcular();
   }, [recalcular]);
 
