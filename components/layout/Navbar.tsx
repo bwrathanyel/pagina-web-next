@@ -5,12 +5,15 @@ import { usePathname } from "next/navigation";
 import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
 import { HeaderControls } from "@/components/layout/HeaderControls";
 import { BrandMark } from "@/components/layout/BrandMark";
+import { ThemeSwitch } from "@/components/ui/ThemeSwitch";
+import { useHeaderAutoHide } from "@/lib/layout/useHeaderAutoHide";
 import { useSiteContent } from "@/components/providers/SiteContentProvider";
 
 export function Navbar() {
   const pathname = usePathname();
   const { content } = useSiteContent();
   const navItems = content.navigation.items.filter((item) => item.visible);
+  const { visible, propsContenedor } = useHeaderAutoHide();
 
   const esActiva = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
@@ -21,8 +24,14 @@ export function Navbar() {
 
   return (
     <header
+      {...propsContenedor}
       className={
-        "sticky top-0 z-30 px-4 pt-4 " + (esHome ? "" : "hidden lg:block")
+        "sticky top-0 z-30 px-4 pt-4 transition-[opacity,transform] duration-500 ease-out motion-reduce:transition-none " +
+        // Oculto: además de desvanecerse se sube un poco y deja de recibir
+        // clics, si no seguiría tapando el contenido de abajo aunque no se vea.
+        (visible ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-3 opacity-0") +
+        " " +
+        (esHome ? "" : "hidden lg:block")
       }
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 rounded-full border border-ink/10 bg-card/90 px-3 py-2 shadow-[0_12px_35px_rgba(36,31,26,.10)] backdrop-blur-xl sm:gap-4 sm:px-4 lg:px-5">
@@ -62,6 +71,7 @@ export function Navbar() {
           >
             {content.navigation.whatsappLabel}
           </WhatsAppLeadButton>
+          <ThemeSwitch />
           <HeaderControls />
         </nav>
 
@@ -69,7 +79,8 @@ export function Navbar() {
             navegación principal (Inicio/Buscar/Promos/Cotizar/Cuenta), tener
             los dos duplicaba navegación y no pegaba con el diseño app
             (hallazgo real, feedback del dueño 2026-07-23). */}
-        <div className="flex items-center lg:hidden">
+        <div className="flex items-center gap-1.5 lg:hidden">
+          <ThemeSwitch />
           <HeaderControls />
         </div>
       </div>
