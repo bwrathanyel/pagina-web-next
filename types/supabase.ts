@@ -41,6 +41,10 @@ export interface Promocion {
   fecha_fin_estimada: string | null;
   ninos_gratis_cantidad: number | null;
   incluye_tags: string[];
+  /** Descripción corta de largo parejo para las tarjetas, generada una vez por
+   * generar-resumenes-promos y guardada. Nunca trae precios (ver la migración
+   * 20260726180000). */
+  resumen_ia: string | null;
   producto:
     | { id: number; tipo: ProductoTipo; nombre: string; destino: string | null; producto_fotos: Foto[] }
     | null;

@@ -103,6 +103,24 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Crossfade de las fotos rotativas del Hero. Se dispara por el cambio de
+   `key` en el <Image>: React monta un nodo nuevo y la animación corre de cero.
+   Con reduced-motion se muestra directo, sin desvanecido. */
+@keyframes hero-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+/* `forwards` es obligatorio acá: sin fill-mode, si la animación no llega a
+   correr (el bloque mobile está display:none en desktop y viceversa) el
+   elemento se quedaba en opacidad 0 y la foto no aparecía nunca. Con
+   forwards el estado final (visible) queda fijo pase lo que pase. */
+.animate-hero-fade {
+  animation: hero-fade 0.9s ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-hero-fade { animation: none; }
+}
+
 /* Globo de aviso del asistente virtual (AsistenteVirtualButton) */
 @keyframes bounce-in {
   0% { opacity: 0; transform: translateY(10px) scale(0.92); }

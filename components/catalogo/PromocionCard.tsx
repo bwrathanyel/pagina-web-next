@@ -49,6 +49,7 @@ export function PromocionCard({ promocion }: { promocion: Promocion }) {
         fotos={fotos}
         fotosReferenciales={fotosReferenciales}
         cotizarHref={`/cotizar/promocion/${promocion.id}`}
+        resumen={promocion.resumen_ia}
         precioLabel={precioLabel}
         precioMuted={!promocion.precio_texto}
         vigenciaLabel={promocion.vigencia_texto}

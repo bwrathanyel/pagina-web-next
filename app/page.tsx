@@ -3,6 +3,7 @@ import { CategoriaAvatares } from "@/components/home/CategoriaAvatares";
 import { BuscarAfordancia } from "@/components/home/BuscarAfordancia";
 import { HotSalesSection } from "@/components/home/HotSalesSection";
 import { promosHotSales } from "@/lib/promociones/hotSales";
+import { fotosHeroDeHotSales } from "@/lib/promociones/fotosHero";
 import { PlanesCorporativos } from "@/components/home/PlanesCorporativos";
 import { AcompanamientoSection } from "@/components/home/AcompanamientoSection";
 import { TrabajaConNosotrosBanner } from "@/components/home/TrabajaConNosotrosBanner";
@@ -18,7 +19,17 @@ export default async function Home() {
     getPromociones().catch(() => []),
   ]);
 
-  const heroFotos = [hoteles[0], hoteles[1], hoteles[2]]
+  const hotSales = promosHotSales(promociones);
+
+  // Fotos del hero: salen de las Hot Sales vigentes y van rotando (pedido del
+  // dueño, 2026-07-26) -- así la portada muestra lo que de verdad se está
+  // vendiendo ahora, en vez de la misma imagen fija siempre. El filtrado
+  // (descartar flyers, referenciales y fotos chicas) vive en fotosHeroDeHotSales.
+  const heroFotos = fotosHeroDeHotSales(hotSales);
+
+  // Respaldo si todavía no hay Hot Sales con foto propia -- la portada nunca
+  // se queda sin imagen.
+  const heroFallback = [hoteles[0], hoteles[1], hoteles[2]]
     .filter((p): p is NonNullable<typeof p> => Boolean(p))
     .map((p) => ({ url: fotosDe(p.producto_fotos)[0], alt: p.nombre }))
     .filter((f) => f.url);
@@ -32,13 +43,13 @@ export default async function Home() {
 
   return (
     <main>
-      <Hero fotos={heroFotos} />
+      <Hero fotos={heroFotos.length > 0 ? heroFotos : heroFallback} />
 
       <CategoriaAvatares fotos={fotosPorCategoria} />
 
       <BuscarAfordancia />
 
-      <HotSalesSection pool={promosHotSales(promociones)} />
+      <HotSalesSection pool={hotSales} />
 
       <AcompanamientoSection />
 

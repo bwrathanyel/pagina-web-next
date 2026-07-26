@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useCarritoStore } from "@/lib/carrito/store";
@@ -40,11 +40,15 @@ export function HeaderControls({ onNavigate }: { onNavigate?: () => void }) {
   const cantidad = useCarritoStore((s) => s.items.length);
   const { notificaciones, noLeidas, marcarTodoLeido, refrescar } = useNotificacionesChat();
   const [panelAbierto, setPanelAbierto] = useState(false);
+  const campanaRef = useRef<HTMLButtonElement>(null);
 
   return (
     <div className="flex items-center gap-1">
       <button
+        ref={campanaRef}
         type="button"
+        aria-haspopup="dialog"
+        aria-expanded={panelAbierto}
         onClick={() => {
           refrescar();
           setPanelAbierto(true);
@@ -62,6 +66,7 @@ export function HeaderControls({ onNavigate }: { onNavigate?: () => void }) {
           notificaciones={notificaciones}
           onClose={() => setPanelAbierto(false)}
           onMarcarLeido={marcarTodoLeido}
+          anclaRef={campanaRef}
         />
       ) : null}
       <Link

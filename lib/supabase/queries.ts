@@ -30,7 +30,7 @@ export const PRODUCTO_SELECT =
   "producto_fotos(id,storage_path,orden,es_principal,activo,width,height,origen)";
 
 export const PROMOCION_SELECT =
-  "id,titulo,precio_texto,precio_desde_usd,vigencia_texto,fecha_fin_estimada,ninos_gratis_cantidad,incluye_tags," +
+  "id,titulo,precio_texto,precio_desde_usd,vigencia_texto,fecha_fin_estimada,ninos_gratis_cantidad,incluye_tags,resumen_ia," +
   "producto:productos(id,tipo,nombre,destino,producto_fotos(id,storage_path,orden,es_principal,activo,origen))," +
   "promocion_fotos(id,storage_path,orden,es_principal,activo,width,height,origen)";
 

@@ -12,6 +12,10 @@ export interface TicketCardProps {
   // transparencia, nunca se oculta (ver esSoloReferencial en lib/supabase/fotos).
   fotosReferenciales?: boolean;
   cotizarHref: string;
+  /** Descripción corta de largo parejo (promociones.resumen_ia). Se muestra en
+   * un bloque de alto fijo para que todas las tarjetas de una grilla midan
+   * igual y los botones queden a la misma altura. */
+  resumen?: string | null;
   precioLabel: string;
   precioMuted: boolean;
   vigenciaLabel?: string | null;
@@ -62,6 +66,7 @@ export function TicketCard({
   fotos,
   fotosReferenciales = false,
   cotizarHref,
+  resumen,
   precioLabel,
   precioMuted,
   vigenciaLabel,
@@ -116,13 +121,18 @@ export function TicketCard({
         )}
       </div>
 
-      <div className="flex flex-1 flex-col px-4 pb-4 pt-4 sm:px-5 sm:pb-5">
+      {/* Alturas fijas por bloque (título, resumen, precio) para que todas las
+          tarjetas de una grilla midan igual y los botones queden alineados.
+          Sin esto, una promo con precio de 3 líneas empujaba su botón mucho
+          más abajo que la de al lado. El `mt-auto` de los botones remata: si
+          algo igual varía, el sobrante queda arriba de la fila de acciones. */}
+      <div className="flex flex-1 flex-col px-4 pb-4 pt-3.5 sm:px-5 sm:pb-4">
         {destino ? (
-          <p className="mb-1.5 font-mono text-[0.66rem] font-bold uppercase tracking-[0.12em] text-coral">
+          <p className="mb-1 font-mono text-[0.66rem] font-bold uppercase tracking-[0.12em] text-coral">
             {destino}
           </p>
         ) : null}
-        <h3 className="font-body text-base font-bold leading-snug text-ink sm:text-lg">
+        <h3 className="line-clamp-2 min-h-[2.6em] font-body text-[0.95rem] font-bold leading-snug text-ink sm:text-base">
           {href ? (
             <Link href={href} className="transition-colors hover:text-coral">
               {nombre}
@@ -132,24 +142,33 @@ export function TicketCard({
           )}
         </h3>
 
+        {resumen ? (
+          <p className="mt-1.5 line-clamp-3 min-h-[3.9em] text-[0.8rem] leading-[1.3] text-ink-soft">
+            {resumen}
+          </p>
+        ) : null}
+
         <p
           className={
-            "mt-2 text-sm font-bold leading-snug " +
+            "mt-2 line-clamp-2 min-h-[2.5em] text-[0.82rem] font-bold leading-snug " +
             (precioMuted ? "text-ink-soft" : "text-ink")
           }
         >
           {precioLabel}
         </p>
+        {/* Vigencia en UNA línea: es info comercial real (hasta cuándo se
+            vende), pero el texto crudo puede traer dos fechas y romper la
+            altura pareja. La ficha del producto la muestra completa. */}
         {vigenciaLabel ? (
-          <p className="mt-1 text-xs text-ink-soft">{vigenciaLabel}</p>
+          <p className="mt-1 line-clamp-1 text-[0.7rem] text-ink-soft">{vigenciaLabel}</p>
         ) : null}
         {ninosGratis && ninosGratis > 0 ? (
-          <p className="mt-0.5 text-xs text-ink-soft">
+          <p className="mt-0.5 text-[0.7rem] text-ink-soft">
             {ninosGratis} {ninosGratis === 1 ? "niño gratis" : "niños gratis"}
           </p>
         ) : null}
 
-        <div className="mt-4 flex gap-2">
+        <div className="mt-auto flex gap-2 pt-3">
           <Link
             href={cotizarHref}
             aria-label={`Ver y cotizar ${nombre}`}

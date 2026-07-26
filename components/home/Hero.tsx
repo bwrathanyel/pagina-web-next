@@ -1,18 +1,56 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
 import { EditableText } from "@/components/admin/EditableText";
 import { useSiteContent } from "@/components/providers/SiteContentProvider";
 
+const MS_POR_FOTO = 5000;
+
+function barajar<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let k = a.length - 1; k > 0; k--) {
+    const j = Math.floor(Math.random() * (k + 1));
+    [a[k], a[j]] = [a[j], a[k]];
+  }
+  return a;
+}
+
 export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
   const fotoPrincipal = fotos[0];
   const { content } = useSiteContent();
   const hero = content.home.hero;
-  const heroImage = hero.image || fotoPrincipal?.url;
   const esWhatsapp = hero.secondaryHref === "whatsapp";
   const secondaryHref = hero.secondaryHref;
+
+  // Rotación de fotos de Hot Sales (pedido del dueño, 2026-07-26). El orden se
+  // baraja DESPUÉS de montar y el índice arranca en 0: un Math.random() en el
+  // init de useState corre distinto en server y cliente, y React 19 lo marca
+  // como mismatch de hidratación en cada carga (mismo motivo documentado en
+  // HotSalesSection). Si el admin fijó una imagen fija en el contenido
+  // (hero.image), esa manda y no se rota nada.
+  const [orden, setOrden] = useState(fotos);
+  const [i, setI] = useState(0);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setOrden(barajar(fotos));
+    setI(0);
+  }, [fotos]);
+
+  const rotando = !hero.image && orden.length > 1;
+
+  useEffect(() => {
+    if (!rotando) return;
+    const t = setInterval(() => setI((v) => (v + 1) % orden.length), MS_POR_FOTO);
+    return () => clearInterval(t);
+  }, [rotando, orden.length]);
+
+  const actual = hero.image ? null : orden[i] ?? fotoPrincipal;
+  const heroImage = hero.image || actual?.url;
+  const heroAlt = actual?.alt ?? fotoPrincipal?.alt ?? "Experiencia de viaje";
 
   return (
     <section className="relative overflow-hidden px-5 pb-8 pt-6 md:pb-24 md:pt-16">
@@ -21,7 +59,15 @@ export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
           original (círculo + badges flotantes) sin tocar. */}
       <div className="relative mb-2 h-[300px] overflow-hidden rounded-[28px] bg-sand-2 lg:hidden">
         {heroImage ? (
-          <Image src={heroImage} alt={fotoPrincipal?.alt ?? "Experiencia de viaje"} fill sizes="100vw" className="object-cover" priority />
+          <Image
+            key={heroImage}
+            src={heroImage}
+            alt={heroAlt}
+            fill
+            sizes="100vw"
+            className="animate-hero-fade object-cover"
+            priority
+          />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-seafoam via-dusk-2 to-dusk" />
         )}
@@ -30,6 +76,16 @@ export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
           <span className="h-1.5 w-1.5 rounded-full bg-coral-bright" aria-hidden="true" />
           <EditableText path="home.hero.eyebrow" />
         </p>
+        {/* Nombre del alojamiento que se está viendo -- sutil, para que se
+            entienda que la foto es de una promo real y no decorativa. */}
+        {rotando && actual?.alt ? (
+          <p
+            key={actual.alt}
+            className="animate-hero-fade absolute right-4 top-4 max-w-[55%] truncate rounded-full bg-black/35 px-3 py-1.5 text-[11px] font-medium text-white/95 backdrop-blur-md"
+          >
+            {actual.alt}
+          </p>
+        ) : null}
         <div className="absolute inset-x-4 bottom-4">
           <h1 className="max-w-[14ch] text-balance font-display text-[34px] font-semibold leading-[0.98] text-white">
             <EditableText path="home.hero.title" />{" "}
@@ -109,11 +165,27 @@ export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
         <div className="relative mx-auto w-full max-w-[470px]">
           <div className="relative mx-auto aspect-[4/5] w-[82%] overflow-hidden rounded-[999px] border border-ink/10 bg-sand-2 shadow-[0_30px_80px_rgba(36,31,26,.18)]">
             {heroImage ? (
-              <Image src={heroImage} alt={fotoPrincipal?.alt ?? "Experiencia de viaje"} fill sizes="(min-width: 1024px) 36vw, 75vw" className="object-cover" priority />
+              <Image
+                key={heroImage}
+                src={heroImage}
+                alt={heroAlt}
+                fill
+                sizes="(min-width: 1024px) 36vw, 75vw"
+                className="animate-hero-fade object-cover"
+                priority
+              />
             ) : (
               <div className="absolute inset-0 bg-gradient-to-br from-seafoam via-dusk-2 to-dusk" />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-dusk/35 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-dusk/45 via-transparent to-transparent" />
+            {rotando && actual?.alt ? (
+              <p
+                key={actual.alt}
+                className="animate-hero-fade absolute inset-x-6 bottom-6 truncate text-center text-[0.72rem] font-medium tracking-wide text-white/90 drop-shadow-[0_1px_6px_rgba(0,0,0,.7)]"
+              >
+                {actual.alt}
+              </p>
+            ) : null}
           </div>
 
           <div className="absolute -left-1 top-[18%] rounded-2xl border border-white/70 bg-white/85 px-4 py-3 text-left shadow-xl backdrop-blur-md sm:left-0">
