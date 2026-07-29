@@ -13,7 +13,13 @@ export async function POST(request: Request) {
 
   const sessionId = typeof body.session_id === "string" ? body.session_id.trim() : "";
   const mensaje = typeof body.mensaje === "string" ? body.mensaje.trim().slice(0, 2000) : "";
-  if (!sessionId || !mensaje) {
+  // cv_base64/cv_mime son opcionales -- el candidato puede adjuntar su CV con
+  // el botón de clip del chat. La validación de formato/tamaño la hace la
+  // Edge Function (_shared/cv.ts, mismo límite que usa postular-empleo); acá
+  // solo se reenvía tal cual, igual que con ese otro route.
+  const cvBase64 = typeof body.cv_base64 === "string" ? body.cv_base64 : undefined;
+  const cvMime = typeof body.cv_mime === "string" ? body.cv_mime : undefined;
+  if (!sessionId || (!mensaje && !(cvBase64 && cvMime))) {
     return NextResponse.json({ ok: false, error: "datos_invalidos" }, { status: 400 });
   }
 
@@ -28,7 +34,7 @@ export async function POST(request: Request) {
     upstream = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ p_secret: apiKey, session_id: sessionId, mensaje }),
+      body: JSON.stringify({ p_secret: apiKey, session_id: sessionId, mensaje, cv_base64: cvBase64, cv_mime: cvMime }),
       signal: AbortSignal.timeout(60_000),
     });
   } catch (fetchError) {

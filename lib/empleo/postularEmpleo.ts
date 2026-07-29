@@ -1,5 +1,18 @@
 export type ModalidadEmpleo = "presencial" | "freelance";
 
+// Mismo límite y mimes que valida el backend (_shared/cv.ts) -- validar acá
+// primero es solo para dar feedback inmediato, la Edge Function es la
+// frontera real que decide si el archivo se acepta.
+export const CV_MIME_ACEPTADOS = ["application/pdf", "image/jpeg", "image/png"];
+export const CV_LIMITE_BYTES = 5 * 1024 * 1024;
+
+/** null = archivo válido. Si no, el código de error para mostrarle al usuario. */
+export function validarArchivoCV(file: File): "formato" | "tamano" | null {
+  if (!CV_MIME_ACEPTADOS.includes(file.type)) return "formato";
+  if (file.size > CV_LIMITE_BYTES) return "tamano";
+  return null;
+}
+
 export interface PostulacionEmpleo {
   nombre: string;
   telefono: string;

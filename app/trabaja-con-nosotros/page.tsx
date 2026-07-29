@@ -79,8 +79,9 @@ export default function TrabajaConNosotrosPage() {
       </section>
 
       {/* Dos caminos para postularse, a propósito: charlar con la IA (rápido,
-          sin CV) o el formulario de siempre (con CV adjunto). Ambos terminan
-          en la misma tabla postulaciones_empleo del CRM. */}
+          con opción de adjuntar el CV en el chat -- botón de clip) o el
+          formulario de siempre. Ambos terminan en la misma tabla
+          postulaciones_empleo del CRM. */}
       <section className="bg-dusk">
         <div className="mx-auto max-w-2xl px-5 pb-16 md:pb-20">
           <p className="mb-3 font-mono text-xs font-bold uppercase tracking-[0.14em] text-gold">
@@ -90,8 +91,9 @@ export default function TrabajaConNosotrosPage() {
             Postúlate conversando
           </h2>
           <p className="mb-6 text-sm leading-6 text-dusk-text-soft">
-            Cuéntale a nuestra asistente qué buscas y cuál es tu experiencia. Te hace unas preguntas
-            y deja tu postulación registrada al instante, sin llenar formularios.
+            Cuéntale a nuestra asistente qué buscas y cuál es tu experiencia. Te hace unas preguntas,
+            te pide tu CV (puedes adjuntarlo con el botón de clip) y deja tu postulación registrada al
+            instante, sin llenar formularios.
           </p>
           <EntrevistaIA />
         </div>

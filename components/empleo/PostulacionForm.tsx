@@ -2,14 +2,12 @@
 
 import { useState } from "react";
 import type { ModalidadEmpleo } from "@/lib/empleo/postularEmpleo";
-import { archivoABase64, enviarPostulacion } from "@/lib/empleo/postularEmpleo";
+import { archivoABase64, enviarPostulacion, validarArchivoCV } from "@/lib/empleo/postularEmpleo";
 
 const inputClass =
   "mt-1.5 min-h-12 w-full rounded-xl border border-ink/15 bg-sand px-4 text-base text-ink outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/15";
 
 const ROLES_PRESENCIAL = ["Asesor(a) / Ejecutivo(a) de Ventas", "Asistente Administrativo", "Agente de Boletería Aérea"];
-const CV_MIME_ACEPTADOS = ["application/pdf", "image/jpeg", "image/png"];
-const CV_LIMITE_BYTES = 5 * 1024 * 1024;
 
 function telefonoPareceValido(valor: string) {
   if (!/^[+\d\s().-]+$/.test(valor.trim())) return false;
@@ -37,14 +35,9 @@ export function PostulacionForm({ modalidadInicial }: { modalidadInicial: Modali
   function elegirArchivo(file: File | null) {
     setError(null);
     if (!file) { setCv(null); return; }
-    if (!CV_MIME_ACEPTADOS.includes(file.type)) {
-      setError("El CV debe ser PDF, JPG o PNG.");
-      return;
-    }
-    if (file.size > CV_LIMITE_BYTES) {
-      setError("El archivo no puede pesar más de 5MB.");
-      return;
-    }
+    const problema = validarArchivoCV(file);
+    if (problema === "formato") { setError("El CV debe ser PDF, JPG o PNG."); return; }
+    if (problema === "tamano") { setError("El archivo no puede pesar más de 5MB."); return; }
     setCv(file);
   }
 
@@ -77,7 +70,7 @@ export function PostulacionForm({ modalidadInicial }: { modalidadInicial: Modali
         codigo === "cv_muy_grande"
           ? "El CV no puede pesar más de 5MB."
           : codigo === "cv_formato_invalido" || codigo === "cv_invalido"
-            ? "No pudimos procesar el CV -- probá con un PDF, JPG o PNG distinto."
+            ? "No pudimos procesar el CV -- prueba con un PDF, JPG o PNG distinto."
             : codigo === "datos_invalidos"
               ? "Revisa el nombre y el teléfono antes de continuar."
               : "No pudimos enviar tu postulación. Inténtalo nuevamente en un momento.",
