@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { FotoCarousel } from "@/components/catalogo/FotoCarousel";
 import { ProductoInfo } from "@/components/producto/ProductoInfo";
 import { ProductoAccionesOverlay, ProductoFooterMobile } from "@/components/producto/ProductoAccionesMobile";
-import { fotosDe } from "@/lib/supabase/fotos";
+import { fotosDe, fotosDeAncho } from "@/lib/supabase/fotos";
 import { jsonLdScript, buildProductJsonLd, buildBreadcrumbJsonLd } from "@/lib/seo/jsonld";
 import {
   getProductoPorId,
@@ -42,13 +42,13 @@ export async function generateMetadata({
       title,
       description,
       url: `/producto/${producto.id}`,
-      images: fotosDe(producto.producto_fotos).slice(0, 1),
+      images: fotosDeAncho(producto.producto_fotos, 1280).slice(0, 1),
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: fotosDe(producto.producto_fotos).slice(0, 1),
+      images: fotosDeAncho(producto.producto_fotos, 1280).slice(0, 1),
     },
     other: tarifa ? { "product:price:amount": tarifa.precio_texto } : undefined,
   };

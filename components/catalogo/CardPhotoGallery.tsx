@@ -16,6 +16,11 @@ export function CardPhotoGallery({
 }) {
   const [activa, setActiva] = useState(0);
   const [hoverActivo, setHoverActivo] = useState(false);
+  // Las fotos 2..N solo se ven si el usuario pasa el mouse o desliza, pero
+  // montarlas de entrada las descargaba igual (opacity-0 no evita la descarga):
+  // el catálogo bajaba ~4 fotos por card, 12 MB por recorrerlo desde el
+  // teléfono. Se montan al primer gesto, que es cuando recién pueden verse.
+  const [montarTodas, setMontarTodas] = useState(false);
   const toque = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
@@ -38,7 +43,7 @@ export function CardPhotoGallery({
       aria-roledescription="carrusel de fotografías"
       aria-label={`${alt}: foto ${activa + 1} de ${fotos.length}`}
       onPointerEnter={(event) => {
-        if (event.pointerType === "mouse") setHoverActivo(true);
+        if (event.pointerType === "mouse") { setMontarTodas(true); setHoverActivo(true); }
       }}
       onPointerLeave={(event) => {
         if (event.pointerType === "mouse") {
@@ -47,6 +52,7 @@ export function CardPhotoGallery({
         }
       }}
       onTouchStart={(event) => {
+        setMontarTodas(true);
         const punto = event.touches[0];
         toque.current = { x: punto.clientX, y: punto.clientY };
       }}
@@ -60,7 +66,7 @@ export function CardPhotoGallery({
         else if (Math.abs(dx) < 10 && Math.abs(dy) < 10) mover(1);
       }}
     >
-      {fotos.map((foto, indice) => (
+      {(montarTodas ? fotos : fotos.slice(0, 1)).map((foto, indice) => (
         <Image
           key={foto}
           src={foto}

@@ -1,4 +1,5 @@
 import type { Foto } from "@/types/supabase";
+import { fotoDerivada, type AnchoDerivado } from "./imageLoader";
 
 const FOTOS_BASE =
   "https://begbjhrdbsqftbbleecb.supabase.co/storage/v1/object/public/tarifario-fotos/";
@@ -20,6 +21,13 @@ export function fotoUrl(storagePath: string): string {
 
 export function fotosDe(fotos: Foto[] | null | undefined): string[] {
   return ordenarFotos(fotos).map((f) => fotoUrl(f.storage_path));
+}
+
+/** Igual que fotosDe pero devuelve la miniatura pregenerada del ancho pedido.
+ * Para Open Graph/Twitter y JSON-LD, que no pasan por next/image y por lo tanto
+ * servían el original a resolución completa en cada preview de link. */
+export function fotosDeAncho(fotos: Foto[] | null | undefined, ancho: AnchoDerivado): string[] {
+  return fotosDe(fotos).map((url) => fotoDerivada(url, ancho));
 }
 
 /** true solo cuando TODAS las fotos activas de este grupo son generadas por

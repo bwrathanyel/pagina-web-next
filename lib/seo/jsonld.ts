@@ -1,4 +1,4 @@
-import { fotosDe } from "@/lib/supabase/fotos";
+import { fotosDeAncho } from "@/lib/supabase/fotos";
 import { REDES } from "@/lib/social";
 import type { Producto } from "@/types/supabase";
 
@@ -131,7 +131,7 @@ export function buildBreadcrumbJsonLd(items: { name: string; url: string }[]) {
 
 export function buildProductJsonLd(producto: Producto) {
   const tarifa = producto.tarifas.find((t) => t.vigente);
-  const fotos = fotosDe(producto.producto_fotos);
+  const fotos = fotosDeAncho(producto.producto_fotos, 1280);
 
   return {
     "@context": "https://schema.org",

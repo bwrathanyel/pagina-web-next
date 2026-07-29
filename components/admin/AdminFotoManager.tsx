@@ -5,9 +5,28 @@ import { useMemo, useState } from "react";
 import { fotoUrl } from "@/lib/supabase/fotos";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { revalidarSitioPublico } from "@/lib/admin/revalidate";
+import { generarDerivados } from "@/lib/imagenes/derivados";
 import type { Foto } from "@/types/supabase";
 
 type Tabla = "producto" | "promocion";
+
+/** El original ya subió; esto es best-effort. Si un derivado falla no se
+ * aborta ni se avisa al usuario -- el original sirve mientras tanto y
+ * `CRM/scripts/generar_derivados_fotos.py` puede regenerarlo después. */
+async function subirDerivados(sb: ReturnType<typeof supabaseBrowser>, file: File, storagePath: string) {
+  try {
+    const derivados = await generarDerivados(file);
+    await Promise.all(derivados.map(({ ancho, blob }) =>
+      sb.storage.from("tarifario-fotos").upload(`_d/${ancho}/${storagePath}.jpg`, blob, {
+        upsert: true,
+        cacheControl: "31536000",
+        contentType: "image/jpeg",
+      }),
+    ));
+  } catch {
+    // Best-effort: ver comentario arriba.
+  }
+}
 
 async function dimensiones(file: File): Promise<{ width: number | null; height: number | null }> {
   try {
@@ -81,12 +100,13 @@ export function AdminFotoManager({ fotos, tabla, productoId }: { fotos: Foto[]; 
     const extension = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
     const storagePath = `web-admin/${tabla}-${productoId}/${Date.now()}-${crypto.randomUUID()}.${extension}`;
     const sb = supabaseBrowser();
-    const { error: uploadError } = await sb.storage.from("tarifario-fotos").upload(storagePath, file, { upsert: false });
+    const { error: uploadError } = await sb.storage.from("tarifario-fotos").upload(storagePath, file, { upsert: false, cacheControl: "31536000" });
     if (uploadError) {
       setTrabajando(false);
       setError("No se pudo subir la imagen.");
       return;
     }
+    await subirDerivados(sb, file, storagePath);
     const size = await dimensiones(file);
     const rpc = tabla === "producto" ? "web_agregar_producto_foto" : "web_agregar_promocion_foto";
     const params = tabla === "producto"

@@ -17,6 +17,12 @@ const nextConfig: NextConfig = {
         hostname: "begbjhrdbsqftbbleecb.supabase.co",
         pathname: "/storage/v1/object/public/tarifario-fotos/**",
       },
+      {
+        // Worker propio con R2 detras, sirve las miniaturas sin costo de egress.
+        protocol: "https",
+        hostname: "fotos.destinoyeventoslotus360.com",
+        pathname: "/_d/**",
+      },
     ],
   },
 };
