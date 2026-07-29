@@ -58,8 +58,8 @@ export default function PrivacidadPage() {
         <section>
           <h2 className="mb-2 font-display text-xl font-semibold text-ink">Contacto</h2>
           <p>
-            Si querés que eliminemos tus datos de nuestro sistema, o tenés alguna duda sobre
-            esta política, escribinos por WhatsApp o a nuestras redes sociales y lo
+            Si quieres que eliminemos tus datos de nuestro sistema, o tienes alguna duda sobre
+            esta política, escríbenos por WhatsApp o a nuestras redes sociales y lo
             gestionamos directamente.
           </p>
         </section>

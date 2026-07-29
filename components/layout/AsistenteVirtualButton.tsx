@@ -75,7 +75,7 @@ export function AsistenteVirtualButton() {
               >
                 ✕
               </button>
-              ¡Hola! Soy Lotus 🌸 Charlá conmigo y te armo la cotización completa de tu viaje al instante.
+              ¡Hola! Soy Lotus 🌸 Chatea conmigo y te armo la cotización completa de tu viaje al instante.
             </div>
           )}
           <button

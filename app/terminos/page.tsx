@@ -46,7 +46,7 @@ export default function TerminosPage() {
 
         <section>
           <h2 className="mb-2 font-display text-xl font-semibold text-ink">Contacto</h2>
-          <p>Para dudas sobre estos términos, escribinos por WhatsApp o nuestras redes sociales.</p>
+          <p>Para dudas sobre estos términos, escríbenos por WhatsApp o nuestras redes sociales.</p>
         </section>
       </div>
     </main>

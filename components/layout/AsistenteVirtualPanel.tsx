@@ -170,7 +170,7 @@ function LightboxFoto({ src, alt, onClose }: { src: string; alt: string; onClose
 
 const MENSAJE_BIENVENIDA: Mensaje = {
   rol: "ia",
-  texto: "¡Hola! 😊 Soy Lotus, tu asistente virtual. Contame qué viaje tenés en mente y te ayudo a armarlo.",
+  texto: "¡Hola! 😊 Soy Lotus, tu asistente virtual. Cuéntame qué viaje tienes en mente y te ayudo a armarlo.",
 };
 
 // Este panel nunca se renderiza en el server -- AsistenteVirtualButton solo
@@ -239,7 +239,7 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
-        setError("No pudimos conectar, probá de nuevo 🙈");
+        setError("No pudimos conectar, prueba de nuevo 🙈");
         return;
       }
       setMensajes((m) => [
@@ -254,7 +254,7 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
         },
       ]);
     } catch {
-      setError("No pudimos conectar, probá de nuevo 🙈");
+      setError("No pudimos conectar, prueba de nuevo 🙈");
     } finally {
       setEnviando(false);
     }
