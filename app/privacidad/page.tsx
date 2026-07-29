@@ -49,7 +49,7 @@ export default function PrivacidadPage() {
         <section>
           <h2 className="mb-2 font-display text-xl font-semibold text-ink">Dónde se guardan tus datos</h2>
           <p>
-            Tus datos se almacenan en nuestro sistema interno (CRM), alojado sobre
+            Tus datos se almacenan en nuestro sistema interno de gestión, alojado sobre
             infraestructura de Supabase, con acceso restringido a nuestro equipo de asesores y
             administración.
           </p>

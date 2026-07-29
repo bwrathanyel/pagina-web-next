@@ -153,7 +153,7 @@ export function CotizacionOpcionForm({ opcion }: { opcion: CotizacionOpcion }) {
           ninos ? ["👶", `*Edades:* ${edadesTexto}`] : null,
           notas ? ["📝", `*Notas:* ${notas}`] : null,
         ],
-        "✅ *La solicitud ya fue registrada en el CRM.*",
+        "✅ *Confirmar disponibilidad y precio final. ¡Gracias!*",
       );
       const mensaje = esInstagramInApp() ? texto : emoji;
       setConfirmacion({
@@ -164,13 +164,13 @@ export function CotizacionOpcionForm({ opcion }: { opcion: CotizacionOpcion }) {
       });
     } catch (submitError) {
       const codigo = submitError instanceof Error ? submitError.message : "";
-      setError(codigo === "crm_timeout"
-        ? "El CRM tardó demasiado en responder. No se registró la solicitud; espera unos segundos e inténtalo nuevamente."
-        : codigo === "crm_no_disponible"
-          ? "El CRM no está disponible temporalmente. Tus datos no se perdieron; inténtalo nuevamente en un momento."
+      setError(codigo === "tiempo_agotado"
+        ? "El sistema tardó demasiado en responder. No se registró la solicitud; espera unos segundos e inténtalo nuevamente."
+        : codigo === "servicio_no_disponible"
+          ? "El servicio no está disponible temporalmente. Tus datos no se perdieron; inténtalo nuevamente en un momento."
           : codigo === "datos_invalidos"
             ? "Revisa el nombre y el teléfono antes de continuar."
-            : "No pudimos registrar la solicitud en el CRM. Inténtalo nuevamente en un momento.");
+            : "No pudimos registrar tu solicitud. Inténtalo nuevamente en un momento.");
     } finally {
       setEnviando(false);
     }
@@ -189,7 +189,7 @@ export function CotizacionOpcionForm({ opcion }: { opcion: CotizacionOpcion }) {
           {confirmacion.numero ? `Cotización #${confirmacion.numero}` : "Cotización recibida"}
         </h1>
         <p className="mt-3 leading-7 text-ink-soft">
-          Un asesor verificará disponibilidad y tarifa. Tu solicitud ya llegó al CRM y fue asignada a {confirmacion.asesor}.
+          Un asesor verificará disponibilidad y tarifa. Tu solicitud quedó registrada y fue asignada a {confirmacion.asesor}.
         </p>
 
         <dl className="my-7 grid gap-3 rounded-2xl bg-sand-2 p-5 text-sm sm:grid-cols-2">

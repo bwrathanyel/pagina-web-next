@@ -33,7 +33,7 @@ export async function POST(request: Request) {
   } catch (fetchError) {
     const timeout = fetchError instanceof Error && (fetchError.name === "TimeoutError" || fetchError.name === "AbortError");
     return NextResponse.json(
-      { ok: false, error: timeout ? "crm_timeout" : "crm_no_disponible" },
+      { ok: false, error: timeout ? "tiempo_agotado" : "servicio_no_disponible" },
       { status: timeout ? 504 : 502 },
     );
   }
