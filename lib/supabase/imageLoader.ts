@@ -11,6 +11,20 @@ const CDN_FOTOS = "https://fotos.destinoyeventoslotus360.com/";
  * por convención pura, sin consultar si el archivo está. */
 const ANCHOS = [256, 384, 640, 1280] as const;
 
+/** Las miniaturas se sirven con `max-age=31536000, immutable`, así que cambiar el
+ * archivo en el origen NO alcanza: el navegador que ya lo tiene no vuelve a
+ * pedirlo en un año, ni siquiera para revalidar. La única forma de forzar la
+ * bajada es cambiar la URL.
+ *
+ * Subir este número cuando cambie el CONTENIDO de las fotos sin cambiar su ruta.
+ * v=2: 2026-07-31, se devolvieron 504 fotos a su versión sin el relleno
+ * espejado. La query no toca la clave de R2 -- el Worker solo mira el pathname
+ * -- así que no invalida la caché del servidor.
+ *
+ * Tiene que coincidir con FOTOS_VERSION de `lotus-crm-preview/app.js`: si no,
+ * el CRM y la web bajan dos copias de la misma imagen. */
+const FOTOS_VERSION = "?v=2";
+
 /** next/image pide `slot_css * densidad_de_pantalla`. En un celular de 390px a
  * 3x eso da 1170 y terminaba bajando la versión de 1280 (130 KB) para pintar
  * una card de 390 -- 30 MB por recorrer el catálogo desde el teléfono.
@@ -61,7 +75,7 @@ export default function supabaseImageLoader({ src, width }: { src: string; width
   // Si ya es un derivado, devolverla tal cual en vez de anidar `_d/` sobre `_d/`.
   if (ruta.startsWith("_d/")) return src;
 
-  return `${CDN_FOTOS}_d/${anchoDerivado(width)}/${ruta}.jpg`;
+  return `${CDN_FOTOS}_d/${anchoDerivado(width)}/${ruta}.jpg${FOTOS_VERSION}`;
 }
 
 /** Para los consumidores que NO pasan por next/image y por lo tanto nunca
