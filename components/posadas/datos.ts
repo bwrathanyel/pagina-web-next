@@ -30,8 +30,79 @@ export const CIFRAS = {
   mensajesHoraPico: 157,
 };
 
-export const PLAN_BASICO = 50;
-export const PLAN_FULL = 90;
+/* ------------------------------------------------------------------ Planes
+   Los precios salieron de un cálculo de costo real, no de una corazonada:
+
+   - ManyChat cobra por CONTACTOS ACTIVOS del mes (se reinicia cada ciclo),
+     no por mensajes: ~$15 hasta 500 contactos activos. Ese es el piso duro
+     del costo y por eso ningún plan puede bajar de ~$45 sin dejar de ser
+     negocio.
+   - DeepSeek v4-flash cuesta $0.14 por millón de tokens de entrada. El
+     catálogo de UNA posada pesa ~3.000 tokens por mensaje, así que 10.000
+     mensajes al mes son ~$5. Los mensajes son, en la práctica, gratis.
+
+   Consecuencia: el costo es plano (~$18/mes por cliente) sin importar el
+   tier de mensajes, mientras los contactos activos no pasen de 500. Los
+   tiers son empaquetado de valor, no traslado de costo -- por eso el margen
+   crece hacia arriba en vez de comprimirse. */
+
+export interface Tier {
+  mensajes: number;
+  basico: number | null;
+  pro: number | null;
+}
+
+/** Un solo lugar para la escalera de precios. `null` = ese tier no existe en
+ *  ese plan (Pro arranca en 5.000: por debajo no tiene sentido pagarlo). */
+export const TIERS: Tier[] = [
+  { mensajes: 500, basico: 49, pro: null },
+  { mensajes: 2000, basico: 59, pro: null },
+  { mensajes: 5000, basico: 69, pro: 99 },
+  { mensajes: 10000, basico: 79, pro: 119 },
+];
+
+/** Cobro único de instalación. Incluye el primer mes: quien contrata paga una
+ *  sola vez, ve el resultado un mes completo, y recién ahí empieza a correr la
+ *  mensualidad. */
+export const INSTALACION = 99;
+
+export type IdPlan = "basico" | "pro";
+
+export interface Plan {
+  id: IdPlan;
+  nombre: string;
+  gancho: string;
+  incluye: string[];
+}
+
+export const PLANES: Plan[] = [
+  {
+    id: "basico",
+    nombre: "Básico",
+    gancho: "Lo necesario para que nadie se quede sin respuesta.",
+    incluye: [
+      "Responde a cualquier hora, todos los días",
+      "Cotiza con tus precios exactos",
+      "Pide el teléfono y las fechas",
+      "Responde qué incluye y los requisitos",
+      "Te pasa el cliente listo por WhatsApp",
+      "Conexión con tu Instagram incluida",
+    ],
+  },
+  {
+    id: "pro",
+    nombre: "Pro",
+    gancho: "Además, atiende como si fuera alguien de tu equipo.",
+    incluye: [
+      "Todo lo del Básico",
+      "Manda la foto del ambiente que le piden",
+      "Habla con el tono de tu negocio",
+      "Maneja precios distintos por temporada",
+      "Reglas propias: qué ofrecer y qué callar",
+      "Soporte prioritario y ajustes cuando quieras",
+    ],
+  },
+];
 
 export interface Opcion {
   id: string;

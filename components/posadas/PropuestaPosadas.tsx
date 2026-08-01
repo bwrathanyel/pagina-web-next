@@ -1,16 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  CIFRAS, HACE, HORA_ABRE, HORA_CIERRA, MENSAJES_POR_HORA, NO_HACE, OFRECE,
-  PLAN_BASICO, PLAN_FULL, SUGERENCIAS, type Opcion,
+  CIFRAS, HACE, HORA_ABRE, HORA_CIERRA, INSTALACION, MENSAJES_POR_HORA, NO_HACE,
+  OFRECE, PLANES, SUGERENCIAS, TIERS, type IdPlan, type Opcion,
 } from "./datos";
 
 /* Recorrido de cinco actos, uno por pantalla. Se avanza por decisión y no por
    scroll: el pedido explícito fue que no se sintiera una página infinita hacia
-   abajo. Cada acto monta su propia animación al entrar. */
+   abajo.
 
-const ACTOS = ["El problema", "La noche", "Pruébala", "Ármala", "Tu perfil"] as const;
+   TODO el estado vive acá arriba y no dentro de cada acto. Los actos se montan
+   y desmontan al navegar, así que cualquier cosa guardada adentro se perdía al
+   volver atrás: la conversación de prueba, la captura ya leída, lo que habían
+   configurado. Quien retrocede un paso espera encontrar lo que dejó. */
+
+const ACTOS = ["Hola", "La noche", "Pruébala", "Ármala", "Tu perfil"] as const;
 
 export interface Config {
   hace: string[];
@@ -18,32 +23,104 @@ export interface Config {
   ofrece: string[];
 }
 
+export interface MensajeChat {
+  rol: "visitante" | "ia";
+  texto: string;
+  foto?: string | null;
+  titulo?: string | null;
+  precio?: string | null;
+}
+
+export interface Perfil {
+  es_perfil: boolean;
+  tipo: string | null;
+  destino: string | null;
+  tono: string | null;
+  destaca: string[];
+  resumen: string | null;
+}
+
+/** Una sola opción marcada de las que exigen Pro ya lo activa. Lo usan el
+ *  selector de plan y el texto que va al CRM, para que no puedan discrepar. */
+export const requierePro = (hace: string[]) =>
+  HACE.some((o) => o.full && hace.includes(o.id));
+
+const listar = (opciones: Opcion[], elegidas: string[]) =>
+  opciones.filter((o) => elegidas.includes(o.id)).map((o) => o.texto.toLowerCase()).join("; ") || "—";
+
+const miles = (n: number) => n.toLocaleString("es-VE");
+
+/** Primer tier con precio para ese plan. Pro no existe por debajo de 5.000. */
+const primerTier = (plan: IdPlan) => TIERS.findIndex((t) => t[plan] !== null);
+
 export function PropuestaPosadas() {
   const [acto, setActo] = useState(0);
   const tope = useRef<HTMLDivElement>(null);
-  // Vive acá y no dentro del acto 4 porque cada acto se desmonta al avanzar:
-  // si el estado quedara adentro, lo que la posada configuró se perdería antes
-  // de llegar al formulario y el CRM recibiría un lead sin su configuración.
+
   const [config, setConfig] = useState<Config>({
     hace: ["responde", "cotiza", "datos"],
     noHace: ["descuentos", "disponibilidad"],
     ofrece: ["hospedaje"],
   });
+  const [plan, setPlan] = useState<IdPlan>("basico");
+  const [tier, setTier] = useState(0);
+  const [chat, setChat] = useState<MensajeChat[]>([]);
+  const [perfil, setPerfil] = useState<Perfil | null>(null);
+  const [nombre, setNombre] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [enviado, setEnviado] = useState(false);
+  // Que el saludo se cuente solo la primera vez: volver al paso 1 y tener que
+  // esperar de nuevo la animación completa es molesto, no bonito.
+  const [introVista, setIntroVista] = useState(false);
 
   const ir = useCallback((n: number) => {
     setActo(Math.max(0, Math.min(ACTOS.length - 1, n)));
     tope.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
+  /** Marcar una opción de Pro sube el plan sola, y bajar a Básico apaga esas
+   *  opciones: si no, el resumen prometería algo que el plan elegido no da. */
+  const cambiarConfig = useCallback((nueva: Config) => {
+    setConfig(nueva);
+    if (requierePro(nueva.hace)) {
+      setPlan("pro");
+      setTier((t) => Math.max(t, primerTier("pro")));
+    }
+  }, []);
+
+  const cambiarPlan = useCallback((nuevo: IdPlan) => {
+    setPlan(nuevo);
+    setTier((t) => Math.max(t, primerTier(nuevo)));
+    if (nuevo === "basico") {
+      setConfig((c) => ({ ...c, hace: c.hace.filter((id) => !HACE.find((o) => o.id === id)?.full) }));
+    }
+  }, []);
+
+  const precio = TIERS[tier][plan] ?? TIERS[primerTier(plan)][plan] ?? 0;
+
   return (
     <div ref={tope} className="min-h-screen bg-sand text-ink">
       <Progreso acto={acto} ir={ir} />
       <main className="mx-auto max-w-5xl px-5 pb-24 pt-6 sm:px-8">
-        {acto === 0 && <ActoReloj />}
+        {acto === 0 && <ActoSaludo vista={introVista} marcarVista={() => setIntroVista(true)} />}
         {acto === 1 && <ActoNoche />}
-        {acto === 2 && <ActoPrueba />}
-        {acto === 3 && <ActoConfigurar config={config} setConfig={setConfig} />}
-        {acto === 4 && <ActoPerfil config={config} />}
+        {acto === 2 && <ActoPrueba mensajes={chat} setMensajes={setChat} />}
+        {acto === 3 && (
+          <ActoArmar
+            config={config} setConfig={cambiarConfig}
+            plan={plan} setPlan={cambiarPlan}
+            tier={tier} setTier={setTier} precio={precio}
+          />
+        )}
+        {acto === 4 && (
+          <ActoPerfil
+            config={config} plan={plan} precio={precio} mensajes={TIERS[tier].mensajes}
+            perfil={perfil} setPerfil={setPerfil}
+            nombre={nombre} setNombre={setNombre}
+            telefono={telefono} setTelefono={setTelefono}
+            enviado={enviado} setEnviado={setEnviado}
+          />
+        )}
         <Navegacion acto={acto} ir={ir} />
       </main>
     </div>
@@ -68,12 +145,14 @@ function Progreso({ acto, ir }: { acto: number; ir: (n: number) => void }) {
             >
               <span
                 className={`block h-1 rounded-full transition-all duration-500 ${
-                  i <= acto ? "bg-coral" : "bg-ink/15 group-hover:bg-ink/30"
+                  i <= acto
+                    ? "bg-gradient-to-r from-acento to-ambar"
+                    : "bg-ink/15 group-hover:bg-ink/30"
                 }`}
               />
               <span
                 className={`mt-1.5 hidden text-[11px] font-semibold transition-colors sm:block ${
-                  i === acto ? "text-coral" : "text-ink-soft"
+                  i === acto ? "text-acento" : "text-ink-soft"
                 }`}
               >
                 {nombre}
@@ -100,7 +179,7 @@ function Navegacion({ acto, ir }: { acto: number; ir: (n: number) => void }) {
       {!ultimo && (
         <button
           onClick={() => ir(acto + 1)}
-          className="rounded-xl bg-coral px-6 py-3 text-sm font-bold text-white shadow-lg shadow-coral/20 transition hover:bg-coral-bright hover:shadow-xl"
+          className="rounded-xl bg-acento px-6 py-3 text-sm font-bold text-white shadow-lg shadow-acento/25 transition hover:brightness-110 hover:shadow-xl"
         >
           {["Ver qué pasa esa noche", "Probarla ahora", "Armarla a mi gusto", "Casi listo"][acto]} →
         </button>
@@ -109,73 +188,154 @@ function Navegacion({ acto, ir }: { acto: number; ir: (n: number) => void }) {
   );
 }
 
-/* ---------------------------------------------------------------- Acto 1 */
+/* ---------------------------------------------------------------- Acto 1
+   Se abre saludando, no con la cifra en la cara. El problema se arma de a
+   pedazos: primero quiénes somos, después qué medimos, y solo al final el
+   número que duele. Contarlo todo de golpe hace que no se lea nada. */
 
-function ActoReloj() {
-  const [animar, setAnimar] = useState(false);
+const REVELACION = [
+  { pausa: 400 },
+  { pausa: 1400 },
+  { pausa: 1600 },
+  { pausa: 1800 },
+  { pausa: 1500 },
+];
+
+function ActoSaludo({ vista, marcarVista }: { vista: boolean; marcarVista: () => void }) {
+  // Si ya la vio, aparece entera. Si el sistema pide menos movimiento, también.
+  const [paso, setPaso] = useState(vista ? REVELACION.length : 0);
+
   useEffect(() => {
-    const t = setTimeout(() => setAnimar(true), 120);
+    if (paso >= REVELACION.length) { marcarVista(); return; }
+    // Con reduced-motion se salta entero, pero igual por el temporizador: el
+    // estado inicial no puede depender de matchMedia porque el servidor no lo
+    // tiene y la hidratación no coincidiría.
+    const directo = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const t = setTimeout(
+      () => setPaso(directo ? REVELACION.length : paso + 1),
+      directo ? 0 : REVELACION[paso].pausa,
+    );
     return () => clearTimeout(t);
-  }, []);
+  }, [paso, marcarVista]);
 
   const maximo = Math.max(...MENSAJES_POR_HORA);
+  const ver = (n: number) => paso >= n;
 
   return (
-    <section className="animate-[surge_.5s_ease-out]">
-      <p className="text-xs font-bold uppercase tracking-[0.16em] text-ink-soft">
-        Anoche, en el Instagram de tu posada
-      </p>
-      <p className="mt-4 font-serif text-6xl leading-none tracking-tight text-coral sm:text-8xl">
-        9:47<span className="ml-1 align-super text-2xl text-ink sm:text-3xl">p.m.</span>
-      </p>
-      <h1 className="mt-4 max-w-xl text-balance font-serif text-3xl leading-tight sm:text-5xl">
-        Alguien preguntó el precio y nadie le contestó.
-      </h1>
-      <p className="mt-5 max-w-lg text-ink-soft">
-        No es una suposición. Es la hora en que más gente escribe: lo medimos
-        durante veinte días sobre {CIFRAS.conversaciones.toLocaleString("es-VE")} conversaciones reales.
-      </p>
+    <section>
+      {ver(0) && (
+        <p className="animate-[surge_.6s_ease-out] text-xs font-bold uppercase tracking-[0.16em] text-acento">
+          Hola 👋
+        </p>
+      )}
 
-      <div className="mt-10 rounded-2xl border border-ink/10 bg-card p-5 sm:p-7">
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-ink-soft">
-          Mensajes por hora · 12 al 31 de julio de 2026
+      {ver(1) && (
+        <h1 className="mt-4 max-w-2xl animate-[surge_.6s_ease-out] text-balance font-serif text-3xl leading-tight sm:text-5xl">
+          Somos Lotus 360. Trabajamos con{" "}
+          <span className="text-acento">{CIFRAS.alojamientos} alojamientos</span> en Venezuela.
+        </h1>
+      )}
+
+      {ver(2) && (
+        <p className="mt-6 max-w-xl animate-[surge_.6s_ease-out] text-lg leading-relaxed text-ink-soft">
+          Durante veinte días medimos cada mensaje que nos llegó por Instagram.
+          Queremos contarte lo que encontramos, porque en tu posada está pasando
+          exactamente lo mismo.
         </p>
-        <div
-          className="mt-6 flex h-44 items-end gap-[3px] sm:h-56"
-          role="img"
-          aria-label={`Gráfico de mensajes por hora. El pico es a las ${CIFRAS.horaPico} horas con ${CIFRAS.mensajesHoraPico} mensajes. El ${CIFRAS.porcentajeFuera} por ciento llega fuera del horario de oficina.`}
-        >
-          {MENSAJES_POR_HORA.map((n, hora) => {
-            const dentro = hora >= HORA_ABRE && hora <= HORA_CIERRA;
-            const pico = n === maximo;
-            return (
-              <div
-                key={hora}
-                className={`flex-1 rounded-t transition-[height] duration-700 ease-out ${
-                  pico ? "bg-coral ring-2 ring-coral/40" : dentro ? "bg-sand-2" : "bg-coral/75"
-                }`}
-                style={{
-                  height: animar ? `${(n / maximo) * 100}%` : "2%",
-                  transitionDelay: `${hora * 28}ms`,
-                }}
-                title={`${hora}:00 — ${n} mensajes`}
-              />
-            );
-          })}
+      )}
+
+      {ver(3) && (
+        <div className="mt-9 grid animate-[surge_.6s_ease-out] gap-3 sm:grid-cols-2">
+          <Dato
+            valor={miles(CIFRAS.conversaciones)}
+            texto="personas nos escribieron en veinte días"
+            tono="ambar"
+          />
+          <Dato
+            valor={`${CIFRAS.porcentajeFuera}%`}
+            texto="de ellas, cuando ya nadie estaba para contestar"
+            tono="acento"
+            destacado
+          />
         </div>
-        <div className="mt-2 flex justify-between border-t border-ink/10 pt-2 text-[11px] tabular-nums text-ink-soft">
-          <span>12 a.m.</span><span>6 a.m.</span><span>12 p.m.</span><span>6 p.m.</span><span>11 p.m.</span>
+      )}
+
+      {ver(4) && (
+        <div className="mt-10 animate-[surge_.7s_ease-out] overflow-hidden rounded-2xl border border-ink/10 bg-card shadow-sm">
+          <div className="border-b border-ink/10 bg-gradient-to-r from-acento-suave to-ambar-suave px-5 py-4 sm:px-7">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-ink-soft">
+              Mensajes por hora · 12 al 31 de julio de 2026
+            </p>
+            <p className="mt-2 font-serif text-2xl leading-tight sm:text-3xl">
+              La hora en que más gente escribe son las{" "}
+              <span className="text-acento">nueve de la noche</span>.
+            </p>
+          </div>
+          <div className="p-5 sm:p-7">
+            <div
+              className="flex h-44 items-end gap-[3px] sm:h-56"
+              role="img"
+              aria-label={`Gráfico de mensajes por hora. El pico es a las ${CIFRAS.horaPico} horas con ${CIFRAS.mensajesHoraPico} mensajes. El ${CIFRAS.porcentajeFuera} por ciento llega fuera del horario de oficina.`}
+            >
+              {MENSAJES_POR_HORA.map((n, hora) => {
+                const dentro = hora >= HORA_ABRE && hora <= HORA_CIERRA;
+                const pico = n === maximo;
+                return (
+                  <div
+                    key={hora}
+                    className={`flex-1 rounded-t transition-[height] duration-700 ease-out ${
+                      pico
+                        ? "bg-gradient-to-t from-acento to-ambar ring-2 ring-acento/40"
+                        : dentro
+                          ? "bg-sand-2"
+                          : "bg-acento/70"
+                    }`}
+                    style={{ height: `${(n / maximo) * 100}%`, transitionDelay: `${hora * 28}ms` }}
+                    title={`${hora}:00 — ${n} mensajes`}
+                  />
+                );
+              })}
+            </div>
+            <div className="mt-2 flex justify-between border-t border-ink/10 pt-2 text-[11px] tabular-nums text-ink-soft">
+              <span>12 a.m.</span><span>6 a.m.</span><span>12 p.m.</span><span>6 p.m.</span><span>11 p.m.</span>
+            </div>
+            <p className="mt-5 border-t border-ink/10 pt-4 text-sm leading-relaxed text-ink-soft">
+              <strong className="text-ink">Más que a las diez de la mañana y más que a las tres de la tarde.</strong>{" "}
+              {miles(CIFRAS.fueraDeHorario)} de las {miles(CIFRAS.conversaciones)} conversaciones
+              llegaron fuera del horario de oficina, y otras {CIFRAS.finDeSemana} cayeron
+              en sábado o domingo.
+            </p>
+          </div>
         </div>
-        <p className="mt-5 border-t border-ink/10 pt-4 text-sm leading-relaxed">
-          <strong>La hora pico son las nueve de la noche.</strong> Más mensajes que a
-          las diez de la mañana y más que a las tres de la tarde.{" "}
-          {CIFRAS.fueraDeHorario.toLocaleString("es-VE")} de las{" "}
-          {CIFRAS.conversaciones.toLocaleString("es-VE")} conversaciones —el{" "}
-          {CIFRAS.porcentajeFuera}%— llegaron fuera del horario de oficina, y otras{" "}
-          {CIFRAS.finDeSemana} cayeron en sábado o domingo.
+      )}
+
+      {paso < REVELACION.length && (
+        <p className="mt-8 animate-[pulso-suave_1.4s_ease-in-out_infinite] text-sm text-ink-soft" aria-hidden>
+          ···
         </p>
-      </div>
+      )}
     </section>
+  );
+}
+
+function Dato({ valor, texto, tono, destacado }: {
+  valor: string; texto: string; tono: "acento" | "ambar"; destacado?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-2xl border p-5 ${
+        destacado
+          ? "border-acento/30 bg-acento-suave"
+          : "border-ink/10 bg-card"
+      }`}
+    >
+      <p className={`font-serif text-4xl leading-none tabular-nums sm:text-5xl ${
+        tono === "acento" ? "text-acento" : "text-ambar"
+      }`}>
+        {valor}
+      </p>
+      <p className="mt-3 text-sm leading-relaxed text-ink-soft">{texto}</p>
+    </div>
   );
 }
 
@@ -206,7 +366,7 @@ function ActoNoche() {
 
   return (
     <section>
-      <p className="text-xs font-bold uppercase tracking-[0.16em] text-ink-soft">Lo que pasa hoy</p>
+      <p className="text-xs font-bold uppercase tracking-[0.16em] text-acento">Lo que pasa hoy</p>
       <h2 className="mt-3 max-w-2xl text-balance font-serif text-3xl leading-tight sm:text-4xl">
         El mensaje llega cuando la posada ya cerró.
       </h2>
@@ -218,7 +378,7 @@ function ActoNoche() {
 
       <div className="mt-9 max-w-md rounded-2xl border border-ink/10 bg-card p-4 shadow-sm">
         <div className="mb-3 flex items-center gap-2.5 border-b border-ink/10 pb-3">
-          <span className="h-8 w-8 rounded-full bg-gradient-to-br from-seafoam to-coral" />
+          <span className="h-8 w-8 rounded-full bg-gradient-to-br from-ambar via-acento to-seafoam" />
           <span className="text-sm font-bold leading-tight">
             Tu posada
             <small className="block font-normal text-ink-soft">Instagram · mensaje directo</small>
@@ -229,12 +389,12 @@ function ActoNoche() {
             b.de === "silencio" ? (
               <p
                 key={i}
-                className="animate-[surge_.4s_ease-out] rounded-xl bg-[repeating-linear-gradient(-45deg,transparent,transparent_7px,rgba(0,0,0,.06)_7px,rgba(0,0,0,.06)_8px)] py-4 text-center text-xs font-semibold text-ink-soft"
+                className="animate-[surge_.4s_ease-out] rounded-xl bg-[repeating-linear-gradient(-45deg,transparent,transparent_7px,rgba(128,128,128,.12)_7px,rgba(128,128,128,.12)_8px)] py-4 text-center text-xs font-semibold text-ink-soft"
               >
                 {b.texto}
               </p>
             ) : (
-              <div key={i} className="animate-[surge_.4s_ease-out]">
+              <div key={i} className="animate-[entrar-izq_.45s_ease-out]">
                 <p className="max-w-[85%] rounded-2xl rounded-bl-sm bg-sand-2 px-3.5 py-2.5 text-sm">
                   {b.texto}
                 </p>
@@ -243,7 +403,7 @@ function ActoNoche() {
             ),
           )}
           {visibles < CONVERSACION_PERDIDA.length && (
-            <span className="text-xs text-ink-soft" aria-hidden>…</span>
+            <span className="animate-[pulso-suave_1.2s_ease-in-out_infinite] text-xs text-ink-soft" aria-hidden>…</span>
           )}
         </div>
       </div>
@@ -252,14 +412,6 @@ function ActoNoche() {
 }
 
 /* ---------------------------------------------------------------- Acto 3 */
-
-interface MensajeChat {
-  rol: "visitante" | "ia";
-  texto: string;
-  foto?: string | null;
-  titulo?: string | null;
-  precio?: string | null;
-}
 
 function idSesion(): string {
   try {
@@ -273,8 +425,10 @@ function idSesion(): string {
   }
 }
 
-function ActoPrueba() {
-  const [mensajes, setMensajes] = useState<MensajeChat[]>([]);
+function ActoPrueba({ mensajes, setMensajes }: {
+  mensajes: MensajeChat[];
+  setMensajes: React.Dispatch<React.SetStateAction<MensajeChat[]>>;
+}) {
   const [texto, setTexto] = useState("");
   const [cargando, setCargando] = useState(false);
   const sesion = useRef<string>("");
@@ -293,7 +447,7 @@ function ActoPrueba() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: sesion.current, mensaje: limpio }),
+        body: JSON.stringify({ mensaje: limpio, session_id: sesion.current }),
       });
       const data = await res.json().catch(() => null);
       setMensajes((m) => [...m, {
@@ -308,119 +462,114 @@ function ActoPrueba() {
     } finally {
       setCargando(false);
     }
-  }, [cargando]);
+  }, [cargando, setMensajes]);
 
   return (
     <section>
-      <p className="text-xs font-bold uppercase tracking-[0.16em] text-ink-soft">Pruébala ahora</p>
+      <p className="text-xs font-bold uppercase tracking-[0.16em] text-acento">Pruébala ahora</p>
       <h2 className="mt-3 max-w-2xl text-balance font-serif text-3xl leading-tight sm:text-4xl">
         Escríbele como si fueras un cliente.
       </h2>
       <p className="mt-5 max-w-xl text-ink-soft">
-        Esta es la asistente de verdad, respondiendo con nuestro catálogo real.
-        Si tu posada ya trabaja con nosotros,{" "}
-        <strong className="text-ink">pregúntale por tu propio alojamiento</strong> y
-        te va a responder con tus fotos y tus precios.
+        Esta es la asistente de verdad, no un video ni una demo grabada.
+        Pregúntale lo que te preguntaría alguien a las nueve de la noche.
       </p>
 
-      <div className="mt-8 rounded-2xl border border-ink/10 bg-card p-4 sm:p-5">
-        <div className="max-h-[26rem] min-h-[10rem] overflow-y-auto pr-1">
-          {mensajes.length === 0 && (
-            <p className="py-6 text-center text-sm text-ink-soft">
-              Toca una pregunta de abajo o escribe la tuya.
-            </p>
-          )}
-          <div className="flex flex-col gap-3">
-            {mensajes.map((m, i) => (
-              <div key={i} className={`animate-[surge_.35s_ease-out] ${m.rol === "visitante" ? "self-end" : "self-start"} max-w-[88%]`}>
-                <div
-                  className={`rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
-                    m.rol === "visitante"
-                      ? "rounded-br-sm bg-seafoam text-white"
-                      : "rounded-bl-sm bg-sand-2"
-                  }`}
-                >
-                  {m.texto}
-                </div>
-                {(m.foto || m.titulo) && (
-                  <div className="mt-2 overflow-hidden rounded-xl border border-ink/10 bg-sand">
-                    {m.foto && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={m.foto} alt={m.titulo ?? "Foto del alojamiento"} className="h-36 w-full object-cover" loading="lazy" />
-                    )}
-                    {(m.titulo || m.precio) && (
-                      <div className="px-3 py-2">
-                        {m.titulo && <p className="text-sm font-semibold">{m.titulo}</p>}
-                        {m.precio && <p className="text-sm font-bold text-seafoam-text">{m.precio}</p>}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
-            {cargando && (
-              <p className="self-start rounded-2xl rounded-bl-sm bg-sand-2 px-3.5 py-2.5 text-sm text-ink-soft">
-                Escribiendo…
+      <div className="mt-8 overflow-hidden rounded-2xl border border-ink/10 bg-card shadow-sm">
+        <div className="h-1 bg-gradient-to-r from-acento via-ambar to-seafoam" />
+        <div className="p-4 sm:p-5">
+          <div className="max-h-[26rem] min-h-[10rem] overflow-y-auto pr-1">
+            {mensajes.length === 0 && (
+              <p className="py-6 text-center text-sm text-ink-soft">
+                Toca una pregunta de abajo o escribe la tuya.
               </p>
             )}
+            <div className="flex flex-col gap-3">
+              {mensajes.map((m, i) => (
+                <div key={i} className={`animate-[surge_.35s_ease-out] ${m.rol === "visitante" ? "self-end" : "self-start"} max-w-[88%]`}>
+                  <div
+                    className={`rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
+                      m.rol === "visitante"
+                        ? "rounded-br-sm bg-seafoam text-white"
+                        : "rounded-bl-sm bg-sand-2"
+                    }`}
+                  >
+                    {m.texto}
+                  </div>
+                  {(m.foto || m.titulo) && (
+                    <div className="mt-2 overflow-hidden rounded-xl border border-ink/10 bg-sand">
+                      {m.foto && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={m.foto} alt={m.titulo ?? "Foto del alojamiento"} className="h-36 w-full object-cover" loading="lazy" />
+                      )}
+                      {(m.titulo || m.precio) && (
+                        <div className="px-3 py-2">
+                          {m.titulo && <p className="text-sm font-semibold">{m.titulo}</p>}
+                          {m.precio && <p className="text-sm font-bold text-seafoam-text">{m.precio}</p>}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+              {cargando && (
+                <p className="animate-[pulso-suave_1.2s_ease-in-out_infinite] self-start rounded-2xl rounded-bl-sm bg-sand-2 px-3.5 py-2.5 text-sm text-ink-soft">
+                  Escribiendo…
+                </p>
+              )}
+            </div>
+            <div ref={fin} />
           </div>
-          <div ref={fin} />
-        </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          {SUGERENCIAS.map((s) => (
-            <button
-              key={s}
-              onClick={() => enviar(s)}
-              disabled={cargando}
-              className="rounded-full border border-ink/15 px-3 py-1.5 text-xs font-medium text-ink-soft transition hover:border-coral hover:text-coral disabled:opacity-40"
-            >
-              {s}
-            </button>
-          ))}
-        </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {SUGERENCIAS.map((s) => (
+              <button
+                key={s}
+                onClick={() => enviar(s)}
+                disabled={cargando}
+                className="rounded-full border border-ink/15 px-3 py-1.5 text-xs font-medium text-ink-soft transition hover:border-acento hover:text-acento disabled:opacity-40"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
 
-        <form
-          onSubmit={(e) => { e.preventDefault(); enviar(texto); }}
-          className="mt-3 flex gap-2"
-        >
-          <input
-            value={texto}
-            onChange={(e) => setTexto(e.target.value)}
-            placeholder="Escribe tu pregunta…"
-            aria-label="Tu mensaje para la asistente"
-            className="flex-1 rounded-xl border border-ink/15 bg-sand px-3.5 py-2.5 text-sm outline-none transition focus:border-coral"
-          />
-          <button
-            type="submit"
-            disabled={cargando || !texto.trim()}
-            className="rounded-xl bg-coral px-5 py-2.5 text-sm font-bold text-white transition hover:bg-coral-bright disabled:opacity-40"
+          <form
+            onSubmit={(e) => { e.preventDefault(); enviar(texto); }}
+            className="mt-3 flex gap-2"
           >
-            Enviar
-          </button>
-        </form>
-        <p className="mt-3 text-[11px] leading-relaxed text-ink-soft">
-          Responde con el catálogo de Lotus 360, que es el que tenemos cargado hoy.
-          Con tu posada conectada, respondería igual pero con lo tuyo.
-        </p>
+            <input
+              value={texto}
+              onChange={(e) => setTexto(e.target.value)}
+              placeholder="Escribe tu pregunta…"
+              aria-label="Escribe tu pregunta"
+              className="flex-1 rounded-xl border border-ink/15 bg-sand px-3.5 py-2.5 text-sm outline-none transition focus:border-acento"
+            />
+            <button
+              type="submit"
+              disabled={cargando || !texto.trim()}
+              className="rounded-xl bg-acento px-5 py-2.5 text-sm font-bold text-white transition hover:brightness-110 disabled:opacity-40"
+            >
+              Enviar
+            </button>
+          </form>
+        </div>
       </div>
+      <p className="mt-3 text-[11px] leading-relaxed text-ink-soft">
+        Responde con un catálogo cargado. Con el tuyo conectado, respondería
+        igual pero con tus habitaciones, tus fotos y tus precios.
+      </p>
     </section>
   );
 }
 
 /* ---------------------------------------------------------------- Acto 4 */
 
-/** Una sola opción marcada de las que exigen el plan completo ya lo activa.
- *  Lo usan el panel de precio y el texto que se manda al CRM, para que ambos
- *  no puedan discrepar sobre qué plan eligió la posada. */
-export const esPlanFull = (hace: string[]) =>
-  HACE.some((o) => o.full && hace.includes(o.id));
-
-const listar = (opciones: Opcion[], elegidas: string[]) =>
-  opciones.filter((o) => elegidas.includes(o.id)).map((o) => o.texto.toLowerCase()).join("; ") || "—";
-
-function ActoConfigurar({ config, setConfig }: {
+function ActoArmar({ config, setConfig, plan, setPlan, tier, setTier, precio }: {
   config: Config; setConfig: (c: Config) => void;
+  plan: IdPlan; setPlan: (p: IdPlan) => void;
+  tier: number; setTier: React.Dispatch<React.SetStateAction<number>>;
+  precio: number;
 }) {
   const { hace, noHace, ofrece } = config;
 
@@ -432,76 +581,205 @@ function ActoConfigurar({ config, setConfig }: {
     });
   };
 
-  const esFull = useMemo(() => esPlanFull(hace), [hace]);
-  const precio = esFull ? PLAN_FULL : PLAN_BASICO;
-
   return (
     <section>
-      <p className="text-xs font-bold uppercase tracking-[0.16em] text-ink-soft">Ármala a tu gusto</p>
+      <p className="text-xs font-bold uppercase tracking-[0.16em] text-acento">Ármala a tu gusto</p>
       <h2 className="mt-3 max-w-2xl text-balance font-serif text-3xl leading-tight sm:text-4xl">
         Tú decides qué hace y qué no.
       </h2>
       <p className="mt-5 max-w-xl text-ink-soft">
         No es un robot con respuestas fijas. Las reglas se escriben en palabras y
-        se cambian cuando quieras — así funciona el sistema por dentro.
+        se cambian cuando quieras — así funciona el sistema por dentro. Mira el
+        precio abajo mientras eliges.
       </p>
 
-      <div className="mt-8 grid gap-5 lg:grid-cols-[1fr_20rem]">
-        <div className="flex flex-col gap-5">
-          <Grupo titulo="Quiero que…" opciones={HACE} elegidas={hace}
-            alternar={(id) => alternar("hace", id)} color="seafoam" />
-          <Grupo titulo="No quiero que…" opciones={NO_HACE} elegidas={noHace}
-            alternar={(id) => alternar("noHace", id)} color="coral" />
-          <Grupo titulo="Ofrece…" opciones={OFRECE} elegidas={ofrece}
-            alternar={(id) => alternar("ofrece", id)} color="seafoam" />
+      <div className="mt-8 flex flex-col gap-5">
+        <Grupo titulo="Quiero que…" opciones={HACE} elegidas={hace}
+          alternar={(id) => alternar("hace", id)} color="seafoam" />
+        <Grupo titulo="No quiero que…" opciones={NO_HACE} elegidas={noHace}
+          alternar={(id) => alternar("noHace", id)} color="acento" />
+        <Grupo titulo="Ofrece…" opciones={OFRECE} elegidas={ofrece}
+          alternar={(id) => alternar("ofrece", id)} color="seafoam" />
+      </div>
+
+      <div className="mt-14">
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-acento">Tu plan</p>
+        <h3 className="mt-3 text-balance font-serif text-2xl leading-tight sm:text-3xl">
+          Elige cuántos mensajes al mes.
+        </h3>
+        <p className="mt-4 max-w-xl text-ink-soft">
+          Un mensaje es cada vez que alguien te escribe o la asistente le
+          responde. Una conversación completa suele llevarse unos veinte.
+        </p>
+
+        <SelectorMensajes plan={plan} tier={tier} setTier={setTier} />
+
+        <div className="mt-6 grid gap-5 lg:grid-cols-2">
+          {PLANES.map((p) => (
+            <FichaPlan
+              key={p.id}
+              plan={p}
+              elegido={plan === p.id}
+              precio={TIERS[tier][p.id]}
+              mensajes={TIERS[tier].mensajes}
+              alElegir={() => setPlan(p.id)}
+              destacado={p.id === "pro"}
+            />
+          ))}
         </div>
 
-        <aside className="lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-2xl border border-ink/10 bg-card p-5">
+        <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-acento/25 bg-acento-suave p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-ink-soft">
-              Tu plan
+              Lo que pagarías
             </p>
-            <p className="mt-3 flex items-baseline gap-1.5">
-              <span
-                key={precio}
-                className="animate-[surge_.35s_ease-out] font-serif text-5xl tabular-nums text-coral"
-              >
+            <p className="mt-2 flex items-baseline gap-1.5">
+              <span key={precio} className="animate-[saltar_.4s_ease-out] font-serif text-5xl tabular-nums text-acento">
                 ${precio}
               </span>
               <span className="text-sm font-semibold text-ink-soft">/ mes</span>
             </p>
-            <p className="mt-1 text-sm font-semibold">{esFull ? "Plan completo" : "Plan básico"}</p>
-            <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-              Incluye hasta {esFull ? "2.000" : "500"} conversaciones al mes, la conexión
-              con tu Instagram y el soporte de nuestro equipo.
+            <p className="mt-1 text-sm font-semibold">
+              Plan {plan === "pro" ? "Pro" : "Básico"} · {miles(TIERS[tier].mensajes)} mensajes al mes
             </p>
-            <p className="mt-4 rounded-xl bg-seafoam-bg px-3.5 py-3 text-sm leading-relaxed text-seafoam-text">
-              Una noche en tu posada cuesta más o menos lo mismo.{" "}
-              <strong>Con una sola reserva que recuperes al mes, el plan ya se pagó.</strong>
-            </p>
-            <details className="mt-4 text-sm">
-              <summary className="cursor-pointer font-semibold text-ink-soft">
-                Así queda tu asistente
-              </summary>
-              <div className="mt-3 flex flex-col gap-2 text-[13px] leading-relaxed text-ink-soft">
-                <p><strong className="text-ink">Hace:</strong> {listar(HACE, hace)}</p>
-                <p><strong className="text-ink">Nunca:</strong> {listar(NO_HACE, noHace)}</p>
-                <p><strong className="text-ink">Ofrece:</strong> {listar(OFRECE, ofrece)}</p>
-              </div>
-            </details>
           </div>
-        </aside>
+          <div className="max-w-xs text-sm leading-relaxed text-ink-soft">
+            <p>
+              <strong className="text-ink">${INSTALACION} de instalación, una sola vez</strong> —
+              y el primer mes va incluido. Conectamos tu Instagram, cargamos tus
+              habitaciones y escribimos tus reglas.
+            </p>
+          </div>
+        </div>
+
+        <p className="mt-5 rounded-xl bg-seafoam-bg px-4 py-3.5 text-sm leading-relaxed text-seafoam-text">
+          Una noche en tu posada cuesta más o menos lo mismo.{" "}
+          <strong>Con una sola reserva que recuperes al mes, el plan ya se pagó.</strong>
+        </p>
       </div>
     </section>
   );
 }
 
+/** Las flechitas de mensajes. Solo se mueve entre los tiers que el plan
+ *  elegido tiene: en Pro los dos primeros no existen. */
+function SelectorMensajes({ plan, tier, setTier }: {
+  plan: IdPlan; tier: number; setTier: React.Dispatch<React.SetStateAction<number>>;
+}) {
+  const minimo = primerTier(plan);
+  const mover = (paso: number) =>
+    setTier((t) => Math.max(minimo, Math.min(TIERS.length - 1, t + paso)));
+
+  return (
+    <div className="mt-6 flex items-center justify-center gap-4 rounded-2xl border border-ink/10 bg-card p-4">
+      <button
+        onClick={() => mover(-1)}
+        disabled={tier <= minimo}
+        aria-label="Menos mensajes al mes"
+        className="flex h-11 w-11 items-center justify-center rounded-full border border-ink/15 text-lg font-bold text-ink-soft transition hover:border-acento hover:text-acento disabled:opacity-30"
+      >
+        ←
+      </button>
+      <div className="min-w-[9.5rem] text-center">
+        <p key={TIERS[tier].mensajes} className="animate-[saltar_.35s_ease-out] font-serif text-3xl tabular-nums">
+          {miles(TIERS[tier].mensajes)}
+        </p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
+          mensajes al mes
+        </p>
+      </div>
+      <button
+        onClick={() => mover(1)}
+        disabled={tier >= TIERS.length - 1}
+        aria-label="Más mensajes al mes"
+        className="flex h-11 w-11 items-center justify-center rounded-full border border-ink/15 text-lg font-bold text-ink-soft transition hover:border-acento hover:text-acento disabled:opacity-30"
+      >
+        →
+      </button>
+    </div>
+  );
+}
+
+function FichaPlan({ plan, elegido, precio, mensajes, alElegir, destacado }: {
+  plan: (typeof PLANES)[number];
+  elegido: boolean;
+  precio: number | null;
+  mensajes: number;
+  alElegir: () => void;
+  destacado?: boolean;
+}) {
+  // Pro no existe por debajo de 5.000 mensajes, pero la ficha NO se desactiva:
+  // apagada obligaba a adivinar que primero hay que subir los mensajes con las
+  // flechas. Se puede elegir igual y el tier sube solo hasta donde el plan
+  // arranca -- que además es la clase de movimiento que la página promete.
+  const disponible = precio !== null;
+  const desde = TIERS[primerTier("pro")].pro;
+  return (
+    <button
+      onClick={alElegir}
+      aria-pressed={elegido}
+      className={`flex flex-col rounded-2xl border p-6 text-left transition ${
+        elegido
+          ? "border-acento bg-card shadow-lg shadow-acento/10 ring-2 ring-acento/30"
+          : "border-ink/10 bg-card hover:border-ink/25"
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        <span className="font-serif text-2xl">{plan.nombre}</span>
+        {destacado && (
+          <span className="rounded-full bg-ambar-suave px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ambar">
+            Completo
+          </span>
+        )}
+      </div>
+      <p className="mt-1.5 text-sm text-ink-soft">{plan.gancho}</p>
+
+      <p className="mt-5 flex items-baseline gap-1.5">
+        {disponible ? (
+          <>
+            <span key={precio} className="animate-[saltar_.4s_ease-out] font-serif text-4xl tabular-nums text-acento">
+              ${precio}
+            </span>
+            <span className="text-sm font-semibold text-ink-soft">/ mes</span>
+          </>
+        ) : (
+          <>
+            <span className="text-sm font-semibold text-ink-soft">desde</span>
+            <span className="font-serif text-4xl tabular-nums text-acento">${desde}</span>
+            <span className="text-sm font-semibold text-ink-soft">/ mes</span>
+          </>
+        )}
+      </p>
+      <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+        {miles(disponible ? mensajes : TIERS[primerTier("pro")].mensajes)} mensajes al mes
+      </p>
+
+      <ul className="mt-5 flex flex-col gap-2 border-t border-ink/10 pt-4">
+        {plan.incluye.map((linea) => (
+          <li key={linea} className="flex gap-2.5 text-sm leading-relaxed text-ink-soft">
+            <span aria-hidden className="text-seafoam-text">✓</span>
+            <span>{linea}</span>
+          </li>
+        ))}
+      </ul>
+
+      <span
+        className={`mt-6 rounded-xl px-4 py-2.5 text-center text-sm font-bold transition ${
+          elegido ? "bg-acento text-white" : "border border-ink/15 text-ink-soft"
+        }`}
+      >
+        {elegido ? "Elegido" : disponible ? "Elegir este" : `Elegir Pro · ${miles(TIERS[primerTier("pro")].mensajes)} mensajes`}
+      </span>
+    </button>
+  );
+}
+
 function Grupo({ titulo, opciones, elegidas, alternar, color }: {
   titulo: string; opciones: Opcion[]; elegidas: string[];
-  alternar: (id: string) => void; color: "seafoam" | "coral";
+  alternar: (id: string) => void; color: "seafoam" | "acento";
 }) {
-  const activo = color === "coral"
-    ? "border-coral bg-coral/10 text-ink"
+  const activo = color === "acento"
+    ? "border-acento bg-acento-suave text-ink"
     : "border-seafoam bg-seafoam-bg text-seafoam-text";
   return (
     <div className="rounded-2xl border border-ink/10 bg-card p-5">
@@ -520,8 +798,8 @@ function Grupo({ titulo, opciones, elegidas, alternar, color }: {
             >
               {o.texto}
               {o.full && (
-                <span className="ml-2 rounded-full bg-gold/25 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink">
-                  Full
+                <span className="ml-2 rounded-full bg-ambar-suave px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ambar">
+                  Pro
                 </span>
               )}
             </button>
@@ -534,23 +812,19 @@ function Grupo({ titulo, opciones, elegidas, alternar, color }: {
 
 /* ---------------------------------------------------------------- Acto 5 */
 
-interface Perfil {
-  es_perfil: boolean;
-  tipo: string | null;
-  destino: string | null;
-  tono: string | null;
-  destaca: string[];
-  resumen: string | null;
-}
-
-function ActoPerfil({ config }: { config: Config }) {
-  const [perfil, setPerfil] = useState<Perfil | null>(null);
+function ActoPerfil({
+  config, plan, precio, mensajes, perfil, setPerfil,
+  nombre, setNombre, telefono, setTelefono, enviado, setEnviado,
+}: {
+  config: Config; plan: IdPlan; precio: number; mensajes: number;
+  perfil: Perfil | null; setPerfil: (p: Perfil | null) => void;
+  nombre: string; setNombre: (v: string) => void;
+  telefono: string; setTelefono: (v: string) => void;
+  enviado: boolean; setEnviado: (v: boolean) => void;
+}) {
   const [leyendo, setLeyendo] = useState(false);
   const [errorFoto, setErrorFoto] = useState("");
-  const [nombre, setNombre] = useState("");
-  const [telefono, setTelefono] = useState("");
   const [enviando, setEnviando] = useState(false);
-  const [listo, setListo] = useState(false);
   const [errorEnvio, setErrorEnvio] = useState("");
 
   const subir = useCallback(async (file: File) => {
@@ -583,12 +857,16 @@ function ActoPerfil({ config }: { config: Config }) {
     } finally {
       setLeyendo(false);
     }
-  }, []);
+  }, [setPerfil]);
 
   const enviar = useCallback(async () => {
     if (!nombre.trim() || !telefono.trim() || enviando) return;
     setEnviando(true);
     setErrorEnvio("");
+    // Solo se manda lo que la IA leyó cuando de verdad reconoció un perfil. Si
+    // no lo reconoció, `resumen` trae el motivo del rechazo ("es un fondo azul
+    // sólido"), y mandarlo igual lo haría aparecer en el CRM como si fuera la
+    // descripción del negocio.
     const leido = perfil?.es_perfil ? perfil : null;
     try {
       const res = await fetch("/api/posada", {
@@ -597,16 +875,13 @@ function ActoPerfil({ config }: { config: Config }) {
         body: JSON.stringify({
           nombre: nombre.trim(),
           telefono: telefono.trim(),
-          // Solo se manda lo que la IA leyó cuando de verdad reconoció un
-          // perfil. Si no lo reconoció, `resumen` trae el motivo del rechazo
-          // ("es un fondo azul sólido"), y mandarlo igual lo haría aparecer en
-          // el CRM como si fuera la descripción del negocio.
-          destino: (leido?.destino) || "Posada interesada",
+          destino: leido?.destino || "Posada interesada",
           consulta: [
             "Interesado en el asistente de atención al cliente.",
-            // El plan y la configuración van en el mismo texto: el CRM los lee
-            // de acá para mostrarlos en "IA Atención al Cliente".
-            `Plan: ${esPlanFull(config.hace) ? `completo ($${PLAN_FULL}/mes)` : `básico ($${PLAN_BASICO}/mes)`}`,
+            // El plan, el tier y la configuración van en el mismo texto: el CRM
+            // los lee de acá para mostrarlos en "IA Atención al Cliente".
+            `Plan: ${plan === "pro" ? "Pro" : "Básico"} — $${precio}/mes, ${miles(mensajes)} mensajes`,
+            `Instalación: $${INSTALACION} (primer mes incluido)`,
             `Quiere que: ${listar(HACE, config.hace)}`,
             `No quiere que: ${listar(NO_HACE, config.noHace)}`,
             `Ofrece: ${listar(OFRECE, config.ofrece)}`,
@@ -619,18 +894,18 @@ function ActoPerfil({ config }: { config: Config }) {
       });
       const data = await res.json().catch(() => null);
       if (!data?.ok) { setErrorEnvio("No pudimos registrar tus datos. Intenta de nuevo."); return; }
-      setListo(true);
+      setEnviado(true);
     } catch {
       setErrorEnvio("Se cortó la conexión. Intenta de nuevo.");
     } finally {
       setEnviando(false);
     }
-  }, [nombre, telefono, perfil, enviando, config]);
+  }, [nombre, telefono, perfil, enviando, config, plan, precio, mensajes, setEnviado]);
 
-  if (listo) {
+  if (enviado) {
     return (
       <section className="py-10 text-center">
-        <p className="font-serif text-4xl text-coral">¡Listo!</p>
+        <p className="animate-[saltar_.5s_ease-out] font-serif text-4xl text-acento">¡Listo!</p>
         <h2 className="mt-4 text-balance font-serif text-3xl leading-tight">
           Te escribimos por WhatsApp.
         </h2>
@@ -644,7 +919,7 @@ function ActoPerfil({ config }: { config: Config }) {
 
   return (
     <section>
-      <p className="text-xs font-bold uppercase tracking-[0.16em] text-ink-soft">Tu negocio</p>
+      <p className="text-xs font-bold uppercase tracking-[0.16em] text-acento">Tu negocio</p>
       <h2 className="mt-3 max-w-2xl text-balance font-serif text-3xl leading-tight sm:text-4xl">
         Muéstrale tu Instagram y mira qué entiende.
       </h2>
@@ -654,44 +929,44 @@ function ActoPerfil({ config }: { config: Config }) {
       </p>
 
       <div className="mt-8 grid gap-5 lg:grid-cols-2">
-        <div>
-          <label className="flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-ink/20 bg-card p-8 text-center transition hover:border-coral hover:bg-coral/5">
+        <div className="flex flex-col gap-4">
+          <label className="flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-ink/20 bg-card px-5 py-9 text-center transition hover:border-acento">
             <input
               type="file"
-              accept="image/png,image/jpeg,image/webp"
+              accept="image/jpeg,image/png,image/webp"
               className="hidden"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) subir(f); }}
             />
-            <span className="text-2xl" aria-hidden>📸</span>
-            <span className="font-bold">Sube la captura de tu perfil</span>
+            <span className="text-3xl" aria-hidden>📸</span>
+            <span className="text-sm font-bold">Sube la captura de tu perfil</span>
             <span className="text-xs text-ink-soft">JPG, PNG o WEBP · se achica sola</span>
           </label>
-          {errorFoto && <p className="mt-3 text-sm font-medium text-coral">{errorFoto}</p>}
-          {leyendo && <p className="mt-3 text-sm text-ink-soft">Leyendo tu perfil…</p>}
 
-          {perfil && (
-            <div className="mt-4 animate-[surge_.4s_ease-out] rounded-2xl border border-ink/10 bg-card p-5">
-              {perfil.es_perfil ? (
-                <>
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-seafoam-text">
-                    Esto entendió
-                  </p>
-                  <p className="mt-3 text-[15px] leading-relaxed">{perfil.resumen}</p>
-                  {perfil.destaca.length > 0 && (
-                    <div className="mt-4 flex flex-wrap gap-1.5">
-                      {perfil.destaca.map((d) => (
-                        <span key={d} className="rounded-full bg-seafoam-bg px-2.5 py-1 text-xs font-medium text-seafoam-text">
-                          {d}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </>
-              ) : (
-                <p className="text-sm leading-relaxed text-ink-soft">
-                  Eso no parece un perfil de Instagram. {perfil.resumen}
-                </p>
+          {leyendo && (
+            <p className="animate-[pulso-suave_1.2s_ease-in-out_infinite] text-sm font-semibold text-acento">
+              Leyendo tu perfil…
+            </p>
+          )}
+          {errorFoto && <p className="text-sm font-medium text-acento">{errorFoto}</p>}
+          {perfil && !perfil.es_perfil && (
+            <p className="animate-[surge_.4s_ease-out] rounded-xl border border-ink/10 bg-card p-4 text-sm leading-relaxed text-ink-soft">
+              {perfil.resumen || "Eso no parece un perfil de Instagram."}
+            </p>
+          )}
+          {perfil?.es_perfil && (
+            <div className="animate-[surge_.5s_ease-out] rounded-2xl border border-seafoam/30 bg-seafoam-bg p-5">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-seafoam-text">
+                Esto entendió la IA
+              </p>
+              {perfil.resumen && (
+                <p className="mt-3 text-sm leading-relaxed text-seafoam-text">{perfil.resumen}</p>
               )}
+              <dl className="mt-4 flex flex-col gap-1.5 text-sm text-seafoam-text">
+                {perfil.tipo && <Fila termino="Tipo" valor={perfil.tipo} />}
+                {perfil.destino && <Fila termino="Dónde" valor={perfil.destino} />}
+                {perfil.tono && <Fila termino="Tono" valor={perfil.tono} />}
+                {perfil.destaca?.length > 0 && <Fila termino="Destaca" valor={perfil.destaca.join(", ")} />}
+              </dl>
             </div>
           )}
         </div>
@@ -700,13 +975,19 @@ function ActoPerfil({ config }: { config: Config }) {
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-ink-soft">
             ¿Dónde te escribimos?
           </p>
+          <p className="mt-3 rounded-xl bg-acento-suave px-3.5 py-3 text-sm leading-relaxed">
+            Armaste el plan <strong>{plan === "pro" ? "Pro" : "Básico"}</strong> con{" "}
+            <strong>{miles(mensajes)} mensajes</strong> al mes:{" "}
+            <strong className="text-acento">${precio}/mes</strong>, más ${INSTALACION} de
+            instalación con el primer mes incluido.
+          </p>
           <div className="mt-4 flex flex-col gap-3">
             <input
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               placeholder="Tu nombre y el de la posada"
               aria-label="Tu nombre y el de la posada"
-              className="rounded-xl border border-ink/15 bg-sand px-3.5 py-2.5 text-sm outline-none transition focus:border-coral"
+              className="rounded-xl border border-ink/15 bg-sand px-3.5 py-2.5 text-sm outline-none transition focus:border-acento"
             />
             <input
               value={telefono}
@@ -714,62 +995,38 @@ function ActoPerfil({ config }: { config: Config }) {
               placeholder="WhatsApp"
               inputMode="tel"
               aria-label="Tu número de WhatsApp"
-              className="rounded-xl border border-ink/15 bg-sand px-3.5 py-2.5 text-sm outline-none transition focus:border-coral"
+              className="rounded-xl border border-ink/15 bg-sand px-3.5 py-2.5 text-sm outline-none transition focus:border-acento"
             />
             <button
               onClick={enviar}
               disabled={enviando || !nombre.trim() || !telefono.trim()}
-              className="rounded-xl bg-coral px-5 py-3 text-sm font-bold text-white transition hover:bg-coral-bright disabled:opacity-40"
+              className="rounded-xl bg-acento px-5 py-3 text-sm font-bold text-white transition hover:brightness-110 disabled:opacity-40"
             >
               {enviando ? "Enviando…" : "Quiero que me contacten"}
             </button>
-            {errorEnvio && <p className="text-sm font-medium text-coral">{errorEnvio}</p>}
+            {errorEnvio && <p className="text-sm font-medium text-acento">{errorEnvio}</p>}
+            <p className="text-[11px] leading-relaxed text-ink-soft">
+              Te contactamos solo por esto. Nada de lo que subas se publica ni se
+              comparte con nadie.
+            </p>
           </div>
-          <p className="mt-4 text-[11px] leading-relaxed text-ink-soft">
-            Te contactamos solo por esto. Nada de lo que subas se publica ni se
-            comparte con nadie.
-          </p>
         </div>
-      </div>
-
-      <div className="mt-10 grid gap-4 sm:grid-cols-2">
-        <Limites titulo="Sí hace" color="seafoam" items={[
-          "Responde a cualquier hora, todos los días",
-          "Cotiza con tus precios exactos",
-          "Manda la foto que el cliente pide",
-          "Te pasa el contacto por WhatsApp",
-        ]} />
-        <Limites titulo="No hace" color="coral" items={[
-          "No cobra ni pide datos de pago",
-          "No confirma reservas: eso lo haces tú",
-          "No inventa precios ni disponibilidad",
-          "No reemplaza a tu gente",
-        ]} />
       </div>
     </section>
   );
 }
 
-function Limites({ titulo, items, color }: { titulo: string; items: string[]; color: "seafoam" | "coral" }) {
+function Fila({ termino, valor }: { termino: string; valor: string }) {
   return (
-    <div className="rounded-2xl border border-ink/10 bg-card p-5">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-ink-soft">{titulo}</p>
-      <ul className="mt-3 flex flex-col gap-2">
-        {items.map((t) => (
-          <li key={t} className="flex gap-2 text-sm leading-relaxed text-ink-soft">
-            <span className={color === "coral" ? "text-coral" : "text-seafoam-text"} aria-hidden>
-              {color === "coral" ? "✕" : "✓"}
-            </span>
-            {t}
-          </li>
-        ))}
-      </ul>
+    <div className="flex gap-2">
+      <dt className="font-bold">{termino}:</dt>
+      <dd>{valor}</dd>
     </div>
   );
 }
 
-/* La captura se achica en el navegador: subir 4 MB para que el modelo mire
-   1024px es pagar transferencia y espera para nada. */
+/** Achica la captura antes de mandarla: una foto de teléfono son varios MB y
+ *  el modelo no necesita más de 1024px de lado para leer un perfil. */
 async function achicar(file: File, maxLado = 1024): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new Image();

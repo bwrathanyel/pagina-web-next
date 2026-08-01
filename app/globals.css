@@ -39,6 +39,17 @@
   --color-btn-ink: #3a1505;
 
   --color-whatsapp: #0f7a40;
+
+  /* Acentos que cambian con el tema. Los de marca (coral #A83E00, gold #FBC000)
+     están calibrados para leerse sobre `sand` claro: en oscuro el coral se
+     apaga a marrón y el gold deslumbra. Estos dos giran con el tema para poder
+     usarlos como texto en ambos lados sin perder contraste, y son los que le
+     dan color a /ia-planes en modo oscuro, donde antes solo había gris y
+     naranja apagado. */
+  --color-acento: #A83E00;
+  --color-acento-suave: #fbe6d5;
+  --color-ambar: #8a5a00;
+  --color-ambar-suave: #f8ecd0;
 }
 
 /* Dark mode: only the light "sand/card/ink" surfaces invert. Dusk sections
@@ -57,9 +68,17 @@
   --color-seafoam-text: #8fd4c9;
   --color-ink: #f3ebe0;
   --color-ink-soft: #b8ab9a;
+  --color-acento: #FF8A3D;
+  --color-acento-suave: #3a2113;
+  --color-ambar: #FBC000;
+  --color-ambar-suave: #3a2f10;
 }
 
 :root[data-theme="light"] {
+  --color-acento: #A83E00;
+  --color-acento-suave: #fbe6d5;
+  --color-ambar: #8a5a00;
+  --color-ambar-suave: #f8ecd0;
   --color-sand: #f5f0e7;
   --color-sand-2: #e9e2d5;
   --color-card: #fcf8f1;
@@ -87,6 +106,10 @@
   --color-ink-soft: var(--color-ink-soft);
   --color-btn-ink: var(--color-btn-ink);
   --color-whatsapp: var(--color-whatsapp);
+  --color-acento: var(--color-acento);
+  --color-acento-suave: var(--color-acento-suave);
+  --color-ambar: var(--color-ambar);
+  --color-ambar-suave: var(--color-ambar-suave);
 
   --font-display: var(--font-display);
   --font-body: var(--font-body);
@@ -129,6 +152,35 @@ html {
 }
 .animate-bounce-in {
   animation: bounce-in 0.35s ease-out;
+}
+
+/* Animaciones de /ia-planes. `surge` se usaba en toda esa página sin estar
+   definido en ningún lado: Tailwind aceptaba la clase arbitraria, el navegador
+   no encontraba los keyframes y no animaba nada. */
+@keyframes surge {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes entrar-izq {
+  from { opacity: 0; transform: translateX(-16px); }
+  to { opacity: 1; transform: none; }
+}
+/* El precio al cambiar: un salto corto, sin rebote largo que distraiga de la
+   cifra misma. */
+@keyframes saltar {
+  0% { transform: scale(0.86); opacity: 0.4; }
+  60% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes pulso-suave {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [class*="animate-[surge"],
+  [class*="animate-[entrar-izq"],
+  [class*="animate-[saltar"],
+  [class*="animate-[pulso-suave"] { animation: none !important; }
 }
 
 ::selection {
