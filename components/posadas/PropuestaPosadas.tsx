@@ -12,9 +12,23 @@ import {
 
 const ACTOS = ["El problema", "La noche", "Pruébala", "Ármala", "Tu perfil"] as const;
 
+export interface Config {
+  hace: string[];
+  noHace: string[];
+  ofrece: string[];
+}
+
 export function PropuestaPosadas() {
   const [acto, setActo] = useState(0);
   const tope = useRef<HTMLDivElement>(null);
+  // Vive acá y no dentro del acto 4 porque cada acto se desmonta al avanzar:
+  // si el estado quedara adentro, lo que la posada configuró se perdería antes
+  // de llegar al formulario y el CRM recibiría un lead sin su configuración.
+  const [config, setConfig] = useState<Config>({
+    hace: ["responde", "cotiza", "datos"],
+    noHace: ["descuentos", "disponibilidad"],
+    ofrece: ["hospedaje"],
+  });
 
   const ir = useCallback((n: number) => {
     setActo(Math.max(0, Math.min(ACTOS.length - 1, n)));
@@ -28,8 +42,8 @@ export function PropuestaPosadas() {
         {acto === 0 && <ActoReloj />}
         {acto === 1 && <ActoNoche />}
         {acto === 2 && <ActoPrueba />}
-        {acto === 3 && <ActoConfigurar />}
-        {acto === 4 && <ActoPerfil />}
+        {acto === 3 && <ActoConfigurar config={config} setConfig={setConfig} />}
+        {acto === 4 && <ActoPerfil config={config} />}
         <Navegacion acto={acto} ir={ir} />
       </main>
     </div>
@@ -396,18 +410,29 @@ function ActoPrueba() {
 
 /* ---------------------------------------------------------------- Acto 4 */
 
-function ActoConfigurar() {
-  const [hace, setHace] = useState<string[]>(["responde", "cotiza", "datos"]);
-  const [noHace, setNoHace] = useState<string[]>(["descuentos", "disponibilidad"]);
-  const [ofrece, setOfrece] = useState<string[]>(["hospedaje"]);
+/** Una sola opción marcada de las que exigen el plan completo ya lo activa.
+ *  Lo usan el panel de precio y el texto que se manda al CRM, para que ambos
+ *  no puedan discrepar sobre qué plan eligió la posada. */
+export const esPlanFull = (hace: string[]) =>
+  HACE.some((o) => o.full && hace.includes(o.id));
 
-  const alternar = (lista: string[], set: (v: string[]) => void, id: string) =>
-    set(lista.includes(id) ? lista.filter((x) => x !== id) : [...lista, id]);
+const listar = (opciones: Opcion[], elegidas: string[]) =>
+  opciones.filter((o) => elegidas.includes(o.id)).map((o) => o.texto.toLowerCase()).join("; ") || "—";
 
-  const esFull = useMemo(
-    () => HACE.some((o) => o.full && hace.includes(o.id)),
-    [hace],
-  );
+function ActoConfigurar({ config, setConfig }: {
+  config: Config; setConfig: (c: Config) => void;
+}) {
+  const { hace, noHace, ofrece } = config;
+
+  const alternar = (clave: keyof Config, id: string) => {
+    const lista = config[clave];
+    setConfig({
+      ...config,
+      [clave]: lista.includes(id) ? lista.filter((x) => x !== id) : [...lista, id],
+    });
+  };
+
+  const esFull = useMemo(() => esPlanFull(hace), [hace]);
   const precio = esFull ? PLAN_FULL : PLAN_BASICO;
 
   return (
@@ -424,11 +449,11 @@ function ActoConfigurar() {
       <div className="mt-8 grid gap-5 lg:grid-cols-[1fr_20rem]">
         <div className="flex flex-col gap-5">
           <Grupo titulo="Quiero que…" opciones={HACE} elegidas={hace}
-            alternar={(id) => alternar(hace, setHace, id)} color="seafoam" />
+            alternar={(id) => alternar("hace", id)} color="seafoam" />
           <Grupo titulo="No quiero que…" opciones={NO_HACE} elegidas={noHace}
-            alternar={(id) => alternar(noHace, setNoHace, id)} color="coral" />
+            alternar={(id) => alternar("noHace", id)} color="coral" />
           <Grupo titulo="Ofrece…" opciones={OFRECE} elegidas={ofrece}
-            alternar={(id) => alternar(ofrece, setOfrece, id)} color="seafoam" />
+            alternar={(id) => alternar("ofrece", id)} color="seafoam" />
         </div>
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
@@ -459,18 +484,9 @@ function ActoConfigurar() {
                 Así queda tu asistente
               </summary>
               <div className="mt-3 flex flex-col gap-2 text-[13px] leading-relaxed text-ink-soft">
-                <p>
-                  <strong className="text-ink">Hace:</strong>{" "}
-                  {HACE.filter((o) => hace.includes(o.id)).map((o) => o.texto.toLowerCase()).join("; ") || "—"}
-                </p>
-                <p>
-                  <strong className="text-ink">Nunca:</strong>{" "}
-                  {NO_HACE.filter((o) => noHace.includes(o.id)).map((o) => o.texto.toLowerCase()).join("; ") || "—"}
-                </p>
-                <p>
-                  <strong className="text-ink">Ofrece:</strong>{" "}
-                  {OFRECE.filter((o) => ofrece.includes(o.id)).map((o) => o.texto.toLowerCase()).join("; ") || "—"}
-                </p>
+                <p><strong className="text-ink">Hace:</strong> {listar(HACE, hace)}</p>
+                <p><strong className="text-ink">Nunca:</strong> {listar(NO_HACE, noHace)}</p>
+                <p><strong className="text-ink">Ofrece:</strong> {listar(OFRECE, ofrece)}</p>
               </div>
             </details>
           </div>
@@ -527,7 +543,7 @@ interface Perfil {
   resumen: string | null;
 }
 
-function ActoPerfil() {
+function ActoPerfil({ config }: { config: Config }) {
   const [perfil, setPerfil] = useState<Perfil | null>(null);
   const [leyendo, setLeyendo] = useState(false);
   const [errorFoto, setErrorFoto] = useState("");
@@ -573,6 +589,7 @@ function ActoPerfil() {
     if (!nombre.trim() || !telefono.trim() || enviando) return;
     setEnviando(true);
     setErrorEnvio("");
+    const leido = perfil?.es_perfil ? perfil : null;
     try {
       const res = await fetch("/api/posada", {
         method: "POST",
@@ -580,13 +597,23 @@ function ActoPerfil() {
         body: JSON.stringify({
           nombre: nombre.trim(),
           telefono: telefono.trim(),
-          destino: perfil?.destino || "Posada interesada",
+          // Solo se manda lo que la IA leyó cuando de verdad reconoció un
+          // perfil. Si no lo reconoció, `resumen` trae el motivo del rechazo
+          // ("es un fondo azul sólido"), y mandarlo igual lo haría aparecer en
+          // el CRM como si fuera la descripción del negocio.
+          destino: (leido?.destino) || "Posada interesada",
           consulta: [
             "Interesado en el asistente de atención al cliente.",
-            perfil?.resumen ? `Perfil leído por la IA: ${perfil.resumen}` : null,
-            perfil?.tipo ? `Tipo: ${perfil.tipo}` : null,
-            perfil?.tono ? `Tono: ${perfil.tono}` : null,
-            perfil?.destaca?.length ? `Destaca: ${perfil.destaca.join(", ")}` : null,
+            // El plan y la configuración van en el mismo texto: el CRM los lee
+            // de acá para mostrarlos en "IA Atención al Cliente".
+            `Plan: ${esPlanFull(config.hace) ? `completo ($${PLAN_FULL}/mes)` : `básico ($${PLAN_BASICO}/mes)`}`,
+            `Quiere que: ${listar(HACE, config.hace)}`,
+            `No quiere que: ${listar(NO_HACE, config.noHace)}`,
+            `Ofrece: ${listar(OFRECE, config.ofrece)}`,
+            leido?.resumen ? `Perfil leído por la IA: ${leido.resumen}` : null,
+            leido?.tipo ? `Tipo: ${leido.tipo}` : null,
+            leido?.tono ? `Tono: ${leido.tono}` : null,
+            leido?.destaca?.length ? `Destaca: ${leido.destaca.join(", ")}` : null,
           ].filter(Boolean).join("\n"),
         }),
       });
@@ -598,7 +625,7 @@ function ActoPerfil() {
     } finally {
       setEnviando(false);
     }
-  }, [nombre, telefono, perfil, enviando]);
+  }, [nombre, telefono, perfil, enviando, config]);
 
   if (listo) {
     return (

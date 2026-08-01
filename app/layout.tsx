@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { CromoSitio } from "@/components/layout/CromoSitio";
 import { WhatsAppFloatButton } from "@/components/layout/WhatsAppFloatButton";
 import { AsistenteVirtualButton } from "@/components/layout/AsistenteVirtualButton";
 import { BottomTabBar } from "@/components/layout/BottomTabBar";
@@ -122,16 +123,18 @@ export default async function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <SiteContentProvider initialContent={siteContent}>
-              <Navbar />
+              <CromoSitio><Navbar /></CromoSitio>
               <div className="flex flex-1 flex-col pb-20 lg:pb-0">
                 <div className="flex-1">{children}</div>
-                <Footer />
+                <CromoSitio><Footer /></CromoSitio>
               </div>
-              <WhatsAppFloatButton />
-              <AsistenteVirtualButton />
+              <CromoSitio>
+                <WhatsAppFloatButton />
+                <AsistenteVirtualButton />
+                <BottomTabBar />
+                <OnboardingOverlay />
+              </CromoSitio>
               <AdminEditToggle />
-              <BottomTabBar />
-              <OnboardingOverlay />
             </SiteContentProvider>
           </AuthProvider>
         </ThemeProvider>
