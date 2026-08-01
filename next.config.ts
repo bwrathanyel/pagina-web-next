@@ -1,6 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // La propuesta para las posadas vivió un rato en /posadas antes de pasar a
+  // /ia-planes; sin esto, cualquier link ya compartido daría 404.
+  //
+  // No agregar una entrada para la variante en mayúsculas: el matcheo de
+  // `source` NO distingue mayúsculas, así que "/IA-Planes" matchearía también
+  // "/ia-planes" y la ruta se redirigiría a sí misma en bucle.
+  async redirects() {
+    return [
+      { source: "/posadas", destination: "/ia-planes", permanent: true },
+    ];
+  },
   images: {
     // El optimizador de imágenes de Next (el que corre en /_next/image) no
     // funciona en Workers -- lo hacía el plugin de Netlify. En vez de servir

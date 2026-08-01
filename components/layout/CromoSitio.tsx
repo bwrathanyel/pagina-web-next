@@ -6,12 +6,12 @@ import { usePathname } from "next/navigation";
    navegación, footer del catálogo, botones flotantes de WhatsApp y del chat de
    viajes, y el onboarding de bienvenida.
 
-   `/posadas` no le habla a un cliente que busca viajar sino a una posada que
+   `/ia-planes` no le habla a un cliente que busca viajar sino a una posada que
    evalúa contratar el asistente. Con el cromo puesto, lo primero que veía era
    el onboarding de la agencia tapando la propuesta, y debajo un footer que la
    invitaba a comprar un viaje -- además de alargar una página cuyo pedido
    explícito fue que no se sintiera un scroll infinito. */
-const RUTAS_SIN_CROMO = ["/posadas"];
+const RUTAS_SIN_CROMO = ["/ia-planes"];
 
 export function CromoSitio({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "";
