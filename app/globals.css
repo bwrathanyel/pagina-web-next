@@ -50,6 +50,11 @@
   --color-acento-suave: #fbe6d5;
   --color-ambar: #8a5a00;
   --color-ambar-suave: #f8ecd0;
+  /* El color del texto que va ENCIMA de `acento`. En claro el acento es
+     oscuro y encima va blanco; en oscuro el acento es claro y el blanco
+     dejaría de leerse. Va pareado con el acento y cambia con él -- también
+     cuando la paleta la aporta la marca del cliente. */
+  --color-sobre-acento: #ffffff;
 }
 
 /* Dark mode: only the light "sand/card/ink" surfaces invert. Dusk sections
@@ -72,6 +77,7 @@
   --color-acento-suave: #3a2113;
   --color-ambar: #FBC000;
   --color-ambar-suave: #3a2f10;
+  --color-sobre-acento: #1a1206;
 }
 
 :root[data-theme="light"] {
@@ -79,6 +85,7 @@
   --color-acento-suave: #fbe6d5;
   --color-ambar: #8a5a00;
   --color-ambar-suave: #f8ecd0;
+  --color-sobre-acento: #ffffff;
   --color-sand: #f5f0e7;
   --color-sand-2: #e9e2d5;
   --color-card: #fcf8f1;
@@ -110,6 +117,7 @@
   --color-acento-suave: var(--color-acento-suave);
   --color-ambar: var(--color-ambar);
   --color-ambar-suave: var(--color-ambar-suave);
+  --color-sobre-acento: var(--color-sobre-acento);
 
   --font-display: var(--font-display);
   --font-body: var(--font-body);

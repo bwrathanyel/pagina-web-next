@@ -44,7 +44,13 @@ export const CIFRAS = {
    Consecuencia: el costo es plano (~$18/mes por cliente) sin importar el
    tier de mensajes, mientras los contactos activos no pasen de 500. Los
    tiers son empaquetado de valor, no traslado de costo -- por eso el margen
-   crece hacia arriba en vez de comprimirse. */
+   crece hacia arriba en vez de comprimirse.
+
+   Ganancia por cliente, a repartir 50/50 entre el dueño y la agencia:
+     Básico  $59/$69/$79/$89  ->  $41/$51/$61/$71
+     Pro     $109/$129        ->  $91/$111
+   Referencia de mercado para no perder el piso: Tidio+Lyro cobra $289/mes por
+   500 conversaciones e Intercom Fin ~$0.99 por conversación resuelta. */
 
 export interface Tier {
   mensajes: number;
@@ -55,16 +61,16 @@ export interface Tier {
 /** Un solo lugar para la escalera de precios. `null` = ese tier no existe en
  *  ese plan (Pro arranca en 5.000: por debajo no tiene sentido pagarlo). */
 export const TIERS: Tier[] = [
-  { mensajes: 500, basico: 49, pro: null },
-  { mensajes: 2000, basico: 59, pro: null },
-  { mensajes: 5000, basico: 69, pro: 99 },
-  { mensajes: 10000, basico: 79, pro: 119 },
+  { mensajes: 500, basico: 59, pro: null },
+  { mensajes: 2000, basico: 69, pro: null },
+  { mensajes: 5000, basico: 79, pro: 109 },
+  { mensajes: 10000, basico: 89, pro: 129 },
 ];
 
 /** Cobro único de instalación. Incluye el primer mes: quien contrata paga una
  *  sola vez, ve el resultado un mes completo, y recién ahí empieza a correr la
  *  mensualidad. */
-export const INSTALACION = 99;
+export const INSTALACION = 109;
 
 export type IdPlan = "basico" | "pro";
 
@@ -121,10 +127,12 @@ export const HACE: Opcion[] = [
   { id: "temporada", texto: "Manejar precios distintos por temporada", full: true },
 ];
 
+// "Hablar de otras posadas" salió de la lista: la asistente es exclusiva del
+// alojamiento que la contrata y nunca ofrece otro. Ponerlo como opción sembraba
+// la duda de que pudiera hacerlo.
 export const NO_HACE: Opcion[] = [
   { id: "descuentos", texto: "Dar descuentos por su cuenta" },
   { id: "disponibilidad", texto: "Prometer disponibilidad sin confirmar" },
-  { id: "otras", texto: "Hablar de otras posadas" },
   { id: "ocultar", texto: "Ocultar que es un asistente si le preguntan" },
 ];
 
