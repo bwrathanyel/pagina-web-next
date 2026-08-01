@@ -5,7 +5,7 @@ import {
   CIFRAS, HACE, HORA_ABRE, HORA_CIERRA, INSTALACION, MENSAJES_POR_HORA, NO_HACE,
   OFRECE, PLANES, SUGERENCIAS, TIERS, type IdPlan, type Opcion,
 } from "./datos";
-import { construirPaleta, cssPaleta, type ColoresMarca } from "./paleta";
+import { construirPaleta, cssPaleta, extraerColores, type ColoresMarca } from "./paleta";
 
 /* Recorrido de cinco actos, uno por pantalla. Se avanza por decisión y no por
    scroll: el pedido explícito fue que no se sintiera una página infinita hacia
@@ -605,7 +605,7 @@ function ActoPerfil({ perfil, setPerfil, vestida }: {
     setLeyendo(true);
     setPerfil(null);
     try {
-      const base64 = await achicar(file);
+      const { base64, colores } = await achicar(file);
       const res = await fetch("/api/perfil-instagram", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -620,7 +620,10 @@ function ActoPerfil({ perfil, setPerfil, vestida }: {
         );
         return;
       }
-      setPerfil(data as Perfil);
+      // Los colores medidos de los píxeles mandan sobre los que nombró el
+      // modelo. Los del modelo quedan de reserva por si la captura fuera casi
+      // toda gris y no hubiera nada que medir.
+      setPerfil({ ...(data as Perfil), colores: colores ?? data.colores ?? null });
     } catch {
       setError("Se cortó la conexión mientras subíamos la imagen.");
     } finally {
@@ -1147,8 +1150,11 @@ function Fila({ termino, valor }: { termino: string; valor: string }) {
 }
 
 /** Achica la captura antes de mandarla: una foto de teléfono son varios MB y
- *  el modelo no necesita más de 1024px de lado para leer un perfil. */
-async function achicar(file: File, maxLado = 1024): Promise<string> {
+ *  el modelo no necesita más de 1024px de lado para leer un perfil.
+ *
+ *  De paso mide los colores sobre el mismo lienzo, que es el momento en que la
+ *  imagen ya está decodificada y en memoria. */
+async function achicar(file: File, maxLado = 1024): Promise<{ base64: string; colores: ColoresMarca | null }> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
@@ -1158,7 +1164,10 @@ async function achicar(file: File, maxLado = 1024): Promise<string> {
       c.height = Math.round(img.height * escala);
       c.getContext("2d")?.drawImage(img, 0, 0, c.width, c.height);
       URL.revokeObjectURL(img.src);
-      resolve(c.toDataURL("image/jpeg", 0.82).split(",")[1]);
+      resolve({
+        base64: c.toDataURL("image/jpeg", 0.82).split(",")[1],
+        colores: extraerColores(c),
+      });
     };
     img.onerror = () => { URL.revokeObjectURL(img.src); reject(new Error("imagen ilegible")); };
     img.src = URL.createObjectURL(file);
