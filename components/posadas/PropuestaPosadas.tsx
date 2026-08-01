@@ -362,15 +362,31 @@ function Dato({ valor, texto, tono, destacado }: {
 /* ---------------------------------------------------------------- Acto 2 */
 
 interface Burbuja {
-  de: "cliente" | "posada" | "silencio";
+  de: "cliente" | "posada" | "silencio" | "dia";
   texto: string;
   hora?: string;
+  /** Milisegundos hasta el mensaje siguiente. Es el ritmo lo que hace que se
+   *  lea como una conversación: los mensajes sueltos de alguien que está
+   *  escribiendo rápido caen casi encima, y el silencio se hace esperar. */
+  pausa?: number;
 }
 
+/* Escrita como se escribe de verdad por Instagram: mensajes cortos y seguidos,
+   sin puntuación perfecta, corrigiéndose a mitad de camino. El golpe no es que
+   la posada no conteste nunca -- es que contesta a la mañana siguiente, bien,
+   amable y completa, y ya no sirve de nada. */
 const CONVERSACION_PERDIDA: Burbuja[] = [
-  { de: "cliente", texto: "Hola buenas noches, ¿tienen disponible para el fin de semana? ¿Y cuánto sale?", hora: "Domingo, 9:47 p.m." },
-  { de: "silencio", texto: "visto a las 8:10 a.m. — diez horas después" },
-  { de: "cliente", texto: "Ya no, gracias 🙏", hora: "Lunes, 8:32 a.m." },
+  { de: "dia", texto: "Domingo" },
+  { de: "cliente", texto: "Hola buenas noches 🙌", pausa: 700 },
+  { de: "cliente", texto: "Disculpe, ¿tienen disponible para este fin de semana?", pausa: 900 },
+  { de: "cliente", texto: "Somos 4 adultos y 2 niños", hora: "9:47 p.m.", pausa: 1100 },
+  { de: "cliente", texto: "¿Cuánto sale la noche? 😊", hora: "9:52 p.m.", pausa: 1400 },
+  { de: "cliente", texto: "¿Hola? 👀", hora: "10:26 p.m.", pausa: 1800 },
+  { de: "silencio", texto: "Visto a las 8:10 a.m. — diez horas después", pausa: 1900 },
+  { de: "dia", texto: "Lunes", pausa: 600 },
+  { de: "posada", texto: "¡Buenos días! 😊 Sí tenemos disponible para el fin de semana. Le paso los precios y las fotos ahorita mismo", hora: "8:31 a.m.", pausa: 1500 },
+  { de: "cliente", texto: "Ya no, gracias 🙏", pausa: 800 },
+  { de: "cliente", texto: "Anoche reservamos en otra que nos contestó de una vez", hora: "8:32 a.m." },
 ];
 
 function ActoNoche() {
@@ -378,9 +394,11 @@ function ActoNoche() {
 
   useEffect(() => {
     if (visibles >= CONVERSACION_PERDIDA.length) return;
-    // El silencio tarda más a propósito: es lo que se está contando.
-    const espera = CONVERSACION_PERDIDA[visibles].de === "silencio" ? 1500 : 800;
-    const t = setTimeout(() => setVisibles((v) => v + 1), espera);
+    const directo = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const t = setTimeout(
+      () => setVisibles(directo ? CONVERSACION_PERDIDA.length : visibles + 1),
+      directo ? 0 : CONVERSACION_PERDIDA[visibles].pausa ?? 800,
+    );
     return () => clearTimeout(t);
   }, [visibles]);
 
@@ -396,36 +414,75 @@ function ActoNoche() {
         siguiente, ya preguntó en otras tres posadas y alguna le respondió primero.
       </p>
 
-      <div className="mt-9 max-w-md rounded-2xl border border-ink/10 bg-card p-4 shadow-sm">
-        <div className="mb-3 flex items-center gap-2.5 border-b border-ink/10 pb-3">
-          <span className="h-8 w-8 rounded-full bg-gradient-to-br from-ambar via-acento to-seafoam" />
-          <span className="text-sm font-bold leading-tight">
+      <div className="mt-9 max-w-md overflow-hidden rounded-2xl border border-ink/10 bg-card shadow-sm">
+        <div className="flex items-center gap-2.5 border-b border-ink/10 px-4 py-3">
+          <span className="h-9 w-9 rounded-full bg-gradient-to-br from-ambar via-acento to-seafoam" />
+          <span className="flex-1 text-sm font-bold leading-tight">
             Tu posada
             <small className="block font-normal text-ink-soft">Instagram · mensaje directo</small>
           </span>
         </div>
-        <div className="flex flex-col gap-2.5">
-          {CONVERSACION_PERDIDA.slice(0, visibles).map((b, i) =>
-            b.de === "silencio" ? (
-              <p
-                key={i}
-                className="animate-[surge_.4s_ease-out] rounded-xl bg-[repeating-linear-gradient(-45deg,transparent,transparent_7px,rgba(128,128,128,.12)_7px,rgba(128,128,128,.12)_8px)] py-4 text-center text-xs font-semibold text-ink-soft"
-              >
-                {b.texto}
-              </p>
-            ) : (
-              <div key={i} className="animate-[entrar-izq_.45s_ease-out]">
-                <p className="max-w-[85%] rounded-2xl rounded-bl-sm bg-sand-2 px-3.5 py-2.5 text-sm">
+
+        <div className="flex flex-col gap-1.5 p-4">
+          {CONVERSACION_PERDIDA.slice(0, visibles).map((b, i) => {
+            if (b.de === "dia") {
+              return (
+                <p key={i} className="animate-[surge_.3s_ease-out] py-1.5 text-center text-[11px] font-bold uppercase tracking-wide text-ink-soft">
                   {b.texto}
                 </p>
-                {b.hora && <span className="mt-1 block text-[11px] tabular-nums text-ink-soft">{b.hora}</span>}
+              );
+            }
+            if (b.de === "silencio") {
+              return (
+                <p
+                  key={i}
+                  className="my-1.5 animate-[surge_.4s_ease-out] rounded-xl bg-[repeating-linear-gradient(-45deg,transparent,transparent_7px,rgba(128,128,128,.12)_7px,rgba(128,128,128,.12)_8px)] py-4 text-center text-xs font-semibold text-ink-soft"
+                >
+                  {b.texto}
+                </p>
+              );
+            }
+            const dePosada = b.de === "posada";
+            return (
+              <div
+                key={i}
+                className={`flex flex-col ${dePosada ? "items-end animate-[surge_.4s_ease-out]" : "items-start animate-[entrar-izq_.4s_ease-out]"}`}
+              >
+                <p
+                  className={`max-w-[86%] px-3.5 py-2.5 text-sm leading-relaxed ${
+                    dePosada
+                      ? "rounded-2xl rounded-br-sm bg-seafoam text-white"
+                      : "rounded-2xl rounded-bl-sm bg-sand-2"
+                  }`}
+                >
+                  {b.texto}
+                </p>
+                {b.hora && (
+                  <span className="mt-1 px-1 text-[11px] tabular-nums text-ink-soft">{b.hora}</span>
+                )}
               </div>
-            ),
-          )}
+            );
+          })}
+
+          {/* Los puntitos van del lado de quien está por escribir, como en
+              cualquier chat: si no, parecen un adorno suelto. */}
           {visibles < CONVERSACION_PERDIDA.length && (
-            <span className="animate-[pulso-suave_1.2s_ease-in-out_infinite] text-xs text-ink-soft" aria-hidden>…</span>
+            <span
+              className={`animate-[pulso-suave_1.1s_ease-in-out_infinite] px-1 text-lg leading-none text-ink-soft ${
+                CONVERSACION_PERDIDA[visibles].de === "posada" ? "self-end" : "self-start"
+              }`}
+              aria-hidden
+            >
+              ···
+            </span>
           )}
         </div>
+
+        {visibles >= CONVERSACION_PERDIDA.length && (
+          <p className="animate-[surge_.5s_ease-out] border-t border-ink/10 bg-acento-suave px-4 py-3 text-center text-xs font-semibold text-ink">
+            Contestaste bien. Contestaste tarde.
+          </p>
+        )}
       </div>
     </section>
   );
