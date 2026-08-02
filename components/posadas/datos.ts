@@ -72,6 +72,18 @@ export const TIERS: Tier[] = [
  *  mensualidad. */
 export const INSTALACION = 109;
 
+/** Los cuatro canales donde la asistente atiende, en los dos planes. */
+export const CANALES = ["Instagram", "Facebook", "WhatsApp", "Telegram"] as const;
+
+/* La condición del WhatsApp va escrita en la página y no se descubre después:
+   la API de WhatsApp Business no admite números venezolanos, así que quien
+   quiera ese canal tiene que poner un número de otro país. Es un requisito del
+   proveedor, no una decisión nuestra, y callarlo hasta la instalación sería
+   vender algo que no se puede entregar. */
+export const AVISO_WHATSAPP =
+  "WhatsApp necesita un número que no sea venezolano — es un requisito de "
+  + "WhatsApp, no nuestro. Los otros tres canales funcionan con lo que ya tienes.";
+
 export type IdPlan = "basico" | "pro";
 
 export interface Plan {
@@ -92,7 +104,7 @@ export const PLANES: Plan[] = [
       "Pide el teléfono y las fechas",
       "Responde qué incluye y los requisitos",
       "Te pasa el cliente listo por WhatsApp",
-      "Conexión con tu Instagram incluida",
+      "Atiende en Instagram, Facebook, WhatsApp y Telegram",
     ],
   },
   {
@@ -100,7 +112,7 @@ export const PLANES: Plan[] = [
     nombre: "Pro",
     gancho: "Además, atiende como si fuera alguien de tu equipo.",
     incluye: [
-      "Todo lo del Básico",
+      "Todo lo del Básico, en los cuatro canales",
       "Manda la foto del ambiente que le piden",
       "Habla con el tono de tu negocio",
       "Maneja precios distintos por temporada",

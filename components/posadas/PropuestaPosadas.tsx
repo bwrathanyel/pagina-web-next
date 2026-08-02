@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  CIFRAS, HACE, HORA_ABRE, HORA_CIERRA, INSTALACION, MENSAJES_POR_HORA, NO_HACE,
+  AVISO_WHATSAPP, CANALES, CIFRAS, HACE, HORA_ABRE, HORA_CIERRA, INSTALACION,
+  MENSAJES_POR_HORA, NO_HACE,
   OFRECE, PLANES, SUGERENCIAS, TIERS, type IdPlan, type Opcion,
 } from "./datos";
 import { construirPaleta, cssPaleta, extraerColores, type ColoresMarca } from "./paleta";
@@ -867,6 +868,24 @@ function ActoArmar({
           responde. Una conversación completa suele llevarse unos veinte.
         </p>
 
+        <div className="mt-6 rounded-2xl border border-ink/10 bg-card p-5">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-ink-soft">
+            Atiende en los cuatro, con los dos planes
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {CANALES.map((canal, i) => (
+              <span
+                key={canal}
+                style={{ animationDelay: `${i * 70}ms` }}
+                className="animate-[surge_.4s_ease-out_backwards] rounded-xl border border-seafoam bg-seafoam-bg px-3.5 py-2 text-sm font-semibold text-seafoam-text"
+              >
+                {canal}
+              </span>
+            ))}
+          </div>
+          <p className="mt-3 text-xs leading-relaxed text-ink-soft">{AVISO_WHATSAPP}</p>
+        </div>
+
         <SelectorMensajes plan={plan} tier={tier} setTier={setTier} />
 
         <div className="mt-6 grid gap-5 lg:grid-cols-2">
@@ -901,7 +920,7 @@ function ActoArmar({
           <div className="max-w-xs text-sm leading-relaxed text-ink-soft">
             <p>
               <strong className="text-ink">${INSTALACION} de instalación, una sola vez</strong> —
-              y el primer mes va incluido. Conectamos tu Instagram, cargamos tus
+              y el primer mes va incluido. Conectamos tus canales, cargamos tus
               habitaciones y escribimos tus reglas.
             </p>
           </div>
@@ -1148,7 +1167,7 @@ function Cierre({
           </h3>
           <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-ink-soft">
             Ya tenemos lo que armaste{comoSeLlama ? ` para ${comoSeLlama}` : ""}. Te
-            contactamos para conectar la asistente a tu Instagram y dejarla
+            contactamos para conectar la asistente a tus canales y dejarla
             respondiendo.
           </p>
         </div>
