@@ -31,24 +31,39 @@ export const CIFRAS = {
 };
 
 /* ------------------------------------------------------------------ Planes
-   Los precios salieron de un cálculo de costo real, no de una corazonada:
+   Los precios salieron de un cálculo de costo real, y desde el 02/08/2026 el
+   costo está MEDIDO, no estimado: el CRM cuenta los mensajes, los contactos y
+   los tokens de cada cliente (CRM > IA Atención al Cliente > Clientes).
 
-   - ManyChat cobra por CONTACTOS ACTIVOS del mes (se reinicia cada ciclo),
-     no por mensajes: ~$15 hasta 500 contactos activos. Ese es el piso duro
-     del costo y por eso ningún plan puede bajar de ~$45 sin dejar de ser
-     negocio.
-   - DeepSeek v4-flash cuesta $0.14 por millón de tokens de entrada. El
-     catálogo de UNA posada pesa ~3.000 tokens por mensaje, así que 10.000
-     mensajes al mes son ~$5. Los mensajes son, en la práctica, gratis.
+   - ManyChat: ~$15/mes hasta 500 contactos ACTIVOS (se reinicia cada ciclo).
+     Es prácticamente el costo entero, y el único que puede escalar: cobra por
+     personas distintas que escriben, no por mensajes.
+   - DeepSeek v4-flash: $0.14 por millón de tokens de entrada, pero el prefijo
+     del prompt se sirve desde su caché a ~1/10 de precio. Medido con tráfico
+     real: 97,7% de aciertos de caché. Una posada gasta ~$0.0004 por mensaje,
+     o sea ~$0.40 cada 1.000 mensajes. El modelo dejó de ser un costo.
 
-   Consecuencia: el costo es plano (~$18/mes por cliente) sin importar el
-   tier de mensajes, mientras los contactos activos no pasen de 500. Los
-   tiers son empaquetado de valor, no traslado de costo -- por eso el margen
-   crece hacia arriba en vez de comprimirse.
+   La estimación vieja de este comentario decía "~3.000 tokens por mensaje" y
+   ~$5 en 10.000 mensajes. Contaba solo el catálogo y se olvidaba del prompt,
+   que pesa ~12.600 tokens y viaja en CADA mensaje -- se equivocaba ~5x hacia
+   abajo en tokens y, sin contar el caché, ~10x hacia arriba en dólares.
 
-   Ganancia por cliente, a repartir 50/50 entre el dueño y la agencia:
-     Básico  $59/$69/$79/$89  ->  $41/$51/$61/$71
-     Pro     $109/$129        ->  $91/$111
+   Consecuencia: el costo es plano, entre $15 y $18 al mes por cliente, sin
+   importar el tier. Los tiers son empaquetado de valor, no traslado de costo
+   -- por eso el margen crece hacia arriba (74% -> 86%) en vez de comprimirse.
+
+   Ganancia por cliente, a repartir 50/50 entre el dueño y la agencia
+   (los tiers de 5.000 y 10.000 calculados al 80% de uso, que es lo que de
+   verdad consume alguien que compra ese plan):
+     Básico  $59 -> $43.80 | $69 -> $53.20 | $79 -> $62.40 | $89 -> $70.80
+     Pro     $109 -> $92.40 | $129 -> $110.80
+   Más la instalación: $109 una vez, ~$94 de ganancia el primer mes.
+
+   Lo que ese margen paga y no aparece en la tabla: construir esto, mantenerlo
+   cuando el proveedor deprecia un modelo sin avisar (pasó el 24/07), y las
+   horas de puesta a punto de cada cliente. El costo marginal de un mensaje no
+   es el costo del servicio.
+
    Referencia de mercado para no perder el piso: Tidio+Lyro cobra $289/mes por
    500 conversaciones e Intercom Fin ~$0.99 por conversación resuelta. */
 
