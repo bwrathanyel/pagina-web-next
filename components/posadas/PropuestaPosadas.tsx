@@ -791,7 +791,17 @@ function ActoPerfil({ perfil, setPerfil, vestida }: {
               type="file"
               accept="image/*"
               className="absolute h-px w-px opacity-0"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) subir(f); e.target.value = ""; }}
+              // En Android, volver de la Galería a veces dispara `change` con
+              // `files` vacío (permiso de fotos denegado a medias, o el picker
+              // del fabricante que no devuelve nada) -- antes eso no hacía
+              // nada visible y se leía como "no funciona". Ahora al menos
+              // avisa, en vez de quedarse callado.
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) subir(f);
+                else setError("No se detectó ninguna foto. Vuelve a intentar, eligiendo desde la galería.");
+                e.target.value = "";
+              }}
             />
             <span className="animate-[flotar_3s_ease-in-out_infinite] text-3xl transition group-hover:scale-110" aria-hidden>📸</span>
             <span className="text-sm font-bold">Sube la captura de tu perfil</span>
