@@ -184,10 +184,32 @@ html {
   0%, 100% { opacity: 0.55; }
   50% { opacity: 1; }
 }
+/* Rebote de entrada: para lo que aparece y quiere que lo mires (el precio
+   nuevo, la tarjeta del perfil leído). Pasa un poco de largo y vuelve. */
+@keyframes rebote {
+  0% { opacity: 0; transform: translateY(18px) scale(0.94); }
+  55% { opacity: 1; transform: translateY(-6px) scale(1.03); }
+  75% { transform: translateY(2px) scale(0.99); }
+  100% { opacity: 1; transform: none; }
+}
+/* Movimiento de fondo, sin principio ni final visibles: da la sensación de que
+   la página está viva sin pedir atención. */
+@keyframes flotar {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+/* Un brillo que cruza una vez, para marcar que algo terminó bien. */
+@keyframes brillo {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(320%); }
+}
 @media (prefers-reduced-motion: reduce) {
   [class*="animate-[surge"],
   [class*="animate-[entrar-izq"],
   [class*="animate-[saltar"],
+  [class*="animate-[rebote"],
+  [class*="animate-[flotar"],
+  [class*="animate-[brillo"],
   [class*="animate-[pulso-suave"] { animation: none !important; }
 }
 

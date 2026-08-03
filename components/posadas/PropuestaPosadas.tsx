@@ -162,13 +162,17 @@ function Progreso({ acto, ir }: { acto: number; ir: (n: number) => void }) {
               onClick={() => ir(i)}
               aria-current={i === acto ? "step" : undefined}
               aria-label={`Paso ${i + 1}: ${nombre}`}
-              className="group flex-1 py-2"
+              // 44px de alto mínimo: es el tamaño que iOS considera tocable.
+              // Antes eran 22 y en el teléfono había que apuntarle al dedo.
+              className="group min-h-[44px] flex-1 py-3 sm:min-h-0 sm:py-2"
             >
               <span
-                className={`block h-1 rounded-full transition-all duration-500 ${
-                  i <= acto
-                    ? "bg-gradient-to-r from-acento to-ambar"
-                    : "bg-ink/15 group-hover:bg-ink/30"
+                className={`block rounded-full transition-all duration-500 ${
+                  i === acto
+                    ? "h-1.5 animate-[pulso-suave_1.8s_ease-in-out_infinite] bg-gradient-to-r from-acento via-ambar to-acento"
+                    : i < acto
+                      ? "h-1 bg-gradient-to-r from-acento to-ambar"
+                      : "h-1 bg-ink/15 group-hover:bg-ink/30"
                 }`}
               />
               <span
@@ -200,7 +204,7 @@ function Navegacion({ acto, ir }: { acto: number; ir: (n: number) => void }) {
       {!ultimo && (
         <button
           onClick={() => ir(acto + 1)}
-          className="rounded-xl bg-acento px-6 py-3 text-sm font-bold text-sobre-acento shadow-lg shadow-acento/25 transition hover:brightness-110 hover:shadow-xl"
+          className="rounded-xl bg-gradient-to-r from-acento to-ambar px-6 py-3 text-sm font-bold text-sobre-acento shadow-lg shadow-acento/25 transition duration-200 hover:-translate-y-0.5 hover:brightness-110 hover:shadow-xl active:translate-y-0 active:scale-95"
         >
           {["Ver qué pasa esa noche", "Probarla ahora", "Mostrarle mi Instagram", "Armarla a mi gusto"][acto]} →
         </button>
@@ -646,29 +650,99 @@ function ActoPrueba({ mensajes, setMensajes }: {
    el paso siguiente hable de SU posada: el nombre, el tipo y los colores de su
    marca salen de acá. */
 
+/* La barra dice EN QUÉ PASO va, no un porcentaje inventado. Los tres primeros
+   pasos ocurren en el teléfono y son rápidos; el último espera al modelo y es
+   el que de verdad tarda. Sin esto, en un teléfono lento la pantalla se veía
+   igual varios segundos y parecía colgada -- que es como se leía el bug. */
+type PasoSubida = "leyendo" | "midiendo" | "subiendo" | "pensando";
+
+const PASOS: { id: PasoSubida; texto: string; pct: number }[] = [
+  { id: "leyendo", texto: "Abriendo tu captura…", pct: 25 },
+  { id: "midiendo", texto: "Mirando los colores de tu marca…", pct: 50 },
+  { id: "subiendo", texto: "Enviándosela a la IA…", pct: 70 },
+  { id: "pensando", texto: "La IA está leyendo tu perfil…", pct: 92 },
+];
+
+function BarraCarga({ paso }: { paso: PasoSubida }) {
+  const i = Math.max(0, PASOS.findIndex((p) => p.id === paso));
+  const actual = PASOS[i];
+  return (
+    <div className="animate-[surge_.3s_ease-out] rounded-2xl border border-acento/20 bg-card p-5">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-bold text-acento">{actual.texto}</p>
+        <span className="text-xs font-bold tabular-nums text-ink-soft">{actual.pct}%</span>
+      </div>
+      <div
+        className="mt-3 h-2.5 overflow-hidden rounded-full bg-sand-2"
+        role="progressbar"
+        aria-valuenow={actual.pct}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label="Progreso de la lectura del perfil"
+      >
+        <span
+          className="block h-full rounded-full bg-gradient-to-r from-acento to-ambar transition-[width] duration-500 ease-out"
+          style={{ width: `${actual.pct}%` }}
+        />
+      </div>
+      <ol className="mt-4 flex flex-col gap-1.5 text-xs text-ink-soft">
+        {PASOS.map((p, n) => (
+          <li key={p.id} className={`flex items-center gap-2 ${n > i ? "opacity-40" : ""}`}>
+            <span aria-hidden className={n < i ? "text-acento" : ""}>
+              {n < i ? "✓" : n === i ? "◍" : "○"}
+            </span>
+            {p.texto.replace("…", "")}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
 function ActoPerfil({ perfil, setPerfil, vestida }: {
   perfil: Perfil | null;
   setPerfil: (p: Perfil | null) => void;
   vestida: boolean;
 }) {
-  const [leyendo, setLeyendo] = useState(false);
+  const [paso, setPaso] = useState<PasoSubida | null>(null);
   const [error, setError] = useState("");
+  const leyendo = paso !== null;
 
   const subir = useCallback(async (file: File) => {
     setError("");
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      setError("Tiene que ser una imagen JPG, PNG o WEBP.");
+    // Ya no se rechaza por el tipo que declara el archivo. En el iPhone una
+    // foto llega como HEIC y una captura compartida puede llegar sin tipo
+    // ninguno; rechazarlas por el nombre dejaba fuera capturas perfectamente
+    // legibles. Si el navegador la puede decodificar, sirve -- y si no, se
+    // entera al intentarlo, que es la única prueba que vale.
+    if (file.type && !file.type.startsWith("image/")) {
+      setError("Eso no parece una imagen. Sube la captura de tu perfil.");
       return;
     }
-    setLeyendo(true);
+    if (file.size > 25 * 1024 * 1024) {
+      setError("Esa imagen pesa demasiado. Prueba con una captura de pantalla.");
+      return;
+    }
+    setPaso("leyendo");
     setPerfil(null);
     try {
-      const { base64, colores } = await achicar(file);
-      const res = await fetch("/api/perfil-instagram", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imagen_base64: base64, mime_type: "image/jpeg" }),
-      });
+      const { base64, colores } = await achicar(file, 1024, (p) => setPaso(p as PasoSubida));
+      setPaso("subiendo");
+      // La misma promesa cubre subir la imagen y esperar al modelo, así que no
+      // hay forma de saber cuándo termina lo primero. Pasado un segundo largo,
+      // lo que queda es el modelo pensando: decirlo es más honesto que dejar
+      // "Enviándosela a la IA" ocho segundos como si la red fuera lentísima.
+      const aPensar = setTimeout(() => setPaso("pensando"), 1200);
+      let res: Response;
+      try {
+        res = await fetch("/api/perfil-instagram", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imagen_base64: base64, mime_type: "image/jpeg" }),
+        });
+      } finally {
+        clearTimeout(aPensar);
+      }
       const data = await res.json().catch(() => null);
       if (!data?.ok) {
         setError(
@@ -682,10 +756,15 @@ function ActoPerfil({ perfil, setPerfil, vestida }: {
       // modelo. Los del modelo quedan de reserva por si la captura fuera casi
       // toda gris y no hubiera nada que medir.
       setPerfil({ ...(data as Perfil), colores: colores ?? data.colores ?? null });
-    } catch {
-      setError("Se cortó la conexión mientras subíamos la imagen.");
+    } catch (err) {
+      const motivo = (err as Error)?.message;
+      setError(
+        motivo === "lienzo_vacio" || motivo === "imagen_ilegible"
+          ? "Tu teléfono no pudo abrir esa imagen. Prueba con una captura de pantalla del perfil (funciona siempre)."
+          : "Se cortó la conexión mientras subíamos la imagen.",
+      );
     } finally {
-      setLeyendo(false);
+      setPaso(null);
     }
   }, [setPerfil]);
 
@@ -703,34 +782,23 @@ function ActoPerfil({ perfil, setPerfil, vestida }: {
 
       <div className="mt-8 grid gap-5 lg:grid-cols-2">
         <div className="flex flex-col gap-4">
-          <label className="group flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-ink/20 bg-card px-5 py-10 text-center transition hover:-translate-y-0.5 hover:border-acento hover:shadow-lg">
+          <label className="group flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-ink/20 bg-card px-5 py-10 text-center transition hover:-translate-y-0.5 hover:border-acento hover:shadow-lg active:scale-[.99]">
+            {/* El input NO va con `display:none`: en varias versiones de Safari
+                de iPhone un input oculto así dentro de un label no abre el
+                selector de fotos, y el usuario toca y no pasa nada. Se esconde
+                a la vista pero se deja en el layout. */}
             <input
               type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="hidden"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) subir(f); }}
+              accept="image/*"
+              className="absolute h-px w-px opacity-0"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) subir(f); e.target.value = ""; }}
             />
-            <span className="text-3xl transition group-hover:scale-110" aria-hidden>📸</span>
+            <span className="animate-[flotar_3s_ease-in-out_infinite] text-3xl transition group-hover:scale-110" aria-hidden>📸</span>
             <span className="text-sm font-bold">Sube la captura de tu perfil</span>
-            <span className="text-xs text-ink-soft">JPG, PNG o WEBP · se achica sola</span>
+            <span className="text-xs text-ink-soft">Desde tu galería · se achica sola</span>
           </label>
 
-          {leyendo && (
-            <div className="animate-[surge_.3s_ease-out] rounded-2xl border border-ink/10 bg-card p-5">
-              <p className="animate-[pulso-suave_1.2s_ease-in-out_infinite] text-sm font-bold text-acento">
-                Mirando tu perfil…
-              </p>
-              <div className="mt-4 flex flex-col gap-2.5" aria-hidden>
-                {[100, 78, 88].map((ancho, i) => (
-                  <span
-                    key={i}
-                    className="block h-3 animate-[pulso-suave_1.4s_ease-in-out_infinite] rounded-full bg-sand-2"
-                    style={{ width: `${ancho}%`, animationDelay: `${i * 180}ms` }}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+          {leyendo && <BarraCarga paso={paso!} />}
 
           {error && <p className="text-sm font-medium text-acento">{error}</p>}
 
@@ -742,7 +810,7 @@ function ActoPerfil({ perfil, setPerfil, vestida }: {
         </div>
 
         {perfil?.es_perfil ? (
-          <div className="animate-[surge_.5s_ease-out] overflow-hidden rounded-2xl border border-acento/25 bg-card shadow-lg">
+          <div className="animate-[rebote_.6s_cubic-bezier(.3,1.4,.5,1)] overflow-hidden rounded-2xl border border-acento/25 bg-card shadow-lg">
             {/* Fondo `acento-suave` y no un degradado de acento a ámbar: con la
                 paleta del cliente el degradado podía terminar en un amarillo
                 claro y el texto encima dejaba de leerse. Este par --fondo suave
@@ -908,7 +976,7 @@ function ActoArmar({
               Lo que pagarías
             </p>
             <p className="mt-2 flex items-baseline gap-1.5">
-              <span key={precio} className="animate-[saltar_.4s_ease-out] font-serif text-5xl tabular-nums text-acento">
+              <span key={precio} className="animate-[rebote_.45s_cubic-bezier(.3,1.5,.5,1)] font-serif text-5xl tabular-nums text-acento">
                 ${precio}
               </span>
               <span className="text-sm font-semibold text-ink-soft">/ mes</span>
@@ -967,7 +1035,7 @@ function SelectorMensajes({ plan, tier, setTier }: {
           ←
         </button>
         <div className="min-w-[9.5rem] text-center">
-          <p key={TIERS[tier].mensajes} className="animate-[saltar_.35s_ease-out] font-serif text-3xl tabular-nums">
+          <p key={TIERS[tier].mensajes} className="animate-[rebote_.4s_cubic-bezier(.3,1.5,.5,1)] font-serif text-3xl tabular-nums">
             {miles(TIERS[tier].mensajes)}
           </p>
           <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
@@ -1024,7 +1092,7 @@ function FichaPlan({ plan, elegido, precio, mensajes, alElegir, destacado }: {
       <p className="mt-5 flex items-baseline gap-1.5">
         {disponible ? (
           <>
-            <span key={precio} className="animate-[saltar_.4s_ease-out] font-serif text-4xl tabular-nums text-acento">
+            <span key={precio} className="animate-[rebote_.45s_cubic-bezier(.3,1.5,.5,1)] font-serif text-4xl tabular-nums text-acento">
               ${precio}
             </span>
             <span className="text-sm font-semibold text-ink-soft">/ mes</span>
@@ -1079,11 +1147,11 @@ function Grupo({ titulo, opciones, elegidas, alternar, color }: {
               key={o.id}
               onClick={() => alternar(o.id)}
               aria-pressed={on}
-              className={`rounded-xl border px-3.5 py-2 text-left text-sm transition duration-200 hover:-translate-y-0.5 ${
-                on ? `${activo} shadow-sm` : "border-ink/15 text-ink-soft hover:border-ink/30"
+              className={`rounded-xl border px-3.5 py-2 text-left text-sm transition duration-200 hover:-translate-y-0.5 active:scale-95 ${
+                on ? `${activo} scale-[1.02] shadow-sm` : "border-ink/15 text-ink-soft hover:border-ink/30"
               }`}
             >
-              {on && <span aria-hidden className="mr-1.5 animate-[saltar_.3s_ease-out] inline-block">✓</span>}
+              {on && <span aria-hidden className="mr-1.5 animate-[rebote_.35s_cubic-bezier(.3,1.6,.5,1)] inline-block">✓</span>}
               {o.texto}
               {o.full && (
                 <span className="ml-2 rounded-full bg-ambar-suave px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ambar">
@@ -1158,10 +1226,17 @@ function Cierre({
 
   if (enviado) {
     return (
-      <div className="mt-8 animate-[surge_.5s_ease-out] overflow-hidden rounded-2xl border border-acento/25 bg-card text-center shadow-lg">
-        <div className="h-1.5 bg-gradient-to-r from-acento via-ambar to-seafoam" />
+      <div className="mt-8 animate-[rebote_.6s_cubic-bezier(.3,1.4,.5,1)] overflow-hidden rounded-2xl border border-acento/25 bg-card text-center shadow-lg">
+        {/* Un brillo que cruza una sola vez el borde de arriba: el momento del
+            cierre es el único de la página que merece celebrarse. */}
+        <div className="relative h-1.5 overflow-hidden bg-gradient-to-r from-acento via-ambar to-seafoam">
+          <span
+            aria-hidden
+            className="absolute inset-y-0 w-1/3 animate-[brillo_1.1s_ease-out_.25s_backwards] bg-white/60 blur-[2px]"
+          />
+        </div>
         <div className="px-6 py-10">
-          <p className="animate-[saltar_.5s_ease-out] font-serif text-4xl text-acento">¡Listo!</p>
+          <p className="animate-[rebote_.7s_cubic-bezier(.3,1.6,.5,1)] font-serif text-4xl text-acento">¡Listo!</p>
           <h3 className="mt-4 text-balance font-serif text-2xl leading-tight">
             Te escribimos por WhatsApp.
           </h3>
@@ -1229,23 +1304,112 @@ function Fila({ termino, valor }: { termino: string; valor: string }) {
  *  el modelo no necesita más de 1024px de lado para leer un perfil.
  *
  *  De paso mide los colores sobre el mismo lienzo, que es el momento en que la
- *  imagen ya está decodificada y en memoria. */
-async function achicar(file: File, maxLado = 1024): Promise<{ base64: string; colores: ColoresMarca | null }> {
+ *  imagen ya está decodificada y en memoria.
+ *
+ *  ESCRITO PARA SAFARI DE iPHONE, que es donde esto fallaba en silencio:
+ *
+ *  - `createImageBitmap` con `resizeWidth` decodifica y achica de una, sin
+ *    tener la imagen entera a tamaño completo en memoria. Safari de iOS libera
+ *    el lienzo cuando una captura de 12 megapíxeles le llena la memoria, y el
+ *    resultado no es un error sino un lienzo EN BLANCO: se subía una imagen
+ *    vacía, el modelo respondía "no es un perfil" y no había colores que medir.
+ *    Los dos síntomas que se veían.
+ *  - Cuando no está (Safari viejo), se cae a `<img>` y se baja en dos pasos:
+ *    achicar de golpe más de 2x le desarma los bordes a Safari.
+ *  - Al final se comprueba que el lienzo NO haya quedado en blanco. Si quedó,
+ *    se avisa, en vez de mandar el vacío y culpar al usuario por su captura. */
+async function achicar(
+  file: File,
+  maxLado = 1024,
+  avisar?: (paso: string) => void,
+): Promise<{ base64: string; colores: ColoresMarca | null }> {
+  avisar?.("leyendo");
+  const lienzo = (await bitmapALienzo(file, maxLado)) ?? (await imagenALienzo(file, maxLado));
+  avisar?.("midiendo");
+  if (lienzoEnBlanco(lienzo)) throw new Error("lienzo_vacio");
+  const colores = extraerColores(lienzo);
+  const base64 = lienzo.toDataURL("image/jpeg", 0.82).split(",")[1];
+  if (!base64) throw new Error("lienzo_vacio");
+  return { base64, colores };
+}
+
+function dibujar(fuente: CanvasImageSource, ancho: number, alto: number): HTMLCanvasElement {
+  const c = document.createElement("canvas");
+  c.width = Math.max(1, Math.round(ancho));
+  c.height = Math.max(1, Math.round(alto));
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  if (ctx) {
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(fuente, 0, 0, c.width, c.height);
+  }
+  return c;
+}
+
+async function bitmapALienzo(file: File, maxLado: number): Promise<HTMLCanvasElement | null> {
+  if (typeof createImageBitmap !== "function") return null;
+  try {
+    // `imageOrientation: "from-image"` respeta el EXIF: una foto sacada con el
+    // teléfono de lado llegaba girada y el modelo leía el perfil acostado.
+    const previo = await createImageBitmap(file, { imageOrientation: "from-image" });
+    const escala = Math.min(1, maxLado / Math.max(previo.width, previo.height));
+    const bmp = escala < 1
+      ? await createImageBitmap(file, {
+          imageOrientation: "from-image",
+          resizeWidth: Math.round(previo.width * escala),
+          resizeHeight: Math.round(previo.height * escala),
+          resizeQuality: "high",
+        })
+      : previo;
+    const c = dibujar(bmp, bmp.width, bmp.height);
+    bmp.close?.();
+    if (bmp !== previo) previo.close?.();
+    return c;
+  } catch {
+    return null; // formato que este navegador no sabe decodificar (HEIC viejo)
+  }
+}
+
+function imagenALienzo(file: File, maxLado: number): Promise<HTMLCanvasElement> {
   return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
+      URL.revokeObjectURL(url);
       const escala = Math.min(1, maxLado / Math.max(img.width, img.height));
-      const c = document.createElement("canvas");
-      c.width = Math.round(img.width * escala);
-      c.height = Math.round(img.height * escala);
-      c.getContext("2d")?.drawImage(img, 0, 0, c.width, c.height);
-      URL.revokeObjectURL(img.src);
-      resolve({
-        base64: c.toDataURL("image/jpeg", 0.82).split(",")[1],
-        colores: extraerColores(c),
-      });
+      // Dos pasos si hay que achicar mucho: Safari degrada feo de un solo salto.
+      let fuente: CanvasImageSource = img;
+      let ancho = img.width * escala, alto = img.height * escala;
+      if (escala < 0.5) {
+        const medio = dibujar(img, img.width / 2, img.height / 2);
+        fuente = medio;
+        ancho = medio.width * Math.min(1, maxLado / Math.max(medio.width, medio.height));
+        alto = medio.height * Math.min(1, maxLado / Math.max(medio.width, medio.height));
+      }
+      resolve(dibujar(fuente, ancho, alto));
     };
-    img.onerror = () => { URL.revokeObjectURL(img.src); reject(new Error("imagen ilegible")); };
-    img.src = URL.createObjectURL(file);
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("imagen_ilegible")); };
+    img.src = url;
   });
+}
+
+/** Un lienzo que quedó todo del mismo color (o transparente) es el síntoma de
+ *  que el navegador se quedó sin memoria a mitad de camino. Se mira una grilla
+ *  de píxeles, no todos: alcanza para distinguir "vacío" de "una captura". */
+function lienzoEnBlanco(c: HTMLCanvasElement): boolean {
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  if (!ctx || !c.width || !c.height) return true;
+  try {
+    const d = ctx.getImageData(0, 0, c.width, c.height).data;
+    const paso = Math.max(4, Math.floor(d.length / 4 / 400) * 4);
+    let primero = -1;
+    for (let i = 0; i < d.length; i += paso) {
+      if (d[i + 3] < 8) continue;               // transparente: no cuenta
+      const v = (d[i] << 16) | (d[i + 1] << 8) | d[i + 2];
+      if (primero === -1) primero = v;
+      else if (v !== primero) return false;      // hay al menos dos colores
+    }
+    return true;
+  } catch {
+    return false; // si no se puede leer, mejor seguir que bloquear al usuario
+  }
 }
