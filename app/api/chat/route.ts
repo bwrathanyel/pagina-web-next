@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { clientKey } from "../_shared/client-key";
 
 /** Server-side proxy to web-sales-chat-deepseek (mismo patrón que
  * app/api/lead/route.ts): agrega el secret compartido server-side, nunca
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
     upstream = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ p_secret: apiKey, session_id: sessionId, mensaje }),
+      body: JSON.stringify({ p_secret: apiKey, session_id: sessionId, mensaje, client_key: clientKey(request) }),
       signal: AbortSignal.timeout(60_000),
     });
   } catch (fetchError) {
