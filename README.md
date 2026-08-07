@@ -9,7 +9,7 @@ edición para administradores.
 - Next.js 16 con App Router, React 19 y TypeScript estricto.
 - Tailwind CSS 4 para estilos.
 - Supabase para catálogo, autenticación, favoritos y roles.
-- Netlify con `@netlify/plugin-nextjs` como plataforma prevista de despliegue.
+- Cloudflare Workers con OpenNext como plataforma de despliegue.
 - Fuentes locales en `app/fonts/`; el build no depende de Google Fonts.
 - `proxy.ts` refresca la sesión de Supabase en las rutas configuradas.
 
@@ -67,17 +67,19 @@ Antes de considerar un cambio listo:
 
 ## Despliegue y rollback
 
-`netlify.toml` fija Node 24, ejecuta `npm run build` y activa el plugin oficial de
+`wrangler.jsonc` define el Worker, R2, D1 y Durable Objects que necesita OpenNext.
 Next.js. Un commit local o un build verde no autorizan por sí solos un despliegue.
 
-Para publicar:
+Para publicar en Cloudflare Workers:
 
-1. Crear un deploy preview del commit candidato.
+1. Ejecutar `npm.cmd run lint` y `npm.cmd run build`.
 2. Ejecutar smoke tests en móvil y escritorio.
 3. Confirmar variables por nombre, redirects, metadata y envío de leads.
-4. Promover el deploy solo con autorización explícita.
+4. Con autorización explícita, ejecutar `npm.cmd run deploy` y comprobar el dominio
+   y un endpoint dinámico con `curl -I`. Las páginas estáticas existentes pueden
+   conservar su caché anterior hasta su `s-maxage`; no purgar R2/D1 a ciegas.
 
-Rollback: restaurar en Netlify el último deploy validado y, si hubo un cambio de
+Rollback: usar `npx.cmd wrangler rollback <version-id> --name pagina-web-next` con una versión validada y,
 dominio, revertir también la configuración DNS documentada. La web legacy no debe
 retirarse hasta completar el inventario de URLs y redirects 301.
 
