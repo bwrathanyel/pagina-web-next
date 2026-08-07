@@ -9,7 +9,7 @@ export default function PrivacidadPage() {
       <h1 className="mb-6 font-display text-3xl font-semibold text-ink">Política de privacidad</h1>
       <div className="flex flex-col gap-5 text-ink-soft">
         <p>
-          Destino y Eventos Lotus 360 ("Lotus 360") es una agencia de viajes venezolana. Esta
+          Destino y Eventos Lotus 360 (&quot;Lotus 360&quot;) es una agencia de viajes venezolana. Esta
           página explica qué datos recopilamos cuando usás nuestro sitio web, nuestras redes
           sociales (Instagram, Facebook, TikTok) o nos escribís por WhatsApp, y cómo los usamos.
         </p>

@@ -138,6 +138,8 @@ function LightboxFoto({ src, alt, onClose }: { src: string; alt: string; onClose
       >
         ✕
       </button>
+      {/* El zoom/pan calcula la geometría del nodo de imagen; next/image agrega un wrapper. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         ref={imgRef}
         src={src}
@@ -303,6 +305,7 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
                         aria-label="Ver foto en grande"
                         className="block w-full cursor-zoom-in"
                       >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={m.foto_1} alt={m.opcion_titulo ?? ""} className="h-32 w-full object-cover" />
                       </button>
                     )}

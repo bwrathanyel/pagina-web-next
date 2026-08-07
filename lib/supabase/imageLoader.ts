@@ -9,7 +9,7 @@ const CDN_FOTOS = "https://fotos.destinoyeventoslotus360.com/";
  * `_d/<ancho>/<ruta_original>.jpg`. Los cuatro existen SIEMPRE para toda foto
  * (los genera `CRM/scripts/generar_derivados_fotos.py`), así que la URL se arma
  * por convención pura, sin consultar si el archivo está. */
-const ANCHOS = [256, 384, 640, 1280] as const;
+export type AnchoDerivado = 256 | 384 | 640 | 1280;
 
 /** Las miniaturas se sirven con `max-age=31536000, immutable`, así que cambiar el
  * archivo en el origen NO alcanza: el navegador que ya lo tiene no vuelve a
@@ -40,14 +40,12 @@ const FOTOS_VERSION = "?v=2";
  * 500 css necesitaría 3x para pasarlo, y a 500 css ya no estás en un teléfono),
  * y por encima entra el hero de escritorio a 1x (1440), que sí se ve borroso
  * si se le sirve 640. */
-function anchoDerivado(pedido: number): (typeof ANCHOS)[number] {
+function anchoDerivado(pedido: number): AnchoDerivado {
   if (pedido <= 320) return 256;
   if (pedido <= 500) return 384;
   if (pedido <= 1200) return 640;
   return 1280;
 }
-
-export type AnchoDerivado = (typeof ANCHOS)[number];
 
 /** Reescribe una URL del bucket a su miniatura pregenerada del ancho más chico
  * que cubra `width`. Lo que no sea del bucket (assets locales de /public) pasa
