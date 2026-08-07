@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { clientKey } from "../_shared/client-key";
 
 /** Server-side proxy a la Edge Function postular-empleo del CRM -- mismo
  * patrón que /api/lead: el navegador nunca llama a Supabase directo, este
@@ -27,7 +28,8 @@ export async function POST(request: Request) {
   }
 
   const url = process.env.POSTULAR_EMPLEO_URL;
-  if (!url) {
+  const apiKey = process.env.WEB_CHAT_API_KEY;
+  if (!url || !apiKey) {
     return NextResponse.json({ ok: false, error: "no_configurado" }, { status: 503 });
   }
 
@@ -36,7 +38,7 @@ export async function POST(request: Request) {
     upstream = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(datos),
+      body: JSON.stringify({ ...datos, p_secret: apiKey, client_key: clientKey(request) }),
       signal: AbortSignal.timeout(60_000),
     });
   } catch (fetchError) {
