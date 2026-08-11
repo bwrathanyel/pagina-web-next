@@ -17,12 +17,13 @@ import { construirPaleta, cssPaleta, extraerColores, type ColoresMarca } from ".
    volver atrás: la conversación de prueba, la captura ya leída, lo que habían
    configurado. Quien retrocede un paso espera encontrar lo que dejó. */
 
-/* "Tu perfil" va ANTES de "Ármala" a propósito: cuando la IA ya leyó el perfil
-   sabe cómo se llama el negocio, qué tipo es y de qué color es su marca, y el
-   paso de armar deja de ser genérico -- habla de su posada por su nombre y la
-   página entera se viste con sus colores. El cierre (nombre y WhatsApp) queda
-   al final, que es donde corresponde pedirlo. */
-const ACTOS = ["Hola", "La noche", "Pruébala", "Tu perfil", "Ármala"] as const;
+/* "Tu perfil" va ANTES de "Pruébala" Y de "Ármala" a propósito: cuando la IA ya
+   sabe cómo se llama el negocio, qué tipo es y qué hace, la prueba en vivo deja
+   de ser una demo genérica -- responde como SU negocio -- y el paso de armar
+   habla de él por su nombre y la página entera se viste con sus colores (si los
+   reconoció). El cierre (nombre y WhatsApp) queda al final, que es donde
+   corresponde pedirlo. */
+const ACTOS = ["Hola", "La noche", "Tu perfil", "Pruébala", "Ármala"] as const;
 
 /** Marca del bloque de estilos que pinta la página con los colores del cliente.
  *  Es un literal fijo, no viene de ningún dato. */
@@ -77,7 +78,10 @@ export function PropuestaPosadas() {
   });
   const [plan, setPlan] = useState<IdPlan>("basico");
   const [tier, setTier] = useState(0);
-  const [chat, setChat] = useState<MensajeChat[]>([]);
+  // Dos hilos separados: cambiar de modo no debe mezclar la conversación de
+  // prueba con el propio negocio con la demo completa de Lotus 360.
+  const [chatNegocio, setChatNegocio] = useState<MensajeChat[]>([]);
+  const [chatLotus, setChatLotus] = useState<MensajeChat[]>([]);
   const [perfil, setPerfil] = useState<Perfil | null>(null);
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
@@ -129,8 +133,14 @@ export function PropuestaPosadas() {
       <main className="mx-auto max-w-5xl px-5 pb-24 pt-6 sm:px-8">
         {acto === 0 && <ActoSaludo vista={introVista} marcarVista={() => setIntroVista(true)} />}
         {acto === 1 && <ActoNoche />}
-        {acto === 2 && <ActoPrueba mensajes={chat} setMensajes={setChat} />}
-        {acto === 3 && <ActoPerfil perfil={perfil} setPerfil={setPerfil} vestida={!!paleta} />}
+        {acto === 2 && <ActoPerfil perfil={perfil} setPerfil={setPerfil} vestida={!!paleta} />}
+        {acto === 3 && (
+          <ActoPrueba
+            perfil={perfil}
+            chatNegocio={chatNegocio} setChatNegocio={setChatNegocio}
+            chatLotus={chatLotus} setChatLotus={setChatLotus}
+          />
+        )}
         {acto === 4 && (
           <ActoArmar
             perfil={perfil}
@@ -206,7 +216,7 @@ function Navegacion({ acto, ir }: { acto: number; ir: (n: number) => void }) {
           onClick={() => ir(acto + 1)}
           className="rounded-xl bg-gradient-to-r from-acento to-ambar px-6 py-3 text-sm font-bold text-sobre-acento shadow-lg shadow-acento/25 transition duration-200 hover:-translate-y-0.5 hover:brightness-110 hover:shadow-xl active:translate-y-0 active:scale-95"
         >
-          {["Ver qué pasa esa noche", "Probarla ahora", "Contarle de mi negocio", "Armarla a mi gusto"][acto]} →
+          {["Ver qué pasa esa noche", "Contarle de mi negocio", "Probarla ahora", "Armarla a mi gusto"][acto]} →
         </button>
       )}
     </div>
@@ -507,44 +517,84 @@ function idSesion(): string {
   }
 }
 
-function ActoPrueba({ mensajes, setMensajes }: {
-  mensajes: MensajeChat[];
-  setMensajes: React.Dispatch<React.SetStateAction<MensajeChat[]>>;
+const SUGERENCIAS_NEGOCIO = ["¿Qué ofrecen?", "¿Cuánto cuesta?", "¿Dónde están ubicados?"];
+
+type ModoChat = "negocio" | "lotus";
+
+function ActoPrueba({ perfil, chatNegocio, setChatNegocio, chatLotus, setChatLotus }: {
+  perfil: Perfil | null;
+  chatNegocio: MensajeChat[];
+  setChatNegocio: React.Dispatch<React.SetStateAction<MensajeChat[]>>;
+  chatLotus: MensajeChat[];
+  setChatLotus: React.Dispatch<React.SetStateAction<MensajeChat[]>>;
 }) {
+  const hayNegocio = !!(perfil?.es_perfil && (perfil.nombre || perfil.resumen));
+  const [modo, setModo] = useState<ModoChat>(hayNegocio ? "negocio" : "lotus");
   const [texto, setTexto] = useState("");
   const [cargando, setCargando] = useState(false);
   const sesion = useRef<string>("");
   const fin = useRef<HTMLDivElement>(null);
 
+  const mensajes = modo === "negocio" ? chatNegocio : chatLotus;
+  const setMensajes = modo === "negocio" ? setChatNegocio : setChatLotus;
+
   useEffect(() => { sesion.current = idSesion(); }, []);
   useEffect(() => { fin.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, [mensajes, cargando]);
+
+  const enviarLotus = useCallback(async (limpio: string) => {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mensaje: limpio, session_id: sesion.current }),
+    });
+    const data = await res.json().catch(() => null);
+    return {
+      texto: data?.respuesta || "No pude responder ahora mismo. Intenta de nuevo en un momento.",
+      foto: data?.foto_1 ?? null,
+      titulo: data?.opcion_titulo ?? null,
+      precio: data?.opcion_precio ?? null,
+    } as MensajeChat;
+  }, []);
+
+  const enviarNegocio = useCallback(async (limpio: string, historialPrevio: MensajeChat[]) => {
+    const res = await fetch("/api/chat-negocio", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nombre: perfil?.nombre ?? "",
+        tipo: perfil?.tipo ?? "",
+        descripcion: perfil?.resumen ?? "",
+        historial: historialPrevio.map((m) => ({ rol: m.rol, texto: m.texto })),
+        mensaje: limpio,
+      }),
+    });
+    const data = await res.json().catch(() => null);
+    return {
+      rol: "ia" as const,
+      texto: data?.ok ? data.respuesta : "No pude responder ahora mismo. Intenta de nuevo en un momento.",
+    } as MensajeChat;
+  }, [perfil]);
 
   const enviar = useCallback(async (mensaje: string) => {
     const limpio = mensaje.trim();
     if (!limpio || cargando) return;
+    const historialPrevio = mensajes;
     setMensajes((m) => [...m, { rol: "visitante", texto: limpio }]);
     setTexto("");
     setCargando(true);
     try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mensaje: limpio, session_id: sesion.current }),
-      });
-      const data = await res.json().catch(() => null);
-      setMensajes((m) => [...m, {
-        rol: "ia",
-        texto: data?.respuesta || "No pude responder ahora mismo. Intenta de nuevo en un momento.",
-        foto: data?.foto_1 ?? null,
-        titulo: data?.opcion_titulo ?? null,
-        precio: data?.opcion_precio ?? null,
-      }]);
+      const respuesta = modo === "negocio"
+        ? await enviarNegocio(limpio, historialPrevio)
+        : await enviarLotus(limpio);
+      setMensajes((m) => [...m, respuesta]);
     } catch {
       setMensajes((m) => [...m, { rol: "ia", texto: "Se cortó la conexión. Intenta de nuevo." }]);
     } finally {
       setCargando(false);
     }
-  }, [cargando, setMensajes]);
+  }, [cargando, mensajes, modo, setMensajes, enviarNegocio, enviarLotus]);
+
+  const sugerencias = modo === "negocio" ? SUGERENCIAS_NEGOCIO : SUGERENCIAS;
 
   return (
     <section>
@@ -557,20 +607,50 @@ function ActoPrueba({ mensajes, setMensajes }: {
         Pregúntale lo que te preguntaría alguien a las nueve de la noche.
       </p>
 
-      <div className="mt-8 overflow-hidden rounded-2xl border border-ink/10 bg-card shadow-sm">
+      <div className="mt-6 inline-flex rounded-full border border-ink/15 bg-card p-1">
+        <button
+          type="button"
+          onClick={() => setModo("negocio")}
+          disabled={!hayNegocio}
+          className={`rounded-full px-4 py-2 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-40 ${
+            modo === "negocio" ? "bg-acento text-sobre-acento" : "text-ink-soft"
+          }`}
+        >
+          Con mi negocio
+        </button>
+        <button
+          type="button"
+          onClick={() => setModo("lotus")}
+          className={`rounded-full px-4 py-2 text-xs font-bold transition ${
+            modo === "lotus" ? "bg-acento text-sobre-acento" : "text-ink-soft"
+          }`}
+        >
+          Demo completa Lotus 360
+        </button>
+      </div>
+      {!hayNegocio && (
+        <p className="mt-2 text-xs text-ink-soft">
+          Completa el nombre o la descripción en &ldquo;Tu perfil&rdquo; para probarla con tu negocio.
+        </p>
+      )}
+
+      {/* En mobile la ventana se angosta al ancho de un teléfono -- pedido
+          explícito del dueño para que se sienta más a WhatsApp/Telegram que a
+          un widget de ancho completo. En desktop usa todo el ancho normal. */}
+      <div className="mx-auto mt-8 w-full max-w-sm overflow-hidden rounded-2xl border border-ink/10 bg-card shadow-sm sm:max-w-none">
         <div className="h-1 bg-gradient-to-r from-acento via-ambar to-seafoam" />
-        <div className="p-4 sm:p-5">
+        <div className="p-3 sm:p-5">
           <div className="max-h-[26rem] min-h-[10rem] overflow-y-auto pr-1">
             {mensajes.length === 0 && (
               <p className="py-6 text-center text-sm text-ink-soft">
                 Toca una pregunta de abajo o escribe la tuya.
               </p>
             )}
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2 sm:gap-3">
               {mensajes.map((m, i) => (
-                <div key={i} className={`animate-[surge_.35s_ease-out] ${m.rol === "visitante" ? "self-end" : "self-start"} max-w-[88%]`}>
+                <div key={i} className={`animate-[surge_.35s_ease-out] ${m.rol === "visitante" ? "self-end" : "self-start"} max-w-[80%]`}>
                   <div
-                    className={`rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
+                    className={`rounded-2xl px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap sm:px-3.5 sm:py-2.5 ${
                       m.rol === "visitante"
                         ? "rounded-br-sm bg-seafoam text-white"
                         : "rounded-bl-sm bg-sand-2"
@@ -582,7 +662,7 @@ function ActoPrueba({ mensajes, setMensajes }: {
                     <div className="mt-2 overflow-hidden rounded-xl border border-ink/10 bg-sand">
                       {m.foto && (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={m.foto} alt={m.titulo ?? "Foto del alojamiento"} className="h-36 w-full object-cover" loading="lazy" />
+                        <img src={m.foto} alt={m.titulo ?? "Foto del negocio"} className="h-36 w-full object-cover" loading="lazy" />
                       )}
                       {(m.titulo || m.precio) && (
                         <div className="px-3 py-2">
@@ -604,7 +684,7 @@ function ActoPrueba({ mensajes, setMensajes }: {
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            {SUGERENCIAS.map((s) => (
+            {sugerencias.map((s) => (
               <button
                 key={s}
                 onClick={() => enviar(s)}
@@ -638,8 +718,9 @@ function ActoPrueba({ mensajes, setMensajes }: {
         </div>
       </div>
       <p className="mt-3 text-[11px] leading-relaxed text-ink-soft">
-        Responde con un catálogo cargado. Con el tuyo conectado, respondería
-        igual pero con tus productos o servicios, tus fotos y tus precios.
+        {modo === "negocio"
+          ? "Responde con lo que cargaste en \"Tu perfil\". Con tu catálogo conectado, respondería igual pero con tus productos o servicios, tus fotos y tus precios."
+          : "Esta es la demo completa: catálogo real, fotos y precios de Lotus 360."}
       </p>
     </section>
   );
