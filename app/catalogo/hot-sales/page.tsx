@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { HotSalesGrid } from "@/components/catalogo/HotSalesGrid";
+import { BuscarClient } from "@/components/catalogo/BuscarClient";
 import { getPromociones } from "@/lib/supabase/queries";
 import { promosHotSales } from "@/lib/promociones/hotSales";
 import { jsonLdScript, buildBreadcrumbJsonLd, buildItemListJsonLd } from "@/lib/seo/jsonld";
@@ -52,6 +53,10 @@ export default async function HotSalesPage() {
           </span>
         </div>
       </header>
+
+      <div className="mb-8 lg:hidden">
+        <BuscarClient productos={[]} promociones={pool} autoFocus={false} />
+      </div>
 
       <HotSalesGrid pool={pool} />
     </main>

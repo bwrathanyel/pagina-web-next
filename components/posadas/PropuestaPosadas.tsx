@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AVISO_WHATSAPP, CANALES, CIFRAS, HACE, HORA_ABRE, HORA_CIERRA, INSTALACION,
   MENSAJES_POR_HORA, NO_HACE,
-  OFRECE, PLANES, SUGERENCIAS, TIERS, type IdPlan, type Opcion,
+  OFRECE, PLANES, SUGERENCIAS, TIERS, TIPOS_NEGOCIO, type IdPlan, type Opcion,
 } from "./datos";
 import { construirPaleta, cssPaleta, extraerColores, type ColoresMarca } from "./paleta";
 
@@ -73,7 +73,7 @@ export function PropuestaPosadas() {
   const [config, setConfig] = useState<Config>({
     hace: ["responde", "cotiza", "datos"],
     noHace: ["descuentos", "disponibilidad"],
-    ofrece: ["hospedaje"],
+    ofrece: ["productos"],
   });
   const [plan, setPlan] = useState<IdPlan>("basico");
   const [tier, setTier] = useState(0);
@@ -206,7 +206,7 @@ function Navegacion({ acto, ir }: { acto: number; ir: (n: number) => void }) {
           onClick={() => ir(acto + 1)}
           className="rounded-xl bg-gradient-to-r from-acento to-ambar px-6 py-3 text-sm font-bold text-sobre-acento shadow-lg shadow-acento/25 transition duration-200 hover:-translate-y-0.5 hover:brightness-110 hover:shadow-xl active:translate-y-0 active:scale-95"
         >
-          {["Ver qué pasa esa noche", "Probarla ahora", "Mostrarle mi Instagram", "Armarla a mi gusto"][acto]} →
+          {["Ver qué pasa esa noche", "Probarla ahora", "Contarle de mi negocio", "Armarla a mi gusto"][acto]} →
         </button>
       )}
     </div>
@@ -264,8 +264,8 @@ function ActoSaludo({ vista, marcarVista }: { vista: boolean; marcarVista: () =>
       {ver(2) && (
         <p className="mt-6 max-w-xl animate-[surge_.6s_ease-out] text-lg leading-relaxed text-ink-soft">
           Durante veinte días medimos cada mensaje que nos llegó por Instagram.
-          Queremos contarte lo que encontramos, porque en tu posada está pasando
-          exactamente lo mismo.
+          Queremos contarte lo que encontramos, porque en cualquier negocio que
+          atiende por redes está pasando exactamente lo mismo.
         </p>
       )}
 
@@ -411,19 +411,19 @@ function ActoNoche() {
     <section>
       <p className="text-xs font-bold uppercase tracking-[0.16em] text-acento">Lo que pasa hoy</p>
       <h2 className="mt-3 max-w-2xl text-balance font-serif text-3xl leading-tight sm:text-4xl">
-        El mensaje llega cuando la posada ya cerró.
+        El mensaje llega cuando tu negocio ya cerró.
       </h2>
       <p className="mt-5 max-w-xl text-ink-soft">
-        El cliente no escribe en horario de oficina. Escribe cuando se sienta a
-        planear el viaje. Para cuando alguien abre el Instagram a la mañana
-        siguiente, ya preguntó en otras tres posadas y alguna le respondió primero.
+        El cliente no escribe en horario de oficina. Escribe cuando se le ocurre.
+        Para cuando alguien abre el Instagram a la mañana siguiente, ya preguntó
+        en otros tres negocios y alguno le respondió primero.
       </p>
 
       <div className="mt-9 max-w-md overflow-hidden rounded-2xl border border-ink/10 bg-card shadow-sm">
         <div className="flex items-center gap-2.5 border-b border-ink/10 px-4 py-3">
           <span className="h-9 w-9 rounded-full bg-gradient-to-br from-ambar via-acento to-seafoam" />
           <span className="flex-1 text-sm font-bold leading-tight">
-            Tu posada
+            Tu negocio
             <small className="block font-normal text-ink-soft">Instagram · mensaje directo</small>
           </span>
         </div>
@@ -639,7 +639,7 @@ function ActoPrueba({ mensajes, setMensajes }: {
       </div>
       <p className="mt-3 text-[11px] leading-relaxed text-ink-soft">
         Responde con un catálogo cargado. Con el tuyo conectado, respondería
-        igual pero con tus habitaciones, tus fotos y tus precios.
+        igual pero con tus productos o servicios, tus fotos y tus precios.
       </p>
     </section>
   );
@@ -708,6 +708,71 @@ function ActoPerfil({ perfil, setPerfil, vestida }: {
   const [error, setError] = useState("");
   const leyendo = paso !== null;
 
+  // El formulario manual escribe directo sobre `perfil`: no hay un estado
+  // paralelo que después haya que reconciliar. `es_perfil: true` en cuanto hay
+  // algo cargado -- así el resto del recorrido (Ármala, Cierre) ya lo trata
+  // como un negocio identificado, venga de Instagram o tipeado a mano.
+  const actualizarManual = useCallback((patch: Partial<Perfil>) => {
+    setPerfil({
+      es_perfil: true,
+      nombre: perfil?.nombre ?? null,
+      tipo: perfil?.tipo ?? null,
+      destino: perfil?.destino ?? null,
+      tono: perfil?.tono ?? null,
+      destaca: perfil?.destaca ?? [],
+      resumen: perfil?.resumen ?? null,
+      colores: perfil?.colores ?? null,
+      ...patch,
+    });
+  }, [perfil, setPerfil]);
+
+  const [mostrarInstagram, setMostrarInstagram] = useState(false);
+  const [mejorando, setMejorando] = useState(false);
+  const [descripcionPrevia, setDescripcionPrevia] = useState<string | null>(null);
+  const [errorIA, setErrorIA] = useState("");
+
+  const mejorarConIA = useCallback(async () => {
+    const actual = (perfil?.resumen ?? "").trim();
+    if (!actual) {
+      setErrorIA("Escribe primero una descripción de tu negocio.");
+      return;
+    }
+    setErrorIA("");
+    setMejorando(true);
+    try {
+      const res = await fetch("/api/reescribir-descripcion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre: perfil?.nombre ?? "",
+          tipo: perfil?.tipo ?? "",
+          descripcion: actual,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!data?.ok) {
+        setErrorIA(
+          data?.error === "demasiados_intentos"
+            ? "Ya lo intentaste varias veces. Espera un rato e intenta de nuevo."
+            : "No pudimos mejorar el texto. Intenta de nuevo.",
+        );
+        return;
+      }
+      setDescripcionPrevia(actual);
+      actualizarManual({ resumen: data.descripcion });
+    } catch {
+      setErrorIA("Se cortó la conexión. Intenta de nuevo.");
+    } finally {
+      setMejorando(false);
+    }
+  }, [perfil, actualizarManual]);
+
+  const deshacerMejora = useCallback(() => {
+    if (descripcionPrevia === null) return;
+    actualizarManual({ resumen: descripcionPrevia });
+    setDescripcionPrevia(null);
+  }, [descripcionPrevia, actualizarManual]);
+
   const subir = useCallback(async (file: File) => {
     setError("");
     // Ya no se rechaza por el tipo que declara el archivo. En el iPhone una
@@ -772,54 +837,127 @@ function ActoPerfil({ perfil, setPerfil, vestida }: {
     <section>
       <p className="text-xs font-bold uppercase tracking-[0.16em] text-acento">Tu negocio</p>
       <h2 className="mt-3 max-w-2xl text-balance font-serif text-3xl leading-tight sm:text-4xl">
-        Muéstrale tu Instagram y mira qué entiende.
+        Contanos de tu negocio.
       </h2>
       <p className="mt-5 max-w-xl text-ink-soft">
-        Sube una captura de tu perfil. En segundos te decimos qué entendió de tu
-        negocio — y si reconoce los colores de tu marca, esta misma página se
-        pone de esos colores.
+        Nombre, tipo y una descripción bastan para que veas cómo atendería la
+        asistente. Si no te sale la descripción, la IA te la deja más prolija.
       </p>
 
       <div className="mt-8 grid gap-5 lg:grid-cols-2">
         <div className="flex flex-col gap-4">
-          <label className="group flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-ink/20 bg-card px-5 py-10 text-center transition hover:-translate-y-0.5 hover:border-acento hover:shadow-lg active:scale-[.99]">
-            {/* El input NO va con `display:none`: en varias versiones de Safari
-                de iPhone un input oculto así dentro de un label no abre el
-                selector de fotos, y el usuario toca y no pasa nada. Se esconde
-                a la vista pero se deja en el layout. */}
+          <div className="rounded-2xl border border-ink/10 bg-card p-5">
+            <label className="block text-xs font-bold uppercase tracking-[0.14em] text-ink-soft">
+              Nombre del negocio
+            </label>
             <input
-              type="file"
-              accept="image/*"
-              className="absolute h-px w-px opacity-0"
-              // En Android, volver de la Galería a veces dispara `change` con
-              // `files` vacío (permiso de fotos denegado a medias, o el picker
-              // del fabricante que no devuelve nada) -- antes eso no hacía
-              // nada visible y se leía como "no funciona". Ahora al menos
-              // avisa, en vez de quedarse callado.
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) subir(f);
-                else setError("No se detectó ninguna foto. Vuelve a intentar, eligiendo desde la galería.");
-                e.target.value = "";
-              }}
+              value={perfil?.nombre ?? ""}
+              onChange={(e) => actualizarManual({ nombre: e.target.value || null })}
+              placeholder="Ej: Posada El Manglar"
+              className="mt-2 w-full rounded-xl border border-ink/15 bg-sand px-3.5 py-2.5 text-sm outline-none transition focus:border-acento"
             />
-            <span className="animate-[flotar_3s_ease-in-out_infinite] text-3xl transition group-hover:scale-110" aria-hidden>📸</span>
-            <span className="text-sm font-bold">Sube la captura de tu perfil</span>
-            <span className="text-xs text-ink-soft">Desde tu galería · se achica sola</span>
-          </label>
 
-          {leyendo && <BarraCarga paso={paso!} />}
+            <label className="mt-4 block text-xs font-bold uppercase tracking-[0.14em] text-ink-soft">
+              Tipo de negocio
+            </label>
+            <select
+              value={perfil?.tipo ?? ""}
+              onChange={(e) => actualizarManual({ tipo: e.target.value || null })}
+              className="mt-2 w-full rounded-xl border border-ink/15 bg-sand px-3.5 py-2.5 text-sm outline-none transition focus:border-acento"
+            >
+              <option value="">Elige uno…</option>
+              {TIPOS_NEGOCIO.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
 
-          {error && <p className="text-sm font-medium text-acento">{error}</p>}
+            <label className="mt-4 block text-xs font-bold uppercase tracking-[0.14em] text-ink-soft">
+              Descripción de tu negocio
+            </label>
+            <textarea
+              value={perfil?.resumen ?? ""}
+              onChange={(e) => {
+                setDescripcionPrevia(null);
+                actualizarManual({ resumen: e.target.value || null });
+              }}
+              placeholder="Ej: Posada frente al mar en Chichiriviche, con piscina y desayuno incluido."
+              rows={4}
+              className="mt-2 w-full resize-none rounded-xl border border-ink/15 bg-sand px-3.5 py-2.5 text-sm outline-none transition focus:border-acento"
+            />
 
-          {perfil && !perfil.es_perfil && (
-            <p className="animate-[surge_.4s_ease-out] rounded-xl border border-ink/10 bg-card p-4 text-sm leading-relaxed text-ink-soft">
-              {perfil.resumen || "Eso no parece un perfil de Instagram."}
-            </p>
-          )}
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={mejorarConIA}
+                disabled={mejorando || !(perfil?.resumen ?? "").trim()}
+                className="rounded-xl border border-acento/30 bg-acento-suave px-4 py-2 text-sm font-bold text-acento transition hover:brightness-105 disabled:opacity-40"
+              >
+                {mejorando ? "Mejorando…" : "✨ Mejorar con IA"}
+              </button>
+              {descripcionPrevia !== null && (
+                <button
+                  type="button"
+                  onClick={deshacerMejora}
+                  className="text-sm font-semibold text-ink-soft underline decoration-dotted hover:text-ink"
+                >
+                  Deshacer
+                </button>
+              )}
+            </div>
+            {errorIA && <p className="mt-2 text-sm font-medium text-acento">{errorIA}</p>}
+          </div>
+
+          <div className="rounded-2xl border border-dashed border-ink/15 bg-card p-4">
+            {!mostrarInstagram ? (
+              <button
+                type="button"
+                onClick={() => setMostrarInstagram(true)}
+                className="text-sm font-semibold text-ink-soft underline decoration-dotted hover:text-ink"
+              >
+                ¿Tenés Instagram? Cargá tu perfil y completamos algunos datos por vos →
+              </button>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <p className="text-sm font-bold">Subí una captura de tu perfil (opcional)</p>
+                <label className="group flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-ink/20 bg-sand px-5 py-8 text-center transition hover:-translate-y-0.5 hover:border-acento hover:shadow-lg active:scale-[.99]">
+                  {/* El input NO va con `display:none`: en varias versiones de
+                      Safari de iPhone un input oculto así dentro de un label no
+                      abre el selector de fotos, y el usuario toca y no pasa
+                      nada. Se esconde a la vista pero se deja en el layout. */}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="absolute h-px w-px opacity-0"
+                    // En Android, volver de la Galería a veces dispara `change`
+                    // con `files` vacío (permiso de fotos denegado a medias, o
+                    // el picker del fabricante que no devuelve nada) -- antes
+                    // eso no hacía nada visible y se leía como "no funciona".
+                    // Ahora al menos avisa, en vez de quedarse callado.
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) subir(f);
+                      else setError("No se detectó ninguna foto. Vuelve a intentar, eligiendo desde la galería.");
+                      e.target.value = "";
+                    }}
+                  />
+                  <span className="animate-[flotar_3s_ease-in-out_infinite] text-3xl transition group-hover:scale-110" aria-hidden>📸</span>
+                  <span className="text-sm font-bold">Sube la captura de tu perfil</span>
+                  <span className="text-xs text-ink-soft">Desde tu galería · se achica sola</span>
+                </label>
+
+                {leyendo && <BarraCarga paso={paso!} />}
+                {error && <p className="text-sm font-medium text-acento">{error}</p>}
+                {perfil && !perfil.es_perfil && (
+                  <p className="animate-[surge_.4s_ease-out] rounded-xl border border-ink/10 bg-sand p-4 text-sm leading-relaxed text-ink-soft">
+                    {perfil.resumen || "Eso no parece un perfil de Instagram."}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
-        {perfil?.es_perfil ? (
+        {perfil?.es_perfil && (perfil.nombre || perfil.resumen) ? (
           <div className="animate-[rebote_.6s_cubic-bezier(.3,1.4,.5,1)] overflow-hidden rounded-2xl border border-acento/25 bg-card shadow-lg">
             {/* Fondo `acento-suave` y no un degradado de acento a ámbar: con la
                 paleta del cliente el degradado podía terminar en un amarillo
@@ -827,7 +965,7 @@ function ActoPerfil({ perfil, setPerfil, vestida }: {
                 y texto acento-- mantiene el contraste con cualquier marca. */}
             <div className="border-b border-acento/20 bg-acento-suave px-5 py-4">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-ink-soft">
-                Esto entendió la IA
+                Así se vería tu perfil
               </p>
               {perfil.nombre && (
                 <p className="mt-1 font-serif text-2xl leading-tight text-acento">{perfil.nombre}</p>
@@ -863,12 +1001,13 @@ function ActoPerfil({ perfil, setPerfil, vestida }: {
         ) : (
           <div className="flex flex-col justify-center gap-3 rounded-2xl border border-dashed border-ink/15 p-6 text-sm leading-relaxed text-ink-soft">
             <p>
-              <strong className="text-ink">¿Para qué sirve esto?</strong> Lo que la
-              IA entienda de tu perfil es exactamente lo que usaría para atender a
-              tus clientes. Si acierta acá, acierta con ellos.
+              <strong className="text-ink">¿Para qué sirve esto?</strong> Lo que
+              escribas acá es exactamente lo que usaría la asistente para
+              atender a tus clientes. Si acierta acá, acierta con ellos.
             </p>
             <p>
-              Es opcional: puedes seguir sin subir nada y lo vemos juntos después.
+              Es opcional: puedes seguir sin completar nada y lo vemos juntos
+              después.
             </p>
           </div>
         )}
@@ -918,13 +1057,13 @@ function ActoArmar({
       </h2>
       <p className="mt-5 max-w-xl text-ink-soft">
         {suyo
-          ? <>Ya sabemos que eres {suyo.tipo ?? "un alojamiento"}
+          ? <>Ya sabemos que eres {suyo.tipo ?? "un negocio"}
               {suyo.destino ? ` en ${suyo.destino}` : ""}. Ahora dinos cómo quieres
               que trate a quien te escriba. Solo habla de lo tuyo: nunca ofrece
-              otro alojamiento.</>
+              otro negocio.</>
           : <>No es un robot con respuestas fijas. Las reglas se escriben en
               palabras y se cambian cuando quieras. Solo habla de lo tuyo: nunca
-              ofrece otro alojamiento.</>}
+              ofrece otro negocio.</>}
       </p>
 
       <div className="mt-8 flex flex-col gap-5">
@@ -1202,7 +1341,7 @@ function Cierre({
         body: JSON.stringify({
           nombre: nombre.trim(),
           telefono: telefono.trim(),
-          destino: perfil?.destino || "Posada interesada",
+          destino: perfil?.destino || "Negocio interesado",
           consulta: [
             "Interesado en el asistente de atención al cliente.",
             // El plan, el tier y la configuración van en el mismo texto: el CRM
@@ -1272,8 +1411,8 @@ function Cierre({
         <input
           value={nombre}
           onChange={(e) => setNombre(e.target.value)}
-          placeholder="Tu nombre y el de la posada"
-          aria-label="Tu nombre y el de la posada"
+          placeholder="Tu nombre y el de tu negocio"
+          aria-label="Tu nombre y el de tu negocio"
           className="rounded-xl border border-ink/15 bg-sand px-3.5 py-3 text-sm outline-none transition focus:border-acento"
         />
         <input

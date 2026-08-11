@@ -12,16 +12,6 @@ const TABS = [
     ),
   },
   {
-    href: "/buscar",
-    label: "Buscar",
-    icon: (
-      <>
-        <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" strokeWidth="1.8" />
-        <path d="M20 20l-4.5-4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      </>
-    ),
-  },
-  {
     href: "/catalogo/hot-sales",
     label: "Promos",
     icon: (
@@ -40,6 +30,20 @@ const TABS = [
     label: "Cuenta",
     icon: (
       <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 20c1.5-4 4.7-6 8-6s6.5 2 8 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    ),
+  },
+  {
+    href: "/trabaja-con-nosotros",
+    label: "Trabaja",
+    icon: (
+      <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M4 7h16v12H4V7zM4 12h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    ),
+  },
+  {
+    href: "/ia-para-tu-negocio",
+    label: "IA Negocio",
+    icon: (
+      <path d="M12 3v3M12 18v3M4.2 12H2M22 12h-2.2M6 6l1.5 1.5M16.5 16.5 18 18M18 6l-1.5 1.5M7.5 16.5 6 18M8 12a4 4 0 1 1 8 0 4 4 0 0 1-8 0z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     ),
   },
 ];

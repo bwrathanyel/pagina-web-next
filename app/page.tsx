@@ -14,8 +14,10 @@ import type { Categoria } from "@/types/supabase";
 export default async function Home() {
   // Si Supabase falla acá, mejor una home con menos fotos que una home
   // rota entera — [] es un fallback seguro para todo lo que sigue.
-  const [hoteles, promociones] = await Promise.all([
+  const [hoteles, paquetes, guiasTours, promociones] = await Promise.all([
     getProductosPorCategoria("hoteles").catch(() => []),
+    getProductosPorCategoria("paquetes").catch(() => []),
+    getProductosPorCategoria("guias-tours").catch(() => []),
     getPromociones().catch(() => []),
   ]);
 
@@ -47,7 +49,7 @@ export default async function Home() {
 
       <CategoriaAvatares fotos={fotosPorCategoria} />
 
-      <BuscarAfordancia />
+      <BuscarAfordancia productos={[...hoteles, ...paquetes, ...guiasTours]} promociones={promociones} />
 
       <HotSalesSection pool={hotSales} />
 

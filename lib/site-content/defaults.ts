@@ -24,6 +24,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       { id: "paquetes", label: "Paquetes", href: "/catalogo/paquetes", visible: true },
       { id: "guias", label: "Guías / Tours", href: "/catalogo/guias-tours", visible: true },
       { id: "empleo", label: "Trabaja con nosotros", href: "/trabaja-con-nosotros", visible: true },
+      { id: "ia-negocio", label: "IA para tu negocio", href: "/ia-para-tu-negocio", visible: true },
     ],
     quoteLabel: "Cotizar",
     quoteHref: "/cotizador-personalizado",

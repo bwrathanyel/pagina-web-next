@@ -76,9 +76,10 @@ export function Navbar() {
         </nav>
 
         {/* Mobile: sin menú hamburguesa -- el BottomTabBar ya cubre la
-            navegación principal (Inicio/Buscar/Promos/Cotizar/Cuenta), tener
-            los dos duplicaba navegación y no pegaba con el diseño app
-            (hallazgo real, feedback del dueño 2026-07-23). */}
+            navegación principal (Inicio/Promos/Cotizar/Cuenta/Trabaja/IA
+            Negocio), tener los dos duplicaba navegación y no pegaba con el
+            diseño app (hallazgo real, feedback del dueño 2026-07-23). Buscar
+            se sacó del tab bar el 2026-08-11 -- vive inline en Home y Promos. */}
         <div className="flex items-center gap-1.5 lg:hidden">
           <ThemeSwitch />
           <HeaderControls />

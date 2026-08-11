@@ -149,7 +149,7 @@ export const HACE: Opcion[] = [
   { id: "cotiza", texto: "Cotizar con mis precios exactos" },
   { id: "datos", texto: "Pedir el teléfono y las fechas" },
   { id: "requisitos", texto: "Responder qué incluye y los requisitos" },
-  { id: "fotos", texto: "Mandar la foto que el cliente pide (el baño, la cocina)", full: true },
+  { id: "fotos", texto: "Mandar la foto que el cliente pide (el producto, el local)", full: true },
   { id: "tono", texto: "Hablar con el tono de mi negocio", full: true },
   { id: "temporada", texto: "Manejar precios distintos por temporada", full: true },
 ];
@@ -164,11 +164,22 @@ export const NO_HACE: Opcion[] = [
 ];
 
 export const OFRECE: Opcion[] = [
-  { id: "hospedaje", texto: "Solo hospedaje" },
-  { id: "traslados", texto: "Hospedaje y traslados" },
-  { id: "excursion", texto: "Paquetes con excursión" },
+  { id: "productos", texto: "Solo lo que vendo" },
+  { id: "servicios", texto: "Productos y servicios adicionales" },
+  { id: "paquetes", texto: "Paquetes o combos" },
   { id: "eventos", texto: "Eventos y grupos" },
 ];
+
+/** Tipos de negocio del selector en "Tu perfil" — lista amplia y genérica, no
+ *  solo turística: la propuesta dejó de ser exclusiva de posadas el 2026-08-11. */
+export const TIPOS_NEGOCIO = [
+  "Posada / Hotel",
+  "Restaurante",
+  "Tienda / Retail",
+  "Servicios",
+  "Clínica / Salud",
+  "Otro",
+] as const;
 
 /** Las tres preguntas sugeridas del chat de prueba. */
 export const SUGERENCIAS = [

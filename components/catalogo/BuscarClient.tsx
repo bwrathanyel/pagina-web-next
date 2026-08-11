@@ -12,7 +12,15 @@ function coincide(texto: string, query: string): boolean {
   return texto.toLowerCase().includes(query.toLowerCase());
 }
 
-export function BuscarClient({ productos, promociones }: { productos: Producto[]; promociones: Promocion[] }) {
+export function BuscarClient({
+  productos,
+  promociones,
+  autoFocus = true,
+}: {
+  productos: Producto[];
+  promociones: Promocion[];
+  autoFocus?: boolean;
+}) {
   const [query, setQuery] = useState("");
 
   const productosFiltrados = useMemo(() => {
@@ -42,7 +50,7 @@ export function BuscarClient({ productos, promociones }: { productos: Producto[]
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Buscar destinos, hoteles, paquetes…"
           className="min-h-12 w-full bg-transparent text-ink placeholder:text-ink-soft focus:outline-none"
-          autoFocus
+          autoFocus={autoFocus}
         />
       </div>
 
