@@ -10,6 +10,7 @@ import { OnboardingOverlay } from "@/components/onboarding/OnboardingOverlay";
 import { jsonLdScript, buildTravelAgencyJsonLd } from "@/lib/seo/jsonld";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { CurrencyProvider } from "@/components/providers/CurrencyProvider";
 import { AdminEditToggle } from "@/components/admin/AdminEditToggle";
 import { SiteContentProvider } from "@/components/providers/SiteContentProvider";
 import { getSiteContent } from "@/lib/site-content/server";
@@ -122,20 +123,22 @@ export default async function RootLayout({
         />
         <ThemeProvider>
           <AuthProvider>
-            <SiteContentProvider initialContent={siteContent}>
-              <CromoSitio><Navbar /></CromoSitio>
-              <div className="flex flex-1 flex-col pb-20 lg:pb-0">
-                <div className="flex-1">{children}</div>
-                <CromoSitio><Footer /></CromoSitio>
-              </div>
-              <CromoSitio>
-                <WhatsAppFloatButton />
-                <AsistenteVirtualButton />
-                <BottomTabBar />
-                <OnboardingOverlay />
-              </CromoSitio>
-              <AdminEditToggle />
-            </SiteContentProvider>
+            <CurrencyProvider>
+              <SiteContentProvider initialContent={siteContent}>
+                <CromoSitio><Navbar /></CromoSitio>
+                <div className="flex flex-1 flex-col pb-20 lg:pb-0">
+                  <div className="flex-1">{children}</div>
+                  <CromoSitio><Footer /></CromoSitio>
+                </div>
+                <CromoSitio>
+                  <WhatsAppFloatButton />
+                  <AsistenteVirtualButton />
+                  <BottomTabBar />
+                  <OnboardingOverlay />
+                </CromoSitio>
+                <AdminEditToggle />
+              </SiteContentProvider>
+            </CurrencyProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

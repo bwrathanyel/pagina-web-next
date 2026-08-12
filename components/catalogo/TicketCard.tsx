@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CardPhotoGallery } from "@/components/catalogo/CardPhotoGallery";
+import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
 
 export interface TicketCardProps {
   href: string | null;
@@ -154,7 +155,7 @@ export function TicketCard({
             (precioMuted ? "text-ink-soft" : "text-ink")
           }
         >
-          {precioLabel}
+          <PrecioMostrado texto={precioLabel} />
         </p>
         {/* Vigencia en UNA línea: es info comercial real (hasta cuándo se
             vende), pero el texto crudo puede traer dos fechas y romper la

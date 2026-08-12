@@ -6,6 +6,7 @@ import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
 import { HeaderControls } from "@/components/layout/HeaderControls";
 import { BrandMark } from "@/components/layout/BrandMark";
 import { ThemeSwitch } from "@/components/ui/ThemeSwitch";
+import { CurrencySwitch } from "@/components/ui/CurrencySwitch";
 import { useHeaderAutoHide } from "@/lib/layout/useHeaderAutoHide";
 import { useSiteContent } from "@/components/providers/SiteContentProvider";
 
@@ -71,6 +72,7 @@ export function Navbar() {
           >
             {content.navigation.whatsappLabel}
           </WhatsAppLeadButton>
+          <CurrencySwitch />
           <ThemeSwitch />
           <HeaderControls />
         </nav>
@@ -81,6 +83,7 @@ export function Navbar() {
             diseño app (hallazgo real, feedback del dueño 2026-07-23). Buscar
             se sacó del tab bar el 2026-08-11 -- vive inline en Home y Promos. */}
         <div className="flex items-center gap-1.5 lg:hidden">
+          <CurrencySwitch />
           <ThemeSwitch />
           <HeaderControls />
         </div>

@@ -8,6 +8,7 @@ import { EditarProductoModal } from "@/components/admin/EditarProductoModal";
 import { AdminFotoManager } from "@/components/admin/AdminFotoManager";
 import { resumenBullets } from "@/lib/utils/resumenBullets";
 import { formatearPrecioCliente } from "@/lib/utils/formatoPrecio";
+import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
 import type { Producto } from "@/types/supabase";
 
 export function ProductoInfo({ producto }: { producto: Producto }) {
@@ -34,7 +35,7 @@ export function ProductoInfo({ producto }: { producto: Producto }) {
           (tarifaVigente ? "bg-gradient-to-br from-coral to-gold text-btn-ink" : "bg-seafoam-bg text-seafoam-text")
         }
       >
-        {formatearPrecioCliente(tarifaVigente?.precio_texto) ?? "Consultar disponibilidad"}
+        <PrecioMostrado texto={formatearPrecioCliente(tarifaVigente?.precio_texto) ?? "Consultar disponibilidad"} />
       </span>
       {tarifaVigente?.vigencia_texto ? (
         <p className="mb-5 -mt-3 text-sm text-ink-soft">{tarifaVigente.vigencia_texto}</p>
