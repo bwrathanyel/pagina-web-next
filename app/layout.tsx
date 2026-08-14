@@ -3,8 +3,7 @@ import localFont from "next/font/local";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { CromoSitio } from "@/components/layout/CromoSitio";
-import { WhatsAppFloatButton } from "@/components/layout/WhatsAppFloatButton";
-import { AsistenteVirtualButton } from "@/components/layout/AsistenteVirtualButton";
+import { ContactoFab } from "@/components/layout/ContactoFab";
 import { BottomTabBar } from "@/components/layout/BottomTabBar";
 import { OnboardingOverlay } from "@/components/onboarding/OnboardingOverlay";
 import { jsonLdScript, buildTravelAgencyJsonLd } from "@/lib/seo/jsonld";
@@ -131,8 +130,7 @@ export default async function RootLayout({
                   <CromoSitio><Footer /></CromoSitio>
                 </div>
                 <CromoSitio>
-                  <WhatsAppFloatButton />
-                  <AsistenteVirtualButton />
+                  <ContactoFab />
                   <BottomTabBar />
                   <OnboardingOverlay />
                 </CromoSitio>

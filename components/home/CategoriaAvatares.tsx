@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CATEGORIAS, type Categoria } from "@/types/supabase";
+import { Revelar } from "@/components/ui/Revelar";
 
 const FOTO_EDITORIAL: Record<Categoria, string> = {
   hoteles: "/images/editorial/escapada-caribe.png",
@@ -15,21 +16,23 @@ const FOTO_EDITORIAL: Record<Categoria, string> = {
  * tamaños, no aporta desorden en desktop. */
 export function CategoriaAvatares({ fotos }: { fotos: Record<string, string | null> }) {
   return (
-    <div className="mx-auto max-w-6xl px-5 pb-4">
-      <div className="flex gap-5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {CATEGORIAS.map(({ slug, label }) => {
+    <div className="mx-auto max-w-6xl px-5 pb-5 pt-4">
+      <div className="-mx-5 flex snap-x snap-proximity gap-4 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {CATEGORIAS.map(({ slug, label }, i) => {
           const foto = fotos[slug] ?? FOTO_EDITORIAL[slug];
           return (
-            <Link key={slug} href={`/catalogo/${slug}`} className="flex shrink-0 flex-col items-center gap-2">
-              <span className="rounded-full bg-gradient-to-br from-coral to-gold p-[2.5px]">
-                <span className="block overflow-hidden rounded-full border-2 border-card">
-                  <span className="relative block h-16 w-16">
-                    <Image src={foto} alt="" fill sizes="64px" className="object-cover" />
+            <Revelar key={slug} retraso={i * 70} className="shrink-0 snap-start">
+              <Link href={`/catalogo/${slug}`} className="flex flex-col items-center gap-2 transition-transform active:scale-95">
+                <span className="rounded-full bg-gradient-to-br from-coral to-gold p-[2.5px]">
+                  <span className="block overflow-hidden rounded-full border-2 border-card">
+                    <span className="relative block h-[60px] w-[60px]">
+                      <Image src={foto} alt="" fill sizes="60px" className="object-cover" />
+                    </span>
                   </span>
                 </span>
-              </span>
-              <span className="max-w-[72px] text-center text-xs font-semibold leading-tight text-ink">{label}</span>
-            </Link>
+                <span className="max-w-[72px] text-center text-xs font-semibold leading-tight text-ink">{label}</span>
+              </Link>
+            </Revelar>
           );
         })}
       </div>

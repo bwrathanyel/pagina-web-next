@@ -152,7 +152,7 @@ html {
   .animate-hero-fade { animation: none; }
 }
 
-/* Globo de aviso del asistente virtual (AsistenteVirtualButton) */
+/* Globo de aviso del asistente virtual (ContactoFab) */
 @keyframes bounce-in {
   0% { opacity: 0; transform: translateY(10px) scale(0.92); }
   60% { opacity: 1; transform: translateY(-2px) scale(1.02); }
@@ -233,4 +233,30 @@ html {
     animation-duration: 0.001ms !important;
     transition-duration: 0.001ms !important;
   }
+}
+
+/* Entrada al hacer scroll (Revelar.tsx). El estado inicial vive acá y no en
+   el componente para que no haya flash de contenido antes de hidratar. */
+.revelar { opacity: 0; transform: translateY(16px); }
+.revelar.es-visible {
+  animation: revelar-entrada 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--retraso, 0ms);
+}
+@keyframes revelar-entrada {
+  to { opacity: 1; transform: none; }
+}
+
+/* Acciones del FAB unificado (ContactoFab): salen escalonadas desde el botón. */
+@keyframes fab-item {
+  from { opacity: 0; transform: translateY(12px) scale(0.9); }
+  to { opacity: 1; transform: none; }
+}
+.animate-fab-item {
+  animation: fab-item 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--retraso, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .revelar, .revelar.es-visible { opacity: 1; transform: none; animation: none; }
+  .animate-fab-item { animation: none; }
 }

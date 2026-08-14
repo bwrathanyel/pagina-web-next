@@ -7,6 +7,7 @@ import { fotosHeroDeHotSales } from "@/lib/promociones/fotosHero";
 import { PlanesCorporativos } from "@/components/home/PlanesCorporativos";
 import { AcompanamientoSection } from "@/components/home/AcompanamientoSection";
 import { TrabajaConNosotrosBanner } from "@/components/home/TrabajaConNosotrosBanner";
+import { MasDeLotus } from "@/components/home/MasDeLotus";
 import { fotosDe } from "@/lib/supabase/fotos";
 import { getProductosPorCategoria, getPromociones } from "@/lib/supabase/queries";
 import type { Categoria } from "@/types/supabase";
@@ -55,9 +56,11 @@ export default async function Home() {
 
       <AcompanamientoSection />
 
-      <TrabajaConNosotrosBanner />
-
-      <PlanesCorporativos />
+      <MasDeLotus />
+      <div className="hidden lg:block">
+        <TrabajaConNosotrosBanner />
+        <PlanesCorporativos />
+      </div>
     </main>
   );
 }

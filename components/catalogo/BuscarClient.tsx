@@ -16,10 +16,16 @@ export function BuscarClient({
   productos,
   promociones,
   autoFocus = true,
+  compacto = false,
 }: {
   productos: Producto[];
   promociones: Promocion[];
   autoFocus?: boolean;
+  /** Usado en la home (BuscarAfordancia): sin el margen inferior heredado de
+   * /buscar y sin "Destinos populares" -- esos chips ya viven en Hot Sales
+   * (DestinoChips), duplicarlos empujaba el resto de la home hacia abajo
+   * (rediseño 2026-08-14). */
+  compacto?: boolean;
 }) {
   const [query, setQuery] = useState("");
 
@@ -39,7 +45,7 @@ export function BuscarClient({
 
   return (
     <div>
-      <div className="mb-8 flex min-h-12 items-center gap-3 rounded-full border border-ink/15 bg-card px-5">
+      <div className={`flex min-h-12 items-center gap-3 rounded-full border border-ink/15 bg-card px-5 ${compacto ? "mb-3" : "mb-8"}`}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0 text-ink-soft" aria-hidden="true">
           <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" strokeWidth="1.8" />
           <path d="M20 20l-4.5-4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
@@ -55,21 +61,23 @@ export function BuscarClient({
       </div>
 
       {query.trim() === "" ? (
-        <div>
-          <p className="mb-3 text-sm font-semibold text-ink-soft">Destinos populares</p>
-          <div className="flex flex-wrap gap-2">
-            {DESTINOS_SUGERIDOS.map((d) => (
-              <button
-                key={d}
-                type="button"
-                onClick={() => setQuery(d)}
-                className="rounded-full border border-ink/15 px-4 py-1.5 text-sm font-semibold text-ink-soft hover:border-ink/30"
-              >
-                {d}
-              </button>
-            ))}
+        compacto ? null : (
+          <div>
+            <p className="mb-3 text-sm font-semibold text-ink-soft">Destinos populares</p>
+            <div className="flex flex-wrap gap-2">
+              {DESTINOS_SUGERIDOS.map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setQuery(d)}
+                  className="rounded-full border border-ink/15 px-4 py-1.5 text-sm font-semibold text-ink-soft hover:border-ink/30"
+                >
+                  {d}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )
       ) : sinResultados ? (
         <p className="py-10 text-center text-ink-soft">No encontramos resultados para &ldquo;{query}&rdquo;.</p>
       ) : (

@@ -8,6 +8,25 @@ import { BrandMark } from "@/components/layout/BrandMark";
 import { EditableText } from "@/components/admin/EditableText";
 import { useSiteContent } from "@/components/providers/SiteContentProvider";
 
+function CaretIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className="shrink-0 transition-transform group-open:rotate-180 md:hidden"
+    >
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
+
 function SocialIcon({ path }: { path: string }) {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -29,8 +48,8 @@ export function Footer() {
   const navItems = content.navigation.items.filter((item) => item.visible);
   return (
     <footer className="bg-dusk">
-      <div className="mx-auto max-w-6xl px-5 py-12 md:py-16">
-        <div className="mb-12 grid gap-7 border-b border-dusk-text/12 pb-12 md:grid-cols-[1fr_auto] md:items-end">
+      <div className="mx-auto max-w-6xl px-5 py-9 md:py-16">
+        <div className="mb-8 grid gap-7 border-b border-dusk-text/12 pb-8 md:grid-cols-[1fr_auto] md:items-end">
           <div>
             <EditableText path="footer.eyebrow" as="p" className="mb-3 font-mono text-xs font-bold uppercase tracking-[0.18em] text-coral-bright" />
             <EditableText path="footer.headline" as="p" multiline className="max-w-[15ch] text-balance font-display text-3xl font-semibold leading-tight text-dusk-text md:text-5xl" />
@@ -43,7 +62,7 @@ export function Footer() {
           </WhatsAppLeadButton>
         </div>
 
-        <div className="mb-10 grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_.8fr_1fr]">
+        <div className="mb-7 grid gap-7 sm:grid-cols-2 lg:grid-cols-[1.4fr_.8fr_1fr]">
           <div className="max-w-xs">
             <div className="mb-3 flex items-center gap-2.5">
               <BrandMark dark size="sm" />
@@ -55,61 +74,71 @@ export function Footer() {
             <EstadoAtencion />
           </div>
 
-          <nav aria-label="Catálogo" className="flex flex-col gap-2">
-            <p className="mb-1 font-mono text-xs uppercase tracking-wide text-dusk-text-soft">
+          {/* Columnas de links como acordeón en móvil (ahorra ~150px de
+              scroll en cada página) -- en md+ se fuerzan siempre abiertas
+              con [&>*]:!block, que pisa el display:none nativo de <details>
+              cerrado (rediseño 2026-08-14). */}
+          <details className="group md:[&>*]:!block">
+            <summary className="mb-1 flex list-none items-center justify-between font-mono text-xs uppercase tracking-wide text-dusk-text-soft md:pointer-events-none md:cursor-default [&::-webkit-details-marker]:hidden">
               Catálogo
-            </p>
-            {navItems.map(({ id, href, label }) => (
-              <Link
-                key={id}
-                href={href}
+              <CaretIcon />
+            </summary>
+            <nav aria-label="Catálogo" className="flex flex-col gap-2 pt-2 md:pt-0">
+              {navItems.map(({ id, href, label }) => (
+                <Link
+                  key={id}
+                  href={href}
+                  className="text-sm text-dusk-text-soft hover:text-dusk-text"
+                >
+                  {label}
+                </Link>
+              ))}
+            </nav>
+          </details>
+
+          <details className="group md:[&>*]:!block">
+            <summary className="mb-1 flex list-none items-center justify-between font-mono text-xs uppercase tracking-wide text-dusk-text-soft md:pointer-events-none md:cursor-default [&::-webkit-details-marker]:hidden">
+              Contacto
+              <CaretIcon />
+            </summary>
+            <div className="flex flex-col gap-2 pt-2 md:pt-0">
+              <a
+                href={`mailto:${REDES.email}`}
                 className="text-sm text-dusk-text-soft hover:text-dusk-text"
               >
-                {label}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="flex flex-col gap-2">
-            <p className="mb-1 font-mono text-xs uppercase tracking-wide text-dusk-text-soft">
-              Contacto
-            </p>
-            <a
-              href={`mailto:${REDES.email}`}
-              className="text-sm text-dusk-text-soft hover:text-dusk-text"
-            >
-              {REDES.email}
-            </a>
-            <div className="mt-1 flex gap-3">
-              <a
-                href={REDES.facebook}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Facebook"
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-dusk-2 text-dusk-text"
-              >
-                <SocialIcon path={ICONS.facebook} />
+                {REDES.email}
               </a>
-              <a
-                href={REDES.instagram}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Instagram"
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-dusk-2 text-dusk-text"
-              >
-                <SocialIcon path={ICONS.instagram} />
-              </a>
-              <a
-                href={REDES.tiktok}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="TikTok"
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-dusk-2 text-dusk-text"
-              >
-                <SocialIcon path={ICONS.tiktok} />
-              </a>
+              <div className="mt-1 flex gap-3">
+                <a
+                  href={REDES.facebook}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Facebook"
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-dusk-2 text-dusk-text"
+                >
+                  <SocialIcon path={ICONS.facebook} />
+                </a>
+                <a
+                  href={REDES.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Instagram"
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-dusk-2 text-dusk-text"
+                >
+                  <SocialIcon path={ICONS.instagram} />
+                </a>
+                <a
+                  href={REDES.tiktok}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="TikTok"
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-dusk-2 text-dusk-text"
+                >
+                  <SocialIcon path={ICONS.tiktok} />
+                </a>
+              </div>
             </div>
-          </div>
+          </details>
         </div>
 
         <p className="border-t border-dusk-text/10 pt-6 text-xs text-dusk-text-soft">

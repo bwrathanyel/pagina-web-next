@@ -35,12 +35,43 @@ function BellIcon() {
   );
 }
 
-export function HeaderControls({ onNavigate }: { onNavigate?: () => void }) {
+/** `soloCarrito`: usado en el header móvil desde el rediseño 2026-08-14 --
+ * campana (notificaciones del chat IA) y cuenta se sacaron de ahí porque ya
+ * viven en el FAB unificado (ContactoFab) y en el bottom tab bar
+ * respectivamente. Evita montar useNotificacionesChat/panel dos veces
+ * (móvil y desktop) cuando el móvil ya no los necesita. */
+export function HeaderControls({
+  onNavigate,
+  soloCarrito = false,
+}: {
+  onNavigate?: () => void;
+  soloCarrito?: boolean;
+}) {
   const { user } = useAuth();
   const cantidad = useCarritoStore((s) => s.items.length);
-  const { notificaciones, noLeidas, marcarTodoLeido, refrescar } = useNotificacionesChat();
+  const notif = useNotificacionesChat();
   const [panelAbierto, setPanelAbierto] = useState(false);
   const campanaRef = useRef<HTMLButtonElement>(null);
+
+  const carrito = (
+    <Link
+      href="/carrito"
+      onClick={onNavigate}
+      aria-label={`Carrito${cantidad > 0 ? `, ${cantidad} ítem(s)` : ""}`}
+      className="relative flex h-11 w-11 items-center justify-center rounded-full text-ink transition-colors hover:bg-sand-2"
+    >
+      <CartIcon />
+      {cantidad > 0 ? (
+        <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-coral px-1 font-mono text-[0.6rem] font-bold text-white">
+          {cantidad}
+        </span>
+      ) : null}
+    </Link>
+  );
+
+  if (soloCarrito) {
+    return <div className="flex items-center gap-1">{carrito}</div>;
+  }
 
   return (
     <div className="flex items-center gap-1">
@@ -50,22 +81,22 @@ export function HeaderControls({ onNavigate }: { onNavigate?: () => void }) {
         aria-haspopup="dialog"
         aria-expanded={panelAbierto}
         onClick={() => {
-          refrescar();
+          notif.refrescar();
           setPanelAbierto(true);
         }}
-        aria-label={`Notificaciones${noLeidas > 0 ? `, ${noLeidas} sin leer` : ""}`}
+        aria-label={`Notificaciones${notif.noLeidas > 0 ? `, ${notif.noLeidas} sin leer` : ""}`}
         className="relative flex h-11 w-11 items-center justify-center rounded-full text-ink transition-colors hover:bg-sand-2"
       >
         <BellIcon />
-        {noLeidas > 0 ? (
+        {notif.noLeidas > 0 ? (
           <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-coral" aria-hidden="true" />
         ) : null}
       </button>
       {panelAbierto ? (
         <NotificacionesPanel
-          notificaciones={notificaciones}
+          notificaciones={notif.notificaciones}
           onClose={() => setPanelAbierto(false)}
-          onMarcarLeido={marcarTodoLeido}
+          onMarcarLeido={notif.marcarTodoLeido}
           anclaRef={campanaRef}
         />
       ) : null}
@@ -77,19 +108,7 @@ export function HeaderControls({ onNavigate }: { onNavigate?: () => void }) {
       >
         <UserIcon />
       </Link>
-      <Link
-        href="/carrito"
-        onClick={onNavigate}
-        aria-label={`Carrito${cantidad > 0 ? `, ${cantidad} ítem(s)` : ""}`}
-        className="relative flex h-11 w-11 items-center justify-center rounded-full text-ink transition-colors hover:bg-sand-2"
-      >
-        <CartIcon />
-        {cantidad > 0 ? (
-          <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-coral px-1 font-mono text-[0.6rem] font-bold text-white">
-            {cantidad}
-          </span>
-        ) : null}
-      </Link>
+      {carrito}
     </div>
   );
 }

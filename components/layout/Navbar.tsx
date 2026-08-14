@@ -5,7 +5,9 @@ import { usePathname } from "next/navigation";
 import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
 import { HeaderControls } from "@/components/layout/HeaderControls";
 import { BrandMark } from "@/components/layout/BrandMark";
+import { Wordmark } from "@/components/layout/Wordmark";
 import { ThemeSwitch } from "@/components/ui/ThemeSwitch";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { CurrencySwitch } from "@/components/ui/CurrencySwitch";
 import { useHeaderAutoHide } from "@/lib/layout/useHeaderAutoHide";
 import { useSiteContent } from "@/components/providers/SiteContentProvider";
@@ -35,12 +37,10 @@ export function Navbar() {
         (esHome ? "" : "hidden lg:block")
       }
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 rounded-full border border-ink/10 bg-card/90 px-3 py-2 shadow-[0_12px_35px_rgba(36,31,26,.10)] backdrop-blur-xl sm:gap-4 sm:px-4 lg:px-5">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 rounded-full border border-ink/10 bg-card/90 px-3 py-1.5 shadow-[0_12px_35px_rgba(36,31,26,.10)] backdrop-blur-xl sm:gap-4 sm:px-4 sm:py-2 lg:px-5">
         <Link href="/" className="flex min-w-0 items-center gap-2.5">
           <BrandMark priority />
-          <span className="max-w-[7rem] text-balance font-display text-[0.68rem] font-bold leading-[0.98] text-ink sm:max-w-[11.5rem] sm:text-base sm:leading-[1.05] lg:text-lg">
-            {content.brand.name}
-          </span>
+          <Wordmark />
         </Link>
 
         <nav aria-label="Catálogo" className="hidden items-center gap-5 lg:flex">
@@ -81,11 +81,16 @@ export function Navbar() {
             navegación principal (Inicio/Promos/Cotizar/Cuenta/Trabaja/IA
             Negocio), tener los dos duplicaba navegación y no pegaba con el
             diseño app (hallazgo real, feedback del dueño 2026-07-23). Buscar
-            se sacó del tab bar el 2026-08-11 -- vive inline en Home y Promos. */}
+            se sacó del tab bar el 2026-08-11 -- vive inline en Home y Promos.
+            Campana y cuenta se sacaron de acá en el rediseño 2026-08-14: la
+            campana pasó al FAB (ContactoFab, que es de donde salen sus
+            notificaciones) y cuenta ya está en el bottom tab -- el cluster
+            derecho ocupaba ~250px de un viewport de 360px y aplastaba el
+            wordmark. */}
         <div className="flex items-center gap-1.5 lg:hidden">
           <CurrencySwitch />
-          <ThemeSwitch />
-          <HeaderControls />
+          <ThemeToggle compacto />
+          <HeaderControls soloCarrito />
         </div>
       </div>
     </header>

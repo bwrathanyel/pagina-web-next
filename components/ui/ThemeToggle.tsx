@@ -27,7 +27,7 @@ function MoonIcon() {
  * script that sets data-theme before React hydrates, so there's no FOUC,
  * but *this component's own* icon still needs to wait for mount to avoid
  * a client/server text mismatch. */
-export function ThemeToggle({ className = "" }: { className?: string }) {
+export function ThemeToggle({ className = "", compacto = false }: { className?: string; compacto?: boolean }) {
   const { resolvedTheme, setTheme } = useTheme();
   const mounted = useSyncExternalStore(suscribirHidratacion, () => true, () => false);
 
@@ -39,7 +39,8 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       onClick={() => setTheme(esOscuro ? "light" : "dark")}
       aria-label={esOscuro ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
       className={
-        "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border border-ink/15 bg-card text-ink transition-colors " +
+        (compacto ? "flex h-9 w-9 " : "flex h-11 w-11 ") +
+        "flex-shrink-0 items-center justify-center rounded-full border border-ink/15 bg-card text-ink transition-colors " +
         className
       }
     >

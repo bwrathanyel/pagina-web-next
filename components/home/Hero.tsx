@@ -6,6 +6,7 @@ import Link from "next/link";
 import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
 import { EditableText } from "@/components/admin/EditableText";
 import { useSiteContent } from "@/components/providers/SiteContentProvider";
+import { Revelar } from "@/components/ui/Revelar";
 
 const MS_POR_FOTO = 5000;
 
@@ -53,24 +54,30 @@ export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
   const heroAlt = actual?.alt ?? fotoPrincipal?.alt ?? "Experiencia de viaje";
 
   return (
-    <section className="relative overflow-hidden px-5 pb-8 pt-6 md:pb-24 md:pt-16">
+    <section className="relative overflow-hidden px-5 pb-4 pt-3 md:pb-20 md:pt-14">
       {/* Hero card mobile-only -- versión "app" pedida en el rediseño (foto
           full-bleed + gradiente + pill + CTA). Desktop mantiene el layout
-          original (círculo + badges flotantes) sin tocar. */}
-      <div className="relative mb-2 h-[300px] overflow-hidden rounded-[28px] bg-sand-2 lg:hidden">
-        {heroImage ? (
-          <Image
-            key={heroImage}
-            src={heroImage}
-            alt={heroAlt}
-            fill
-            sizes="100vw"
-            className="animate-hero-fade object-cover"
-            priority
-          />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-seafoam via-dusk-2 to-dusk" />
-        )}
+          original (círculo + badges flotantes) sin tocar. Altura con clamp
+          en vez de fija (300px) para no desperdiciar pantalla en celulares
+          chicos ni quedarse corta en los grandes (rediseño 2026-08-14). */}
+      <div className="relative mb-0 h-[clamp(260px,42vh,320px)] overflow-hidden rounded-[28px] bg-sand-2 lg:hidden">
+        {/* Flotar sutil solo en la foto, no en el texto encima -- la card
+            "respira" sin que los badges/título se muevan con ella. */}
+        <div className="absolute inset-0 motion-safe:animate-[flotar_9s_ease-in-out_infinite]">
+          {heroImage ? (
+            <Image
+              key={heroImage}
+              src={heroImage}
+              alt={heroAlt}
+              fill
+              sizes="100vw"
+              className="animate-hero-fade object-cover"
+              priority
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-seafoam via-dusk-2 to-dusk" />
+          )}
+        </div>
         <div className="absolute inset-0 bg-gradient-to-t from-dusk/90 via-dusk/25 to-transparent" />
         <p className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full bg-black/25 px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-white backdrop-blur-md">
           <span className="h-1.5 w-1.5 rounded-full bg-coral-bright" aria-hidden="true" />
@@ -86,12 +93,12 @@ export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
             {actual.alt}
           </p>
         ) : null}
-        <div className="absolute inset-x-4 bottom-4">
+        <Revelar retraso={120} className="absolute inset-x-4 bottom-4">
           <h1 className="max-w-[14ch] text-balance font-display text-[34px] font-semibold leading-[0.98] text-white">
             <EditableText path="home.hero.title" />{" "}
             <EditableText path="home.hero.accent" className="text-coral-bright" />
           </h1>
-          <div className="mt-4 flex items-center gap-2">
+          <div className="mt-3 flex items-center gap-2">
             <Link href={hero.primaryHref} className="flex min-h-11 flex-1 items-center justify-center rounded-full bg-coral px-5 text-sm font-semibold text-white">
               {hero.primaryLabel}
             </Link>
@@ -115,7 +122,7 @@ export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
               </a>
             )}
           </div>
-        </div>
+        </Revelar>
       </div>
 
       <div className="pointer-events-none absolute -left-28 top-20 h-72 w-72 rounded-full bg-coral/10 blur-3xl" />

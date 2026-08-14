@@ -13,6 +13,49 @@ interface Mensaje {
   foto_2?: string | null;
   opcion_titulo?: string | null;
   opcion_precio?: string | null;
+  audio_url?: string | null;
+}
+
+// URL pública, no un secreto -- mismo criterio que AUDIO_BASE/CDN_FOTOS en el
+// backend (_shared/voz.ts): hardcodeada porque no hace falta protegerla, la
+// función solo sintetiza hashes que el bot ya registró (ver audio-web-dinamico).
+const AUDIO_SINTESIS_URL = "https://begbjhrdbsqftbbleecb.functions.supabase.co/audio-web-dinamico";
+
+// El backend manda 'texto' completo SIEMPRE, aunque haya audio -- así que si
+// la síntesis tarda, falla, o Fish Audio (tier free, sin SLA) no responde, el
+// cliente ve el texto en vez de quedarse sin nada. Solo cuando el audio queda
+// listo de verdad se oculta el texto y se muestra el reproductor.
+function ContenidoMensaje({ mensaje }: { mensaje: Mensaje }) {
+  const [audioListo, setAudioListo] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!mensaje.audio_url) return;
+    let cancelado = false;
+    fetch(AUDIO_SINTESIS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ audio_url: mensaje.audio_url }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelado && data?.ok && typeof data.audio_url === "string") {
+          setAudioListo(data.audio_url);
+        }
+      })
+      .catch(() => {
+        // Sin conexión o Fish Audio caído -- el texto ya está visible, no hace falta nada más.
+      });
+    return () => {
+      cancelado = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mensaje.audio_url]);
+
+  if (audioListo) {
+    // eslint-disable-next-line jsx-a11y/media-has-caption
+    return <audio controls src={audioListo} className="w-full" style={{ height: 32 }} />;
+  }
+  return <>{mensaje.texto}</>;
 }
 
 // crypto.randomUUID() no existe en algunos navegadores embebidos (in-app
@@ -175,7 +218,7 @@ const MENSAJE_BIENVENIDA: Mensaje = {
   texto: "¡Hola! 😊 Soy Lotus, tu asistente virtual. Cuéntame qué viaje tienes en mente y te ayudo a armarlo.",
 };
 
-// Este panel nunca se renderiza en el server -- AsistenteVirtualButton solo
+// Este panel nunca se renderiza en el server -- ContactoFab solo
 // lo monta client-side tras un click (ver `{abierto && <AsistenteVirtualPanel .../>}`),
 // nunca durante hidratación -- así que leer localStorage en el init de
 // useState es seguro acá y evita el setState síncrono dentro de un efecto.
@@ -253,6 +296,7 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
           foto_2: data.foto_2,
           opcion_titulo: data.opcion_titulo,
           opcion_precio: data.opcion_precio,
+          audio_url: data.audio_url,
         },
       ]);
     } catch {
@@ -295,7 +339,7 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
                   m.rol === "lead" ? "bg-seafoam text-white" : "bg-sand-2 text-ink"
                 }`}
               >
-                {m.texto}
+                {m.rol === "ia" ? <ContenidoMensaje mensaje={m} /> : m.texto}
                 {(m.foto_1 || m.opcion_titulo) && (
                   <div className="mt-2 overflow-hidden rounded-xl border border-black/5">
                     {m.foto_1 && (

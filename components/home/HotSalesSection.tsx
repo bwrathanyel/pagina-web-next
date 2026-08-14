@@ -6,6 +6,9 @@ import { EditableText } from "@/components/admin/EditableText";
 import { PromocionCard } from "@/components/catalogo/PromocionCard";
 import { DestinoChips } from "@/components/catalogo/DestinoChips";
 import { destinosDelPool } from "@/lib/promociones/hotSales";
+import { Seccion } from "@/components/ui/Seccion";
+import { Carrusel } from "@/components/ui/Carrusel";
+import { Revelar } from "@/components/ui/Revelar";
 import type { Promocion } from "@/types/supabase";
 
 const POR_TANDA = 6;
@@ -43,10 +46,10 @@ export function HotSalesSection({ pool }: { pool: Promocion[] }) {
   if (pool.length === 0) return null;
 
   return (
-    <section className="mx-auto max-w-6xl px-5 py-16 md:py-24">
-      <div className="mb-8 flex items-end justify-between gap-4">
+    <Seccion ritmo="intro">
+      <div className="mb-4 flex items-end justify-between gap-4 md:mb-8">
         <div>
-          <EditableText path="home.hotSales.eyebrow" as="p" className="mb-3 font-mono text-xs font-bold uppercase tracking-[0.16em] text-coral" />
+          <EditableText path="home.hotSales.eyebrow" as="p" className="mb-2 font-mono text-xs font-bold uppercase tracking-[0.16em] text-coral" />
           <EditableText path="home.hotSales.title" as="h2" className="max-w-[20ch] text-balance font-display text-3xl font-semibold leading-tight text-ink md:text-5xl" />
         </div>
         <Link href="/catalogo/hot-sales" className="hidden min-h-11 flex-shrink-0 items-center text-sm font-semibold text-coral sm:flex">
@@ -63,16 +66,19 @@ export function HotSalesSection({ pool }: { pool: Promocion[] }) {
         }}
       />
 
-      <div className="-mx-5 flex gap-4 overflow-x-auto px-5 pb-1 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-7 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3">
-        {visible.map((p) => (
-          <div key={p.id} className="w-[70vw] max-w-[258px] shrink-0 snap-start sm:w-auto sm:max-w-none">
+      <Carrusel
+        anchoItem="72%"
+        maxItem="264px"
+        desktop="sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-7 sm:overflow-visible sm:px-0 lg:grid-cols-3"
+        items={visible.map((p, i) => (
+          <Revelar key={p.id} retraso={i * 60}>
             <PromocionCard promocion={p} />
-          </div>
+          </Revelar>
         ))}
-      </div>
+      />
 
       {visibles < filtradas.length && (
-        <div className="mt-8 flex justify-center">
+        <div className="mt-6 flex justify-center">
           <button
             type="button"
             onClick={() => setVisibles((v) => v + POR_TANDA)}
@@ -83,9 +89,9 @@ export function HotSalesSection({ pool }: { pool: Promocion[] }) {
         </div>
       )}
 
-      <Link href="/catalogo/hot-sales" className="mt-7 inline-flex min-h-11 items-center text-sm font-semibold text-coral sm:hidden">
+      <Link href="/catalogo/hot-sales" className="mt-5 inline-flex min-h-11 items-center text-sm font-semibold text-coral sm:hidden">
         Ver todas las Hot Sales ↗
       </Link>
-    </section>
+    </Seccion>
   );
 }
