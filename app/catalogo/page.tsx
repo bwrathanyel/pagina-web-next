@@ -38,13 +38,13 @@ export default async function CatalogoIndexPage() {
   };
 
   return (
-    <main className="mx-auto max-w-6xl px-5 py-10 md:py-14">
+    <main className="mx-auto max-w-6xl px-5 py-6 md:py-16">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript(buildBreadcrumbJsonLd([{ name: "Inicio", url: "/" }, { name: "Catálogo", url: "/catalogo" }]))}
       />
-      <header className="mb-8">
-        <p className="mb-3 font-mono text-xs font-bold uppercase tracking-[0.18em] text-coral">Catálogo</p>
+      <header className="mb-4 md:mb-8">
+        <p className="mb-2 font-mono text-xs font-bold uppercase tracking-[0.18em] text-coral">Catálogo</p>
         <h1 className="font-display text-4xl font-semibold leading-none text-ink md:text-5xl">¿Qué estás buscando?</h1>
       </header>
 

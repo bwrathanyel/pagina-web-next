@@ -18,11 +18,11 @@ export function DestinoChips({
   if (destinos.length === 0) return null;
 
   return (
-    <div className="-mx-5 mb-6 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="-mx-5 mb-6 flex gap-2 overflow-x-auto px-5 pb-1 snap-x snap-proximity [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_92%,transparent)]">
       <button
         type="button"
         onClick={() => onChange(null)}
-        className={`shrink-0 rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors ${
+        className={`shrink-0 snap-start rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors ${
           activo === null ? "border-coral bg-coral text-white" : "border-ink/15 text-ink-soft hover:border-ink/30"
         }`}
       >
@@ -33,7 +33,7 @@ export function DestinoChips({
           key={destino}
           type="button"
           onClick={() => onChange(destino)}
-          className={`shrink-0 rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors ${
+          className={`shrink-0 snap-start rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors ${
             activo === destino ? "border-coral bg-coral text-white" : "border-ink/15 text-ink-soft hover:border-ink/30"
           }`}
         >

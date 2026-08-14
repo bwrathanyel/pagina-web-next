@@ -6,6 +6,7 @@ import { CatalogoMobileHeader } from "@/components/catalogo/CatalogoMobileHeader
 import { CatalogoGrid } from "@/components/catalogo/CatalogoGrid";
 import { ProductoCard } from "@/components/catalogo/ProductoCard";
 import { PromocionCard } from "@/components/catalogo/PromocionCard";
+import { Revelar } from "@/components/ui/Revelar";
 import { getProductosPorCategoria, getPromociones } from "@/lib/supabase/queries";
 import { agruparPorDestino } from "@/lib/supabase/agruparPorDestino";
 import { jsonLdScript, buildBreadcrumbJsonLd, buildItemListJsonLd } from "@/lib/seo/jsonld";
@@ -91,7 +92,7 @@ export default async function CatalogoPage({
     : (items as Producto[]).map((p) => ({ name: p.nombre, url: `/producto/${p.id}` }));
 
   return (
-    <main className="mx-auto max-w-7xl px-5 py-10 md:py-14">
+    <main className="mx-auto max-w-7xl px-5 py-4 md:py-14">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript(
@@ -138,10 +139,16 @@ export default async function CatalogoPage({
               </div>
               <CatalogoGrid>
                 {esPromociones
-                  ? (itemsDelGrupo as Promocion[]).map((p) => (
-                      <PromocionCard key={p.id} promocion={p} />
+                  ? (itemsDelGrupo as Promocion[]).map((p, i) => (
+                      <Revelar key={p.id} retraso={i * 50}>
+                        <PromocionCard promocion={p} />
+                      </Revelar>
                     ))
-                  : (itemsDelGrupo as Producto[]).map((p) => <ProductoCard key={p.id} producto={p} />)}
+                  : (itemsDelGrupo as Producto[]).map((p, i) => (
+                      <Revelar key={p.id} retraso={i * 50}>
+                        <ProductoCard producto={p} />
+                      </Revelar>
+                    ))}
               </CatalogoGrid>
             </section>
           ))}

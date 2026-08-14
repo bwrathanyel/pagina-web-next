@@ -65,7 +65,7 @@ export default async function ProductoPage({ params }: { params: Promise<{ id: s
   ];
 
   return (
-    <main className="mx-auto max-w-5xl px-5 py-10 pb-28 lg:pb-10">
+    <main className="mx-auto max-w-5xl px-5 py-6 pb-28 md:py-10 lg:pb-10">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript(buildProductJsonLd(producto))}
@@ -79,7 +79,7 @@ export default async function ProductoPage({ params }: { params: Promise<{ id: s
           ]),
         )}
       />
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-8">
         <div className="relative">
           <ProductoAccionesOverlay tipo="producto" id={producto.id} nombre={producto.nombre} />
           <FotoCarousel fotos={fotos} alt={producto.nombre} />
@@ -89,7 +89,7 @@ export default async function ProductoPage({ params }: { params: Promise<{ id: s
       <ProductoFooterMobile cotizarHref={`/cotizar/producto/${producto.id}`} />
 
       {promociones.length > 0 ? (
-        <section className="mt-12">
+        <section className="mt-8 md:mt-12">
           <h2 className="mb-4 font-display text-2xl font-semibold text-ink">
             Promociones activas
           </h2>

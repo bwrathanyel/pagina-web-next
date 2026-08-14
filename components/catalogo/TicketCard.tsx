@@ -173,9 +173,12 @@ export function TicketCard({
           <Link
             href={cotizarHref}
             aria-label={`Ver y cotizar ${nombre}`}
-            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full bg-coral px-4 text-sm font-bold text-white transition hover:brightness-95"
+            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full bg-coral px-3 text-sm font-bold text-white transition hover:brightness-95 sm:px-4"
           >
-            <span>Ver y cotizar</span>
+            {/* Solo ícono por debajo de sm: en la grilla de 2 columnas mobile
+                el texto no cabe junto al botón de carrito (rediseño
+                2026-08-14) -- el aria-label ya dice la acción completa. */}
+            <span className="hidden sm:inline">Ver y cotizar</span>
             <span aria-hidden="true">↗</span>
           </Link>
           {onToggleCarrito ? (

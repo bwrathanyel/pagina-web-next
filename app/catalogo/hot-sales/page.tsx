@@ -25,7 +25,7 @@ export default async function HotSalesPage() {
     .map((p) => ({ name: p.titulo, url: `/producto/${p.producto!.id}` }));
 
   return (
-    <main className="mx-auto max-w-7xl px-5 py-10 md:py-14">
+    <main className="mx-auto max-w-7xl px-5 py-6 md:py-14">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript(
@@ -39,7 +39,7 @@ export default async function HotSalesPage() {
         <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(buildItemListJsonLd(itemList))} />
       ) : null}
 
-      <header className="mb-7 overflow-hidden rounded-none bg-transparent px-0 py-0 text-ink md:rounded-[32px] md:bg-dusk md:px-10 md:py-12 md:text-dusk-text">
+      <header className="mb-4 overflow-hidden rounded-none bg-transparent px-0 py-0 text-ink md:mb-7 md:rounded-[32px] md:bg-dusk md:px-10 md:py-12 md:text-dusk-text">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end md:gap-8">
           <div>
             <p className="mb-2 font-mono text-xs font-bold uppercase tracking-[0.18em] text-coral md:mb-3 md:text-coral-bright">🔥 Ofertas imperdibles</p>
@@ -54,8 +54,8 @@ export default async function HotSalesPage() {
         </div>
       </header>
 
-      <div className="mb-8 lg:hidden">
-        <BuscarClient productos={[]} promociones={pool} autoFocus={false} />
+      <div className="mb-4 lg:hidden">
+        <BuscarClient productos={[]} promociones={pool} autoFocus={false} compacto />
       </div>
 
       <HotSalesGrid pool={pool} />

@@ -5,6 +5,7 @@ import { CatalogoGrid } from "@/components/catalogo/CatalogoGrid";
 import { PromocionCard } from "@/components/catalogo/PromocionCard";
 import { DestinoChips } from "@/components/catalogo/DestinoChips";
 import { destinosDelPool } from "@/lib/promociones/hotSales";
+import { Revelar } from "@/components/ui/Revelar";
 import type { Promocion } from "@/types/supabase";
 
 // Grid plano (sin agrupar por destino, para no romper el orden por precio
@@ -23,8 +24,10 @@ export function HotSalesGrid({ pool }: { pool: Promocion[] }) {
         </p>
       ) : (
         <CatalogoGrid>
-          {filtradas.map((p) => (
-            <PromocionCard key={p.id} promocion={p} />
+          {filtradas.map((p, i) => (
+            <Revelar key={p.id} retraso={i * 50}>
+              <PromocionCard promocion={p} />
+            </Revelar>
           ))}
         </CatalogoGrid>
       )}

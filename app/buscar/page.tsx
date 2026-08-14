@@ -22,8 +22,8 @@ export default async function BuscarPage() {
   ]);
 
   return (
-    <main className="mx-auto max-w-6xl px-5 py-8 md:py-14">
-      <h1 className="mb-6 font-display text-3xl font-semibold text-ink md:text-4xl">Buscar</h1>
+    <main className="mx-auto max-w-6xl px-5 py-6 md:py-14">
+      <h1 className="mb-4 font-display text-3xl font-semibold text-ink md:text-4xl">Buscar</h1>
       <BuscarClient productos={[...hoteles, ...paquetes, ...guiasTours]} promociones={promociones} />
     </main>
   );
