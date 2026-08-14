@@ -5,9 +5,9 @@ export const metadata = {
 
 export default function TerminosPage() {
   return (
-    <main className="mx-auto max-w-2xl px-5 py-12">
-      <h1 className="mb-6 font-display text-3xl font-semibold text-ink">Términos de servicio</h1>
-      <div className="flex flex-col gap-5 text-ink-soft">
+    <main className="mx-auto max-w-3xl px-5 py-8 md:py-12">
+      <h1 className="mb-5 font-display text-3xl font-semibold text-ink">Términos de servicio</h1>
+      <div className="flex flex-col gap-5 leading-7 text-ink-soft">
         <p>
           Este sitio (destinoyeventoslotus360.com) es operado por Destino y Eventos Lotus 360,
           agencia de viajes venezolana. Al usarlo, aceptás estos términos.

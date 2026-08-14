@@ -51,7 +51,7 @@ function ConfiguracionForm() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-5 py-12">
+    <main className="mx-auto max-w-md px-5 py-8 md:py-12">
       <h1 className="mb-6 font-display text-3xl font-semibold text-ink">Configuración</h1>
 
       <section className="mb-8 flex items-center justify-between rounded-xl border border-ink/10 bg-card px-4 py-4">

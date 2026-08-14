@@ -33,7 +33,7 @@ export default function TrabajaConNosotrosPage() {
   return (
     <main>
       <section className="bg-dusk">
-        <div className="mx-auto max-w-6xl px-5 py-16 md:py-24">
+        <div className="mx-auto max-w-6xl px-5 py-9 md:py-20">
           <p className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-coral-bright">Estamos contratando</p>
           <h1 className="mt-3 max-w-2xl text-balance font-display text-4xl font-semibold leading-tight text-dusk-text md:text-6xl">
             Forma parte de <span className="text-gold">nuestro equipo</span>.
@@ -44,7 +44,7 @@ export default function TrabajaConNosotrosPage() {
             trabajar de forma remota.
           </p>
 
-          <div className="mt-12 grid gap-8 md:grid-cols-2">
+          <div className="mt-8 grid gap-6 md:grid-cols-2 md:gap-8">
             <div className="rounded-[28px] border border-dusk-text/12 bg-dusk-2 p-6 md:p-8">
               <p className="font-mono text-xs font-bold uppercase tracking-[0.14em] text-gold">Modalidad presencial</p>
               <h2 className="mt-2 font-display text-2xl font-semibold text-dusk-text">Oficina en Naguanagua</h2>
@@ -83,7 +83,7 @@ export default function TrabajaConNosotrosPage() {
           formulario de siempre. Ambos terminan en la misma tabla
           postulaciones_empleo del CRM. */}
       <section className="bg-dusk">
-        <div className="mx-auto max-w-2xl px-5 pb-16 md:pb-20">
+        <div className="mx-auto max-w-2xl px-5 pb-9 md:pb-16">
           <p className="mb-3 font-mono text-xs font-bold uppercase tracking-[0.14em] text-gold">
             Opción rápida
           </p>
@@ -100,7 +100,7 @@ export default function TrabajaConNosotrosPage() {
       </section>
 
       <section className="bg-sand">
-        <div className="mx-auto max-w-2xl px-5 py-16 md:py-20">
+        <div className="mx-auto max-w-2xl px-5 py-9 md:py-16">
           <p className="mb-3 font-mono text-xs font-bold uppercase tracking-[0.14em] text-coral">
             O si prefieres el formulario
           </p>

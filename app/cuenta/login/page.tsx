@@ -27,7 +27,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-5 py-12">
+    <main className="mx-auto max-w-md px-5 py-8 md:py-12">
       <h1 className="mb-1 font-display text-3xl font-semibold text-ink">Iniciar sesión</h1>
       <p className="mb-6 text-ink-soft">Accede a tus favoritos y a tu carrito guardado.</p>
 

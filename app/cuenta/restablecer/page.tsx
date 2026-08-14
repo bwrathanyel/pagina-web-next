@@ -41,7 +41,7 @@ export default function RestablecerPage() {
 
   if (!listo) {
     return (
-      <main className="mx-auto max-w-md px-5 py-12">
+      <main className="mx-auto max-w-md px-5 py-8 md:py-12">
         <h1 className="mb-1 font-display text-3xl font-semibold text-ink">Enlace inválido</h1>
         <p className="text-ink-soft">
           Este enlace ya venció o no es válido. Pedí uno nuevo desde{" "}
@@ -55,7 +55,7 @@ export default function RestablecerPage() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-5 py-12">
+    <main className="mx-auto max-w-md px-5 py-8 md:py-12">
       <h1 className="mb-1 font-display text-3xl font-semibold text-ink">Elige una nueva contraseña</h1>
 
       <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-4">

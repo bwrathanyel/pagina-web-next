@@ -44,8 +44,8 @@ function CuentaDashboard() {
   const inicial = (user?.email?.[0] ?? "?").toUpperCase();
 
   return (
-    <main className="mx-auto max-w-md px-5 py-12">
-      <div className="mb-8 flex items-center gap-4">
+    <main className="mx-auto max-w-md px-5 py-8 md:py-12">
+      <div className="mb-6 flex items-center gap-4">
         <span
           aria-hidden="true"
           className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-coral to-gold font-display text-xl font-bold text-btn-ink"

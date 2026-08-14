@@ -27,7 +27,7 @@ export default function RecuperarPage() {
 
   if (enviado) {
     return (
-      <main className="mx-auto max-w-md px-5 py-12">
+      <main className="mx-auto max-w-md px-5 py-8 md:py-12">
         <h1 className="mb-1 font-display text-3xl font-semibold text-ink">Revisá tu correo</h1>
         <p className="text-ink-soft">
           Si el correo tiene una cuenta asociada, te enviamos un enlace para restablecer la contraseña.
@@ -37,7 +37,7 @@ export default function RecuperarPage() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-5 py-12">
+    <main className="mx-auto max-w-md px-5 py-8 md:py-12">
       <h1 className="mb-1 font-display text-3xl font-semibold text-ink">Recuperar contraseña</h1>
       <p className="mb-6 text-ink-soft">Te mandamos un enlace a tu correo para elegir una nueva.</p>
 

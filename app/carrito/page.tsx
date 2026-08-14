@@ -87,7 +87,7 @@ export default function CarritoPage() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-5 py-10 pb-28 lg:pb-10">
+    <main className="mx-auto max-w-2xl px-5 py-6 pb-28 md:py-10 lg:pb-10">
       <div className="mb-6 flex items-center gap-3">
         <Link
           href="/cuenta"

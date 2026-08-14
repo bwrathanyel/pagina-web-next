@@ -24,7 +24,7 @@ export default async function CotizarProductoPage({ params }: { params: Promise<
   const tarifa = producto.tarifas.find((item) => item.vigente);
 
   return (
-    <main className="mx-auto max-w-6xl px-5 py-10 md:py-14">
+    <main className="mx-auto max-w-6xl px-5 py-6 md:py-14">
       <CotizacionOpcionForm
         opcion={{
           clase: "producto",

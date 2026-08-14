@@ -25,7 +25,7 @@ export default async function CotizarPromocionPage({ params }: { params: Promise
   const fotos = fotosPropias.length > 0 ? fotosPropias : fotosDe(promocion.producto?.producto_fotos);
 
   return (
-    <main className="mx-auto max-w-6xl px-5 py-10 md:py-14">
+    <main className="mx-auto max-w-6xl px-5 py-6 md:py-14">
       <CotizacionOpcionForm
         opcion={{
           clase: "promocion",
