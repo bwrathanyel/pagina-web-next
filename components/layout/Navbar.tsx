@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
@@ -13,22 +12,26 @@ import { CurrencySwitch } from "@/components/ui/CurrencySwitch";
 import { useHeaderAutoHide } from "@/lib/layout/useHeaderAutoHide";
 import { useSiteContent } from "@/components/providers/SiteContentProvider";
 
-// Ítems que se agrupan bajo "Más" en el pill para que quepan sin solaparse
-// (auditoría redesign desktop 2026-08-22: 7 ítems + Cotizar + WhatsApp + 3
-// controles no entraban en max-w-6xl y "Promociones" quedaba encimado sobre
-// el wordmark). No se movió a `site-content` porque el editor de contenido
-// no tiene UI para agrupar todavía -- agrupar por id acá es reversible sin
-// tocar el esquema.
-const IDS_MENU_MAS = new Set(["empleo", "ia-negocio"]);
+// "Paquetes" sale de la barra (pasada 3, pedido del dueño) pero la categoría
+// sigue viva en /catalogo/paquetes -- solo se oculta del header, igual que
+// antes se agrupaba por id bajo "Más" en vez de tocar site-content (el editor
+// de contenido no tiene UI para eso todavía).
+const IDS_OCULTOS_HEADER = new Set(["paquetes"]);
+
+// Labels cortos solo para el header (pasada 3): el label largo se conserva en
+// site-content para el BottomTabBar y el editor de contenido del admin.
+const LABEL_HEADER: Record<string, string> = {
+  empleo: "Únete",
+  "ia-negocio": "IA para empresas",
+};
 
 export function Navbar() {
   const pathname = usePathname();
   const { content } = useSiteContent();
-  const navItems = content.navigation.items.filter((item) => item.visible);
-  const itemsPrincipales = navItems.filter((item) => !IDS_MENU_MAS.has(item.id));
-  const itemsMas = navItems.filter((item) => IDS_MENU_MAS.has(item.id));
+  const itemsPrincipales = content.navigation.items.filter(
+    (item) => item.visible && !IDS_OCULTOS_HEADER.has(item.id),
+  );
   const { visible, propsContenedor } = useHeaderAutoHide();
-  const [masAbierto, setMasAbierto] = useState(false);
 
   const esActiva = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
@@ -70,53 +73,9 @@ export function Navbar() {
                   : "text-ink-soft after:scale-x-0 hover:text-ink hover:after:scale-x-100")
               }
             >
-              {label}
+              {LABEL_HEADER[id] ?? label}
             </Link>
           ))}
-
-          {itemsMas.length > 0 ? (
-            <div
-              className="relative shrink-0"
-              onMouseEnter={() => setMasAbierto(true)}
-              onMouseLeave={() => setMasAbierto(false)}
-            >
-              <button
-                type="button"
-                aria-haspopup="menu"
-                aria-expanded={masAbierto}
-                onClick={() => setMasAbierto((v) => !v)}
-                className={
-                  "flex items-center gap-1 whitespace-nowrap py-2 font-body text-sm transition-colors " +
-                  (itemsMas.some((i) => esActiva(i.href)) ? "text-ink" : "text-ink-soft hover:text-ink")
-                }
-              >
-                Más
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-                  <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-              {masAbierto ? (
-                <div
-                  role="menu"
-                  className="absolute right-0 top-full z-10 mt-2 w-56 overflow-hidden rounded-2xl border border-linea bg-card shadow-lift"
-                >
-                  {itemsMas.map(({ id, href, label }) => (
-                    <Link
-                      key={id}
-                      href={href}
-                      role="menuitem"
-                      className={
-                        "block px-4 py-3 text-sm transition-colors " +
-                        (esActiva(href) ? "bg-sand-2 text-ink" : "text-ink-soft hover:bg-sand-2 hover:text-ink")
-                      }
-                    >
-                      {label}
-                    </Link>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
 
           <Link
             href={content.navigation.quoteHref}
