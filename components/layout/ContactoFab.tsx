@@ -89,7 +89,7 @@ export function ContactoFab() {
 
   return (
     <>
-      <nav aria-label="Contacto rápido" ref={fabRef}>
+      <nav aria-label="Contacto rápido" ref={fabRef} className={chatAbierto ? "hidden" : undefined}>
         <div
           className={
             "fixed right-4 z-40 flex flex-col items-end gap-3 sm:right-5 lg:bottom-6 " +
@@ -128,7 +128,7 @@ export function ContactoFab() {
                     setChatAbierto(true);
                     setAbierto(false);
                   }}
-                  className="animate-fab-item relative flex h-12 items-center gap-2.5 rounded-full bg-seafoam pl-4 pr-5 text-sm font-semibold text-white shadow-[0_10px_28px_-8px_rgba(62,130,125,0.55)]"
+                  className="animate-fab-item relative flex h-12 items-center gap-2.5 rounded-full bg-coral pl-4 pr-5 text-sm font-semibold text-white shadow-[0_10px_28px_-8px_rgba(168,62,0,0.55)]"
                 >
                   <ChatIcon />
                   Cotiza con Lotus IA
@@ -158,15 +158,24 @@ export function ContactoFab() {
             }}
             aria-label={abierto ? "Cerrar opciones de contacto" : "Contactar a Lotus 360"}
             aria-expanded={abierto}
-            className="group relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-seafoam text-white shadow-[0_10px_28px_-8px_rgba(62,130,125,0.55)]"
+            className="group relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-coral text-white shadow-[0_10px_28px_-8px_rgba(168,62,0,0.55)]"
           >
             {!abierto ? (
-              <span className="absolute inset-0 -z-10 rounded-full bg-seafoam/60 animate-ping [animation-duration:2.4s]" aria-hidden="true" />
+              <span
+                className="motion-safe:animate-fab-halo absolute inset-0 -z-10 rounded-full ring-2 ring-gold"
+                aria-hidden="true"
+              />
+            ) : null}
+            {!abierto ? (
+              <span
+                className="motion-safe:animate-fab-shine pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 bg-gradient-to-r from-transparent via-gold/70 to-transparent"
+                aria-hidden="true"
+              />
             ) : null}
             {noLeidas > 0 && !abierto ? (
-              <span className="absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-full bg-coral ring-2 ring-seafoam" aria-hidden="true" />
+              <span className="absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-full bg-gold ring-2 ring-coral" aria-hidden="true" />
             ) : null}
-            <span className={"transition-transform duration-200 " + (abierto ? "rotate-45" : "")}>
+            <span className={"relative transition-transform duration-200 " + (abierto ? "rotate-45" : "")}>
               {abierto ? (
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
                   <path d="M6 6l12 12M6 18 18 6" />

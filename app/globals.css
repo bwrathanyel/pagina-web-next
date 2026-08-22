@@ -337,7 +337,26 @@ html {
   animation-delay: var(--retraso, 0ms);
 }
 
+/* Halo dorado del FAB coral: late hacia afuera en vez del animate-ping
+   seafoam anterior, más un destello que recorre el botón cada ~6s. */
+@keyframes fab-halo {
+  0%, 100% { transform: scale(1); opacity: 0.55; }
+  50% { transform: scale(1.22); opacity: 0; }
+}
+.animate-fab-halo {
+  animation: fab-halo 2.6s ease-out infinite;
+}
+@keyframes fab-shine {
+  0%, 90%, 100% { transform: translateX(-120%) rotate(20deg); opacity: 0; }
+  93% { opacity: 0.6; }
+  100% { transform: translateX(220%) rotate(20deg); opacity: 0; }
+}
+.animate-fab-shine {
+  animation: fab-shine 6s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .revelar, .revelar.es-visible { opacity: 1; transform: none; animation: none; }
   .animate-fab-item { animation: none; }
+  .animate-fab-halo, .animate-fab-shine { animation: none; opacity: 0; }
 }
