@@ -386,6 +386,38 @@ html {
 .animate-msg-in-right { animation: msg-in-right 0.25s ease-out both; }
 .animate-msg-in-left { animation: msg-in-left 0.25s ease-out both; }
 
+/* Wordmark del header: revelado por clip-path de una sola vez al montar
+   (Navbar vive en el layout raíz y no se desmonta al navegar). */
+@keyframes wordmark-reveal {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+.animate-wordmark-line {
+  animation: wordmark-reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--retraso, 0ms);
+}
+
+/* Micro-animaciones de HeaderControls: campana que se balancea cuando hay
+   notificaciones sin leer, carrito que rebota cuando sube la cantidad. */
+@keyframes campana-balanceo {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-12deg); }
+  40% { transform: rotate(10deg); }
+  60% { transform: rotate(-6deg); }
+  80% { transform: rotate(3deg); }
+}
+.animate-campana-balanceo {
+  animation: campana-balanceo 0.6s ease-in-out;
+}
+@keyframes carrito-rebote {
+  0%, 100% { transform: scale(1); }
+  30% { transform: scale(1.25); }
+  60% { transform: scale(0.95); }
+}
+.animate-carrito-rebote {
+  animation: carrito-rebote 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 /* Puntitos de "Lotus está escribiendo…". */
 @keyframes typing-dot {
   0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
@@ -400,4 +432,6 @@ html {
   .animate-panel-abrir { animation: none; }
   .animate-msg-in-right, .animate-msg-in-left { animation: none; }
   .animate-typing-dot { animation: none; opacity: 0.7; }
+  .animate-wordmark-line { animation: none; clip-path: none; }
+  .animate-campana-balanceo, .animate-carrito-rebote { animation: none; }
 }

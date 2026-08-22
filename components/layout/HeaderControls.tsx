@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useCarritoStore } from "@/lib/carrito/store";
@@ -51,7 +51,20 @@ export function HeaderControls({
   const cantidad = useCarritoStore((s) => s.items.length);
   const notif = useNotificacionesChat();
   const [panelAbierto, setPanelAbierto] = useState(false);
+  const [rebotando, setRebotando] = useState(false);
   const campanaRef = useRef<HTMLButtonElement>(null);
+  const cantidadPrevRef = useRef(cantidad);
+
+  // Rebote solo cuando la cantidad sube (no en cada re-render ni al bajar).
+  useEffect(() => {
+    if (cantidad > cantidadPrevRef.current) {
+      setRebotando(true);
+      const t = setTimeout(() => setRebotando(false), 400);
+      cantidadPrevRef.current = cantidad;
+      return () => clearTimeout(t);
+    }
+    cantidadPrevRef.current = cantidad;
+  }, [cantidad]);
 
   const carrito = (
     <Link
@@ -60,7 +73,9 @@ export function HeaderControls({
       aria-label={`Carrito${cantidad > 0 ? `, ${cantidad} ítem(s)` : ""}`}
       className="relative flex h-11 w-11 items-center justify-center rounded-full text-ink transition-colors hover:bg-sand-2"
     >
-      <CartIcon />
+      <span className={rebotando ? "motion-safe:animate-carrito-rebote block" : "block"}>
+        <CartIcon />
+      </span>
       {cantidad > 0 ? (
         <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-coral px-1 font-mono text-[0.6rem] font-bold text-white">
           {cantidad}
@@ -87,7 +102,9 @@ export function HeaderControls({
         aria-label={`Notificaciones${notif.noLeidas > 0 ? `, ${notif.noLeidas} sin leer` : ""}`}
         className="relative flex h-11 w-11 items-center justify-center rounded-full text-ink transition-colors hover:bg-sand-2"
       >
-        <BellIcon />
+        <span className={notif.noLeidas > 0 ? "motion-safe:animate-campana-balanceo block" : "block"}>
+          <BellIcon />
+        </span>
         {notif.noLeidas > 0 ? (
           <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-coral" aria-hidden="true" />
         ) : null}

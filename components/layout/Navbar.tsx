@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
@@ -44,6 +45,49 @@ export function Navbar() {
 
   const esActiva = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
+  // Indicador deslizante que reemplaza los after: independientes de cada
+  // ítem: sigue al hover y vuelve al ítem activo al salir. Arranca invisible
+  // hasta la primera medición real para no flashear en la esquina izquierda
+  // antes de hidratar.
+  const [indicador, setIndicador] = useState({ left: 0, width: 0, visible: false });
+  const navElRef = useRef<HTMLElement | null>(null);
+  const roRef = useRef<ResizeObserver | null>(null);
+
+  function medirYSetear(el: Element | null) {
+    const navEl = navElRef.current;
+    if (!el || !navEl) return;
+    const navRect = navEl.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    setIndicador({ left: elRect.left - navRect.left, width: elRect.width, visible: true });
+  }
+
+  function medirActivo() {
+    medirYSetear(navElRef.current?.querySelector('[aria-current="page"]') ?? null);
+  }
+
+  // Callback ref: no depende de itemsPrincipales/pathname (busca el activo
+  // por [aria-current] en el DOM), así que arranca una sola vez -- evita
+  // reconectar el ResizeObserver en cada render.
+  const setNavRef = useCallback((node: HTMLElement | null) => {
+    navElRef.current = node;
+    roRef.current?.disconnect();
+    if (!node) return;
+    medirActivo();
+    const ro = new ResizeObserver(() => medirActivo());
+    ro.observe(node);
+    roRef.current = ro;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // El cambio de ruta no dispara setState directo en el cuerpo del efecto
+  // (react-hooks/set-state-in-effect es error acá): la medición corre dentro
+  // del callback de requestAnimationFrame, no en el efecto mismo.
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => medirActivo());
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
   // El pill (logo+wordmark+campana+carrito) solo tiene sentido en Home dentro
   // del diseño mobile "app-like": el resto de pantallas tiene su propio header.
   // En desktop (lg+) se mantiene en TODAS las rutas como hasta ahora.
@@ -69,17 +113,30 @@ export function Navbar() {
           <Wordmark />
         </Link>
 
-        <nav aria-label="Catálogo" className="hidden min-w-0 items-center lg:flex lg:gap-2 xl:gap-3 2xl:gap-6">
+        <nav
+          ref={setNavRef}
+          aria-label="Catálogo"
+          onPointerLeave={() => medirActivo()}
+          className="relative hidden min-w-0 items-center lg:flex lg:gap-2 xl:gap-3 2xl:gap-6"
+        >
+          <span
+            aria-hidden="true"
+            className={
+              "pointer-events-none absolute bottom-0 h-px bg-coral transition-[left,width] duration-[250ms] ease-out " +
+              (indicador.visible ? "opacity-100" : "opacity-0")
+            }
+            style={{ left: indicador.left, width: indicador.width }}
+          />
           {itemsPrincipales.map(({ id, href, label }) => (
             <Link
               key={id}
               href={href}
               aria-current={esActiva(href) ? "page" : undefined}
+              onPointerEnter={(e) => medirYSetear(e.currentTarget)}
+              onFocus={(e) => medirYSetear(e.currentTarget)}
               className={
-                "group relative flex items-center gap-1.5 whitespace-nowrap py-2 font-body text-sm transition-colors after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-left after:bg-coral after:transition-transform " +
-                (esActiva(href)
-                  ? "text-ink after:scale-x-100"
-                  : "text-ink-soft after:scale-x-0 hover:text-ink hover:after:scale-x-100")
+                "group relative flex items-center gap-1.5 whitespace-nowrap py-2 font-body text-sm transition-colors " +
+                (esActiva(href) ? "text-ink" : "text-ink-soft hover:text-ink")
               }
             >
               <IconoNav id={id} className="hidden xl:block" activo={esActiva(href)} />
