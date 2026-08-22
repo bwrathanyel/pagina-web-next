@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CHAT_ACTUALIZADO_EVENTO } from "@/lib/notificaciones/useNotificacionesChat";
+import { BrandMark } from "@/components/layout/BrandMark";
 
 const SESSION_KEY = "lotus360_chat_session_id";
 const HISTORIAL_KEY = "lotus360_chat_historial";
@@ -14,6 +15,16 @@ interface Mensaje {
   opcion_titulo?: string | null;
   opcion_precio?: string | null;
   audio_url?: string | null;
+  // Opcional: hay historiales viejos en el localStorage de la gente sin este
+  // campo. Sin hora cuando falta -- nunca new Date(undefined), que renderiza
+  // "Invalid Date".
+  ts?: number;
+}
+
+function HoraMensaje({ ts }: { ts?: number }) {
+  if (!ts) return null;
+  const hora = new Date(ts).toLocaleTimeString("es-VE", { hour: "2-digit", minute: "2-digit" });
+  return <span className="mt-1 block text-right text-[10px] opacity-60">{hora}</span>;
 }
 
 // URL pública, no un secreto -- mismo criterio que AUDIO_BASE/CDN_FOTOS en el
@@ -249,8 +260,16 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
   const sessionIdRef = useRef<string>("");
   const listaRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const arrastreRef = useRef(0);
   const inicioYRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 104)}px`;
+  }, [texto]);
 
   useEffect(() => {
     arrastreRef.current = arrastreY;
@@ -323,12 +342,12 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  async function enviar() {
-    const mensaje = texto.trim();
+  async function enviar(mensajeDirecto?: string) {
+    const mensaje = (mensajeDirecto ?? texto).trim();
     if (!mensaje || enviando) return;
-    setTexto("");
+    if (!mensajeDirecto) setTexto("");
     setError(null);
-    setMensajes((m) => [...m, { rol: "lead", texto: mensaje }]);
+    setMensajes((m) => [...m, { rol: "lead", texto: mensaje, ts: Date.now() }]);
     setEnviando(true);
     try {
       const res = await fetch("/api/chat", {
@@ -351,6 +370,7 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
           opcion_titulo: data.opcion_titulo,
           opcion_precio: data.opcion_precio,
           audio_url: data.audio_url,
+          ts: Date.now(),
         },
       ]);
     } catch {
@@ -368,7 +388,9 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
         className={
           "fixed inset-x-0 bottom-0 z-50 flex h-[75vh] w-full flex-col overflow-hidden rounded-t-2xl bg-card shadow-2xl ring-1 ring-black/10 " +
           "sm:inset-x-auto sm:bottom-24 sm:right-4 sm:h-[70vh] sm:max-h-[600px] sm:w-[90vw] sm:max-w-[380px] sm:rounded-2xl sm:mb-[env(safe-area-inset-bottom)] sm:mr-[env(safe-area-inset-right)] " +
-          (cerrando ? "motion-safe:transition-transform motion-safe:duration-200 motion-safe:ease-in translate-y-full sm:translate-y-0 sm:opacity-0" : "")
+          (cerrando
+            ? "motion-safe:transition-transform motion-safe:duration-200 motion-safe:ease-in translate-y-full sm:translate-y-0 sm:opacity-0"
+            : "motion-safe:animate-panel-abrir")
         }
         style={
           !cerrando && arrastreY
@@ -378,7 +400,7 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
       >
         <div
           ref={handleRef}
-          className="flex flex-col items-center gap-1.5 rounded-t-2xl bg-seafoam pt-2 text-white sm:pt-0"
+          className="flex flex-col items-center gap-1.5 rounded-t-2xl bg-coral pt-2 text-white sm:pt-0"
         >
           <span className="h-1 w-9 rounded-full bg-white/30 sm:hidden" aria-hidden="true" />
           <div className="flex w-full items-center justify-between px-4 pb-3">
@@ -399,10 +421,20 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
 
         <div ref={listaRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
           {mensajes.map((m, i) => (
-            <div key={i} className={`flex ${m.rol === "lead" ? "justify-end" : "justify-start"}`}>
+            <div
+              key={i}
+              className={`flex items-end gap-2 ${m.rol === "lead" ? "justify-end" : "justify-start"}`}
+            >
+              {m.rol === "ia" ? (
+                <div className="mb-0.5 shrink-0 scale-[0.7] origin-bottom-left">
+                  <BrandMark size="sm" />
+                </div>
+              ) : null}
               <div
-                className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm whitespace-pre-line ${
-                  m.rol === "lead" ? "bg-seafoam text-white" : "bg-sand-2 text-ink"
+                className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm whitespace-pre-line ${
+                  m.rol === "lead"
+                    ? "motion-safe:animate-msg-in-right bg-coral text-white"
+                    : "motion-safe:animate-msg-in-left bg-sand-2 text-ink"
                 }`}
               >
                 {m.rol === "ia" ? <ContenidoMensaje mensaje={m} /> : m.texto}
@@ -427,29 +459,60 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
                     )}
                   </div>
                 )}
+                <HoraMensaje ts={m.ts} />
               </div>
             </div>
           ))}
-          {enviando && <div className="text-xs text-ink-soft">Lotus está escribiendo…</div>}
+          {mensajes.length === 1 && !enviando ? (
+            <div className="flex flex-wrap gap-1.5 pl-9">
+              {["Quiero una escapada", "Ver promociones", "Viajar con niños", "Hablar con un asesor"].map(
+                (sugerencia) => (
+                  <button
+                    key={sugerencia}
+                    type="button"
+                    onClick={() => enviar(sugerencia)}
+                    className="rounded-full border border-coral/25 bg-card px-3 py-1.5 text-xs font-medium text-coral hover:bg-coral/5"
+                  >
+                    {sugerencia}
+                  </button>
+                ),
+              )}
+            </div>
+          ) : null}
+          {enviando ? (
+            <div className="flex items-center gap-2 pl-9" aria-live="polite">
+              <span className="sr-only">Lotus está escribiendo…</span>
+              <div className="flex items-center gap-1 rounded-2xl bg-sand-2 px-3 py-2.5" aria-hidden="true">
+                {[0, 1, 2].map((i) => (
+                  <span
+                    key={i}
+                    className="motion-safe:animate-typing-dot h-1.5 w-1.5 rounded-full bg-ink-soft"
+                    style={{ animationDelay: `${i * 0.15}s` }}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : null}
           {error && <div className="text-xs text-coral">{error}</div>}
         </div>
 
-        <div className="flex items-center gap-2 border-t border-black/5 p-3">
-          <input
-            type="text"
+        <div className="flex items-end gap-2 border-t border-black/5 p-3">
+          <textarea
+            ref={textareaRef}
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), enviar())}
             disabled={enviando}
             placeholder="Escribí tu mensaje…"
-            className="flex-1 rounded-full border border-black/10 bg-sand px-4 py-2 text-sm text-ink outline-none focus:border-seafoam disabled:opacity-60"
+            rows={1}
+            className="max-h-[104px] flex-1 resize-none rounded-2xl border border-black/10 bg-sand px-4 py-2 text-sm text-ink outline-none focus:border-coral disabled:opacity-60"
           />
           <button
             type="button"
-            onClick={enviar}
+            onClick={() => enviar()}
             disabled={enviando || !texto.trim()}
             aria-label="Enviar mensaje"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-seafoam text-white disabled:opacity-50"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-coral text-white disabled:opacity-50"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M2 21l21-9L2 3v7l15 2-15 2v7z" />

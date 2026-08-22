@@ -355,8 +355,49 @@ html {
   animation: fab-shine 6s ease-in-out infinite;
 }
 
+/* Panel del asistente Lotus (AsistenteVirtualPanel): en movil sube desde
+   abajo, en escritorio se abre desde la esquina donde estaba el FAB en vez
+   de aparecer de golpe. */
+@keyframes panel-abrir-movil {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes panel-abrir-escritorio {
+  from { transform: scale(0.85) translateY(12px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+.animate-panel-abrir {
+  transform-origin: bottom right;
+  animation: panel-abrir-movil 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@media (min-width: 640px) {
+  .animate-panel-abrir { animation-name: panel-abrir-escritorio; }
+}
+
+/* Burbujas del chat entrando desde su lado. */
+@keyframes msg-in-right {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes msg-in-left {
+  from { opacity: 0; transform: translateX(-16px); }
+  to { opacity: 1; transform: none; }
+}
+.animate-msg-in-right { animation: msg-in-right 0.25s ease-out both; }
+.animate-msg-in-left { animation: msg-in-left 0.25s ease-out both; }
+
+/* Puntitos de "Lotus está escribiendo…". */
+@keyframes typing-dot {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+.animate-typing-dot { animation: typing-dot 1s ease-in-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
   .revelar, .revelar.es-visible { opacity: 1; transform: none; animation: none; }
   .animate-fab-item { animation: none; }
   .animate-fab-halo, .animate-fab-shine { animation: none; opacity: 0; }
+  .animate-panel-abrir { animation: none; }
+  .animate-msg-in-right, .animate-msg-in-left { animation: none; }
+  .animate-typing-dot { animation: none; opacity: 0.7; }
 }
