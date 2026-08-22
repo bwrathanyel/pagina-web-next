@@ -50,8 +50,12 @@ export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
   }, [rotando, orden.length]);
 
   const actual = hero.image ? null : orden[i] ?? fotoPrincipal;
-  const heroImage = hero.image || actual?.url;
   const heroAlt = actual?.alt ?? fotoPrincipal?.alt ?? "Experiencia de viaje";
+
+  // Solo se montan la foto actual y la siguiente -- son fotos de Hot Sales a
+  // ancho completo, montar el pool entero dispararía la descarga de todas
+  // (mismo problema que CardPhotoGallery resolvió con el lazy-mount).
+  const indiceSiguiente = orden.length > 1 ? (i + 1) % orden.length : -1;
 
   return (
     // Un solo árbol responsive (antes había una tarjeta móvil y una grilla
@@ -61,16 +65,37 @@ export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
     // reescritura editorial redesign desktop 2026-08-22).
     <section className="relative isolate flex min-h-[62svh] flex-col justify-end overflow-hidden sm:min-h-[68svh] lg:min-h-[78svh] lg:max-h-[820px]">
       <div className="grano hero-parallax absolute inset-0 overflow-hidden">
-        {heroImage ? (
-          <Image
-            key={heroImage}
-            src={heroImage}
-            alt={heroAlt}
-            fill
-            sizes="100vw"
-            className="hero-kenburns animate-hero-fade object-cover"
-            priority
-          />
+        {hero.image ? (
+          <Image src={hero.image} alt={heroAlt} fill sizes="100vw" className="hero-kenburns object-cover" priority />
+        ) : actual ? (
+          // Tres nodos, no uno: este contenedor solo hace parallax (arriba);
+          // la capa de acá abajo es la que cruza (opacidad + scale de
+          // entrada); el <Image> de adentro solo hace Ken Burns. Mezclar el
+          // cruce y el Ken Burns en el mismo nodo hacía que las dos
+          // animaciones de transform se anularan (hallazgo pasada 3).
+          [i, indiceSiguiente].map((idx, pos) => {
+            if (idx < 0) return null;
+            const foto = orden[idx];
+            if (!foto) return null;
+            return (
+              <div
+                key={foto.url}
+                className={
+                  "absolute inset-0 transition-[opacity,transform] duration-[1200ms] ease-in-out " +
+                  (idx === i ? "opacity-100 scale-100" : "pointer-events-none opacity-0 scale-[1.03]")
+                }
+              >
+                <Image
+                  src={foto.url}
+                  alt={idx === i ? heroAlt : ""}
+                  fill
+                  sizes="100vw"
+                  className="hero-kenburns object-cover"
+                  priority={pos === 0 && i === 0}
+                />
+              </div>
+            );
+          })
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-seafoam via-dusk-2 to-dusk" />
         )}

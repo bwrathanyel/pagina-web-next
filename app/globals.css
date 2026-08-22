@@ -165,9 +165,10 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Crossfade de las fotos rotativas del Hero. Se dispara por el cambio de
-   `key` en el <Image>: React monta un nodo nuevo y la animación corre de cero.
-   Con reduced-motion se muestra directo, sin desvanecido. */
+/* Aviso del nombre de la foto en el Hero (esquina superior). El crossfade de
+   las fotos en sí ya no usa esto -- pasada 3 lo reemplazó por capas apiladas
+   con opacidad por clase de estado (ver Hero.tsx). Con reduced-motion se
+   muestra directo, sin desvanecido. */
 @keyframes hero-fade {
   from { opacity: 0; }
   to { opacity: 1; }
