@@ -56,8 +56,8 @@ export function Carrusel({
         {items.map((item, i) => (
           <div
             key={i}
-            className="shrink-0 snap-start sm:w-auto sm:max-w-none"
-            style={{ width: anchoItem, maxWidth: maxItem }}
+            className="w-[var(--ancho-item)] max-w-[var(--max-item)] shrink-0 snap-start sm:w-auto sm:max-w-none"
+            style={{ "--ancho-item": anchoItem, "--max-item": maxItem } as React.CSSProperties}
           >
             {item}
           </div>

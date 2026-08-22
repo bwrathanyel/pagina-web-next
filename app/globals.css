@@ -66,18 +66,24 @@
    con el sistema en oscuro veía el sitio oscuro antes de que corriera el
    script de next-themes, y también con JS desactivado. */
 :root[data-theme="dark"] {
-  --color-sand: #1a1611;
-  --color-sand-2: #241f18;
-  --color-card: #221d17;
+  /* Reconciliado con la familia `dusk` (teal profundo) del header/footer/hero
+     en vez del marrón anterior -- antes canvas #1a1611 y card #221d17 eran
+     casi el mismo marrón y las tarjetas no se distinguían del fondo
+     (auditoría redesign desktop 2026-08-22). */
+  --color-sand: #0d1a1e;
+  --color-sand-2: #142428;
+  --color-card: #17292e;
   --color-seafoam-bg: #1c332f;
   --color-seafoam-text: #8fd4c9;
-  --color-ink: #f3ebe0;
-  --color-ink-soft: #b8ab9a;
+  --color-ink: #eef3f1;
+  --color-ink-soft: #9db3b0;
   --color-acento: #FF8A3D;
   --color-acento-suave: #3a2113;
   --color-ambar: #FBC000;
   --color-ambar-suave: #3a2f10;
   --color-sobre-acento: #1a1206;
+  --color-linea: rgba(238, 243, 241, 0.12);
+  --color-linea-fuerte: rgba(238, 243, 241, 0.22);
 }
 
 :root[data-theme="light"] {
@@ -93,6 +99,22 @@
   --color-seafoam-text: #255954;
   --color-ink: #241f1a;
   --color-ink-soft: #6b5e50;
+  --color-linea: rgba(36, 31, 26, 0.1);
+  --color-linea-fuerte: rgba(36, 31, 26, 0.18);
+}
+
+/* Radios, sombras y anchos compartidos -- antes cada componente inventaba su
+   propio valor arbitrario (rounded-[1.5rem], shadow-[0_18px_50px_-30px_...]),
+   auditoría redesign desktop 2026-08-22. */
+:root {
+  --radius-card: 1.25rem;
+  --radius-media: 1rem;
+  --radius-pill: 999px;
+  --shadow-card: 0 18px 50px -30px rgba(10, 14, 13, 0.45);
+  --shadow-lift: 0 24px 60px -24px rgba(10, 14, 13, 0.35);
+  --shadow-chrome: 0 12px 35px rgba(10, 14, 13, 0.12);
+  --ancho-contenido: 86rem;
+  --ancho-medio: 64rem;
 }
 
 @theme inline {
@@ -118,10 +140,19 @@
   --color-ambar: var(--color-ambar);
   --color-ambar-suave: var(--color-ambar-suave);
   --color-sobre-acento: var(--color-sobre-acento);
+  --color-linea: var(--color-linea);
+  --color-linea-fuerte: var(--color-linea-fuerte);
 
   --font-display: var(--font-display);
   --font-body: var(--font-body);
   --font-mono: var(--font-mono);
+
+  --radius-card: var(--radius-card);
+  --radius-media: var(--radius-media);
+  --radius-pill: var(--radius-pill);
+  --shadow-card: var(--shadow-card);
+  --shadow-lift: var(--shadow-lift);
+  --shadow-chrome: var(--shadow-chrome);
 }
 
 body {
@@ -198,6 +229,40 @@ html {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); }
 }
+/* Ken Burns lento de la foto del hero: zoom mínimo + deriva, nunca la foto
+   entera saltando (eso era `flotar`, se notaba como un tic en un bloque tan
+   grande). */
+@keyframes deriva-lenta {
+  0% { transform: scale(1) translate3d(0, 0, 0); }
+  50% { transform: scale(1.045) translate3d(-1%, -1%, 0); }
+  100% { transform: scale(1.08) translate3d(0, 0, 0); }
+}
+
+/* Foto del hero: zoom+deriva continuo. Va en el contenedor de la imagen, no
+   en el texto -- por eso es una clase aparte y no `motion-safe:animate-[...]`
+   inline (el arbitrary value de Tailwind no soporta comas dentro de translate3d). */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-kenburns {
+    animation: deriva-lenta 20s ease-in-out infinite alternate;
+  }
+}
+
+/* Parallax de scroll nativo en CSS (sin listener de scroll en JS). Donde el
+   navegador no soporta `animation-timeline: view()` (Safari < 17.4, Firefox),
+   la regla entera no aplica y la foto queda estática -- degradación, no rotura. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-parallax {
+      animation: hero-parallax linear;
+      animation-timeline: view();
+      animation-range: entry 0% cover 60%;
+    }
+  }
+}
+@keyframes hero-parallax {
+  from { transform: translateY(0); }
+  to { transform: translateY(6%); }
+}
 /* Un brillo que cruza una vez, para marcar que algo terminó bien. */
 @keyframes brillo {
   from { transform: translateX(-120%); }
@@ -244,6 +309,22 @@ html {
 }
 @keyframes revelar-entrada {
   to { opacity: 1; transform: none; }
+}
+
+/* Grano sutil para superficies dusk (hero, footer, banda de acompañamiento):
+   sin esto el modo oscuro se ve de color plano. `feTurbulence` inline, sin
+   pedir ningún archivo -- opacity muy baja para que sea textura y no ruido
+   visible. Poner en un ::after (no bg-image directo) para no interferir con
+   los degradés que ya cubren el mismo elemento. */
+.grano::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.04;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
 }
 
 /* Acciones del FAB unificado (ContactoFab): salen escalonadas desde el botón. */

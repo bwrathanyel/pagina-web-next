@@ -82,13 +82,13 @@ export function TicketCard({
   return (
     <div
       className={
-        "group relative flex h-full flex-col overflow-hidden rounded-[1.5rem] border border-ink/10 bg-card " +
-        "shadow-[0_18px_50px_-30px_rgba(36,31,26,0.5)] transition duration-300 " +
-        "hover:-translate-y-1 hover:border-ink/15 hover:shadow-[0_24px_58px_-28px_rgba(36,31,26,0.45)] " +
+        "group relative flex h-full flex-col overflow-hidden rounded-[var(--radius-card)] border border-linea bg-card " +
+        "shadow-card transition duration-300 " +
+        "hover:-translate-y-1 hover:shadow-lift " +
         (oculto ? "opacity-50" : "")
       }
     >
-      <div className="relative aspect-[4/3] overflow-hidden bg-sand-2">
+      <div className="group/foto relative aspect-[3/4] overflow-hidden bg-sand-2">
         <span className="absolute left-3 top-3 z-10 rounded-full border border-white/15 bg-dusk/90 px-3 py-1.5 font-mono text-[0.62rem] font-bold uppercase tracking-[0.1em] text-dusk-text shadow-sm backdrop-blur-sm">
           {badge}
         </span>
@@ -110,7 +110,7 @@ export function TicketCard({
           <CardPhotoGallery fotos={fotos} alt={nombre} referencial={fotosReferenciales} />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-seafoam-bg via-sand-2 to-card">
-            <div className="relative rounded-2xl border border-ink/10 bg-card/65 px-8 py-6 text-center text-ink-soft shadow-sm backdrop-blur-sm">
+            <div className="relative rounded-2xl border border-linea bg-card/65 px-8 py-6 text-center text-ink-soft shadow-sm backdrop-blur-sm">
               <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" className="mx-auto mb-3" aria-hidden="true">
                 <rect x="3" y="5" width="18" height="14" rx="2" />
                 <circle cx="8.5" cy="10" r="1.5" />
@@ -122,36 +122,30 @@ export function TicketCard({
         )}
       </div>
 
-      {/* Alturas fijas por bloque (título, resumen, precio) para que todas las
-          tarjetas de una grilla midan igual y los botones queden alineados.
-          Sin esto, una promo con precio de 3 líneas empujaba su botón mucho
-          más abajo que la de al lado. El `mt-auto` de los botones remata: si
-          algo igual varía, el sobrante queda arriba de la fila de acciones. */}
       <div className="flex flex-1 flex-col px-4 pb-4 pt-3.5 sm:px-5 sm:pb-4">
         {destino ? (
-          <p className="mb-1 font-mono text-[0.66rem] font-bold uppercase tracking-[0.12em] text-coral">
+          <p className="mb-1 font-mono text-[0.62rem] font-bold uppercase tracking-[0.12em] text-ink-soft">
             {destino}
           </p>
         ) : null}
-        <h3 className="line-clamp-2 min-h-[2.6em] font-body text-[0.95rem] font-bold leading-snug text-ink sm:text-base">
+        <h3 className="line-clamp-2 font-body text-[0.95rem] font-bold leading-snug text-ink sm:text-base">
           {href ? (
-            <Link href={href} className="transition-colors hover:text-coral">
+            <Link href={href} className="transition-colors hover:text-coral-bright">
               {nombre}
             </Link>
           ) : (
             nombre
           )}
         </h3>
-
         {resumen ? (
-          <p className="mt-1.5 line-clamp-3 min-h-[3.9em] text-[0.8rem] leading-[1.3] text-ink-soft">
+          <p className="mt-1.5 line-clamp-2 text-[0.8rem] leading-[1.3] text-ink-soft">
             {resumen}
           </p>
         ) : null}
 
         <p
           className={
-            "mt-2 line-clamp-2 min-h-[2.5em] text-[0.82rem] font-bold leading-snug " +
+            "mt-2 line-clamp-2 text-[0.82rem] font-bold leading-snug " +
             (precioMuted ? "text-ink-soft" : "text-ink")
           }
         >
@@ -191,7 +185,7 @@ export function TicketCard({
                 "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border transition " +
                 (enCarrito
                   ? "border-coral bg-coral/10 text-coral"
-                  : "border-ink/20 text-ink hover:border-ink hover:bg-sand-2")
+                  : "border-linea-fuerte text-ink hover:border-ink hover:bg-sand-2")
               }
             >
               <CartIcon />

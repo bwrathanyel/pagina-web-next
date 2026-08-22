@@ -86,7 +86,7 @@ export function NotificacionesPanel({
         ref={panelRef}
         role="dialog"
         aria-label="Notificaciones"
-        className="fixed z-50 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-ink/10 bg-card shadow-[0_20px_50px_-12px_rgba(36,31,26,.35)]"
+        className="fixed z-50 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-linea bg-card shadow-[0_20px_50px_-12px_rgba(36,31,26,.35)]"
         style={pos ? { top: pos.top, right: pos.right } : { top: 72, right: 16 }}
       >
         <div className="flex items-center justify-between gap-2 border-b border-ink/8 px-4 py-2.5">

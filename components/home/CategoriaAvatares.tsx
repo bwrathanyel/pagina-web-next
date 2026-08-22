@@ -10,31 +10,40 @@ const FOTO_EDITORIAL: Record<Categoria, string> = {
   promociones: "/images/editorial/vuelo-a-tu-medida.png",
 };
 
-/** Avatares circulares de acceso rápido a categorías -- versión compacta del
- * mockup ("category avatars"), distinta de CategoriasDestacadas (tiles
- * grandes, más abajo en la página). Mobile-first pero visible en todos los
- * tamaños, no aporta desorden en desktop. */
+/** Fichas de categoría que montan sobre el borde inferior del Hero (-mt
+ * negativo) -- ancla la transición foto-a-sangre -> contenido y elimina el
+ * hueco muerto que dejaban los avatares circulares flotando en vacío
+ * (auditoría redesign desktop 2026-08-22). Un solo árbol responsive: scroll
+ * horizontal con snap en móvil, fila a ancho completo desde lg. */
 export function CategoriaAvatares({ fotos }: { fotos: Record<string, string | null> }) {
   return (
-    <div className="mx-auto max-w-6xl px-5 pb-5 pt-4">
-      <div className="-mx-5 flex snap-x snap-proximity gap-4 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {CATEGORIAS.map(({ slug, label }, i) => {
-          const foto = fotos[slug] ?? FOTO_EDITORIAL[slug];
-          return (
-            <Revelar key={slug} retraso={i * 70} className="shrink-0 snap-start">
-              <Link href={`/catalogo/${slug}`} className="flex flex-col items-center gap-2 transition-transform active:scale-95">
-                <span className="rounded-full bg-gradient-to-br from-coral to-gold p-[2.5px]">
-                  <span className="block overflow-hidden rounded-full border-2 border-card">
-                    <span className="relative block h-[60px] w-[60px]">
-                      <Image src={foto} alt="" fill sizes="60px" className="object-cover" />
-                    </span>
+    <div className="relative z-10 -mt-6 sm:-mt-8 lg:-mt-10">
+      <div className="mx-auto max-w-[var(--ancho-contenido)] px-5">
+        <div className="-mx-5 flex snap-x snap-proximity gap-3 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 lg:overflow-visible lg:px-5 lg:snap-none">
+          {CATEGORIAS.map(({ slug, label }, i) => {
+            const foto = fotos[slug] ?? FOTO_EDITORIAL[slug];
+            return (
+              <Revelar key={slug} retraso={i * 70} className="shrink-0 snap-start lg:flex-1">
+                <Link
+                  href={`/catalogo/${slug}`}
+                  className="group relative block aspect-[4/3] w-[150px] overflow-hidden rounded-[var(--radius-media)] shadow-lift transition-transform hover:-translate-y-1 sm:w-[190px] lg:w-full"
+                >
+                  <Image
+                    src={foto}
+                    alt=""
+                    fill
+                    sizes="(min-width: 1024px) 22vw, (min-width: 640px) 190px, 150px"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-dusk/85 via-dusk/15 to-transparent" />
+                  <span className="absolute inset-x-3 bottom-3 font-display text-base font-semibold text-white sm:text-lg">
+                    {label}
                   </span>
-                </span>
-                <span className="max-w-[72px] text-center text-xs font-semibold leading-tight text-ink">{label}</span>
-              </Link>
-            </Revelar>
-          );
-        })}
+                </Link>
+              </Revelar>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

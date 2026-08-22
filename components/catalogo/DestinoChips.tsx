@@ -22,8 +22,8 @@ export function DestinoChips({
       <button
         type="button"
         onClick={() => onChange(null)}
-        className={`shrink-0 snap-start rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors ${
-          activo === null ? "border-coral bg-coral text-white" : "border-ink/15 text-ink-soft hover:border-ink/30"
+        className={`shrink-0 snap-start rounded-full border px-4 py-1.5 text-sm font-semibold transition-[background-color,border-color,color] ${
+          activo === null ? "border-coral bg-coral text-white" : "border-ink/15 text-ink-soft hover:border-ink/30 hover:bg-sand-2"
         }`}
       >
         Todos
@@ -33,8 +33,8 @@ export function DestinoChips({
           key={destino}
           type="button"
           onClick={() => onChange(destino)}
-          className={`shrink-0 snap-start rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors ${
-            activo === destino ? "border-coral bg-coral text-white" : "border-ink/15 text-ink-soft hover:border-ink/30"
+          className={`shrink-0 snap-start rounded-full border px-4 py-1.5 text-sm font-semibold transition-[background-color,border-color,color] ${
+            activo === destino ? "border-coral bg-coral text-white" : "border-ink/15 text-ink-soft hover:border-ink/30 hover:bg-sand-2"
           }`}
         >
           {EMOJI_POR_DESTINO[destino] ?? "📍"} {destino}

@@ -75,7 +75,7 @@ export function CardPhotoGallery({
           sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
           priority={indice === 0}
           className={
-            "object-fill transition-[opacity,transform] duration-500 ease-out " +
+            "object-cover transition-[opacity,transform] duration-500 ease-out motion-safe:group-hover/foto:scale-105 " +
             (indice === activa
               ? "scale-100 opacity-100"
               : "pointer-events-none scale-[1.015] opacity-0")
@@ -84,17 +84,17 @@ export function CardPhotoGallery({
       ))}
 
       {referencial ? (
-        <span className="absolute bottom-3 left-3 z-10 rounded-lg bg-dusk/80 px-2 py-1 font-mono text-[0.6rem] font-bold uppercase tracking-[0.06em] text-dusk-text backdrop-blur-sm">
+        <span className="absolute left-3 top-14 z-10 rounded-lg bg-dusk/80 px-2 py-1 font-mono text-[0.6rem] font-bold uppercase tracking-[0.06em] text-dusk-text backdrop-blur-sm">
           Imagen referencial
         </span>
       ) : null}
 
       {fotos.length > 1 ? (
         <>
-          <span className="absolute bottom-3 right-3 rounded-lg bg-dusk/80 px-2 py-1 font-mono text-[0.62rem] font-bold text-dusk-text backdrop-blur-sm">
+          <span className="absolute right-3 top-14 rounded-lg bg-dusk/80 px-2 py-1 font-mono text-[0.62rem] font-bold text-dusk-text backdrop-blur-sm">
             {activa + 1} / {fotos.length}
           </span>
-          <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1.5" aria-hidden="true">
+          <div className="absolute left-1/2 top-14 flex -translate-x-1/2 gap-1.5" aria-hidden="true">
             {fotos.map((foto, indice) => (
               <span
                 key={foto}

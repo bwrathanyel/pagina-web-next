@@ -9,6 +9,7 @@ import { destinosDelPool } from "@/lib/promociones/hotSales";
 import { Seccion } from "@/components/ui/Seccion";
 import { Carrusel } from "@/components/ui/Carrusel";
 import { Revelar } from "@/components/ui/Revelar";
+import { EncabezadoSeccion } from "@/components/ui/EncabezadoSeccion";
 import type { Promocion } from "@/types/supabase";
 
 const POR_TANDA = 6;
@@ -47,15 +48,11 @@ export function HotSalesSection({ pool }: { pool: Promocion[] }) {
 
   return (
     <Seccion ritmo="intro">
-      <div className="mb-4 flex items-end justify-between gap-4 md:mb-8">
-        <div>
-          <EditableText path="home.hotSales.eyebrow" as="p" className="mb-2 font-mono text-xs font-bold uppercase tracking-[0.16em] text-coral" />
-          <EditableText path="home.hotSales.title" as="h2" className="max-w-[20ch] text-balance font-display text-3xl font-semibold leading-tight text-ink md:text-5xl" />
-        </div>
-        <Link href="/catalogo/hot-sales" className="hidden min-h-11 flex-shrink-0 items-center text-sm font-semibold text-coral sm:flex">
-          Ver todas ↗
-        </Link>
-      </div>
+      <EncabezadoSeccion
+        eyebrow={<EditableText path="home.hotSales.eyebrow" as="p" className="mb-2 font-mono text-xs font-bold uppercase tracking-[0.16em] text-coral" />}
+        titulo={<EditableText path="home.hotSales.title" as="h2" className="max-w-[20ch] text-balance font-display text-3xl font-semibold leading-tight text-ink md:text-5xl" />}
+        verTodasHref="/catalogo/hot-sales"
+      />
 
       <DestinoChips
         destinos={destinos}
@@ -69,9 +66,9 @@ export function HotSalesSection({ pool }: { pool: Promocion[] }) {
       <Carrusel
         anchoItem="72%"
         maxItem="264px"
-        desktop="sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-7 sm:overflow-visible sm:px-0 lg:grid-cols-3"
+        desktop="sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-7 sm:overflow-visible sm:px-0 lg:grid-cols-3 xl:grid-cols-4 xl:gap-6"
         items={visible.map((p, i) => (
-          <Revelar key={p.id} retraso={i * 60}>
+          <Revelar key={p.id} retraso={i * 60} className="h-full">
             <PromocionCard promocion={p} />
           </Revelar>
         ))}
@@ -82,7 +79,7 @@ export function HotSalesSection({ pool }: { pool: Promocion[] }) {
           <button
             type="button"
             onClick={() => setVisibles((v) => v + POR_TANDA)}
-            className="min-h-11 rounded-full border border-ink/15 px-6 text-sm font-semibold text-ink hover:border-ink/30"
+            className="min-h-11 rounded-full border border-linea-fuerte px-6 text-sm font-semibold text-ink transition-[background-color,border-color] hover:border-ink/30 hover:bg-sand-2"
           >
             Ver más
           </button>

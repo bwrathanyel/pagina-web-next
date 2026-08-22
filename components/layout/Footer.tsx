@@ -43,12 +43,51 @@ const ICONS = {
     "M16.6 2h-3.2v13.7a3 3 0 1 1-2.1-2.9V9.5a6.2 6.2 0 1 0 5.3 6.1V8.4a8 8 0 0 0 4.9 1.7V6.9a4.8 4.8 0 0 1-4.9-4.9z",
 };
 
+/** Enlaces/contacto de cada columna, factorizados para no repetir el mismo
+ * `map`/markup en la versión acordeón (móvil) y la estática (md+) --
+ * auditoría redesign desktop 2026-08-22. */
+function EnlacesCatalogo({ navItems }: { navItems: { id: string; href: string; label: string }[] }) {
+  return (
+    <nav aria-label="Catálogo" className="flex flex-col gap-2">
+      {navItems.map(({ id, href, label }) => (
+        <Link key={id} href={href} className="text-sm text-dusk-text-soft hover:text-dusk-text">
+          {label}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+function InfoContacto() {
+  return (
+    <div className="flex flex-col gap-2">
+      <a href={`mailto:${REDES.email}`} className="text-sm text-dusk-text-soft hover:text-dusk-text">
+        {REDES.email}
+      </a>
+      <div className="mt-1 flex gap-3">
+        {(["facebook", "instagram", "tiktok"] as const).map((red) => (
+          <a
+            key={red}
+            href={REDES[red]}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={red === "facebook" ? "Facebook" : red === "instagram" ? "Instagram" : "TikTok"}
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-dusk-2 text-dusk-text"
+          >
+            <SocialIcon path={ICONS[red]} />
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function Footer() {
   const { content } = useSiteContent();
   const navItems = content.navigation.items.filter((item) => item.visible);
   return (
-    <footer className="bg-dusk">
-      <div className="mx-auto max-w-6xl px-5 py-9 md:py-16">
+    <footer className="grano relative bg-dusk">
+      <div className="mx-auto max-w-[var(--ancho-contenido)] px-5 py-9 md:py-16">
         <div className="mb-8 grid gap-7 border-b border-dusk-text/12 pb-8 md:grid-cols-[1fr_auto] md:items-end">
           <div>
             <EditableText path="footer.eyebrow" as="p" className="mb-3 font-mono text-xs font-bold uppercase tracking-[0.18em] text-coral-bright" />
@@ -75,70 +114,37 @@ export function Footer() {
           </div>
 
           {/* Columnas de links como acordeón en móvil (ahorra ~150px de
-              scroll en cada página) -- en md+ se fuerzan siempre abiertas
-              con [&>*]:!block, que pisa el display:none nativo de <details>
-              cerrado (rediseño 2026-08-14). */}
-          <details className="group md:[&>*]:!block">
-            <summary className="mb-1 flex list-none items-center justify-between font-mono text-xs uppercase tracking-wide text-dusk-text-soft md:pointer-events-none md:cursor-default [&::-webkit-details-marker]:hidden">
+              scroll en cada página). En md+ NO se fuerza abierto el mismo
+              <details> (hack [&>*]:!block, retirado en el rediseño desktop
+              2026-08-22) -- se renderiza una columna nativa aparte, más
+              simple y sin pisar el display nativo de <details>. */}
+          <details className="group md:hidden">
+            <summary className="mb-1 flex list-none items-center justify-between font-mono text-xs uppercase tracking-wide text-dusk-text-soft [&::-webkit-details-marker]:hidden">
               Catálogo
               <CaretIcon />
             </summary>
-            <nav aria-label="Catálogo" className="flex flex-col gap-2 pt-2 md:pt-0">
-              {navItems.map(({ id, href, label }) => (
-                <Link
-                  key={id}
-                  href={href}
-                  className="text-sm text-dusk-text-soft hover:text-dusk-text"
-                >
-                  {label}
-                </Link>
-              ))}
-            </nav>
+            <div className="pt-2">
+              <EnlacesCatalogo navItems={navItems} />
+            </div>
           </details>
+          <div className="hidden md:block">
+            <p className="mb-3 font-mono text-xs uppercase tracking-wide text-dusk-text-soft">Catálogo</p>
+            <EnlacesCatalogo navItems={navItems} />
+          </div>
 
-          <details className="group md:[&>*]:!block">
-            <summary className="mb-1 flex list-none items-center justify-between font-mono text-xs uppercase tracking-wide text-dusk-text-soft md:pointer-events-none md:cursor-default [&::-webkit-details-marker]:hidden">
+          <details className="group md:hidden">
+            <summary className="mb-1 flex list-none items-center justify-between font-mono text-xs uppercase tracking-wide text-dusk-text-soft [&::-webkit-details-marker]:hidden">
               Contacto
               <CaretIcon />
             </summary>
-            <div className="flex flex-col gap-2 pt-2 md:pt-0">
-              <a
-                href={`mailto:${REDES.email}`}
-                className="text-sm text-dusk-text-soft hover:text-dusk-text"
-              >
-                {REDES.email}
-              </a>
-              <div className="mt-1 flex gap-3">
-                <a
-                  href={REDES.facebook}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Facebook"
-                  className="flex h-11 w-11 items-center justify-center rounded-full bg-dusk-2 text-dusk-text"
-                >
-                  <SocialIcon path={ICONS.facebook} />
-                </a>
-                <a
-                  href={REDES.instagram}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Instagram"
-                  className="flex h-11 w-11 items-center justify-center rounded-full bg-dusk-2 text-dusk-text"
-                >
-                  <SocialIcon path={ICONS.instagram} />
-                </a>
-                <a
-                  href={REDES.tiktok}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="TikTok"
-                  className="flex h-11 w-11 items-center justify-center rounded-full bg-dusk-2 text-dusk-text"
-                >
-                  <SocialIcon path={ICONS.tiktok} />
-                </a>
-              </div>
+            <div className="pt-2">
+              <InfoContacto />
             </div>
           </details>
+          <div className="hidden md:block">
+            <p className="mb-3 font-mono text-xs uppercase tracking-wide text-dusk-text-soft">Contacto</p>
+            <InfoContacto />
+          </div>
         </div>
 
         <p className="border-t border-dusk-text/10 pt-6 text-xs text-dusk-text-soft">
