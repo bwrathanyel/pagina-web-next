@@ -9,8 +9,17 @@ import { Wordmark } from "@/components/layout/Wordmark";
 import { ThemeSwitch } from "@/components/ui/ThemeSwitch";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { CurrencySwitch } from "@/components/ui/CurrencySwitch";
+import { IconoNav } from "@/components/layout/IconosNav";
 import { useHeaderAutoHide } from "@/lib/layout/useHeaderAutoHide";
 import { useSiteContent } from "@/components/providers/SiteContentProvider";
+
+function WhatsAppIconNav() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2zm0 18a8 8 0 0 1-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1 1 12 20zm4.4-5.9c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.6.1s-.7.8-.8.9-.3.2-.5.1a6.6 6.6 0 0 1-1.9-1.2 7 7 0 0 1-1.3-1.6c-.1-.2 0-.4.1-.5l.4-.4.2-.4v-.4c-.1-.1-.6-1.4-.8-1.9s-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2c0 1.3.9 2.6 1.1 2.8s1.7 2.7 4.1 3.7a5.6 5.6 0 0 0 2.4.6c.9 0 1.5-.4 1.7-.7a1.4 1.4 0 0 0 .1-.9c-.1-.1-.2-.2-.5-.3z" />
+    </svg>
+  );
+}
 
 // "Paquetes" sale de la barra (pasada 3, pedido del dueño) pero la categoría
 // sigue viva en /catalogo/paquetes -- solo se oculta del header, igual que
@@ -60,19 +69,20 @@ export function Navbar() {
           <Wordmark />
         </Link>
 
-        <nav aria-label="Catálogo" className="hidden min-w-0 items-center lg:flex lg:gap-3 xl:gap-6">
+        <nav aria-label="Catálogo" className="hidden min-w-0 items-center lg:flex lg:gap-2 xl:gap-3 2xl:gap-6">
           {itemsPrincipales.map(({ id, href, label }) => (
             <Link
               key={id}
               href={href}
               aria-current={esActiva(href) ? "page" : undefined}
               className={
-                "relative whitespace-nowrap py-2 font-body text-sm transition-colors after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-left after:bg-coral after:transition-transform " +
+                "group relative flex items-center gap-1.5 whitespace-nowrap py-2 font-body text-sm transition-colors after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-left after:bg-coral after:transition-transform " +
                 (esActiva(href)
                   ? "text-ink after:scale-x-100"
                   : "text-ink-soft after:scale-x-0 hover:text-ink hover:after:scale-x-100")
               }
             >
+              <IconoNav id={id} className="hidden xl:block" activo={esActiva(href)} />
               {LABEL_HEADER[id] ?? label}
             </Link>
           ))}
@@ -80,18 +90,19 @@ export function Navbar() {
           <Link
             href={content.navigation.quoteHref}
             aria-current={esActiva(content.navigation.quoteHref) ? "page" : undefined}
-            className="shrink-0 whitespace-nowrap font-body text-sm font-semibold text-ink hover:text-coral"
+            className="hidden shrink-0 whitespace-nowrap font-body text-sm font-semibold text-ink hover:text-coral xl:inline"
           >
             {content.navigation.quoteLabel}
           </Link>
           <WhatsAppLeadButton
             mensajeBase="Hola! Vengo de su página web."
-            triggerClassName="inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-full bg-coral px-5 text-sm font-semibold text-white"
+            triggerClassName="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-coral text-white lg:h-11 lg:w-11 xl:w-auto xl:px-5 xl:text-sm xl:font-semibold"
           >
-            {content.navigation.whatsappLabel}
+            <WhatsAppIconNav />
+            <span className="hidden xl:inline">{content.navigation.whatsappLabel}</span>
           </WhatsAppLeadButton>
           <div className="flex shrink-0 items-center gap-3 border-l border-linea pl-4 ml-1">
-            <CurrencySwitch />
+            <CurrencySwitch className="hidden xl:block" />
             <ThemeSwitch />
             <HeaderControls />
           </div>
