@@ -244,8 +244,62 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fotoZoom, setFotoZoom] = useState<{ src: string; alt: string } | null>(null);
+  const [arrastreY, setArrastreY] = useState(0);
+  const [cerrando, setCerrando] = useState(false);
   const sessionIdRef = useRef<string>("");
   const listaRef = useRef<HTMLDivElement>(null);
+  const handleRef = useRef<HTMLDivElement>(null);
+  const arrastreRef = useRef(0);
+  const inicioYRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    arrastreRef.current = arrastreY;
+  }, [arrastreY]);
+
+  function cerrarConAnimacion() {
+    setCerrando(true);
+    setTimeout(onClose, 200);
+  }
+
+  // Tirón hacia abajo en la barra del encabezado para minimizar/cerrar la
+  // hoja en móvil. Igual que en LightboxFoto (:150-153): onTouchMove de JSX
+  // es pasivo, así que preventDefault no frena el scroll salvo con
+  // addEventListener nativo.
+  useEffect(() => {
+    const el = handleRef.current;
+    if (!el) return;
+    const UMBRAL_CIERRE = 80;
+
+    function onTouchStart(e: TouchEvent) {
+      inicioYRef.current = e.touches[0].clientY;
+    }
+    function onTouchMove(e: TouchEvent) {
+      if (inicioYRef.current == null) return;
+      const delta = e.touches[0].clientY - inicioYRef.current;
+      if (delta > 0) {
+        e.preventDefault();
+        setArrastreY(delta);
+      }
+    }
+    function onTouchEnd() {
+      inicioYRef.current = null;
+      if (arrastreRef.current > UMBRAL_CIERRE) {
+        cerrarConAnimacion();
+      } else {
+        setArrastreY(0);
+      }
+    }
+
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd);
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     sessionIdRef.current = obtenerSessionId();
@@ -307,28 +361,40 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 sm:flex sm:items-center sm:justify-center sm:bg-black/40 sm:p-4" onClick={onClose}>
+    <>
       <div
         role="dialog"
-        aria-modal="true"
         aria-label="Lotus, tu asistente virtual para tus viajes"
-        onClick={(e) => e.stopPropagation()}
-        className="fixed bottom-24 right-4 z-50 flex h-[70vh] max-h-[600px] w-[90vw] max-w-[360px] flex-col overflow-hidden rounded-2xl bg-card shadow-2xl ring-1 ring-black/10 sm:static sm:h-[640px] sm:w-full sm:max-w-sm sm:ring-0"
-        style={{ marginBottom: "env(safe-area-inset-bottom)", marginRight: "env(safe-area-inset-right)" }}
+        className={
+          "fixed inset-x-0 bottom-0 z-50 flex h-[75vh] w-full flex-col overflow-hidden rounded-t-2xl bg-card shadow-2xl ring-1 ring-black/10 " +
+          "sm:inset-x-auto sm:bottom-24 sm:right-4 sm:h-[70vh] sm:max-h-[600px] sm:w-[90vw] sm:max-w-[380px] sm:rounded-2xl sm:mb-[env(safe-area-inset-bottom)] sm:mr-[env(safe-area-inset-right)] " +
+          (cerrando ? "motion-safe:transition-transform motion-safe:duration-200 motion-safe:ease-in translate-y-full sm:translate-y-0 sm:opacity-0" : "")
+        }
+        style={
+          !cerrando && arrastreY
+            ? { transform: `translateY(${arrastreY}px)` }
+            : undefined
+        }
       >
-        <div className="flex items-center justify-between rounded-t-2xl bg-seafoam px-4 py-3 text-white">
-          <div>
-            <p className="font-display text-base font-semibold">Lotus, tu asistente virtual</p>
-            <p className="text-xs text-white/80">Te ayuda a armar tu viaje al instante</p>
+        <div
+          ref={handleRef}
+          className="flex flex-col items-center gap-1.5 rounded-t-2xl bg-seafoam pt-2 text-white sm:pt-0"
+        >
+          <span className="h-1 w-9 rounded-full bg-white/30 sm:hidden" aria-hidden="true" />
+          <div className="flex w-full items-center justify-between px-4 pb-3">
+            <div>
+              <p className="font-display text-base font-semibold">Lotus, tu asistente virtual</p>
+              <p className="text-xs text-white/80">Te ayuda a armar tu viaje al instante</p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Cerrar chat"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-white/90 hover:bg-white/10"
+            >
+              ✕
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar chat"
-            className="flex h-8 w-8 items-center justify-center rounded-full text-white/90 hover:bg-white/10"
-          >
-            ✕
-          </button>
         </div>
 
         <div ref={listaRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
@@ -392,6 +458,6 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
         </div>
       </div>
       {fotoZoom && <LightboxFoto src={fotoZoom.src} alt={fotoZoom.alt} onClose={() => setFotoZoom(null)} />}
-    </div>
+    </>
   );
 }
