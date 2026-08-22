@@ -15,6 +15,9 @@ export function CardPhotoGallery({
   referencial?: boolean;
 }) {
   const [activa, setActiva] = useState(0);
+  // Dirección del cruce: hacia dónde entra la foto siguiente. El
+  // auto-advance del hover usa siempre +1; el swipe/flecha usa mover().
+  const [direccion, setDireccion] = useState<1 | -1>(1);
   const [hoverActivo, setHoverActivo] = useState(false);
   // Las fotos 2..N solo se ven si el usuario pasa el mouse o desliza, pero
   // montarlas de entrada las descargaba igual (opacity-0 no evita la descarga):
@@ -25,15 +28,16 @@ export function CardPhotoGallery({
 
   useEffect(() => {
     if (!hoverActivo || fotos.length < 2) return;
-    const interval = window.setInterval(
-      () => setActiva((indice) => (indice + 1) % fotos.length),
-      1800,
-    );
+    const interval = window.setInterval(() => {
+      setDireccion(1);
+      setActiva((indice) => (indice + 1) % fotos.length);
+    }, 1800);
     return () => window.clearInterval(interval);
   }, [fotos.length, hoverActivo]);
 
-  function mover(direccion: 1 | -1) {
-    setActiva((indice) => (indice + direccion + fotos.length) % fotos.length);
+  function mover(sentido: 1 | -1) {
+    setDireccion(sentido);
+    setActiva((indice) => (indice + sentido + fotos.length) % fotos.length);
   }
 
   return (
@@ -66,22 +70,28 @@ export function CardPhotoGallery({
         else if (Math.abs(dx) < 10 && Math.abs(dy) < 10) mover(1);
       }}
     >
-      {(montarTodas ? fotos : fotos.slice(0, 1)).map((foto, indice) => (
-        <Image
-          key={foto}
-          src={foto}
-          alt={indice === activa ? alt : ""}
-          fill
-          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-          priority={indice === 0}
-          className={
-            "object-cover transition-[opacity,transform] duration-500 ease-out motion-safe:group-hover/foto:scale-105 " +
-            (indice === activa
-              ? "scale-100 opacity-100"
-              : "pointer-events-none scale-[1.015] opacity-0")
-          }
-        />
-      ))}
+      {/* El zoom al hover vive en este wrapper, no en cada <Image>: si el
+          scale del hover y el translate del cruce escriben la misma
+          propiedad transform en el mismo nodo se anulan entre sí (hallazgo
+          pasada 3). */}
+      <div className="motion-safe:group-hover/foto:scale-105 absolute inset-0 transition-transform duration-500 ease-out">
+        {(montarTodas ? fotos : fotos.slice(0, 1)).map((foto, indice) => (
+          <Image
+            key={foto}
+            src={foto}
+            alt={indice === activa ? alt : ""}
+            fill
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            priority={indice === 0}
+            className={
+              "object-cover transition-[opacity,transform] duration-700 ease-out " +
+              (indice === activa
+                ? "translate-x-0 opacity-100"
+                : "pointer-events-none opacity-0 " + (direccion === 1 ? "translate-x-[6%]" : "-translate-x-[6%]"))
+            }
+          />
+        ))}
+      </div>
 
       {referencial ? (
         <span className="absolute left-3 top-14 z-10 rounded-lg bg-dusk/80 px-2 py-1 font-mono text-[0.6rem] font-bold uppercase tracking-[0.06em] text-dusk-text backdrop-blur-sm">
