@@ -1,14 +1,13 @@
 import { Hero } from "@/components/home/Hero";
-import { CategoriaAvatares } from "@/components/home/CategoriaAvatares";
+import { VitrinaOfertas } from "@/components/home/VitrinaOfertas";
 import { BuscarAfordancia } from "@/components/home/BuscarAfordancia";
 import { HotSalesSection } from "@/components/home/HotSalesSection";
-import { promosHotSales } from "@/lib/promociones/hotSales";
+import { promosHotSales, ofertasVitrina } from "@/lib/promociones/hotSales";
 import { fotosHeroDeHotSales } from "@/lib/promociones/fotosHero";
 import { AcompanamientoSection } from "@/components/home/AcompanamientoSection";
 import { MasDeLotus } from "@/components/home/MasDeLotus";
 import { fotosDe } from "@/lib/supabase/fotos";
 import { getProductosPorCategoria, getPromociones } from "@/lib/supabase/queries";
-import type { Categoria } from "@/types/supabase";
 
 export default async function Home() {
   // Si Supabase falla acá, mejor una home con menos fotos que una home
@@ -35,22 +34,22 @@ export default async function Home() {
     .map((p) => ({ url: fotosDe(p.producto_fotos)[0], alt: p.nombre }))
     .filter((f) => f.url);
 
-  const fotosPorCategoria: Record<Categoria, string | null> = {
-    hoteles: fotosDe(hoteles[0]?.producto_fotos)[0] ?? null,
-    paquetes: null,
-    "guias-tours": null,
-    promociones: fotosDe(promociones[0]?.promocion_fotos)[0] ?? null,
-  };
+  // Las 4 de la vitrina salen del mismo pool que la seccion Hot Sales, asi que
+  // hay que sacarlas de ahi: si no, la misma promo aparece dos veces en la
+  // misma pantalla, separada por 300px.
+  const ofertas = ofertasVitrina(hotSales);
+  const idsVitrina = new Set(ofertas.map((p) => p.id));
+  const hotSalesRestantes = hotSales.filter((p) => !idsVitrina.has(p.id));
 
   return (
     <main>
       <Hero fotos={heroFotos.length > 0 ? heroFotos : heroFallback} />
 
-      <CategoriaAvatares fotos={fotosPorCategoria} />
+      <VitrinaOfertas ofertas={ofertas} />
 
       <BuscarAfordancia productos={[...hoteles, ...paquetes, ...guiasTours]} promociones={promociones} />
 
-      <HotSalesSection pool={hotSales} />
+      <HotSalesSection pool={hotSalesRestantes} />
 
       <AcompanamientoSection />
 

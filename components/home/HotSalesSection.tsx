@@ -50,7 +50,7 @@ export function HotSalesSection({ pool }: { pool: Promocion[] }) {
     <Seccion ritmo="intro">
       <EncabezadoSeccion
         eyebrow={<EditableText path="home.hotSales.eyebrow" as="p" className="mb-2 font-mono text-xs font-bold uppercase tracking-[0.16em] text-coral" />}
-        titulo={<EditableText path="home.hotSales.title" as="h2" className="max-w-[20ch] text-balance font-display text-3xl font-semibold leading-tight text-ink md:text-5xl" />}
+        titulo={<EditableText path="home.hotSales.title" as="h2" className="max-w-[20ch] text-balance font-display text-2xl font-semibold leading-tight text-ink md:text-4xl" />}
         verTodasHref="/catalogo/hot-sales"
       />
 

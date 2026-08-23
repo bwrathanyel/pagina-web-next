@@ -41,7 +41,7 @@ export function CurrencySwitch({ className = "" }: { className?: string }) {
       <span
         aria-hidden="true"
         className={
-          "pointer-events-none flex h-[1.375rem] w-[1.375rem] items-center justify-center rounded-full text-[9px] font-bold shadow-sm transition-transform duration-300 ease-out motion-reduce:transition-none " +
+          "pointer-events-none flex h-[1.375rem] w-[1.375rem] items-center justify-center rounded-full text-[9px] font-bold shadow-sm transition-transform duration-300 ease-out " +
           (esBs ? "translate-x-[1.75rem] bg-seafoam text-white" : "translate-x-[0.19rem] bg-card text-coral")
         }
       >

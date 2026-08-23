@@ -3,12 +3,17 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { AnimatePresence, motion } from "motion/react";
 import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
 import { EditableText } from "@/components/admin/EditableText";
 import { useSiteContent } from "@/components/providers/SiteContentProvider";
 import { Revelar } from "@/components/ui/Revelar";
 
 const MS_POR_FOTO = 5000;
+const SEG_CRUCE = 1.2;
+/* La curva del cruce: sale rápido y frena largo al final. Es la misma que usa
+   `revelar-entrada` en globals.css, para que todo el sitio se mueva igual. */
+const CURVA = [0.22, 1, 0.36, 1] as const;
 
 function barajar<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -34,28 +39,55 @@ export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
   // (hero.image), esa manda y no se rota nada.
   const [orden, setOrden] = useState(fotos);
   const [i, setI] = useState(0);
+  // El cruce no puede ir hacia una foto que el navegador todavía no bajó: eso
+  // es un hueco de degradado en pantalla completa. Mismo patrón ya probado en
+  // CardPhotoGallery -- solo se salta entre índices confirmados por onLoad.
+  const [cargadas, setCargadas] = useState<Set<number>>(() => new Set([0]));
+  // Con la pestaña oculta el navegador estrangula los timers y al volver se
+  // acumulan saltos de golpe. Se para y se retoma.
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setOrden(barajar(fotos));
     setI(0);
+    setCargadas(new Set([0]));
   }, [fotos]);
+
+  useEffect(() => {
+    const alCambiar = () => setVisible(document.visibilityState === "visible");
+    alCambiar();
+    document.addEventListener("visibilitychange", alCambiar);
+    return () => document.removeEventListener("visibilitychange", alCambiar);
+  }, []);
 
   const rotando = !hero.image && orden.length > 1;
 
   useEffect(() => {
-    if (!rotando) return;
-    const t = setInterval(() => setI((v) => (v + 1) % orden.length), MS_POR_FOTO);
+    if (!rotando || !visible) return;
+    const t = setInterval(() => {
+      setI((v) => {
+        for (let paso = 1; paso < orden.length; paso++) {
+          const siguiente = (v + paso) % orden.length;
+          if (cargadas.has(siguiente)) return siguiente;
+        }
+        return v;
+      });
+    }, MS_POR_FOTO);
     return () => clearInterval(t);
-  }, [rotando, orden.length]);
+  }, [rotando, visible, orden.length, cargadas]);
 
   const actual = hero.image ? null : orden[i] ?? fotoPrincipal;
   const heroAlt = actual?.alt ?? fotoPrincipal?.alt ?? "Experiencia de viaje";
 
-  // Solo se montan la foto actual y la siguiente -- son fotos de Hot Sales a
-  // ancho completo, montar el pool entero dispararía la descarga de todas
-  // (mismo problema que CardPhotoGallery resolvió con el lazy-mount).
+  // Solo se monta la foto actual (más la saliente mientras se desvanece) y un
+  // prefetch invisible de la siguiente -- son fotos de Hot Sales a ancho
+  // completo, montar el pool entero dispararía la descarga de todas.
   const indiceSiguiente = orden.length > 1 ? (i + 1) % orden.length : -1;
+  const fotoSiguiente = indiceSiguiente >= 0 ? orden[indiceSiguiente] : null;
+
+  const marcarCargada = (idx: number) =>
+    setCargadas((prev) => (prev.has(idx) ? prev : new Set(prev).add(idx)));
 
   return (
     // Un solo árbol responsive (antes había una tarjeta móvil y una grilla
@@ -63,63 +95,90 @@ export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
     // que el pase mobile del 14-ago rompiera desktop sin que nadie lo viera.
     // Ahora es una sola foto a sangre con el contenido anclado abajo,
     // reescritura editorial redesign desktop 2026-08-22).
-    <section className="relative isolate flex min-h-[62svh] flex-col justify-end overflow-hidden sm:min-h-[68svh] lg:min-h-[78svh] lg:max-h-[820px]">
+    <section className="relative isolate flex min-h-[62svh] flex-col justify-end overflow-hidden sm:min-h-[68svh] lg:min-h-[70svh] lg:max-h-[720px]">
       <div className="grano hero-parallax absolute inset-0 overflow-hidden">
         {hero.image ? (
           <Image src={hero.image} alt={heroAlt} fill sizes="100vw" className="hero-kenburns object-cover" priority />
         ) : actual ? (
           // Tres nodos, no uno: este contenedor solo hace parallax (arriba);
-          // la capa de acá abajo es la que cruza (opacidad + scale de
-          // entrada); el <Image> de adentro solo hace Ken Burns. Mezclar el
-          // cruce y el Ken Burns en el mismo nodo hacía que las dos
-          // animaciones de transform se anularan (hallazgo pasada 3).
-          [i, indiceSiguiente].map((idx, pos) => {
-            if (idx < 0) return null;
-            const foto = orden[idx];
-            if (!foto) return null;
-            return (
-              <div
-                key={foto.url}
-                className={
-                  "absolute inset-0 transition-[opacity,transform] duration-[1200ms] ease-in-out " +
-                  (idx === i ? "opacity-100 scale-100" : "pointer-events-none opacity-0 scale-[1.03]")
-                }
-              >
-                <Image
-                  src={foto.url}
-                  alt={idx === i ? heroAlt : ""}
-                  fill
-                  sizes="100vw"
-                  className={"object-cover " + (idx === i ? "hero-kenburns" : "")}
-                  priority={pos === 0 && i === 0}
-                  loading={pos === 0 && i === 0 ? undefined : "eager"}
-                />
-              </div>
-            );
-          })
+          // la capa de motion es la que cruza (opacidad + escala); el <Image>
+          // de adentro solo hace Ken Burns. Mezclar el cruce y el Ken Burns en
+          // el mismo nodo hacía que las dos animaciones de transform se
+          // anularan (hallazgo pasada 3). Y el cruce va con motion, no con
+          // clases: en Tailwind v4 `scale-105` escribe la propiedad `scale:`,
+          // que `transition-[opacity,transform]` NO cubre -- la escala saltaba
+          // de golpe y solo se interpolaba la opacidad.
+          <AnimatePresence initial={false}>
+            <motion.div
+              key={actual.url}
+              className="absolute inset-0"
+              initial={{ opacity: 0, scale: 1.06 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.02 }}
+              transition={{ duration: SEG_CRUCE, ease: CURVA }}
+            >
+              <Image
+                src={actual.url}
+                alt={heroAlt}
+                fill
+                sizes="100vw"
+                className={"object-cover " + (i % 2 ? "hero-kenburns-inv" : "hero-kenburns")}
+                priority={i === 0}
+                onLoad={() => marcarCargada(i)}
+              />
+            </motion.div>
+          </AnimatePresence>
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-seafoam via-dusk-2 to-dusk" />
         )}
       </div>
+
+      {/* Prefetch de la próxima foto: fuera del AnimatePresence y sin pintar,
+          para que cuando le toque entrar ya esté en cache y el cruce no muestre
+          un hueco. El onLoad es lo que la habilita en el salto del timer. */}
+      {rotando && fotoSiguiente ? (
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 opacity-0">
+          {/* fill + sizes idénticos a los de la capa visible: el loader de
+              Supabase/R2 reescribe la URL según el ancho pedido, así que un
+              prefetch en miniatura bajaría un archivo distinto del que después
+              se necesita y no serviría de nada. */}
+          <Image
+            src={fotoSiguiente.url}
+            alt=""
+            fill
+            sizes="100vw"
+            loading="eager"
+            className="object-cover"
+            onLoad={() => marcarCargada(indiceSiguiente)}
+          />
+        </div>
+      ) : null}
+
       <div className="absolute inset-0 bg-gradient-to-t from-dusk via-dusk/70 to-dusk/20" />
       <div className="absolute inset-0 bg-gradient-to-r from-dusk/60 via-dusk/10 to-transparent" />
 
       {rotando && actual?.alt ? (
-        <p
-          key={actual.alt}
-          className="animate-hero-fade absolute right-5 top-5 max-w-[55%] truncate rounded-full border border-white/15 bg-black/25 px-3 py-1.5 text-[11px] font-medium text-white/90 backdrop-blur-md sm:right-8 sm:top-8"
-        >
-          {actual.alt}
-        </p>
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={actual.alt}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.5, ease: CURVA }}
+            className="absolute right-5 top-5 max-w-[55%] truncate rounded-full border border-white/15 bg-black/25 px-3 py-1.5 text-[11px] font-medium text-white/90 backdrop-blur-md sm:right-8 sm:top-8"
+          >
+            {actual.alt}
+          </motion.p>
+        </AnimatePresence>
       ) : null}
 
-      <Revelar retraso={120} className="relative mx-auto w-full max-w-[var(--ancho-contenido)] px-5 pb-8 pt-28 sm:pb-12 sm:pt-32 lg:pb-16 lg:pt-36">
+      <Revelar retraso={120} className="relative mx-auto w-full max-w-[var(--ancho-contenido)] px-5 pb-8 pt-24 sm:pb-12 sm:pt-28 lg:pb-16 lg:pt-32">
         <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-white/90 backdrop-blur-md">
           <span className="h-2 w-2 rounded-full bg-coral-bright" aria-hidden="true" />
           <EditableText path="home.hero.eyebrow" />
         </p>
 
-        <h1 className="max-w-[14ch] text-balance font-display text-[clamp(2.75rem,6.5vw,5.5rem)] font-semibold leading-[0.92] tracking-[-0.03em] text-white">
+        <h1 className="max-w-[14ch] text-balance font-display text-[clamp(2.5rem,5.2vw,4.25rem)] font-semibold leading-[1.0] tracking-[-0.03em] text-white">
           <EditableText path="home.hero.title" />{" "}
           <EditableText path="home.hero.accent" className="text-coral-bright" />
         </h1>
@@ -166,7 +225,45 @@ export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
             <EditableText path="home.hero.badgeBottomValue" as="p" className="mt-1 text-sm font-bold text-white" />
           </div>
         </div>
+
+        {rotando ? (
+          <div className="mt-8 flex items-center gap-2">
+            {orden.map((foto, idx) => (
+              <button
+                key={foto.url}
+                type="button"
+                onClick={() => setI(idx)}
+                aria-label={`Ver foto ${idx + 1} de ${orden.length}: ${foto.alt}`}
+                aria-current={idx === i}
+                className="group/punto h-6 py-2.5"
+              >
+                <span
+                  className={
+                    "block h-1 rounded-full transition-all duration-500 ease-out " +
+                    (idx === i
+                      ? "w-8 bg-coral-bright"
+                      : "w-3 bg-white/40 group-hover/punto:w-5 group-hover/punto:bg-white/70")
+                  }
+                />
+              </button>
+            ))}
+          </div>
+        ) : null}
       </Revelar>
+
+      {/* Barra de tiempo del slide: se reinicia sola en cada foto por el key.
+          Se congela con la pestaña oculta, igual que el timer. */}
+      {rotando ? (
+        <div className="absolute inset-x-0 bottom-0 h-[3px] bg-white/10" aria-hidden="true">
+          <motion.div
+            key={i}
+            className="h-full origin-left bg-coral-bright"
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: visible ? 1 : 0 }}
+            transition={{ duration: MS_POR_FOTO / 1000, ease: "linear" }}
+          />
+        </div>
+      ) : null}
     </section>
   );
 }

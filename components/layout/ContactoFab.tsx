@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { AsistenteVirtualPanel } from "@/components/layout/AsistenteVirtualPanel";
 import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
+import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import { useNotificacionesChat } from "@/lib/notificaciones/useNotificacionesChat";
 import { tieneFooterStickyPropio } from "@/lib/layout/rutasConFooterSticky";
 
@@ -14,14 +15,6 @@ function ChatIcon() {
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M4 12a8 8 0 1 1 3.2 6.4L4 20l1.2-3.6A7.96 7.96 0 0 1 4 12z" fill="currentColor" />
       <path d="M17.5 3.5l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7.7-1.6z" fill="currentColor" />
-    </svg>
-  );
-}
-
-function WhatsAppIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2zm0 18a8 8 0 0 1-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1 1 12 20zm4.4-5.9c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.6.1s-.7.8-.8.9-.3.2-.5.1a6.6 6.6 0 0 1-1.9-1.2 7 7 0 0 1-1.3-1.6c-.1-.2 0-.4.1-.5l.4-.4.2-.4v-.4c-.1-.1-.6-1.4-.8-1.9s-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2c0 1.3.9 2.6 1.1 2.8s1.7 2.7 4.1 3.7a5.6 5.6 0 0 0 2.4.6c.9 0 1.5-.4 1.7-.7a1.4 1.4 0 0 0 .1-.9c-.1-.1-.2-.2-.5-.3z" />
     </svg>
   );
 }
@@ -144,9 +137,21 @@ export function ContactoFab() {
               <WhatsAppLeadButton
                 mensajeBase="Hola! Vengo de su página web."
                 triggerAriaLabel="Escríbenos por WhatsApp"
-                triggerClassName="animate-fab-item flex h-12 items-center gap-2.5 rounded-full bg-whatsapp pl-4 pr-5 text-sm font-semibold text-white shadow-[0_10px_28px_-8px_rgba(15,122,64,0.55)]"
+                triggerClassName="animate-fab-item relative flex h-12 items-center gap-2.5 overflow-hidden rounded-full bg-whatsapp pl-4 pr-5 text-sm font-semibold text-white shadow-[0_12px_32px_-8px_rgba(15,122,64,0.65)]"
               >
-                <WhatsAppIcon />
+                {/* Mismo lenguaje visual que el halo/destello del botón coral
+                    principal (`:166-176` más abajo) pero en verde -- antes
+                    era el único pill del grupo sin ningún acento propio,
+                    apagado al lado del que sí brillaba. */}
+                <span
+                  className="animate-fab-halo absolute inset-0 -z-10 rounded-full ring-2 ring-whatsapp"
+                  aria-hidden="true"
+                />
+                <span
+                  className="animate-fab-shine pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 bg-gradient-to-r from-transparent via-white/50 to-transparent"
+                  aria-hidden="true"
+                />
+                <WhatsAppIcon size={20} />
                 Escríbenos por WhatsApp
               </WhatsAppLeadButton>
             </div>
@@ -164,13 +169,13 @@ export function ContactoFab() {
           >
             {!abierto ? (
               <span
-                className="motion-safe:animate-fab-halo absolute inset-0 -z-10 rounded-full ring-2 ring-gold"
+                className="animate-fab-halo absolute inset-0 -z-10 rounded-full ring-2 ring-gold"
                 aria-hidden="true"
               />
             ) : null}
             {!abierto ? (
               <span
-                className="motion-safe:animate-fab-shine pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 bg-gradient-to-r from-transparent via-gold/70 to-transparent"
+                className="animate-fab-shine pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 bg-gradient-to-r from-transparent via-gold/70 to-transparent"
                 aria-hidden="true"
               />
             ) : null}

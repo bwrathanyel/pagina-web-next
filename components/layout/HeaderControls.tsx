@@ -73,7 +73,7 @@ export function HeaderControls({
       aria-label={`Carrito${cantidad > 0 ? `, ${cantidad} ítem(s)` : ""}`}
       className="relative flex h-11 w-11 items-center justify-center rounded-full text-ink transition-colors hover:bg-sand-2"
     >
-      <span className={rebotando ? "motion-safe:animate-carrito-rebote block" : "block"}>
+      <span className={rebotando ? "animate-carrito-rebote block" : "block"}>
         <CartIcon />
       </span>
       {cantidad > 0 ? (
@@ -102,7 +102,7 @@ export function HeaderControls({
         aria-label={`Notificaciones${notif.noLeidas > 0 ? `, ${notif.noLeidas} sin leer` : ""}`}
         className="relative flex h-11 w-11 items-center justify-center rounded-full text-ink transition-colors hover:bg-sand-2"
       >
-        <span className={notif.noLeidas > 0 ? "motion-safe:animate-campana-balanceo block" : "block"}>
+        <span className={notif.noLeidas > 0 ? "animate-campana-balanceo block" : "block"}>
           <BellIcon />
         </span>
         {notif.noLeidas > 0 ? (

@@ -3,7 +3,7 @@ import type { Promocion } from "@/types/supabase";
 
 // Mismo fallback que PromocionCard: fotos propias, y solo si no tiene
 // ninguna, las del hotel.
-function fotosDeLaPromo(p: Promocion): string[] {
+export function fotosDeLaPromo(p: Promocion): string[] {
   const propias = fotosDe(p.promocion_fotos);
   return propias.length > 0 ? propias : fotosDe(p.producto?.producto_fotos);
 }
@@ -34,4 +34,24 @@ export function destinosDelPool(pool: Promocion[]): string[] {
     if (p.producto?.destino) destinos.add(p.producto.destino);
   }
   return [...destinos].sort();
+}
+
+// Las N ofertas que van en la vitrina de la home: la mas barata de cada
+// destino, sin repetir destino. El pool ya viene ordenado por precio
+// ascendente desde getPromociones(), asi que alcanza con recorrerlo en orden
+// -- no usar agruparPorDestino aca, que reordena alfabeticamente y pierde el
+// criterio de precio. Se exigen promo con producto (sin producto no hay
+// destino ni ficha a la que linkear) y al menos una foto.
+export function ofertasVitrina(pool: Promocion[], cantidad = 4): Promocion[] {
+  const destinos = new Set<string>();
+  const resultado: Promocion[] = [];
+  for (const p of pool) {
+    const destino = p.producto?.destino;
+    if (!destino || destinos.has(destino)) continue;
+    if (fotosDeLaPromo(p).length === 0) continue;
+    destinos.add(destino);
+    resultado.push(p);
+    if (resultado.length === cantidad) break;
+  }
+  return resultado;
 }

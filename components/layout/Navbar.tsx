@@ -97,7 +97,7 @@ export function Navbar() {
     <header
       {...propsContenedor}
       className={
-        "sticky top-0 z-30 px-4 pt-4 transition-[opacity,transform] duration-500 ease-out motion-reduce:transition-none " +
+        "sticky top-0 z-30 px-4 pt-4 transition-[opacity,transform] duration-500 ease-out " +
         // El auto-hide por inactividad es un patrón móvil (pedido del dueño
         // 2026-07-26); en desktop el header queda siempre sólido y estable --
         // "lg:translate-y-0 lg:opacity-100 lg:pointer-events-auto" pisa el

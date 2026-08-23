@@ -242,14 +242,7 @@ function ActoSaludo({ vista, marcarVista }: { vista: boolean; marcarVista: () =>
 
   useEffect(() => {
     if (paso >= REVELACION.length) { marcarVista(); return; }
-    // Con reduced-motion se salta entero, pero igual por el temporizador: el
-    // estado inicial no puede depender de matchMedia porque el servidor no lo
-    // tiene y la hidratación no coincidiría.
-    const directo = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const t = setTimeout(
-      () => setPaso(directo ? REVELACION.length : paso + 1),
-      directo ? 0 : REVELACION[paso].pausa,
-    );
+    const t = setTimeout(() => setPaso(paso + 1), REVELACION[paso].pausa);
     return () => clearTimeout(t);
   }, [paso, marcarVista]);
 
@@ -409,10 +402,9 @@ function ActoNoche() {
 
   useEffect(() => {
     if (visibles >= CONVERSACION_PERDIDA.length) return;
-    const directo = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const t = setTimeout(
-      () => setVisibles(directo ? CONVERSACION_PERDIDA.length : visibles + 1),
-      directo ? 0 : CONVERSACION_PERDIDA[visibles].pausa ?? 800,
+      () => setVisibles(visibles + 1),
+      CONVERSACION_PERDIDA[visibles].pausa ?? 800,
     );
     return () => clearTimeout(t);
   }, [visibles]);

@@ -7,10 +7,19 @@ export function Modal({
   titulo,
   onClose,
   children,
+  icono,
+  acentoClassName,
 }: {
   titulo: string;
   onClose: () => void;
   children: React.ReactNode;
+  /** Badge circular junto al título (ej. ícono de WhatsApp). Opcional: sin
+   * esto el modal se ve como siempre -- lo usan también formularios de admin
+   * y de postulación que no deben heredar ningún acento de marca. */
+  icono?: React.ReactNode;
+  /** Clases de degradé para el badge y la franja superior, ej.
+   * "from-whatsapp to-[#0a5c30]". Sin efecto si no viene `icono`. */
+  acentoClassName?: string;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -30,20 +39,36 @@ export function Modal({
         aria-modal="true"
         aria-label={titulo}
         onClick={(e) => e.stopPropagation()}
-        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-card p-6 shadow-2xl"
+        className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-card shadow-2xl"
       >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-display text-xl font-semibold text-ink">{titulo}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar"
-            className="flex h-9 w-9 items-center justify-center rounded-full text-ink-soft"
-          >
-            ✕
-          </button>
+        {icono ? (
+          <div aria-hidden="true" className={"h-[3px] w-full bg-gradient-to-r " + acentoClassName} />
+        ) : null}
+        <div className="p-6">
+          <div className="mb-4 flex items-center gap-3">
+            {icono ? (
+              <span
+                className={
+                  "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-white shadow-[0_8px_20px_-6px_rgba(15,122,64,0.5)] " +
+                  acentoClassName
+                }
+                aria-hidden="true"
+              >
+                {icono}
+              </span>
+            ) : null}
+            <h2 className="flex-1 font-display text-xl font-semibold text-ink">{titulo}</h2>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Cerrar"
+              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-sand-2 hover:text-ink"
+            >
+              ✕
+            </button>
+          </div>
+          {children}
         </div>
-        {children}
       </div>
     </div>,
     document.body,

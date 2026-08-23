@@ -13,11 +13,20 @@ const nextConfig: NextConfig = {
     ];
   },
   async headers() {
+    // React en modo desarrollo usa eval() para reconstruir call stacks de
+    // debugging (fast refresh, nombres de componente en errores); Turbopack
+    // lo dispara seguido. Sin 'unsafe-eval' el CSP lo bloquea y tira el
+    // overlay "eval() is not supported" -- cosmético, pero molesta en cada
+    // sesión. Solo se afloja en dev: React nunca usa eval en production mode,
+    // así que el CSP real que sirve en prod no cambia.
+    const scriptSrc = process.env.NODE_ENV === "production"
+      ? "'self' 'unsafe-inline' https://challenges.cloudflare.com"
+      : "'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com";
     return [
       {
         source: "/:path*",
         headers: [
-          { key: "Content-Security-Policy", value: "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: blob: https:; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; frame-src https://challenges.cloudflare.com; connect-src 'self' https://challenges.cloudflare.com https://begbjhrdbsqftbbleecb.supabase.co https://begbjhrdbsqftbbleecb.functions.supabase.co wss://begbjhrdbsqftbbleecb.supabase.co" },
+          { key: "Content-Security-Policy", value: `default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: blob: https:; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline'; font-src 'self' data:; frame-src https://challenges.cloudflare.com; connect-src 'self' https://challenges.cloudflare.com https://begbjhrdbsqftbbleecb.supabase.co https://begbjhrdbsqftbbleecb.functions.supabase.co wss://begbjhrdbsqftbbleecb.supabase.co` },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },

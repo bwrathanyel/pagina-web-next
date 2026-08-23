@@ -83,8 +83,8 @@ export function TicketCard({
     <div
       className={
         "group relative flex h-full flex-col overflow-hidden rounded-[var(--radius-card)] border border-linea bg-card " +
-        "shadow-card transition duration-300 " +
-        "hover:-translate-y-1 hover:shadow-lift " +
+        "shadow-card transition-[transform,scale,box-shadow,border-color] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] " +
+        "hover:-translate-y-1.5 hover:border-coral/40 hover:shadow-lift active:scale-[0.985] " +
         (oculto ? "opacity-50" : "")
       }
     >

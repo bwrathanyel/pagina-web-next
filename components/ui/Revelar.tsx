@@ -6,8 +6,8 @@ type Elemento = "div" | "section" | "li";
 
 /** Envuelve contenido y lo anima al entrar en viewport (una sola vez, nunca
  * re-anima al volver a scrollear). Si el navegador no soporta
- * IntersectionObserver o el usuario pidió prefers-reduced-motion, el
- * contenido se muestra visible de entrada -- sin esta guarda, un fallo del
+ * IntersectionObserver el contenido se muestra visible de entrada -- sin esta
+ * guarda, un fallo del
  * observer deja bloques enteros en opacity:0 para siempre (ver plan de
  * rediseño 2026-08-14). */
 export function Revelar({
@@ -28,11 +28,7 @@ export function Revelar({
     const el = ref.current;
     if (!el) return;
 
-    const reducido =
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    if (reducido || typeof IntersectionObserver === "undefined") {
+    if (typeof IntersectionObserver === "undefined") {
       setVisible(true);
       return;
     }

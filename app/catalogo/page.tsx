@@ -52,8 +52,8 @@ export default async function CatalogoIndexPage() {
         {CATEGORIAS.map(({ slug, label }) => {
           const foto = fotosPorCategoria[slug] ?? FOTO_EDITORIAL[slug];
           return (
-            <Link key={slug} href={`/catalogo/${slug}`} className="group relative aspect-[3/4] overflow-hidden rounded-[28px] bg-sand-2">
-              <Image src={foto} alt={label} fill sizes="(min-width: 768px) 25vw, 50vw" className="object-cover transition-transform duration-700 group-hover:scale-105" />
+            <Link key={slug} href={`/catalogo/${slug}`} className="group relative aspect-[3/4] overflow-hidden rounded-[28px] bg-sand-2 transition-[transform,scale,box-shadow] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1.5 hover:shadow-lift active:scale-[0.985]">
+              <Image src={foto} alt={label} fill sizes="(min-width: 768px) 25vw, 50vw" className="object-cover transition-[transform,scale,filter] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.09] group-hover:brightness-[1.05]" />
               <div className="absolute inset-0 bg-gradient-to-t from-dusk/80 via-dusk/0 to-dusk/0" />
               <div className="absolute inset-x-5 bottom-5 flex items-end justify-between gap-2 text-dusk-text">
                 <span className="font-display text-xl font-semibold">{label}</span>

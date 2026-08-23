@@ -5,61 +5,72 @@ import { useTheme } from "next-themes";
 
 const suscribirHidratacion = () => () => {};
 
-/** Slider claro/oscuro para el header (pedido del dueño, 2026-07-26).
+const OPCIONES = [
+  { valor: "system", label: "Automático" },
+  { valor: "light", label: "Claro" },
+  { valor: "dark", label: "Oscuro" },
+] as const;
+
+/** Selector claro/oscuro/automático para el header (pedido del dueño,
+ * 2026-07-26; pasó a 3 estados 2026-08-23 al habilitar enableSystem).
  * Distinto de ThemeToggle (botón redondo de un solo icono, usado en
  * /cuenta/configuracion): acá el estado se lee de un vistazo por la posición
  * de la perilla, sin tener que interpretar qué significa el icono.
  *
- * Igual que ThemeToggle, espera al montaje antes de pintar el estado real:
- * next-themes fija data-theme con un script bloqueante antes de hidratar (no
- * hay FOUC de la página), pero este componente sí necesita esperar para no
- * generar un mismatch de servidor/cliente en su propia perilla. */
+ * `theme` es la ELECCIÓN (puede ser "system"); `resolvedTheme` es el
+ * RESULTADO ("light"/"dark" ya resuelto). La perilla se posiciona por
+ * `theme` (para poder mostrar "automático" como estado propio) pero se pinta
+ * con el icono de `resolvedTheme` (para que en automático muestre qué se está
+ * viendo en este momento, no un tercer icono neutro).
+ *
+ * Espera al montaje antes de pintar el estado real: next-themes fija
+ * data-theme con un script bloqueante antes de hidratar (no hay FOUC de la
+ * página), pero este componente sí necesita esperar para no generar un
+ * mismatch de servidor/cliente en su propia perilla. */
 export function ThemeSwitch({ className = "" }: { className?: string }) {
-  const { resolvedTheme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const mounted = useSyncExternalStore(suscribirHidratacion, () => true, () => false);
 
+  const eleccion = mounted ? theme ?? "system" : "system";
   const esOscuro = mounted && resolvedTheme === "dark";
+  const indice = OPCIONES.findIndex((o) => o.valor === eleccion);
+  const posicion = indice < 0 ? 0 : indice;
 
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={esOscuro}
-      aria-label={esOscuro ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-      title={esOscuro ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-      onClick={() => setTheme(esOscuro ? "light" : "dark")}
+    <div
+      role="radiogroup"
+      aria-label="Tema del sitio"
       className={
-        "relative inline-flex h-7 w-[3.25rem] flex-shrink-0 items-center rounded-full border border-ink/15 transition-colors duration-300 " +
-        (esOscuro ? "bg-dusk-2" : "bg-sand-2") +
-        " " +
+        "relative inline-flex h-7 w-[4.75rem] flex-shrink-0 items-center rounded-full border border-ink/15 bg-sand-2 " +
         className
       }
     >
-      {/* Iconos de fondo: marcan a dónde va la perilla, se atenúa el lado activo
-          para que el contraste lo gane siempre la perilla. */}
-      <span
-        aria-hidden="true"
-        className={"pointer-events-none absolute left-[0.4rem] transition-opacity duration-300 " + (esOscuro ? "opacity-40" : "opacity-0")}
-      >
-        <SunIcon />
-      </span>
-      <span
-        aria-hidden="true"
-        className={"pointer-events-none absolute right-[0.4rem] transition-opacity duration-300 " + (esOscuro ? "opacity-0" : "opacity-45")}
-      >
-        <MoonIcon />
-      </span>
-
+      {/* Perilla: 3 posiciones por `theme`, icono por `resolvedTheme`. */}
       <span
         aria-hidden="true"
         className={
-          "pointer-events-none flex h-[1.375rem] w-[1.375rem] items-center justify-center rounded-full shadow-sm transition-transform duration-300 ease-out motion-reduce:transition-none " +
-          (esOscuro ? "translate-x-[1.75rem] bg-gold text-dusk" : "translate-x-[0.19rem] bg-card text-coral")
+          "pointer-events-none absolute left-[0.19rem] flex h-[1.375rem] w-[1.375rem] items-center justify-center rounded-full shadow-sm transition-transform duration-300 ease-out " +
+          (esOscuro ? "bg-dusk-2 text-gold" : "bg-card text-coral") +
+          " " +
+          (posicion === 0 ? "translate-x-0" : posicion === 1 ? "translate-x-[1.5rem]" : "translate-x-[3rem]")
         }
       >
-        {mounted ? (esOscuro ? <MoonIcon /> : <SunIcon />) : null}
+        {mounted ? (posicion === 0 ? <MonitorIcon /> : esOscuro ? <MoonIcon /> : <SunIcon />) : null}
       </span>
-    </button>
+
+      {OPCIONES.map((opcion) => (
+        <button
+          key={opcion.valor}
+          type="button"
+          role="radio"
+          aria-checked={eleccion === opcion.valor}
+          aria-label={opcion.label}
+          title={opcion.label}
+          onClick={() => setTheme(opcion.valor)}
+          className="relative z-10 flex h-7 w-[1.58rem] items-center justify-center"
+        />
+      ))}
+    </div>
   );
 }
 
@@ -76,6 +87,15 @@ function MoonIcon() {
   return (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
+    </svg>
+  );
+}
+
+function MonitorIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2.5" y="4" width="19" height="13" rx="1.8" />
+      <path d="M8 21h8M12 17v4" />
     </svg>
   );
 }

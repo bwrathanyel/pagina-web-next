@@ -21,14 +21,14 @@ export function Wordmark() {
     <span className="flex min-w-0 flex-col leading-none">
       <span
         style={{ "--retraso": "0ms" } as React.CSSProperties}
-        className="motion-safe:animate-wordmark-line whitespace-nowrap font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-ink-soft sm:text-[10px]"
+        className="animate-wordmark-line whitespace-nowrap font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-ink-soft sm:text-[10px]"
       >
         {arriba}
       </span>
       {abajo ? (
         <span
           style={{ "--retraso": "120ms" } as React.CSSProperties}
-          className="motion-safe:animate-wordmark-line mt-0.5 whitespace-nowrap font-display text-[15px] font-bold text-ink sm:text-lg lg:text-xl"
+          className="animate-wordmark-line mt-0.5 whitespace-nowrap font-display text-[15px] font-bold text-ink sm:text-lg lg:text-xl"
         >
           {abajo}
         </span>

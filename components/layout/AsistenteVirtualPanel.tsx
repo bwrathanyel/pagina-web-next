@@ -389,8 +389,8 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
           "fixed inset-x-0 bottom-0 z-50 flex h-[75vh] w-full flex-col overflow-hidden rounded-t-2xl bg-card shadow-2xl ring-1 ring-black/10 " +
           "sm:inset-x-auto sm:bottom-24 sm:right-4 sm:h-[70vh] sm:max-h-[600px] sm:w-[90vw] sm:max-w-[380px] sm:rounded-2xl sm:mb-[env(safe-area-inset-bottom)] sm:mr-[env(safe-area-inset-right)] " +
           (cerrando
-            ? "motion-safe:transition-transform motion-safe:duration-200 motion-safe:ease-in translate-y-full sm:translate-y-0 sm:opacity-0"
-            : "motion-safe:animate-panel-abrir")
+            ? "transition-transform duration-200 ease-in translate-y-full sm:translate-y-0 sm:opacity-0"
+            : "animate-panel-abrir")
         }
         style={
           !cerrando && arrastreY
@@ -433,8 +433,8 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
               <div
                 className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm whitespace-pre-line ${
                   m.rol === "lead"
-                    ? "motion-safe:animate-msg-in-right bg-coral text-white"
-                    : "motion-safe:animate-msg-in-left bg-sand-2 text-ink"
+                    ? "animate-msg-in-right bg-coral text-white"
+                    : "animate-msg-in-left bg-sand-2 text-ink"
                 }`}
               >
                 {m.rol === "ia" ? <ContenidoMensaje mensaje={m} /> : m.texto}
@@ -486,7 +486,7 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
                 {[0, 1, 2].map((i) => (
                   <span
                     key={i}
-                    className="motion-safe:animate-typing-dot h-1.5 w-1.5 rounded-full bg-ink-soft"
+                    className="animate-typing-dot h-1.5 w-1.5 rounded-full bg-ink-soft"
                     style={{ animationDelay: `${i * 0.15}s` }}
                   />
                 ))}

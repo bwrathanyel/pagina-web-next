@@ -9,13 +9,17 @@
   --color-dusk-text: #eaf1ef;
   --color-dusk-text-soft: #a9bfbc;
 
-  /* Claro "mate" (pedido del dueño, 2026-07-26): antes card era #fffdf8, casi
-     blanco puro -- deslumbraba en pantallas brillantes. Se bajó el brillo y se
-     desaturó apenas, manteniendo el crema cálido de marca. El contraste de
-     coral (#A83E00) sobre sand queda en ~5.5:1, sigue pasando AA. */
-  --color-sand: #f5f0e7;
-  --color-sand-2: #e9e2d5;
-  --color-card: #fcf8f1;
+  /* Claro "mate" (pedido del dueño, 2026-07-26; segunda bajada 2026-08-23):
+     card empezó siendo #fffdf8, casi blanco puro, y aun después de la primera
+     corrección seguía a ~94% de blanco cubriendo casi toda la pantalla -- el
+     sitio se leía como un solo campo brillante. Esta pasada baja otro 4-5%
+     hacia papel crema y sube `linea` en la misma proporción: al acercarse card
+     y sand, el borde es lo que sostiene la separación de la tarjeta.
+     Contrastes con estos valores: coral (#A83E00) sobre sand 5.0:1, sobre card
+     5.57:1; ink sobre card 13.3:1; ink-soft sobre card 5.6:1. Todos AA. */
+  --color-sand: #ede5d8;
+  --color-sand-2: #e1d8c7;
+  --color-card: #f7f1e6;
 
   /* Ajustado 2026-07-22 para que coincida con el naranja real del logo
      (muestreado del PNG: #FC7300 arriba del degradé) -- antes era un tono
@@ -34,9 +38,15 @@
   --color-seafoam-text: #255954;
   --color-seafoam-bg: #e4eeec;
 
-  --color-ink: #241f1a;
+  --color-ink: #2c2620;
   --color-ink-soft: #6b5e50;
   --color-btn-ink: #3a1505;
+
+  /* Los bordes vivían SOLO dentro de los bloques [data-theme]: sin el atributo
+     puesto (JS apagado, o el instante previo al script de next-themes) el sitio
+     entero se quedaba sin color de borde. El fallback claro va acá. */
+  --color-linea: rgba(36, 31, 26, 0.14);
+  --color-linea-fuerte: rgba(36, 31, 26, 0.24);
 
   --color-whatsapp: #0f7a40;
 
@@ -92,15 +102,15 @@
   --color-ambar: #8a5a00;
   --color-ambar-suave: #f8ecd0;
   --color-sobre-acento: #ffffff;
-  --color-sand: #f5f0e7;
-  --color-sand-2: #e9e2d5;
-  --color-card: #fcf8f1;
+  --color-sand: #ede5d8;
+  --color-sand-2: #e1d8c7;
+  --color-card: #f7f1e6;
   --color-seafoam-bg: #e4eeec;
   --color-seafoam-text: #255954;
-  --color-ink: #241f1a;
+  --color-ink: #2c2620;
   --color-ink-soft: #6b5e50;
-  --color-linea: rgba(36, 31, 26, 0.1);
-  --color-linea-fuerte: rgba(36, 31, 26, 0.18);
+  --color-linea: rgba(36, 31, 26, 0.14);
+  --color-linea-fuerte: rgba(36, 31, 26, 0.24);
 }
 
 /* Radios, sombras y anchos compartidos -- antes cada componente inventaba su
@@ -113,8 +123,10 @@
   --shadow-card: 0 18px 50px -30px rgba(10, 14, 13, 0.45);
   --shadow-lift: 0 24px 60px -24px rgba(10, 14, 13, 0.35);
   --shadow-chrome: 0 12px 35px rgba(10, 14, 13, 0.12);
-  --ancho-contenido: 86rem;
+  --ancho-contenido: 78rem;
   --ancho-medio: 64rem;
+  --ritmo-seccion: 3.5rem;
+  --ritmo-seccion-md: 6rem;
 }
 
 @theme inline {
@@ -142,6 +154,8 @@
   --color-sobre-acento: var(--color-sobre-acento);
   --color-linea: var(--color-linea);
   --color-linea-fuerte: var(--color-linea-fuerte);
+  --ritmo-seccion: var(--ritmo-seccion);
+  --ritmo-seccion-md: var(--ritmo-seccion-md);
 
   --font-display: var(--font-display);
   --font-body: var(--font-body);
@@ -159,10 +173,44 @@ body {
   background: var(--color-sand);
   color: var(--color-ink);
   transition: background-color 0.2s ease, color 0.2s ease;
+  /* SIN overflow-x: acá convierte body en scroll container y mata el
+     `sticky top-0` del Navbar (components/layout/Navbar.tsx:100). */
 }
 
 html {
   scroll-behavior: smooth;
+  /* Barra fina y en tono de marca en vez de la gris gruesa del sistema.
+     --color-linea-fuerte ya está definido por tema (arriba, :root/light/dark),
+     así que la barra sigue al dark mode sola. Ocultarla del todo se descartó:
+     la home es larga y el usuario perdería el indicador de posición. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-linea-fuerte) transparent;
+}
+
+/* WebKit viejo (Safari, Chrome < 121), que no soporta scrollbar-width. */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-linea-fuerte);
+  border-radius: var(--radius-pill);
+}
+
+/* Bajar "volumen" visual en desktop ~10%, pedido del dueño (equivalente a
+   zoom 90% del navegador). CSS `zoom` real quedó descartado: hay 10+
+   componentes con `vw` (Hero, carruseles, paneles) que no escalan con
+   `zoom` y quedarían desincronizados del resto -- mismo gotcha que rompió
+   el CRM con `body{zoom:.9}` y `100vw`. Bajar `font-size` del `html` escala
+   todo lo que usa `rem` (el grueso de Tailwind: spacing, texto, radios)
+   sin tocar `vw` ni px fijos. */
+@media (min-width: 1024px) {
+  html {
+    font-size: 90%;
+  }
 }
 
 /* Aviso del nombre de la foto en el Hero (esquina superior). El crossfade de
@@ -179,9 +227,6 @@ html {
    forwards el estado final (visible) queda fijo pase lo que pase. */
 .animate-hero-fade {
   animation: hero-fade 0.9s ease-out forwards;
-}
-@media (prefers-reduced-motion: reduce) {
-  .animate-hero-fade { animation: none; }
 }
 
 /* Globo de aviso del asistente virtual (ContactoFab) */
@@ -238,26 +283,33 @@ html {
   50% { transform: scale(1.045) translate3d(-1%, -1%, 0); }
   100% { transform: scale(1.08) translate3d(0, 0, 0); }
 }
+/* Variante inversa: arranca acercada y se aleja, derivando al lado opuesto.
+   Alternando una y otra por slide, dos fotos seguidas nunca se mueven en la
+   misma dirección y el pase deja de sentirse repetitivo. */
+@keyframes deriva-lenta-inv {
+  0% { transform: scale(1.08) translate3d(1%, 1%, 0); }
+  50% { transform: scale(1.045) translate3d(1%, 0, 0); }
+  100% { transform: scale(1) translate3d(0, 0, 0); }
+}
 
 /* Foto del hero: zoom+deriva continuo. Va en el contenedor de la imagen, no
-   en el texto -- por eso es una clase aparte y no `motion-safe:animate-[...]`
-   inline (el arbitrary value de Tailwind no soporta comas dentro de translate3d). */
-@media (prefers-reduced-motion: no-preference) {
-  .hero-kenburns {
-    animation: deriva-lenta 20s ease-in-out infinite alternate;
-  }
+   en el texto -- por eso es una clase aparte y no una utilidad inline (el
+   arbitrary value de Tailwind no soporta comas dentro de translate3d). */
+.hero-kenburns {
+  animation: deriva-lenta 20s ease-in-out infinite alternate;
+}
+.hero-kenburns-inv {
+  animation: deriva-lenta-inv 20s ease-in-out infinite alternate;
 }
 
 /* Parallax de scroll nativo en CSS (sin listener de scroll en JS). Donde el
    navegador no soporta `animation-timeline: view()` (Safari < 17.4, Firefox),
    la regla entera no aplica y la foto queda estática -- degradación, no rotura. */
 @supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .hero-parallax {
-      animation: hero-parallax linear;
-      animation-timeline: view();
-      animation-range: entry 0% cover 60%;
-    }
+  .hero-parallax {
+    animation: hero-parallax linear;
+    animation-timeline: view();
+    animation-range: entry 0% cover 60%;
   }
 }
 @keyframes hero-parallax {
@@ -269,16 +321,6 @@ html {
   from { transform: translateX(-120%); }
   to { transform: translateX(320%); }
 }
-@media (prefers-reduced-motion: reduce) {
-  [class*="animate-[surge"],
-  [class*="animate-[entrar-izq"],
-  [class*="animate-[saltar"],
-  [class*="animate-[rebote"],
-  [class*="animate-[flotar"],
-  [class*="animate-[brillo"],
-  [class*="animate-[pulso-suave"] { animation: none !important; }
-}
-
 ::selection {
   background: var(--color-coral);
   color: white;
@@ -288,17 +330,6 @@ html {
   outline: 2px solid var(--color-coral);
   outline-offset: 3px;
   border-radius: 4px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  * {
-    animation-duration: 0.001ms !important;
-    transition-duration: 0.001ms !important;
-  }
 }
 
 /* Entrada al hacer scroll (Revelar.tsx). El estado inicial vive acá y no en
@@ -426,13 +457,3 @@ html {
 }
 .animate-typing-dot { animation: typing-dot 1s ease-in-out infinite; }
 
-@media (prefers-reduced-motion: reduce) {
-  .revelar, .revelar.es-visible { opacity: 1; transform: none; animation: none; }
-  .animate-fab-item { animation: none; }
-  .animate-fab-halo, .animate-fab-shine { animation: none; opacity: 0; }
-  .animate-panel-abrir { animation: none; }
-  .animate-msg-in-right, .animate-msg-in-left { animation: none; }
-  .animate-typing-dot { animation: none; opacity: 0.7; }
-  .animate-wordmark-line { animation: none; clip-path: none; }
-  .animate-campana-balanceo, .animate-carrito-rebote { animation: none; }
-}
