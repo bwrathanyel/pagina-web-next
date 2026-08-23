@@ -90,8 +90,9 @@ export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
                   alt={idx === i ? heroAlt : ""}
                   fill
                   sizes="100vw"
-                  className="hero-kenburns object-cover"
+                  className={"object-cover " + (idx === i ? "hero-kenburns" : "")}
                   priority={pos === 0 && i === 0}
+                  loading={pos === 0 && i === 0 ? undefined : "eager"}
                 />
               </div>
             );

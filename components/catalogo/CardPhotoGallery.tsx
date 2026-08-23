@@ -15,28 +15,33 @@ export function CardPhotoGallery({
   referencial?: boolean;
 }) {
   const [activa, setActiva] = useState(0);
-  // Dirección del cruce: hacia dónde entra la foto siguiente. El
-  // auto-advance del hover usa siempre +1; el swipe/flecha usa mover().
-  const [direccion, setDireccion] = useState<1 | -1>(1);
   const [hoverActivo, setHoverActivo] = useState(false);
   // Las fotos 2..N solo se ven si el usuario pasa el mouse o desliza, pero
   // montarlas de entrada las descargaba igual (opacity-0 no evita la descarga):
   // el catálogo bajaba ~4 fotos por card, 12 MB por recorrerlo desde el
   // teléfono. Se montan al primer gesto, que es cuando recién pueden verse.
   const [montarTodas, setMontarTodas] = useState(false);
+  // El auto-advance no puede cruzar hacia una foto que el navegador todavía
+  // no bajó -- eso es el hueco que se veía como salto. Se salta solo entre
+  // índices ya confirmados por el onLoad de <Image>.
+  const [cargadas, setCargadas] = useState<Set<number>>(() => new Set([0]));
   const toque = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     if (!hoverActivo || fotos.length < 2) return;
     const interval = window.setInterval(() => {
-      setDireccion(1);
-      setActiva((indice) => (indice + 1) % fotos.length);
-    }, 1800);
+      setActiva((indice) => {
+        for (let paso = 1; paso < fotos.length; paso++) {
+          const siguiente = (indice + paso) % fotos.length;
+          if (cargadas.has(siguiente)) return siguiente;
+        }
+        return indice;
+      });
+    }, 2400);
     return () => window.clearInterval(interval);
-  }, [fotos.length, hoverActivo]);
+  }, [fotos.length, hoverActivo, cargadas]);
 
   function mover(sentido: 1 | -1) {
-    setDireccion(sentido);
     setActiva((indice) => (indice + sentido + fotos.length) % fotos.length);
   }
 
@@ -83,11 +88,12 @@ export function CardPhotoGallery({
             fill
             sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
             priority={indice === 0}
+            onLoad={() => setCargadas((prev) => (prev.has(indice) ? prev : new Set(prev).add(indice)))}
             className={
-              "object-cover transition-[opacity,transform] duration-700 ease-out " +
+              "object-cover transition-[opacity,transform] duration-[900ms] ease-in-out " +
               (indice === activa
-                ? "translate-x-0 opacity-100"
-                : "pointer-events-none opacity-0 " + (direccion === 1 ? "translate-x-[6%]" : "-translate-x-[6%]"))
+                ? "scale-100 opacity-100"
+                : "pointer-events-none scale-[1.02] opacity-0")
             }
           />
         ))}

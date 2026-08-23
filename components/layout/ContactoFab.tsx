@@ -65,6 +65,8 @@ export function ContactoFab() {
   useEffect(() => {
     if (!abierto) return;
     function onClickFuera(e: MouseEvent) {
+      const target = e.target as Element;
+      if (target.closest('[role="dialog"]')) return;
       if (fabRef.current && !fabRef.current.contains(e.target as Node)) setAbierto(false);
     }
     function onEscape(e: KeyboardEvent) {

@@ -63,10 +63,14 @@ export function HotSalesSection({ pool }: { pool: Promocion[] }) {
         }}
       />
 
+      {/* Sin `desktop`: antes volvía a grid en sm+ y envolvía a una 2ª fila
+          pasadas 4 tarjetas (xl:grid-cols-4). Ahora se mantiene horizontal en
+          todos los tamaños, con flechas en puntero fino (2026-08-22). */}
       <Carrusel
         anchoItem="72%"
-        maxItem="264px"
-        desktop="sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-7 sm:overflow-visible sm:px-0 lg:grid-cols-3 xl:grid-cols-4 xl:gap-6"
+        maxItem="330px"
+        gap="gap-4 sm:gap-6"
+        flechas
         items={visible.map((p, i) => (
           <Revelar key={p.id} retraso={i * 60} className="h-full">
             <PromocionCard promocion={p} />

@@ -15,8 +15,8 @@ export function CatalogoGrid({ children }: { children: React.ReactNode }) {
     <Carrusel
       items={Children.toArray(children)}
       anchoItem="46%"
-      maxItem="230px"
-      gap="gap-3"
+      maxItem="330px"
+      gap="gap-3 sm:gap-6"
       flechas
     />
   );

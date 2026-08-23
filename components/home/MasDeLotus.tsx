@@ -41,10 +41,12 @@ export function MasDeLotus() {
         Más de Lotus 360
       </p>
 
+      {/* Sin `desktop`: horizontal en todos los tamaños, igual que
+          HotSalesSection (2026-08-22). */}
       <Carrusel
         anchoItem="86%"
-        maxItem="330px"
-        desktop="sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:px-0"
+        maxItem="620px"
+        flechas
         items={[
           <Revelar key="trabaja" className="h-full">
           <div className="flex h-full flex-col justify-between rounded-[28px] bg-dusk p-6 text-dusk-text lg:p-10">
