@@ -13,14 +13,20 @@ export function FotoCarousel({ fotos, alt }: { fotos: string[]; alt: string }) {
   return (
     <div>
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-sand-2">
-        <Image
-          src={fotos[activa]}
-          alt={alt}
-          fill
-          sizes="(min-width: 860px) 50vw, 100vw"
-          className="object-cover"
-          priority={activa === 0}
-        />
+        {fotos.map((foto, i) => (
+          <Image
+            key={foto}
+            src={foto}
+            alt={i === activa ? alt : ""}
+            fill
+            sizes="(min-width: 860px) 50vw, 100vw"
+            priority={i === 0}
+            className={
+              "object-cover transition-[opacity,transform] duration-500 ease-in-out " +
+              (i === activa ? "scale-100 opacity-100" : "pointer-events-none scale-[1.02] opacity-0")
+            }
+          />
+        ))}
       </div>
       {fotos.length > 1 ? (
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
@@ -29,6 +35,8 @@ export function FotoCarousel({ fotos, alt }: { fotos: string[]; alt: string }) {
               key={foto}
               type="button"
               onClick={() => setActiva(i)}
+              onMouseEnter={() => setActiva(i)}
+              onFocus={() => setActiva(i)}
               aria-label={`Ver foto ${i + 1} de ${fotos.length}`}
               aria-current={i === activa}
               className={
