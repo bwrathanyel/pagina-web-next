@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { WIZARD_CONFIG } from "@/components/cotizador/wizardConfig";
 import { CampoRenderer } from "@/components/cotizador/fields/CampoRenderer";
 import type { Respuestas, TipoCotizacion } from "@/components/cotizador/types";
-import { ASESOR_BOLETERIA, elegirAsesor } from "@/lib/asesores";
+import { ASESOR_BOLETERIA, asesorPorNombre, elegirAsesor } from "@/lib/asesores";
 import {
   armarBoleteria,
   armarFullday,
@@ -13,7 +13,7 @@ import {
   armarPaquete,
   armarPersonalizado,
 } from "@/lib/leads/buildCotizacion";
-import { enviarACRM } from "@/lib/leads/ingestWebLead";
+import { crearLeadCRM } from "@/lib/leads/ingestWebLead";
 import { enviarASheetMonkey } from "@/lib/leads/sheetMonkey";
 import { detectarProcedencia, esInstagramInApp } from "@/lib/utils/procedencia";
 
@@ -74,7 +74,7 @@ export function CotizadorWizard({
     setRespuestas((r) => ({ ...r, [key]: valor }));
   }
 
-  function enviar() {
+  async function enviar() {
     if (enviandoRef.current) return;
     enviandoRef.current = true;
     const nombreFullday = productoNombre ?? (respuestas.destino as string) ?? "Full Day";
@@ -89,8 +89,8 @@ export function CotizadorWizard({
               ? armarPersonalizado(respuestas)
               : armarPaquete(respuestas);
 
-    const asesor = tipo === "boleteria" ? ASESOR_BOLETERIA : elegirAsesor();
-    const telefono = (respuestas.telefono as string) || "No especificado";
+    const asesorLocal = tipo === "boleteria" ? ASESOR_BOLETERIA : elegirAsesor();
+    const telefono = (respuestas.telefono as string) || "";
     const nombre = (respuestas.nombre as string) || "";
 
     enviarASheetMonkey({
@@ -99,16 +99,21 @@ export function CotizadorWizard({
       pagina: TITULOS[tipo],
       nombre,
       procedencia: detectarProcedencia(),
-      telefono,
-      asesor: asesor.telefono,
+      telefono: telefono || "No especificado",
+      asesor: asesorLocal.telefono,
     });
-    enviarACRM({
+    const leadCRM = await crearLeadCRM({
       nombre,
       telefono,
       destino: resultado.destino,
       personas: resultado.personas,
       consulta: resultado.consulta,
-    });
+    }).catch(() => null);
+    // Boletería siempre va al asesor fijo de esa rama; el resto prefiere el
+    // asesor que el CRM realmente asignó sobre el elegido localmente.
+    const asesor = tipo === "boleteria"
+      ? asesorLocal
+      : (asesorPorNombre(leadCRM?.asesor) ?? asesorLocal);
 
     const mensaje = esInstagramInApp() ? resultado.mensajeTexto : resultado.mensajeEmoji;
     setWaHref(`https://wa.me/${asesor.telefono}?text=${encodeURIComponent(mensaje)}`);

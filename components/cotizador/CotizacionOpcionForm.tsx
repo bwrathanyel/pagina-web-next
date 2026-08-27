@@ -95,7 +95,7 @@ export function CotizacionOpcionForm({ opcion }: { opcion: CotizacionOpcion }) {
   async function enviar(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (enviando) return;
-    if (!telefonoPareceValido(telefono)) {
+    if (telefono.trim() && !telefonoPareceValido(telefono)) {
       setError("Escribe un número válido de 7 a 15 dígitos. Puedes usar formato 0412-1234567 o +58 412-1234567.");
       return;
     }
@@ -235,7 +235,7 @@ export function CotizacionOpcionForm({ opcion }: { opcion: CotizacionOpcion }) {
 
         <div className="mt-7 grid gap-5 sm:grid-cols-2">
           <label className="text-sm font-bold text-ink sm:col-span-2">Nombre y apellido<input required autoComplete="name" value={nombre} onChange={(e) => setNombre(e.target.value)} className={inputClass} placeholder="Escribe tu nombre completo" /></label>
-          <label className="text-sm font-bold text-ink">Teléfono<input required autoComplete="tel" inputMode="tel" value={telefono} onChange={(e) => { setTelefono(e.target.value); setError(null); }} className={inputClass} placeholder="Ej: 0412-1234567 o +58 412-1234567" /><span className="mt-1.5 block text-xs font-normal leading-5 text-ink-soft">Aceptamos formato nacional o internacional.</span></label>
+          <label className="text-sm font-bold text-ink">Teléfono opcional<input autoComplete="tel" inputMode="tel" value={telefono} onChange={(e) => { setTelefono(e.target.value); setError(null); }} className={inputClass} placeholder="Ej: 0412-1234567 o +58 412-1234567" /><span className="mt-1.5 block text-xs font-normal leading-5 text-ink-soft">Aceptamos formato nacional o internacional.</span></label>
           <label className="text-sm font-bold text-ink">Correo opcional<input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="tu@correo.com" /></label>
           <label className="text-sm font-bold text-ink">{opcion.esHotel ? "Fecha de entrada" : "Fecha de viaje"}<input required type="date" min={hoy} max={opcion.vigenciaFin ?? undefined} value={fechaEntrada} onChange={(e) => { setFechaEntrada(e.target.value); if (fechaSalida && fechaSalida <= e.target.value) setFechaSalida(""); }} className={inputClass} /></label>
           <label className="text-sm font-bold text-ink">{opcion.esHotel ? "Fecha de salida" : "Regreso opcional"}<input required={opcion.esHotel} type="date" min={fechaEntrada ? sumarDias(fechaEntrada, 1) : hoy} max={opcion.vigenciaFin ?? undefined} value={fechaSalida} onChange={(e) => setFechaSalida(e.target.value)} className={inputClass} /></label>

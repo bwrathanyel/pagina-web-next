@@ -36,39 +36,57 @@ export function WhatsAppLeadButton({
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [nombre, setNombre] = useState("");
-  const [telefono, setTelefono] = useState("");
   const [destino, setDestino] = useState("");
+  const [adultos, setAdultos] = useState("");
+  const [ninos, setNinos] = useState("");
+  const [infantes, setInfantes] = useState("");
+
+  function textoPersonas() {
+    const partes = [
+      adultos ? `${adultos} adulto${adultos === "1" ? "" : "s"}` : "",
+      ninos ? `${ninos} niño${ninos === "1" ? "" : "s"}` : "",
+      infantes ? `${infantes} infante${infantes === "1" ? "" : "s"}` : "",
+    ].filter(Boolean);
+    return partes.join(", ");
+  }
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
-    if (!nombre.trim() || !telefono.trim() || !destino.trim()) {
-      setError("Completa los 3 campos para continuar.");
+    if (!nombre.trim() || !destino.trim()) {
+      setError("Completa nombre y destino para continuar.");
       return;
     }
     setEnviando(true);
     setError(null);
     const mensajeWhatsapp = `${mensajeBase} Me interesa ${destino}.`;
+    // Sincrónico, dentro del gesto del click: Safari/iOS bloquea un
+    // window.open que llegue después de un await.
+    const ventana = window.open("", "_blank", "noopener,noreferrer");
     try {
       const resultado = await crearLeadCRM({
         nombre: nombre.trim(),
-        telefono: telefono.trim(),
         destino: destino.trim(),
-        personas: "",
+        personas: textoPersonas(),
         consulta: mensajeWhatsapp,
       });
       const numero = resultado.asesor_whatsapp?.replace(/[^\d+]/g, "");
       const href = numero
         ? `https://wa.me/${numero}?text=${encodeURIComponent(mensajeWhatsapp)}`
         : whatsappHref(mensajeWhatsapp);
-      window.open(href, "_blank", "noopener,noreferrer");
+      if (ventana) ventana.location.href = href;
+      else window.open(href, "_blank", "noopener,noreferrer");
       setAbierto(false);
       setNombre("");
-      setTelefono("");
       setDestino("");
+      setAdultos("");
+      setNinos("");
+      setInfantes("");
     } catch {
       // Nunca dejar al visitante sin salida: si el CRM falla, igual lo
       // mandamos al WhatsApp corporativo fijo en vez de trabarlo acá.
-      window.open(whatsappHref(mensajeWhatsapp), "_blank", "noopener,noreferrer");
+      const href = whatsappHref(mensajeWhatsapp);
+      if (ventana) ventana.location.href = href;
+      else window.open(href, "_blank", "noopener,noreferrer");
       setAbierto(false);
     } finally {
       setEnviando(false);
@@ -121,25 +139,6 @@ export function WhatsAppLeadButton({
               </div>
             </div>
             <div>
-              <label htmlFor="wa-lead-telefono" className="mb-1.5 block text-sm font-semibold text-ink">
-                Teléfono<span className="ml-1 text-coral">*</span>
-              </label>
-              <div className="relative">
-                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-soft/70">
-                  <TelefonoIcon />
-                </span>
-                <input
-                  id="wa-lead-telefono"
-                  type="tel"
-                  className={inputClass}
-                  placeholder="Ej. 0412-1234567"
-                  value={telefono}
-                  onChange={(e) => setTelefono(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-            <div>
               <label htmlFor="wa-lead-destino" className="mb-1.5 block text-sm font-semibold text-ink">
                 Destino que te interesa<span className="ml-1 text-coral">*</span>
               </label>
@@ -155,6 +154,50 @@ export function WhatsAppLeadButton({
                   value={destino}
                   onChange={(e) => setDestino(e.target.value)}
                   required
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label htmlFor="wa-lead-adultos" className="mb-1.5 block text-sm font-semibold text-ink">
+                  Adultos
+                </label>
+                <input
+                  id="wa-lead-adultos"
+                  type="number"
+                  min={0}
+                  className={inputClass.replace("pl-11", "pl-4")}
+                  placeholder="0"
+                  value={adultos}
+                  onChange={(e) => setAdultos(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="wa-lead-ninos" className="mb-1.5 block text-sm font-semibold text-ink">
+                  Niños
+                </label>
+                <input
+                  id="wa-lead-ninos"
+                  type="number"
+                  min={0}
+                  className={inputClass.replace("pl-11", "pl-4")}
+                  placeholder="0"
+                  value={ninos}
+                  onChange={(e) => setNinos(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="wa-lead-infantes" className="mb-1.5 block text-sm font-semibold text-ink">
+                  Infantes
+                </label>
+                <input
+                  id="wa-lead-infantes"
+                  type="number"
+                  min={0}
+                  className={inputClass.replace("pl-11", "pl-4")}
+                  placeholder="0"
+                  value={infantes}
+                  onChange={(e) => setInfantes(e.target.value)}
                 />
               </div>
             </div>
@@ -198,14 +241,6 @@ function PersonaIcon() {
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <circle cx="12" cy="8" r="4" />
       <path d="M4 20c0-4 3.5-7 8-7s8 3 8 7" />
-    </svg>
-  );
-}
-
-function TelefonoIcon() {
-  return (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M4 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L14 13l5 2v4a2 2 0 0 1-2 2C9.5 21 3 14.5 3 6a2 2 0 0 1 1-2Z" />
     </svg>
   );
 }

@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     personas: texto("personas", 160),
     consulta: texto("consulta", 3000),
   };
-  if (!datos.nombre || !datos.telefono) {
+  if (!datos.nombre || datos.destino === ".") {
     return NextResponse.json({ ok: false, error: "datos_invalidos" }, { status: 400 });
   }
 

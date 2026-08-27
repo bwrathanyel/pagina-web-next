@@ -5,8 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCarritoStore } from "@/lib/carrito/store";
 import { armarCarrito } from "@/lib/leads/buildCarrito";
-import { elegirAsesor } from "@/lib/asesores";
-import { enviarACRM } from "@/lib/leads/ingestWebLead";
+import { asesorPorNombre, elegirAsesor } from "@/lib/asesores";
+import { crearLeadCRM } from "@/lib/leads/ingestWebLead";
 import { enviarASheetMonkey } from "@/lib/leads/sheetMonkey";
 import { detectarProcedencia, esInstagramInApp } from "@/lib/utils/procedencia";
 
@@ -19,13 +19,12 @@ export default function CarritoPage() {
   const [enviando, setEnviando] = useState(false);
   const enviandoRef = useRef(false);
 
-  function enviar(e: React.FormEvent) {
+  async function enviar(e: React.FormEvent) {
     e.preventDefault();
     if (enviandoRef.current) return;
     enviandoRef.current = true;
     setEnviando(true);
     const resultado = armarCarrito(items, nombre, telefono, nota);
-    const asesor = elegirAsesor();
 
     enviarASheetMonkey({
       destino: resultado.destino,
@@ -34,15 +33,16 @@ export default function CarritoPage() {
       nombre,
       procedencia: detectarProcedencia(),
       telefono,
-      asesor: asesor.telefono,
+      asesor: elegirAsesor().telefono,
     });
-    enviarACRM({
+    const leadCRM = await crearLeadCRM({
       nombre,
       telefono,
       destino: resultado.destino,
       personas: resultado.personas,
       consulta: resultado.consulta,
-    });
+    }).catch(() => null);
+    const asesor = asesorPorNombre(leadCRM?.asesor) ?? elegirAsesor();
 
     const mensaje = esInstagramInApp() ? resultado.mensajeTexto : resultado.mensajeEmoji;
     setWaHref(`https://wa.me/${asesor.telefono}?text=${encodeURIComponent(mensaje)}`);
@@ -147,12 +147,11 @@ export default function CarritoPage() {
         </div>
         <div>
           <label htmlFor="telefono" className="mb-1.5 block text-sm font-semibold text-ink">
-            WhatsApp <span className="text-coral">*</span>
+            WhatsApp opcional
           </label>
           <input
             id="telefono"
             type="tel"
-            required
             value={telefono}
             onChange={(e) => setTelefono(e.target.value)}
             className="w-full rounded-xl border border-ink/15 bg-sand px-4 py-3 text-base text-ink"

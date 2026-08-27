@@ -1,6 +1,6 @@
 export interface LeadCRM {
   nombre: string;
-  telefono: string;
+  telefono?: string;
   destino: string;
   personas: string;
   consulta: string;
@@ -31,6 +31,5 @@ export async function crearLeadCRM(datos: LeadCRM): Promise<RespuestaLeadCRM> {
  * never block the WhatsApp handoff, which is the part that actually
  * gets the visitor to an advisor. */
 export function enviarACRM(datos: LeadCRM): void {
-  if (!datos.telefono) return;
   crearLeadCRM(datos).catch(() => {});
 }
