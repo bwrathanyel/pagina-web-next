@@ -10,9 +10,9 @@ export function fotosDeLaPromo(p: Promocion): string[] {
 
 // Agrupa por hotel (producto.id, o la propia promocion.id si es una promo
 // suelta sin hotel) y se queda con la primera de cada grupo -- el array de
-// entrada ya viene ordenado por precio ascendente (getPromociones()), así que
-// "la primera" es "la más barata". Mismo criterio de dedup-por-hotel que ya
-// usa cotizador-chat (nunca 2 tarjetas del mismo hotel).
+// entrada ya viene ordenado por score descendente (getPromociones()), así que
+// "la primera" es "la de mejor rendimiento" de ese hotel. Mismo criterio de
+// dedup-por-hotel que ya usa cotizador-chat (nunca 2 tarjetas del mismo hotel).
 // Se descartan las promos con menos de 2 fotos -- una tarjeta sin fotos (o
 // con una sola) se ve pobre al lado de las demás en esta sección.
 export function promosHotSales(promociones: Promocion[]): Promocion[] {
@@ -36,12 +36,12 @@ export function destinosDelPool(pool: Promocion[]): string[] {
   return [...destinos].sort();
 }
 
-// Las N ofertas que van en la vitrina de la home: la mas barata de cada
-// destino, sin repetir destino. El pool ya viene ordenado por precio
-// ascendente desde getPromociones(), asi que alcanza con recorrerlo en orden
-// -- no usar agruparPorDestino aca, que reordena alfabeticamente y pierde el
-// criterio de precio. Se exigen promo con producto (sin producto no hay
-// destino ni ficha a la que linkear) y al menos una foto.
+// Las N ofertas que van en la vitrina de la home: la mejor de cada destino,
+// sin repetir destino. El pool ya viene ordenado por score descendente desde
+// getPromociones(), asi que alcanza con recorrerlo en orden -- no usar
+// agruparPorDestino aca, que reordena alfabeticamente y pierde el ranking. Se
+// exigen promo con producto (sin producto no hay destino ni ficha a la que
+// linkear) y al menos una foto.
 export function ofertasVitrina(pool: Promocion[], cantidad = 4): Promocion[] {
   const destinos = new Set<string>();
   const resultado: Promocion[] = [];

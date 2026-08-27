@@ -41,6 +41,9 @@ export interface Promocion {
   fecha_fin_estimada: string | null;
   ninos_gratis_cantidad: number | null;
   incluye_tags: string[];
+  /** Score de rendimiento (Hot Sales), recalculado a diario por el cron
+   * catalogo-score. La lista de promociones viene ordenada por este campo. */
+  score: number;
   /** Descripción corta de largo parejo para las tarjetas, generada una vez por
    * generar-resumenes-promos y guardada. Nunca trae precios (ver la migración
    * 20260726180000). */
