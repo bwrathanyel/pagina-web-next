@@ -1,4 +1,5 @@
-const NUMERO_CORPORATIVO = process.env.NEXT_PUBLIC_WHATSAPP_CORPORATIVO ?? "584244634041";
+const NUMERO_CORPORATIVO =
+  process.env.NEXT_PUBLIC_WHATSAPP_CORPORATIVO?.trim() || "584244634041";
 
 /** Corporate WhatsApp link — same number the current site's floating
  * button uses. The weighted advisor pool (ASESORES) only applies inside

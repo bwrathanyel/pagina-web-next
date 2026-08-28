@@ -60,8 +60,10 @@ export function WhatsAppLeadButton({
     setError(null);
     const mensajeWhatsapp = `${mensajeBase} Me interesa ${destino}.`;
     // Sincrónico, dentro del gesto del click: Safari/iOS bloquea un
-    // window.open que llegue después de un await.
-    const ventana = window.open("", "_blank", "noopener,noreferrer");
+    // window.open que llegue después de un await. Sin "noopener" acá: con
+    // esa flag window.open devuelve null y perdemos el handle de la pestaña
+    // (era la causa del about:blank colgado).
+    const ventana = window.open("about:blank", "_blank");
     try {
       const resultado = await crearLeadCRM({
         nombre: nombre.trim(),
@@ -74,7 +76,7 @@ export function WhatsAppLeadButton({
         ? `https://wa.me/${numero}?text=${encodeURIComponent(mensajeWhatsapp)}`
         : whatsappHref(mensajeWhatsapp);
       if (ventana) ventana.location.href = href;
-      else window.open(href, "_blank", "noopener,noreferrer");
+      else window.open(href, "_blank", "noopener");
       setAbierto(false);
       setNombre("");
       setDestino("");
@@ -86,7 +88,7 @@ export function WhatsAppLeadButton({
       // mandamos al WhatsApp corporativo fijo en vez de trabarlo acá.
       const href = whatsappHref(mensajeWhatsapp);
       if (ventana) ventana.location.href = href;
-      else window.open(href, "_blank", "noopener,noreferrer");
+      else window.open(href, "_blank", "noopener");
       setAbierto(false);
     } finally {
       setEnviando(false);
