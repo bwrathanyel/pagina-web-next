@@ -8,18 +8,46 @@ export function fotosDeLaPromo(p: Promocion): string[] {
   return propias.length > 0 ? propias : fotosDe(p.producto?.producto_fotos);
 }
 
-// Agrupa por hotel (producto.id, o la propia promocion.id si es una promo
-// suelta sin hotel) y se queda con la primera de cada grupo -- el array de
-// entrada ya viene ordenado por score descendente (getPromociones()), así que
-// "la primera" es "la de mejor rendimiento" de ese hotel. Mismo criterio de
-// dedup-por-hotel que ya usa cotizador-chat (nunca 2 tarjetas del mismo hotel).
-// Se descartan las promos con menos de 2 fotos -- una tarjeta sin fotos (o
-// con una sola) se ve pobre al lado de las demás en esta sección.
+// Vigencia: hasta ahora la web NO la filtraba (ver plan Hot Sales manual) y una
+// promo vencida aparecía hundida con score 0 pero aparecía. Vigente = ninguna de
+// sus dos fechas de fin ya pasó. Fechas 'YYYY-MM-DD' (columnas date de Postgres),
+// comparables como string contra la fecha de hoy en ISO.
+export function promoVigente(p: Promocion): boolean {
+  const hoy = new Date().toISOString().slice(0, 10);
+  if (p.fecha_venta_fin && p.fecha_venta_fin < hoy) return false;
+  if (p.fecha_fin_estimada && p.fecha_fin_estimada < hoy) return false;
+  return true;
+}
+
+// El pool de Hot Sales sale en dos bloques:
+//  1. Manuales: el dueño las forzó desde el CRM (hot_sale_estado === 'poner').
+//     Van primero, en el orden que él fijó (hot_sale_orden), sin dedup por hotel
+//     y sin mínimo de fotos -- el RPC catalogo_hot_sale_marcar ya garantizó >=1
+//     foto al ponerlas. Solo se exige que sigan vigentes: una promo que vence
+//     estando forzada cae sola del pool.
+//  2. Automáticas: las decide el ranking. Se descartan las excluidas a mano
+//     ('quitar') y las no vigentes, se exigen >=2 fotos, y se dedup-ea por hotel
+//     -- el array ya viene ordenado por score desc (getPromociones()), así que
+//     "la primera de cada hotel" es la de mejor rendimiento. El Set de vistos
+//     arranca sembrado con los hoteles del bloque manual: si no, un hotel
+//     forzado volvería a entrar por la puerta automática.
 export function promosHotSales(promociones: Promocion[]): Promocion[] {
   const vistos = new Set<number | string>();
   const resultado: Promocion[] = [];
+  const claveHotel = (p: Promocion) => (p.producto ? p.producto.id : `promo:${p.id}`);
+
+  const manuales = promociones
+    .filter((p) => p.hot_sale_estado === "poner" && promoVigente(p))
+    .sort((a, b) => (a.hot_sale_orden ?? 1e9) - (b.hot_sale_orden ?? 1e9));
+  for (const p of manuales) {
+    vistos.add(claveHotel(p));
+    resultado.push(p);
+  }
+
   for (const p of promociones) {
-    const clave = p.producto ? p.producto.id : `promo:${p.id}`;
+    if (p.hot_sale_estado === "poner" || p.hot_sale_estado === "quitar") continue;
+    if (!promoVigente(p)) continue;
+    const clave = claveHotel(p);
     if (vistos.has(clave)) continue;
     if (fotosDeLaPromo(p).length < 2) continue;
     vistos.add(clave);

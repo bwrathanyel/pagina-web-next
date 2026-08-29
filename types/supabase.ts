@@ -39,6 +39,15 @@ export interface Promocion {
   precio_desde_usd: number | null;
   vigencia_texto: string | null;
   fecha_fin_estimada: string | null;
+  /** Fecha límite de venta. La web filtra vigencia de Hot Sales por este campo
+   * junto con fecha_fin_estimada (ver lib/promociones/hotSales.ts promoVigente). */
+  fecha_venta_fin: string | null;
+  /** Espejo de SOLO LECTURA del eje manual de Hot Sales (catalogo_boost.hot_sale
+   * / orden_manual). Lo escribe recalcular_catalogo_score() en la base; nunca se
+   * edita desde acá. 'poner' fuerza la promo al pool sin dedup ni mínimo de
+   * fotos; 'quitar' la excluye; null = la decide el ranking. */
+  hot_sale_estado: "poner" | "quitar" | null;
+  hot_sale_orden: number | null;
   ninos_gratis_cantidad: number | null;
   incluye_tags: string[];
   /** Score de rendimiento (Hot Sales), recalculado a diario por el cron
