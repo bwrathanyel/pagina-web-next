@@ -11,7 +11,8 @@ import { EditarPromocionModal } from "@/components/admin/EditarPromocionModal";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { revalidarSitioPublico } from "@/lib/admin/revalidate";
 import { formatearPrecioCliente } from "@/lib/utils/formatoPrecio";
-import type { Promocion } from "@/types/supabase";
+import { precioDobleHero } from "@/lib/tarifas";
+import type { Promocion, Tarifa } from "@/types/supabase";
 
 export function PromocionCard({ promocion }: { promocion: Promocion }) {
   const router = useRouter();
@@ -34,7 +35,13 @@ export function PromocionCard({ promocion }: { promocion: Promocion }) {
     fotosPropias.length > 0
       ? esSoloReferencial(promocion.promocion_fotos)
       : esSoloReferencial(promocion.producto?.producto_fotos);
-  const precioLabel = formatearPrecioCliente(promocion.precio_texto) ?? "Consultar disponibilidad";
+  // DBL en grande: si la fila trae grilla con `dbl`, el precio titular es el
+  // doble por persona (así se promociona en redes). Sin `dbl` cae al
+  // `precio_texto` de siempre.
+  const hero = precioDobleHero({ precios: promocion.precios, moneda: promocion.moneda } as Tarifa);
+  const precioLabel = hero
+    ? `${hero.monto} ${hero.nota}`
+    : (formatearPrecioCliente(promocion.precio_texto) ?? "Consultar disponibilidad");
   const href = promocion.producto ? `/producto/${promocion.producto.id}` : null;
   const key = `promocion-${promocion.id}`;
   const puedeEditar = rol === "admin" && modoEdicion;
@@ -51,7 +58,12 @@ export function PromocionCard({ promocion }: { promocion: Promocion }) {
         cotizarHref={`/cotizar/promocion/${promocion.id}`}
         resumen={promocion.resumen_ia}
         precioLabel={precioLabel}
-        precioMuted={!promocion.precio_texto}
+        precioMuted={!hero && !promocion.precio_texto}
+        hotel={
+          promocion.producto
+            ? { nombre: promocion.producto.nombre, href: `/producto/${promocion.producto.id}` }
+            : null
+        }
         vigenciaLabel={promocion.vigencia_texto}
         ninosGratis={promocion.ninos_gratis_cantidad}
         oculto={!visible}

@@ -31,6 +31,18 @@ export interface TicketCardProps {
    * abajo de todo, la card no sabe nada de roles ni de qué hay adentro. */
   pieAdmin?: React.ReactNode;
   oculto?: boolean;
+  /** Chip clickeable al hotel dueño de la promoción. Solo se muestra cuando
+   * hay href y nombre (una promo suelta o una card de producto no lo pasan). */
+  hotel?: { nombre?: string | null; href: string | null } | null;
+}
+
+function HotelIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16" />
+      <path d="M9 7h1M14 7h1M9 11h1M14 11h1M10 21v-4a2 2 0 0 1 4 0v4" />
+    </svg>
+  );
 }
 
 function HeartIcon({ filled }: { filled: boolean }) {
@@ -78,6 +90,7 @@ export function TicketCard({
   onToggleFavorito,
   pieAdmin,
   oculto = false,
+  hotel,
 }: TicketCardProps) {
   return (
     <div
@@ -123,6 +136,15 @@ export function TicketCard({
       </div>
 
       <div className="flex flex-1 flex-col px-4 pb-4 pt-3.5 sm:px-5 sm:pb-4">
+        {hotel?.href && hotel.nombre ? (
+          <Link
+            href={hotel.href}
+            className="mb-1.5 inline-flex max-w-full items-center gap-1.5 self-start rounded-full border border-linea-fuerte bg-sand-2 px-2.5 py-1 text-[0.7rem] font-semibold text-ink transition hover:border-ink hover:bg-card"
+          >
+            <span className="flex-shrink-0"><HotelIcon /></span>
+            <span className="truncate">{hotel.nombre}</span>
+          </Link>
+        ) : null}
         {destino ? (
           <p className="mb-1 font-mono text-[0.62rem] font-bold uppercase tracking-[0.12em] text-ink-soft">
             {destino}
