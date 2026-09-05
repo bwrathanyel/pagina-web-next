@@ -32,7 +32,7 @@ function promoConDestinoPublico(promo: Promocion): Promocion {
 const TARIFA_SELECT =
   "id,precio_texto,precio_desde_usd,vigencia_texto,vigente,moneda," +
   "titulo,plan,habitacion,precios,venta_desde,venta_hasta,disfrute_desde," +
-  "fecha_fin,fecha_venta_fin,minimo_noches,condiciones,ventanas,orden_pdf,origen," +
+  "fecha_fin,fecha_venta_fin,minimo_noches,condiciones,ventanas,orden_pdf,origen,resumen_ia," +
   "tarifario_bloques(id,plan,base_precio,incluye,check_in,check_out,ocupacion,ninos,suplementos,minimo_noches,impuestos,otras)";
 
 export const PRODUCTO_SELECT =

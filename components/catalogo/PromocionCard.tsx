@@ -11,7 +11,7 @@ import { EditarPromocionModal } from "@/components/admin/EditarPromocionModal";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { revalidarSitioPublico } from "@/lib/admin/revalidate";
 import { formatearPrecioCliente } from "@/lib/utils/formatoPrecio";
-import { precioDobleHero } from "@/lib/tarifas";
+import { nombrePromo, precioDobleHero } from "@/lib/tarifas";
 import type { Promocion, Tarifa } from "@/types/supabase";
 
 export function PromocionCard({ promocion }: { promocion: Promocion }) {
@@ -38,6 +38,9 @@ export function PromocionCard({ promocion }: { promocion: Promocion }) {
   // DBL en grande: si la fila trae grilla con `dbl`, el precio titular es el
   // doble por persona (así se promociona en redes). Sin `dbl` cae al
   // `precio_texto` de siempre.
+  // Nombre "Hotel · Promo" en vivo: `titulo` es un useState que el modal de
+  // edición actualiza, por eso se pasa mezclado (no `promocion` a secas).
+  const nombre = nombrePromo({ ...promocion, titulo });
   const hero = precioDobleHero({ precios: promocion.precios, moneda: promocion.moneda } as Tarifa);
   const precioLabel = hero
     ? `${hero.monto} ${hero.nota}`
@@ -51,7 +54,7 @@ export function PromocionCard({ promocion }: { promocion: Promocion }) {
       <TicketCard
         href={href}
         badge="Promoción"
-        nombre={titulo}
+        nombre={nombre}
         destino={promocion.producto?.destino ?? null}
         fotos={fotos}
         fotosReferenciales={fotosReferenciales}
@@ -75,7 +78,7 @@ export function PromocionCard({ promocion }: { promocion: Promocion }) {
                 key,
                 tipo: "promocion",
                 id: promocion.id,
-                nombre: titulo,
+                nombre,
                 destino: promocion.producto?.destino ?? null,
                 fotoUrl: foto,
                 precioLabel,

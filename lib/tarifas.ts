@@ -108,6 +108,19 @@ export function precioDobleHero(t: Tarifa | null | undefined): { monto: string; 
   };
 }
 
+/** Nombre visible de una promoción = "Hotel · Título". Capa de vista: el
+ * `titulo` guardado no se toca. Si el título ya nombra al hotel (substring
+ * normalizado) no se antepone el prefijo. Espejo de tarNombrePromo() del CRM. */
+export function nombrePromo(p: {
+  titulo?: string | null;
+  producto?: { nombre?: string | null } | null;
+}): string {
+  const hotel = p.producto?.nombre || "";
+  const titulo = p.titulo || "Promoción";
+  if (hotel && !normalizar(titulo).includes(normalizar(hotel))) return `${hotel} · ${titulo}`;
+  return titulo;
+}
+
 /** Todas las ventanas de disfrute, no solo la última. */
 export function ventanasDe(t: Tarifa): [string | null, string | null][] {
   const v: VentanaTarifa[] = Array.isArray(t?.ventanas) ? t.ventanas : [];

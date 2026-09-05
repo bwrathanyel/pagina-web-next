@@ -81,6 +81,9 @@ export interface Tarifa {
   ventanas?: VentanaTarifa[] | null;
   orden_pdf?: number | null;
   origen?: string | null;
+  /** Descripción corta generada por generar-resumenes-promos (backfill sobre
+   * `tarifas` directo, no solo flyers). Nunca trae precios. */
+  resumen_ia?: string | null;
   tarifario_bloques?: TarifarioBloque | TarifarioBloque[] | null;
 }
 

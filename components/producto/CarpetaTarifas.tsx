@@ -103,6 +103,8 @@ function TarjetaPromocion({ tarifa, destacada }: { tarifa: Tarifa; destacada: bo
         </p>
       ) : null}
 
+      {tarifa.resumen_ia ? <p className="text-sm text-ink-soft">{tarifa.resumen_ia}</p> : null}
+
       {venta[0] || venta[1] || ventanas.length > 0 || tarifa.vigencia_texto ? (
         <div className="flex flex-col gap-1">
           {venta[0] || venta[1] ? <Dato clave="Venta" valor={rangoFechas(venta)} /> : null}
