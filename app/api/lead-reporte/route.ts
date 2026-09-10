@@ -41,6 +41,11 @@ export async function POST(request: Request) {
   try {
     const upstream = await fetch(url, {
       method: "POST",
+      // Sheet Monkey está detrás de CloudFront y rechaza con 403 cualquier
+      // request sin User-Agent. El fetch del runtime de Workers no manda uno
+      // por defecto, así que lo ponemos explícito. No fijar Content-Type:
+      // FormData necesita setear su propio boundary.
+      headers: { "User-Agent": "LotusWeb/1.0 (+https://destinoyeventoslotus360.com)" },
       body: formData,
       signal: AbortSignal.timeout(15_000),
     });
