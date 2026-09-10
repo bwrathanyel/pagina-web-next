@@ -1,3 +1,5 @@
+import { registrarEvento } from "@/lib/analitica/eventos";
+
 export interface LeadCRM {
   nombre: string;
   telefono?: string;
@@ -15,6 +17,9 @@ export interface RespuestaLeadCRM {
 }
 
 export async function crearLeadCRM(datos: LeadCRM): Promise<RespuestaLeadCRM> {
+  // Paso "WhatsApp" del embudo: llegar acá = el visitante completó un
+  // formulario y va camino al asesor, haya entrado o no el lead al CRM.
+  registrarEvento("click_whatsapp", { destino: datos.destino });
   const response = await fetch("/api/lead", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

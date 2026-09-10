@@ -11,6 +11,7 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { CurrencyProvider } from "@/components/providers/CurrencyProvider";
 import { AdminEditToggle } from "@/components/admin/AdminEditToggle";
+import { Analitica } from "@/components/analitica/Analitica";
 import { SiteContentProvider } from "@/components/providers/SiteContentProvider";
 import { getSiteContent } from "@/lib/site-content/server";
 import "./globals.css";
@@ -135,6 +136,7 @@ export default async function RootLayout({
                   <OnboardingOverlay />
                 </CromoSitio>
                 <AdminEditToggle />
+                <Analitica />
               </SiteContentProvider>
             </CurrencyProvider>
           </AuthProvider>

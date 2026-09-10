@@ -8,20 +8,18 @@ export interface LeadSheetMonkey {
   asesor: string;
 }
 
-const SHEET_MONKEY_URL = "https://api.sheetmonkey.io/form/nLKvJpsMkGCFRwwwMMMX21";
-
 /** Parallel report the business still uses today (confirmed with the
  * user 2026-07-11) — kept alongside the CRM ingest, not a replacement
- * for it. Fire-and-forget, same as the current site. */
+ * for it. Fire-and-forget, same as the current site.
+ *
+ * The Sheet Monkey form URL used to be hardcoded here and shipped in the
+ * client bundle, so anyone could scrape it and spam the sheet. Now the
+ * browser only ever hits our own same-origin route, which holds the URL
+ * server-side (SHEET_MONKEY_URL) and forwards the report. */
 export function enviarASheetMonkey(datos: LeadSheetMonkey): void {
-  const formData = new FormData();
-  formData.append("Nombres", datos.nombre || "No especificado");
-  formData.append("Fecha", new Date().toLocaleString("es-VE"));
-  formData.append("Destino", datos.destino);
-  formData.append("Pagina", datos.pagina);
-  formData.append("Servicio", datos.servicio);
-  formData.append("Procedencia", datos.procedencia || "No detectada");
-  formData.append("Telefono", datos.telefono || "No especificado");
-  formData.append("Asesor", datos.asesor || "No asignado");
-  fetch(SHEET_MONKEY_URL, { method: "POST", body: formData }).catch(() => {});
+  fetch("/api/lead-reporte", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(datos),
+  }).catch(() => {});
 }
