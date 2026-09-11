@@ -11,8 +11,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "body_invalido" }, { status: 400 });
   }
 
+  // slice() corta por code units UTF-16: en el límite puede partir un
+  // surrogate pair (emoji fuera del BMP) y dejar un surrogate suelto que
+  // se serializa como U+FFFD. Array.from() itera por code points, así que
+  // el recorte cae siempre entre caracteres completos.
   const texto = (campo: string, maximo: number) =>
-    typeof body[campo] === "string" ? body[campo].trim().slice(0, maximo) : "";
+    typeof body[campo] === "string" ? Array.from(body[campo].trim()).slice(0, maximo).join("") : "";
   const datos = {
     nombre: texto("nombre", 160),
     telefono: texto("telefono", 40),
