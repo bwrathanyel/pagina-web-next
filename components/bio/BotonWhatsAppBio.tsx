@@ -79,10 +79,26 @@ export function BotonWhatsAppBio({ ruta, className }: { ruta: string; className:
       return;
     }
 
-    // Dentro de TikTok ni se intenta: el salto no va a pasar y el "abre este
-    // enlace en el navegador" tapa la pantalla.
-    if (UA_WEBVIEW_TIKTOK.test(navigator.userAgent)) {
-      setRespaldo({ ...datos, enTikTok: true });
+    // window.open con _blank es un camino distinto de location.href y de un
+    // <a href>: muchos webviews no lo resuelven adentro, se lo entregan al
+    // sistema (navegador externo o directamente la app). La escalera del
+    // 12-sep midió link, 302, página puente y whatsapp://, pero nunca esto.
+    // Si el webview lo ignora o lo bloquea, cae al panel del número.
+    const enTikTok = UA_WEBVIEW_TIKTOK.test(navigator.userAgent);
+    if (enTikTok) {
+      let abierta: Window | null = null;
+      try {
+        abierta = window.open(datos.url, "_blank", "noopener");
+      } catch {
+        abierta = null;
+      }
+      if (!abierta) {
+        setRespaldo({ ...datos, enTikTok: true });
+        return;
+      }
+      temporizador.current = setTimeout(() => {
+        if (document.visibilityState === "visible") setRespaldo({ ...datos, enTikTok: true });
+      }, 2000);
       return;
     }
 
