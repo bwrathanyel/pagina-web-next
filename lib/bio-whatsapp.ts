@@ -74,19 +74,44 @@ function paginaHumana(): Response {
 // el saludo que arma prefillContactoDirecto sin nombre ni destino. La Edge
 // Function bio-whatsapp-click sigue aceptando esos dos campos opcionales por
 // si alguna vez vuelve el formulario -- no hay que tocarla para esto.
+// `json`: el botón de la bio lo llama por fetch y redirige él mismo, porque el
+// navegador in-app de TikTok bloquea toda navegación dura de documento (302,
+// <a href> y esquema whatsapp:// por igual -- medido con una escalera de 4
+// enlaces el 12-sep). El fetch sí pasa, así que el lead se crea igual y el
+// cliente decide qué hacer con la URL. Sin `json` la ruta sigue redirigiendo
+// como siempre (fallback <noscript> y cualquier visita sin JS).
 export async function resolverBioWhatsapp(
   request: Request,
   canal: string,
+  opciones?: { json?: boolean },
 ): Promise<Response> {
-  if (!esCanalBio(canal)) return paginaHumana();
+  const json = opciones?.json === true;
+  const salida = (waUrl: string, setCookie?: string): Response => {
+    if (!json) return redirect(waUrl, setCookie);
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store",
+    };
+    if (setCookie) headers["Set-Cookie"] = setCookie;
+    return new Response(JSON.stringify({ ok: true, whatsapp_url: waUrl }), { status: 200, headers });
+  };
+  const falla = (): Response =>
+    json
+      ? new Response(JSON.stringify({ ok: false }), {
+          status: 200,
+          headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+        })
+      : paginaHumana();
+
+  if (!esCanalBio(canal)) return falla();
 
   const cookieNombre = nombreCookie(canal);
   const cacheado = leerCookie(request, cookieNombre);
-  if (cacheado) return redirect(cacheado);
+  if (cacheado) return salida(cacheado);
 
   const url = process.env.BIO_WHATSAPP_CLICK_URL;
   const key = process.env.CONTACTO_DIRECTO_API_KEY;
-  if (!url || !key) return paginaHumana();
+  if (!url || !key) return falla();
 
   const h = request.headers;
   let data: Record<string, unknown> | null = null;
@@ -109,16 +134,16 @@ export async function resolverBioWhatsapp(
     data = null;
   }
 
-  if (typeof data?.whatsapp_url !== "string") return paginaHumana();
+  if (typeof data?.whatsapp_url !== "string") return falla();
 
   // Un descarte de crawler no crea lead ni asesor -- no hay nada que
   // recordar, así que no se pone cookie (el próximo visitante real sí debe
   // rotar).
   if (data.motivo === "crawler" || data.ok !== true) {
-    return redirect(data.whatsapp_url);
+    return salida(data.whatsapp_url);
   }
 
   const cookie = `${cookieNombre}=${encodeURIComponent(data.whatsapp_url)}; ` +
     `Max-Age=${COOKIE_MAX_AGE}; Path=${RUTA_BIO[canal]}; HttpOnly; Secure; SameSite=Lax`;
-  return redirect(data.whatsapp_url, cookie);
+  return salida(data.whatsapp_url, cookie);
 }

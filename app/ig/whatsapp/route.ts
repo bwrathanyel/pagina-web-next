@@ -6,6 +6,8 @@ import { resolverBioWhatsapp } from "@/lib/bio-whatsapp";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request): Promise<Response> {
-  return resolverBioWhatsapp(request, "instagram");
+  return resolverBioWhatsapp(request, "instagram", {
+    json: new URL(request.url).searchParams.get("json") === "1",
+  });
 }
 

@@ -4,6 +4,7 @@ import { Revelar } from "@/components/ui/Revelar";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import { SocialIcon, ICONS } from "@/components/layout/SocialIcon";
 import { FondoRotativoBio } from "@/components/bio/FondoRotativoBio";
+import { BotonWhatsAppBio } from "@/components/bio/BotonWhatsAppBio";
 import { REDES } from "@/lib/social";
 import { getPromociones } from "@/lib/supabase/queries";
 import { promosHotSales } from "@/lib/promociones/hotSales";
@@ -107,17 +108,24 @@ export async function PaginaEnlaces({ red }: { red: Red }) {
 
         <div className="mt-8 flex w-full flex-col gap-3">
           <Revelar retraso={80}>
-            {/* Un <a> plano, no un <Link>: es una ruta de servidor que rota
-                asesor, crea el lead y redirige a su WhatsApp con el saludo
-                prellenado (route.ts GET). Prefetcharla la ejecutaría sin que
-                nadie la toque. */}
-            <a
-              href={RUTAS_WHATSAPP[red]}
-              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-whatsapp font-semibold text-white shadow-lift transition hover:brightness-110 active:scale-[0.98]"
-            >
-              <WhatsAppIcon size={20} />
-              Escríbenos por WhatsApp
-            </a>
+            {/* Botón de cliente, no un <a>: pide la URL por fetch y salta él
+                mismo, porque el navegador in-app de TikTok bloquea toda
+                navegación dura. Ver BotonWhatsAppBio. */}
+            <BotonWhatsAppBio
+              ruta={RUTAS_WHATSAPP[red]}
+              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-whatsapp font-semibold text-white shadow-lift transition hover:brightness-110 active:scale-[0.98] disabled:opacity-70"
+            />
+            {/* Sin JS no hay fetch posible: el link plano sigue rotando asesor
+                y creando el lead como siempre (route.ts GET, sin ?json=1). */}
+            <noscript>
+              <a
+                href={RUTAS_WHATSAPP[red]}
+                className="flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-whatsapp font-semibold text-white shadow-lift"
+              >
+                <WhatsAppIcon size={20} />
+                Escríbenos por WhatsApp
+              </a>
+            </noscript>
           </Revelar>
           {ENLACES_SECUNDARIOS.map(({ href, label, Icono }, i) => (
             <Revelar key={href} retraso={80 * (i + 2)}>
