@@ -48,8 +48,8 @@ const INSTRUCTIVOS: Record<RielPago, InstructivoRiel> = {
       "Pégalo abajo en “Referencia” y adjunta la captura del comprobante.",
     ],
     datos: [
-      { etiqueta: "Correo Zelle", valor: "CONFIGURAR correo Zelle" },
-      { etiqueta: "Nombre del titular", valor: "CONFIGURAR titular" },
+      { etiqueta: "Correo Zelle", valor: "corporativo.lotus360@gmail.com" },
+      { etiqueta: "Nombre del titular", valor: "Destino Lotus 360 LLC" },
     ],
   },
   pago_movil: {
@@ -60,9 +60,9 @@ const INSTRUCTIVOS: Record<RielPago, InstructivoRiel> = {
       "Escríbelo abajo en “Referencia” y adjunta la captura.",
     ],
     datos: [
-      { etiqueta: "Teléfono", valor: "CONFIGURAR teléfono Pago Móvil" },
-      { etiqueta: "Cédula / RIF", valor: "CONFIGURAR cédula/RIF" },
-      { etiqueta: "Banco", valor: "CONFIGURAR banco" },
+      { etiqueta: "Teléfono", valor: "0414-0415685" },
+      { etiqueta: "Cédula / RIF", valor: "J-41293558-5" },
+      { etiqueta: "Banco", valor: "Banco Provincial" },
     ],
   },
   c2p: {
@@ -73,9 +73,9 @@ const INSTRUCTIVOS: Record<RielPago, InstructivoRiel> = {
       "Escríbelo abajo en “Referencia” y adjunta la captura.",
     ],
     datos: [
-      { etiqueta: "Teléfono", valor: "CONFIGURAR teléfono Pago Móvil" },
-      { etiqueta: "Cédula / RIF", valor: "CONFIGURAR cédula/RIF" },
-      { etiqueta: "Banco", valor: "CONFIGURAR banco" },
+      { etiqueta: "Teléfono", valor: "0414-0415685" },
+      { etiqueta: "Cédula / RIF", valor: "J-41293558-5" },
+      { etiqueta: "Banco", valor: "Banco Provincial" },
     ],
   },
   binance: {
@@ -86,8 +86,7 @@ const INSTRUCTIVOS: Record<RielPago, InstructivoRiel> = {
       "Pégalo abajo en “Referencia” y adjunta la captura.",
     ],
     datos: [
-      { etiqueta: "Binance Pay ID / correo", valor: "CONFIGURAR Binance Pay ID" },
-      { etiqueta: "Red (si es transferencia on-chain)", valor: "USDT · CONFIGURAR red" },
+      { etiqueta: "Binance Pay ID / correo", valor: "andricarevalo@gmail.com" },
     ],
   },
   transferencia: {
