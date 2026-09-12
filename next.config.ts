@@ -1,6 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Máquina de build con poca RAM real: generateStaticParams arma 348
+  // páginas y el default de 3 workers en paralelo tira el proceso por OOM
+  // de sistema (no de heap V8 -- confirmado con --max-old-space-size=8192
+  // y el crash igual reportando heap de ~259MB). Un solo worker evita el pico.
+  experimental: {
+    cpus: 1,
+  },
   // La propuesta para las posadas vivió un rato en /posadas antes de pasar a
   // /ia-planes; sin esto, cualquier link ya compartido daría 404.
   //
