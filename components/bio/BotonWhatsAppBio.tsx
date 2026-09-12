@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 
 /** El navegador in-app de TikTok bloquea toda navegación dura de documento:
@@ -36,6 +37,12 @@ export function BotonWhatsAppBio({ ruta, className }: { ruta: string; className:
   const [respaldo, setRespaldo] = useState<Respaldo | null>(null);
   const [copiado, setCopiado] = useState<"tel" | "texto" | null>(null);
   const temporizador = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // El panel va por portal a <body>: vive dentro de <Revelar>, que anima con
+  // transform, y un ancestro transformado rompe position:fixed -- el overlay
+  // se posicionaba dentro de la tarjeta y quedaba encimado con los enlaces.
+  const [montado, setMontado] = useState(false);
+
+  useEffect(() => setMontado(true), []);
 
   useEffect(() => () => {
     if (temporizador.current) clearTimeout(temporizador.current);
@@ -95,7 +102,8 @@ export function BotonWhatsAppBio({ ruta, className }: { ruta: string; className:
         {cargando ? "Conectando…" : "Escríbenos por WhatsApp"}
       </button>
 
-      {respaldo ? (
+      {respaldo && montado
+        ? createPortal(
         <div
           role="dialog"
           aria-modal="true"
@@ -159,7 +167,10 @@ export function BotonWhatsAppBio({ ruta, className }: { ruta: string; className:
             </button>
           </div>
         </div>
-      ) : null}
+            ,
+            document.body,
+          )
+        : null}
     </>
   );
 }
