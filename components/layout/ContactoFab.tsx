@@ -2,7 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { AsistenteVirtualPanel } from "@/components/layout/AsistenteVirtualPanel";
+import {
+  AsistenteVirtualPanel,
+  HISTORIAL_KEY,
+  SESSION_KEY,
+} from "@/components/layout/AsistenteVirtualPanel";
+import { COOKIE_SESION_BIO } from "@/lib/bio-sesion";
 import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import { useNotificacionesChat } from "@/lib/notificaciones/useNotificacionesChat";
@@ -53,6 +58,50 @@ export function ContactoFab() {
       clearTimeout(aparece);
       clearTimeout(desaparece);
     };
+  }, []);
+
+  // Llegada desde el enlace de bio al cotizador IA (/<red>/cotizador). Esa
+  // ruta ya creó el lead y sembró la sesión del asistente del lado del
+  // servidor, dejó el session_id en una cookie legible por JS y redirigió acá
+  // con ?ia=1. Hay que adoptar esa sesión ANTES de que monte el panel (que lee
+  // localStorage en el init de su useState) -- por eso vive acá y no adentro
+  // del panel.
+  //
+  // Se lee window.location en vez de useSearchParams a propósito: ese hook
+  // marcaría dinámica toda página que monte este FAB, que está en el layout.
+  useEffect(() => {
+    let abrirChat = false;
+    try {
+      abrirChat = new URLSearchParams(window.location.search).get("ia") === "1";
+    } catch {
+      return;
+    }
+    if (!abrirChat) return;
+
+    try {
+      const sesionBio = document.cookie
+        .split(";")
+        .map((c) => c.trim())
+        .find((c) => c.startsWith(`${COOKIE_SESION_BIO}=`))
+        ?.slice(COOKIE_SESION_BIO.length + 1);
+      // El historial guardado pertenece a la sesión vieja: si se adopta una
+      // sesión nueva y no se limpia, el visitante ve una conversación que el
+      // servidor no tiene.
+      if (sesionBio && localStorage.getItem(SESSION_KEY) !== sesionBio) {
+        localStorage.setItem(SESSION_KEY, sesionBio);
+        localStorage.removeItem(HISTORIAL_KEY);
+      }
+    } catch {
+      // localStorage/cookies bloqueados (in-app browser) -- el chat abre
+      // igual, solo que con una sesión propia y sin el lead ya asignado.
+    }
+
+    marcarTodoLeido();
+    setChatAbierto(true);
+    window.history.replaceState(null, "", window.location.pathname);
+    // marcarTodoLeido es estable (viene de useNotificacionesChat) y esto debe
+    // correr una sola vez, en el aterrizaje.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

@@ -4,8 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { CHAT_ACTUALIZADO_EVENTO } from "@/lib/notificaciones/useNotificacionesChat";
 import { BrandMark } from "@/components/layout/BrandMark";
 
-const SESSION_KEY = "lotus360_chat_session_id";
-const HISTORIAL_KEY = "lotus360_chat_historial";
+// Exportadas porque ContactoFab también las escribe: cuando alguien llega
+// desde el enlace de bio al cotizador IA, la sesión ya viene creada del lado
+// del servidor y hay que adoptarla acá antes de que el panel monte.
+export const SESSION_KEY = "lotus360_chat_session_id";
+export const HISTORIAL_KEY = "lotus360_chat_historial";
 
 interface Mensaje {
   rol: "lead" | "ia";
@@ -31,6 +34,35 @@ function HoraMensaje({ ts }: { ts?: number }) {
 // backend (_shared/voz.ts): hardcodeada porque no hace falta protegerla, la
 // función solo sintetiza hashes que el bot ya registró (ver audio-web-dinamico).
 const AUDIO_SINTESIS_URL = "https://begbjhrdbsqftbbleecb.functions.supabase.co/audio-web-dinamico";
+
+// El bot manda el WhatsApp del asesor como URL dentro del texto; sin esto
+// React la escapa y el visitante ve un string muerto que tendría que copiar.
+// Sin flag `g` en el test: RegExp.test con `g` mantiene lastIndex entre
+// llamadas y devolvería false una vez sí y una vez no sobre la misma parte.
+const URL_SPLIT_RE = /(https?:\/\/[^\s]+)/g;
+const ES_URL_RE = /^https?:\/\//;
+
+function tieneLink(texto: string): boolean {
+  return ES_URL_RE.test(texto) || texto.includes("http://") || texto.includes("https://");
+}
+
+function conLinks(texto: string) {
+  return texto.split(URL_SPLIT_RE).map((parte, i) =>
+    ES_URL_RE.test(parte) ? (
+      <a
+        key={i}
+        href={parte}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline underline-offset-2 break-all"
+      >
+        {parte}
+      </a>
+    ) : (
+      <span key={i}>{parte}</span>
+    )
+  );
+}
 
 // El backend manda 'texto' completo SIEMPRE, aunque haya audio -- así que si
 // la síntesis tarda, falla, o Fish Audio (tier free, sin SLA) no responde, el
@@ -62,11 +94,21 @@ function ContenidoMensaje({ mensaje }: { mensaje: Mensaje }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mensaje.audio_url]);
 
+  // Con audio listo se oculta el texto... salvo que el texto traiga un link
+  // (el WhatsApp directo del asesor): ahí se muestran los dos, porque si no
+  // un turno con precio citado + contacto directo deja al cliente sin ver
+  // nunca la URL.
   if (audioListo) {
-    // eslint-disable-next-line jsx-a11y/media-has-caption
-    return <audio controls src={audioListo} className="w-full" style={{ height: 32 }} />;
+    const conLink = tieneLink(mensaje.texto);
+    return (
+      <>
+        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+        <audio controls src={audioListo} className="w-full" style={{ height: 32 }} />
+        {conLink ? <span className="mt-2 block">{conLinks(mensaje.texto)}</span> : null}
+      </>
+    );
   }
-  return <>{mensaje.texto}</>;
+  return <>{conLinks(mensaje.texto)}</>;
 }
 
 // crypto.randomUUID() no existe en algunos navegadores embebidos (in-app
