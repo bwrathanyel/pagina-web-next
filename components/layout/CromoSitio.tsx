@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
    navegación, footer del catálogo, botones flotantes de WhatsApp y del chat de
    viajes, y el onboarding de bienvenida. `/ia-para-tu-negocio` pasó a ser
    pública y con navegación normal (2026-08-11), no va más en esta lista. */
-const RUTAS_SIN_CROMO: string[] = [];
+const RUTAS_SIN_CROMO: string[] = ["/ig", "/fb", "/tiktok"];
 
 export function CromoSitio({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "";
