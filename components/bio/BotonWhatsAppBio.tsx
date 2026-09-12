@@ -19,14 +19,14 @@ import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 
 const UA_WEBVIEW_TIKTOK = /BytedanceWebview|musical_ly|Trill|TikTok/i;
 
-type Respaldo = { telefono: string; texto: string; url: string };
+type Respaldo = { telefono: string; texto: string; url: string; enTikTok: boolean };
 
 function partirWhatsapp(url: string): Respaldo | null {
   try {
     const u = new URL(url);
     const telefono = u.pathname.replace(/\D/g, "");
     if (!telefono) return null;
-    return { telefono, texto: u.searchParams.get("text") ?? "", url };
+    return { telefono, texto: u.searchParams.get("text") ?? "", url, enTikTok: false };
   } catch {
     return null;
   }
@@ -82,7 +82,7 @@ export function BotonWhatsAppBio({ ruta, className }: { ruta: string; className:
     // Dentro de TikTok ni se intenta: el salto no va a pasar y el "abre este
     // enlace en el navegador" tapa la pantalla.
     if (UA_WEBVIEW_TIKTOK.test(navigator.userAgent)) {
-      setRespaldo(datos);
+      setRespaldo({ ...datos, enTikTok: true });
       return;
     }
 
@@ -150,13 +150,19 @@ export function BotonWhatsAppBio({ ruta, className }: { ruta: string; className:
               </button>
             ) : null}
 
-            <a
-              href={respaldo.url}
-              className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-whatsapp font-semibold text-white"
-            >
-              <WhatsAppIcon size={18} />
-              Intentar abrir WhatsApp
-            </a>
+            {/* Adentro de TikTok este link no puede funcionar: es navegación
+                dura, que es exactamente lo que el webview bloquea. Mostrarlo
+                ahí solo invita a un clic que devuelve el "abre este enlace en
+                el navegador". Fuera de TikTok sí sirve como reintento. */}
+            {respaldo.enTikTok ? null : (
+              <a
+                href={respaldo.url}
+                className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-whatsapp font-semibold text-white"
+              >
+                <WhatsAppIcon size={18} />
+                Intentar abrir WhatsApp
+              </a>
+            )}
 
             <button
               type="button"
