@@ -69,55 +69,11 @@ function paginaHumana(): Response {
   });
 }
 
-function jsonRespuesta(obj: unknown, status = 200): Response {
-  return new Response(JSON.stringify(obj), {
-    status,
-    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
-  });
-}
-
-/** Camino nuevo: el modal de la página puente pide nombre+destino antes de
- * abrir WhatsApp y llama esto por POST. A diferencia de resolverBioWhatsapp
- * (GET, sin datos, con cookie de 24h para deduplicar recargas pasivas), acá
- * cada llamada es un submit explícito del visitante -- no hay nada que
- * deduplicar con cookie, y si falla se lo dice al cliente para que él decida
- * el fallback (mismo criterio que crearLeadCRM en el cotizador). */
-export async function resolverBioWhatsappForm(
-  request: Request,
-  canal: string,
-  datos: { nombre: string; destino: string },
-): Promise<Response> {
-  if (!esCanalBio(canal)) return jsonRespuesta({ ok: false, motivo: "canal_invalido" }, 400);
-
-  const url = process.env.BIO_WHATSAPP_CLICK_URL;
-  const key = process.env.CONTACTO_DIRECTO_API_KEY;
-  if (!url || !key) return jsonRespuesta({ ok: false, motivo: "no_configurado" }, 503);
-
-  const h = request.headers;
-  try {
-    const upstream = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-contacto-directo-key": key },
-      body: JSON.stringify({
-        canal,
-        user_agent: h.get("user-agent") ?? "",
-        purpose: h.get("purpose") ?? "",
-        sec_purpose: h.get("sec-purpose") ?? "",
-        x_purpose: h.get("x-purpose") ?? "",
-        client_method: "POST",
-        nombre: datos.nombre,
-        destino: datos.destino,
-      }),
-      signal: AbortSignal.timeout(10_000),
-    });
-    const data = (await upstream.json().catch(() => null)) as Record<string, unknown> | null;
-    if (typeof data?.whatsapp_url !== "string") return jsonRespuesta({ ok: false, motivo: "error" });
-    return jsonRespuesta(data);
-  } catch {
-    return jsonRespuesta({ ok: false, motivo: "error" });
-  }
-}
-
+// El modal que pedía nombre+destino antes de abrir WhatsApp se retiró el
+// 12-sep (decisión del dueño): el botón de la bio volvió al clic directo, con
+// el saludo que arma prefillContactoDirecto sin nombre ni destino. La Edge
+// Function bio-whatsapp-click sigue aceptando esos dos campos opcionales por
+// si alguna vez vuelve el formulario -- no hay que tocarla para esto.
 export async function resolverBioWhatsapp(
   request: Request,
   canal: string,

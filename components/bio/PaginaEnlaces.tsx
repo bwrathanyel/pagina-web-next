@@ -4,7 +4,6 @@ import { Revelar } from "@/components/ui/Revelar";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import { SocialIcon, ICONS } from "@/components/layout/SocialIcon";
 import { FondoRotativoBio } from "@/components/bio/FondoRotativoBio";
-import { ModalWhatsAppBio } from "@/components/bio/ModalWhatsAppBio";
 import { REDES } from "@/lib/social";
 import { getPromociones } from "@/lib/supabase/queries";
 import { promosHotSales } from "@/lib/promociones/hotSales";
@@ -16,16 +15,6 @@ const RUTAS_WHATSAPP: Record<Red, string> = {
   instagram: "/ig/whatsapp",
   facebook: "/fb/whatsapp",
   tiktok: "/tiktok/whatsapp",
-};
-
-// Segunda puerta del enlace de bio: en vez de mandar a WhatsApp, crea el lead
-// y abre el cotizador IA de la web con la sesión ya atada a ese lead (ver
-// lib/bio-cotizador.ts). Convive con el de WhatsApp a propósito -- son dos
-// formas distintas de entrar, no un reemplazo.
-const RUTAS_COTIZADOR: Record<Red, string> = {
-  instagram: "/ig/cotizador",
-  facebook: "/fb/cotizador",
-  tiktok: "/tiktok/cotizador",
 };
 
 const NOMBRE_RED: Record<Red, string> = {
@@ -65,14 +54,6 @@ function GloboIcon() {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <circle cx="12" cy="12" r="9" />
       <path d="M3 12h18M12 3c2.2 2.4 3.5 5.6 3.5 9s-1.3 6.6-3.5 9c-2.2-2.4-3.5-5.6-3.5-9s1.3-6.6 3.5-9Z" />
-    </svg>
-  );
-}
-
-function ChatIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.5-.7L3 21l1.8-5A8.2 8.2 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5Z" />
     </svg>
   );
 }
@@ -126,37 +107,20 @@ export async function PaginaEnlaces({ red }: { red: Red }) {
 
         <div className="mt-8 flex w-full flex-col gap-3">
           <Revelar retraso={80}>
-            <ModalWhatsAppBio
-              canal={red}
-              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-whatsapp font-semibold text-white shadow-lift transition hover:brightness-110 active:scale-[0.98]"
-            />
-            {/* Sin JS el modal no puede abrirse -- este link plano sigue
-                rotando asesor y creando el lead como siempre (route.ts GET),
-                solo sin nombre/destino reales. */}
-            <noscript>
-              <a
-                href={RUTAS_WHATSAPP[red]}
-                className="flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-whatsapp font-semibold text-white shadow-lift transition hover:brightness-110 active:scale-[0.98]"
-              >
-                <WhatsAppIcon size={20} />
-                Escríbenos por WhatsApp
-              </a>
-            </noscript>
-          </Revelar>
-          <Revelar retraso={160}>
-            {/* Un <a> plano, no un <Link>: es una ruta de servidor que crea el
-                lead y redirige. Prefetcharla la ejecutaría sin que nadie la
-                toque. */}
+            {/* Un <a> plano, no un <Link>: es una ruta de servidor que rota
+                asesor, crea el lead y redirige a su WhatsApp con el saludo
+                prellenado (route.ts GET). Prefetcharla la ejecutaría sin que
+                nadie la toque. */}
             <a
-              href={RUTAS_COTIZADOR[red]}
-              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-coral font-semibold text-white shadow-lift transition hover:brightness-110 active:scale-[0.98]"
+              href={RUTAS_WHATSAPP[red]}
+              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-whatsapp font-semibold text-white shadow-lift transition hover:brightness-110 active:scale-[0.98]"
             >
-              <ChatIcon />
-              Cotiza con Lotus IA
+              <WhatsAppIcon size={20} />
+              Escríbenos por WhatsApp
             </a>
           </Revelar>
           {ENLACES_SECUNDARIOS.map(({ href, label, Icono }, i) => (
-            <Revelar key={href} retraso={80 * (i + 3)}>
+            <Revelar key={href} retraso={80 * (i + 2)}>
               <Link
                 href={href}
                 className="flex min-h-12 w-full items-center gap-3 rounded-[var(--radius-card)] border border-white/10 bg-white/5 px-4 text-sm font-medium text-dusk-text transition hover:bg-white/10"
@@ -170,7 +134,7 @@ export async function PaginaEnlaces({ red }: { red: Red }) {
           ))}
         </div>
 
-        <Revelar retraso={80 * (ENLACES_SECUNDARIOS.length + 3)} className="mt-8 flex gap-3">
+        <Revelar retraso={80 * (ENLACES_SECUNDARIOS.length + 2)} className="mt-8 flex gap-3">
           {redesRestantes.map((r) => (
             <a
               key={r}

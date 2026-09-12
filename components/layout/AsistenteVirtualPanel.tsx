@@ -4,11 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { CHAT_ACTUALIZADO_EVENTO } from "@/lib/notificaciones/useNotificacionesChat";
 import { BrandMark } from "@/components/layout/BrandMark";
 
-// Exportadas porque ContactoFab también las escribe: cuando alguien llega
-// desde el enlace de bio al cotizador IA, la sesión ya viene creada del lado
-// del servidor y hay que adoptarla acá antes de que el panel monte.
-export const SESSION_KEY = "lotus360_chat_session_id";
-export const HISTORIAL_KEY = "lotus360_chat_historial";
+const SESSION_KEY = "lotus360_chat_session_id";
+const HISTORIAL_KEY = "lotus360_chat_historial";
 
 interface Mensaje {
   rol: "lead" | "ia";
