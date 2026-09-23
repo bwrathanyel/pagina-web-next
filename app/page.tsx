@@ -6,6 +6,7 @@ import { promosHotSales, ofertasVitrina } from "@/lib/promociones/hotSales";
 import { fotosHeroDeHotSales } from "@/lib/promociones/fotosHero";
 import { AcompanamientoSection } from "@/components/home/AcompanamientoSection";
 import { MasDeLotus } from "@/components/home/MasDeLotus";
+import { JuegosBubble } from "@/components/home/JuegosBubble";
 import { fotosDe } from "@/lib/supabase/fotos";
 import { getProductosPorCategoria, getPromociones } from "@/lib/supabase/queries";
 
@@ -54,6 +55,8 @@ export default async function Home() {
       <AcompanamientoSection />
 
       <MasDeLotus />
+
+      <JuegosBubble />
     </main>
   );
 }
