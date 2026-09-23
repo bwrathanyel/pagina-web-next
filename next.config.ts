@@ -17,6 +17,10 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/posadas", destination: "/ia-planes", permanent: true },
+      // /juega fue la página del stand (evento Naguanagua, 18-sep-2026) y los QR
+      // impresos apuntan ahí. Temporal (307) para poder reactivarla en el próximo
+      // evento quitando esta línea: con 308 los navegadores la guardarían.
+      { source: "/juega", destination: "/", permanent: false },
     ];
   },
   async headers() {
