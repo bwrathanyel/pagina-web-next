@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { CATEGORIAS, type Categoria } from "@/types/supabase";
 import { getProductosPorCategoria, getPromociones } from "@/lib/supabase/queries";
 import { fotosDe } from "@/lib/supabase/fotos";
+import { Icono } from "@/components/ui/Icono";
 import { jsonLdScript, buildBreadcrumbJsonLd } from "@/lib/seo/jsonld";
 
 const TITLE = "Catálogo — Hoteles, Paquetes, Tours y Promociones en Venezuela";
@@ -51,12 +52,12 @@ export default async function CatalogoIndexPage() {
         {CATEGORIAS.map(({ slug, label }) => {
           const foto = fotosPorCategoria[slug] ?? FOTO_EDITORIAL[slug];
           return (
-            <Link key={slug} href={`/catalogo/${slug}`} className="group relative aspect-[3/4] overflow-hidden rounded-[28px] bg-sand-2 transition-[transform,scale,box-shadow] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1.5 hover:shadow-lift active:scale-[0.985]">
-              <Image src={foto} alt={label} fill sizes="(min-width: 768px) 25vw, 50vw" className="object-cover transition-[transform,scale,filter] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.09] group-hover:brightness-[1.05]" />
+            <Link key={slug} href={`/catalogo/${slug}`} className="group relative aspect-[3/4] overflow-hidden rounded-card bg-sand-2 transition-[transform,box-shadow] duration-[var(--dur-media)] ease-salida hover:-translate-y-1 hover:shadow-lift motion-reduce:transition-none">
+              <Image src={foto} alt={label} fill sizes="(min-width: 768px) 25vw, 50vw" className="object-cover transition-[transform,scale,filter] duration-700 ease-salida group-hover:scale-[1.06] motion-reduce:transition-none" />
               <div className="absolute inset-0 bg-gradient-to-t from-dusk/80 via-dusk/0 to-dusk/0" />
               <div className="absolute inset-x-5 bottom-5 flex items-end justify-between gap-2 text-dusk-text">
-                <span className="font-display text-xl font-semibold">{label}</span>
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-sm text-[#18181b]" aria-hidden="true">↗</span>
+                <span className="font-display text-xl font-bold">{label}</span>
+                <span className="flex h-10 w-10 items-center justify-center rounded-pill bg-card text-ink" aria-hidden="true"><Icono nombre="flecha-der" tamano={18} /></span>
               </div>
             </Link>
           );
@@ -65,10 +66,10 @@ export default async function CatalogoIndexPage() {
 
       <Link
         href="/catalogo/hot-sales"
-        className="mt-4 flex items-center justify-between gap-4 rounded-[28px] bg-coral px-6 py-6 text-white"
+        className="mt-4 flex items-center justify-between gap-4 rounded-card bg-dusk px-6 py-6 text-dusk-text transition-colors duration-150 hover:bg-dusk-2"
       >
-        <span className="font-display text-xl font-semibold">Hot Sales: la mejor promoción de cada hotel</span>
-        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-white text-sm text-[#18181b]" aria-hidden="true">↗</span>
+        <span className="font-display text-xl font-bold">Hot Sales: la mejor promoción de cada hotel</span>
+        <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-pill bg-coral-bright text-btn-ink" aria-hidden="true"><Icono nombre="flecha-der" tamano={18} /></span>
       </Link>
     </main>
   );

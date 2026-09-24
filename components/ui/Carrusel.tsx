@@ -1,6 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Icono } from "@/components/ui/Icono";
+
+// scrollTo/scrollBy con `behavior: "smooth"` no pasan por el bloque global de
+// prefers-reduced-motion (eso solo cubre CSS), así que se decide acá.
+const comportamiento = (): ScrollBehavior =>
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+
+const CLASE_FLECHA =
+  "absolute top-1/2 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-pill border border-linea-fuerte " +
+  "bg-card text-ink transition-colors duration-150 hover:border-ink hover:text-acento pointer-fine:flex";
 
 /** Carrusel horizontal con snap + puntos indicadores, para no repetir el
  * mismo patrón de scroll-x a mano en cada sección (Hot Sales, Más de Lotus
@@ -58,13 +68,13 @@ export function Carrusel({
     const el = scrollerRef.current;
     if (!el) return;
     const anchoItemPx = el.scrollWidth / items.length;
-    el.scrollTo({ left: anchoItemPx * i, behavior: "smooth" });
+    el.scrollTo({ left: anchoItemPx * i, behavior: comportamiento() });
   }
 
   function desplazar(sentido: 1 | -1) {
     const el = scrollerRef.current;
     if (!el) return;
-    el.scrollBy({ left: sentido * el.clientWidth * 0.8, behavior: "smooth" });
+    el.scrollBy({ left: sentido * el.clientWidth * 0.8, behavior: comportamiento() });
   }
 
   return (
@@ -96,9 +106,9 @@ export function Carrusel({
           type="button"
           aria-label="Anterior"
           onClick={() => desplazar(-1)}
-          className="absolute left-1 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-full border border-ink/10 bg-card/95 p-2.5 text-ink shadow-lg backdrop-blur-sm transition hover:scale-105 hover:text-coral pointer-fine:flex"
+          className={CLASE_FLECHA + " left-1"}
         >
-          ←
+          <Icono nombre="flecha-izq" tamano={20} />
         </button>
       ) : null}
       {flechas && puedeDer ? (
@@ -106,9 +116,9 @@ export function Carrusel({
           type="button"
           aria-label="Siguiente"
           onClick={() => desplazar(1)}
-          className="absolute right-1 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-full border border-ink/10 bg-card/95 p-2.5 text-ink shadow-lg backdrop-blur-sm transition hover:scale-105 hover:text-coral pointer-fine:flex"
+          className={CLASE_FLECHA + " right-1"}
         >
-          →
+          <Icono nombre="flecha-der" tamano={20} />
         </button>
       ) : null}
       {items.length > 1 ? (
@@ -119,11 +129,16 @@ export function Carrusel({
               type="button"
               aria-label={`Ir a ${i + 1}`}
               onClick={() => irA(i)}
-              className={
-                "h-1.5 rounded-full transition-all " +
-                (i === activo ? "w-5 bg-coral" : "w-1.5 bg-ink/15")
-              }
-            />
+              aria-current={i === activo}
+              className="flex h-6 min-w-6 items-center justify-center"
+            >
+              <span
+                className={
+                  "block h-1.5 rounded-pill transition-[width,background-color] duration-150 " +
+                  (i === activo ? "w-5 bg-acento" : "w-1.5 bg-ink/20")
+                }
+              />
+            </button>
           ))}
         </div>
       ) : null}

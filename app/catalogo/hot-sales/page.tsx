@@ -39,15 +39,15 @@ export default async function HotSalesPage() {
         <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(buildItemListJsonLd(itemList))} />
       ) : null}
 
-      <header className="mb-4 overflow-hidden rounded-none bg-transparent px-0 py-0 text-ink md:mb-7 md:rounded-[32px] md:bg-dusk md:px-10 md:py-12 md:text-dusk-text">
+      <header className="mb-4 overflow-hidden rounded-none bg-transparent px-0 py-0 text-ink md:mb-7 md:rounded-card md:bg-dusk md:px-10 md:py-12 md:text-dusk-text">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end md:gap-8">
           <div>
-            <h1 className="font-display text-3xl font-semibold leading-none md:text-6xl">Hot Sales</h1>
+            <h1 className="font-display text-3xl font-bold leading-none md:text-6xl">Hot Sales</h1>
             <p className="mt-3 max-w-xl leading-7 text-ink-soft md:mt-4 md:text-dusk-text-soft">
               La mejor promoción de cada hotel, ordenada de menor a mayor precio.
             </p>
           </div>
-          <span className="w-fit rounded-full border border-ink/15 px-4 py-2 font-mono text-xs text-ink-soft md:border-dusk-text/15 md:text-dusk-text-soft">
+          <span className="w-fit rounded-pill border border-linea-fuerte px-4 py-2 font-mono text-xs text-ink-soft md:border-dusk-text/20 md:text-dusk-text-soft">
             {pool.length} {pool.length === 1 ? "oferta" : "ofertas"}
           </span>
         </div>

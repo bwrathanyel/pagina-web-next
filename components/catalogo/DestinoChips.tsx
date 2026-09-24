@@ -1,11 +1,12 @@
 "use client";
 
-import { DESTINOS_VENEZUELA } from "@/components/cotizador/wizardConfig";
+import { useId } from "react";
+import { m } from "motion/react";
 
-const EMOJI_POR_DESTINO: Record<string, string> = Object.fromEntries(
-  DESTINOS_VENEZUELA.filter((d) => d.value !== "Extranjero").map((d) => [d.value, d.emoji ?? "📍"]),
-);
-
+// Filtro por destino. El fondo del chip elegido es un solo elemento que se
+// desliza de un chip al siguiente (layoutId); con reduced-motion MotionConfig
+// lo deja saltar sin animar. El id de instancia evita que dos filtros en la
+// misma página compartan el indicador.
 export function DestinoChips({
   destinos,
   activo,
@@ -15,31 +16,41 @@ export function DestinoChips({
   activo: string | null;
   onChange: (destino: string | null) => void;
 }) {
+  const instancia = useId();
   if (destinos.length === 0) return null;
+
+  const chip = (valor: string | null, etiqueta: string) => {
+    const elegido = activo === valor;
+    return (
+      <button
+        key={valor ?? "todos"}
+        type="button"
+        onClick={() => onChange(valor)}
+        aria-pressed={elegido}
+        className={
+          "relative min-h-11 shrink-0 snap-start rounded-pill border px-4 text-sm font-semibold transition-colors duration-150 " +
+          (elegido
+            ? "border-transparent text-sobre-acento"
+            : "border-linea-fuerte bg-card text-ink-soft hover:border-ink/40 hover:text-ink")
+        }
+      >
+        {elegido ? (
+          <m.span
+            layoutId={`destino-activo-${instancia}`}
+            aria-hidden="true"
+            transition={{ type: "spring", stiffness: 500, damping: 38 }}
+            className="absolute inset-0 rounded-pill bg-acento"
+          />
+        ) : null}
+        <span className="relative">{etiqueta}</span>
+      </button>
+    );
+  };
 
   return (
     <div className="-mx-5 mb-6 flex gap-2 overflow-x-auto px-5 pb-1 snap-x snap-proximity [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_92%,transparent)]">
-      <button
-        type="button"
-        onClick={() => onChange(null)}
-        className={`shrink-0 snap-start rounded-full border px-4 py-1.5 text-sm font-semibold transition-[background-color,border-color,color] ${
-          activo === null ? "border-coral bg-coral text-white" : "border-ink/15 text-ink-soft hover:border-ink/30 hover:bg-sand-2"
-        }`}
-      >
-        Todos
-      </button>
-      {destinos.map((destino) => (
-        <button
-          key={destino}
-          type="button"
-          onClick={() => onChange(destino)}
-          className={`shrink-0 snap-start rounded-full border px-4 py-1.5 text-sm font-semibold transition-[background-color,border-color,color] ${
-            activo === destino ? "border-coral bg-coral text-white" : "border-ink/15 text-ink-soft hover:border-ink/30 hover:bg-sand-2"
-          }`}
-        >
-          {EMOJI_POR_DESTINO[destino] ?? "📍"} {destino}
-        </button>
-      ))}
+      {chip(null, "Todos")}
+      {destinos.map((destino) => chip(destino, destino))}
     </div>
   );
 }

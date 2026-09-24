@@ -122,7 +122,7 @@ export function PromocionCard({ promocion }: { promocion: Promocion }) {
                 </button>
               </div>
               {errorVisibilidad ? (
-                <p className="mt-2 text-xs text-coral">No se pudo cambiar. Inténtalo de nuevo.</p>
+                <p className="mt-2 text-xs text-coral">No se pudo cambiar. Inténtelo de nuevo.</p>
               ) : null}
             </div>
           ) : undefined

@@ -9,6 +9,8 @@
 //
 // Componente de servidor: solo lee y pinta, sin estado.
 import type { Producto, Tarifa, TarifarioBloque } from "@/types/supabase";
+import { Icono } from "@/components/ui/Icono";
+import { Etiqueta } from "@/components/ui/Insignia";
 import { formatearPrecioCliente } from "@/lib/utils/formatoPrecio";
 import {
   agruparPorPlan,
@@ -27,7 +29,7 @@ import {
 function Dato({ clave, valor }: { clave: string; valor: string }) {
   return (
     <div className="flex flex-wrap items-baseline gap-x-2">
-      <span className="min-w-16 font-mono text-[0.68rem] uppercase tracking-wide text-ink-soft">{clave}</span>
+      <span className="min-w-16 font-mono text-xs uppercase tracking-wide text-ink-soft">{clave}</span>
       <span className="text-sm text-ink">{valor}</span>
     </div>
   );
@@ -48,23 +50,15 @@ function TarjetaPromocion({ tarifa, destacada }: { tarifa: Tarifa; destacada: bo
   return (
     <article
       className={
-        "flex flex-col gap-3 rounded-[var(--radius-media)] border border-linea bg-card p-4 " +
-        (destacada ? "border-coral/45 shadow-card " : "") +
+        "flex flex-col gap-3 rounded-card border bg-card p-4 " +
+        (destacada ? "border-acento " : "border-linea ") +
         (vendible ? "" : "opacity-60")
       }
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <h4 className="font-display text-lg font-semibold leading-snug text-ink">{titulo}</h4>
-        {destacada ? (
-          <span className="rounded-[var(--radius-pill)] bg-gradient-to-br from-coral to-gold px-2.5 py-1 font-mono text-[0.62rem] uppercase tracking-wide text-btn-ink">
-            Mejor precio hoy
-          </span>
-        ) : null}
-        {vendible ? null : (
-          <span className="rounded-[var(--radius-pill)] bg-sand-2 px-2.5 py-1 font-mono text-[0.62rem] uppercase tracking-wide text-ink-soft">
-            Ya no se vende
-          </span>
-        )}
+        <h4 className="font-display text-lg font-bold leading-snug text-ink">{titulo}</h4>
+        {destacada ? <Etiqueta tono="acento">Mejor precio hoy</Etiqueta> : null}
+        {vendible ? null : <Etiqueta>Ya no se vende</Etiqueta>}
       </div>
 
       {tarifa.habitacion && tarifa.habitacion !== titulo ? (
@@ -124,7 +118,7 @@ function TarjetaPromocion({ tarifa, destacada }: { tarifa: Tarifa; destacada: bo
               key={c.texto}
               className={
                 "relative pl-4 before:absolute before:left-0 before:content-['•'] " +
-                (c.fuerte ? "font-semibold text-acento before:text-acento" : "text-ink-soft before:text-coral")
+                (c.fuerte ? "font-semibold text-acento before:text-acento" : "text-ink-soft before:text-acento")
               }
             >
               {formatearPrecioCliente(c.texto)}
@@ -185,16 +179,17 @@ function CondicionesBloque({ bloque }: { bloque: TarifarioBloque }) {
   if (!filas.length && !suplementos.length && !(bloque.otras ?? []).length) return null;
 
   return (
-    <details className="rounded-[var(--radius-media)] border border-linea bg-seafoam-bg/60 px-4 py-3">
-      <summary className="cursor-pointer list-none font-mono text-xs uppercase tracking-wide text-seafoam-text">
-        Condiciones{bloque.plan ? ` — ${bloque.plan}` : ""}
+    <details className="group rounded-card border border-linea bg-seafoam-bg/60 px-4 py-1">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 font-mono text-xs uppercase tracking-wide text-seafoam-text [&::-webkit-details-marker]:hidden">
+        <span>Condiciones{bloque.plan ? `: ${bloque.plan}` : ""}</span>
+        <Icono nombre="flecha-der" tamano={16} className="transition-transform duration-150 group-open:rotate-90 motion-reduce:transition-none" />
       </summary>
-      <div className="mt-3 flex flex-col gap-2">
+      <div className="flex flex-col gap-2 pb-3 pt-1">
         {suplementos.length > 0 ? (
           <ul className="flex flex-col gap-1 text-sm">
             {suplementos.map((s, i) => (
               <li key={i} className={s.obligatorio ? "font-semibold text-acento" : "text-ink"}>
-                {(s.obligatorio ? "Obligatorio — " : "") + suplementoTexto(s, null)}
+                {(s.obligatorio ? "Obligatorio: " : "") + suplementoTexto(s, null)}
               </li>
             ))}
           </ul>
@@ -223,7 +218,7 @@ export function CarpetaTarifas({ producto }: { producto: Producto }) {
 
   return (
     <section className="mt-8 md:mt-12">
-      <h2 className="mb-4 font-display text-2xl font-semibold text-ink">
+      <h2 className="mb-4 font-display text-2xl font-bold text-ink">
         {tarifas.length === 1 ? "1 promoción disponible" : `${tarifas.length} promociones disponibles`}
       </h2>
 

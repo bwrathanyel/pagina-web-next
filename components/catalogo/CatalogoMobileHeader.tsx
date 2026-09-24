@@ -4,7 +4,8 @@ import type { Categoria } from "@/types/supabase";
 /** Título y pestañas de categoría del catálogo en móvil. Ya no lleva header
  * propio: la barra superior del sitio (Navbar) sale en todas las rutas y la
  * caja sticky que había acá pelearía con ella por el mismo `top-0`. Las
- * pestañas sticky con indicador animado son de la fase 2. */
+ * pestañas no se pegan: la barra del móvil se oculta por inactividad y una
+ * fila fija debajo quedaría flotando (pendiente de compartir su estado). */
 export function CatalogoMobileHeader({ activa }: { activa: Categoria }) {
   return (
     <div className="mb-6 lg:hidden">

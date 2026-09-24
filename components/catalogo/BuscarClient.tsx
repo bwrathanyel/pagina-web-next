@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { ProductoCard } from "@/components/catalogo/ProductoCard";
 import { PromocionCard } from "@/components/catalogo/PromocionCard";
 import { CatalogoGrid } from "@/components/catalogo/CatalogoGrid";
+import { Icono } from "@/components/ui/Icono";
 import { coincide, DESTINOS_SUGERIDOS } from "@/lib/catalogo/busqueda";
 import type { Producto, Promocion } from "@/types/supabase";
 
@@ -43,11 +44,8 @@ export function BuscarClient({
 
   return (
     <div>
-      <div className={`flex min-h-12 items-center gap-3 rounded-full border border-ink/15 bg-card px-5 ${compacto ? "mb-3" : "mb-8"}`}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0 text-ink-soft" aria-hidden="true">
-          <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" strokeWidth="1.8" />
-          <path d="M20 20l-4.5-4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-        </svg>
+      <div className={`flex min-h-12 items-center gap-3 rounded-pill border border-linea-fuerte bg-card px-5 transition-[border-color,box-shadow] duration-150 focus-within:border-acento focus-within:ring-2 focus-within:ring-acento/30 ${compacto ? "mb-3" : "mb-8"}`}>
+        <Icono nombre="buscar" tamano={20} className="text-ink-soft" />
         <input
           type="search"
           value={query}
@@ -68,7 +66,7 @@ export function BuscarClient({
                   key={d}
                   type="button"
                   onClick={() => setQuery(d)}
-                  className="rounded-full border border-ink/15 px-4 py-1.5 text-sm font-semibold text-ink-soft hover:border-ink/30"
+                  className="min-h-11 rounded-pill border border-linea-fuerte px-4 text-sm font-semibold text-ink-soft transition-colors duration-150 hover:border-ink/40 hover:text-ink"
                 >
                   {d}
                 </button>

@@ -1,11 +1,17 @@
+"use client";
+
 import Link from "next/link";
+import { m } from "motion/react";
 import { CATEGORIAS, type Categoria } from "@/types/supabase";
 
+// Cada categoría es una página distinta, así que la pestaña se vuelve a montar
+// al navegar; el layoutId anima el indicador cuando React monta la nueva
+// mientras desmonta la vieja, y si no, queda fijo sin romper nada.
 export function CategoriaTabs({ activa }: { activa: Categoria }) {
   return (
     <nav
       aria-label="Categorías del catálogo"
-      className="flex gap-2.5 overflow-x-auto pb-1 snap-x snap-proximity [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_88%,transparent)]"
+      className="flex gap-2 overflow-x-auto pb-1 snap-x snap-proximity [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_88%,transparent)]"
     >
       {CATEGORIAS.map(({ slug, label }) => {
         const isActive = slug === activa;
@@ -15,13 +21,21 @@ export function CategoriaTabs({ activa }: { activa: Categoria }) {
             href={`/catalogo/${slug}`}
             aria-current={isActive ? "page" : undefined}
             className={
-              "inline-flex min-h-11 flex-shrink-0 snap-start items-center rounded-[10px] border px-4 font-mono text-[0.78rem] uppercase tracking-wide " +
+              "relative inline-flex min-h-11 flex-shrink-0 snap-start items-center rounded-control border px-4 text-sm font-semibold transition-colors duration-150 " +
               (isActive
-                ? "border-transparent bg-gradient-to-br from-coral to-gold font-bold text-btn-ink"
-                : "border-ink/10 bg-card text-ink-soft")
+                ? "border-transparent text-sobre-acento"
+                : "border-linea-fuerte bg-card text-ink-soft hover:border-ink/40 hover:text-ink")
             }
           >
-            {label}
+            {isActive ? (
+              <m.span
+                layoutId="categoria-activa"
+                aria-hidden="true"
+                transition={{ type: "spring", stiffness: 500, damping: 38 }}
+                className="absolute inset-0 rounded-control bg-acento"
+              />
+            ) : null}
+            <span className="relative">{label}</span>
           </Link>
         );
       })}

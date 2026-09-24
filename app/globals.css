@@ -484,6 +484,14 @@ html {
 .animate-carrito-rebote {
   animation: carrito-rebote 0.42s var(--ease-salida);
 }
+@keyframes corazon-latido {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.32); }
+  100% { transform: scale(1); }
+}
+.animate-corazon-latido {
+  animation: corazon-latido var(--dur-media) var(--ease-salida);
+}
 
 /* Puntitos de "Lotus está escribiendo…". */
 @keyframes typing-dot {

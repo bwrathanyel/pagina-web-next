@@ -107,7 +107,7 @@ export function CardPhotoGallery({
           nodo se anulan entre sí (hallazgo pasada 3). `transition-transform` de
           Tailwind v4 sí cubre la propiedad `scale`, por eso acá el zoom puede
           seguir siendo una utilidad. */}
-      <div className="absolute inset-0 transition-[transform,scale,filter] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/foto:scale-[1.08] group-hover/foto:brightness-[1.04] group-hover/foto:saturate-[1.08]">
+      <div className="absolute inset-0 transition-[transform,scale,filter] duration-700 ease-salida group-hover/foto:scale-[1.08] group-hover/foto:brightness-[1.04] group-hover/foto:saturate-[1.08]">
         {/* Las fotos se montan todas (lazy) para no volver a descargar al
             volver atrás, pero solo la activa se pinta: el cruce lo maneja
             motion, que anima `transform`/`opacity` de verdad -- la clase
@@ -155,14 +155,14 @@ export function CardPhotoGallery({
       />
 
       {referencial ? (
-        <span className="absolute left-3 top-14 z-10 rounded-lg bg-dusk/80 px-2 py-1 font-mono text-[0.6rem] font-bold uppercase tracking-[0.06em] text-dusk-text backdrop-blur-sm">
+        <span className="absolute left-3 top-14 z-10 rounded-control bg-dusk/80 px-2 py-1 font-mono text-xs font-bold uppercase tracking-wide text-dusk-text backdrop-blur-sm">
           Imagen referencial
         </span>
       ) : null}
 
       {fotos.length > 1 ? (
         <>
-          <span className="absolute right-3 top-14 rounded-lg bg-dusk/80 px-2 py-1 font-mono text-[0.62rem] font-bold text-dusk-text backdrop-blur-sm">
+          <span className="absolute right-3 top-14 rounded-control bg-dusk/80 px-2 py-1 font-mono text-xs font-bold text-dusk-text backdrop-blur-sm">
             {activa + 1} / {fotos.length}
           </span>
           <div className="absolute left-1/2 top-12 z-10 flex -translate-x-1/2 gap-1.5">

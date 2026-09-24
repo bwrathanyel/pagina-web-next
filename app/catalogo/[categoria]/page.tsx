@@ -124,15 +124,15 @@ export default async function CatalogoPage({
 
       {items.length === 0 ? (
         <p className="text-ink-soft">
-          No hay {label.toLowerCase()} disponibles ahora mismo. Escríbenos por WhatsApp y te
+          No hay {label.toLowerCase()} disponibles ahora mismo. Escríbanos por WhatsApp y le
           contamos qué opciones podemos preparar.
         </p>
       ) : (
         <div className="flex flex-col gap-10">
           {grupos.map(({ destino, items: itemsDelGrupo }) => (
             <section key={destino}>
-              <div className="mb-5 flex items-end justify-between gap-4 border-b border-ink/10 pb-3">
-                <h2 className="font-display text-2xl font-semibold text-ink">{destino}</h2>
+              <div className="mb-5 flex items-end justify-between gap-4 border-b border-linea pb-3">
+                <h2 className="font-display text-2xl font-bold text-ink">{destino}</h2>
                 <span className="font-mono text-xs text-ink-soft">
                   {itemsDelGrupo.length} {itemsDelGrupo.length === 1 ? "opción" : "opciones"}
                 </span>
