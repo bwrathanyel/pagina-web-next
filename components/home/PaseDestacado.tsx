@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Boleto } from "@/components/ui/Boleto";
 import { Icono } from "@/components/ui/Icono";
@@ -60,10 +61,34 @@ export function PaseDestacado({ pase, destino }: { pase: PaseHero; destino?: str
           </div>
         }
       >
-        <div className="flex h-full flex-col justify-center px-4 py-3 lg:px-6 lg:py-6">
-          <p className="line-clamp-2 font-display text-lg font-bold leading-tight text-ink lg:text-2xl">{pase.hotel}</p>
-          {lugar ? <p className="mt-1 truncate text-sm text-ink-soft lg:text-base">{lugar}</p> : null}
-          {incluye ? <p className="mt-3 hidden text-sm leading-snug text-ink-soft lg:line-clamp-2">{incluye}</p> : null}
+        <div className={"flex h-full " + (pase.foto ? "flex-row lg:flex-col" : "flex-col")}>
+          {/* El collage del hero: de fondo el destino, acá el alojamiento. Va
+              a sangre contra el borde del boleto (el recorte redondeado y las
+              muescas son del propio boleto): en el teléfono es una tira a la
+              izquierda, desde lg una franja arriba del nombre. */}
+          {pase.foto ? (
+            <div className="relative w-[4.5rem] shrink-0 overflow-hidden lg:aspect-[16/9] lg:w-full">
+              <Image
+                src={pase.foto}
+                alt=""
+                fill
+                sizes="(min-width: 1024px) 18rem, 4.5rem"
+                className="object-cover transition-transform duration-300 ease-salida motion-safe:group-hover:scale-[1.04]"
+              />
+            </div>
+          ) : null}
+          <div className="flex min-w-0 flex-1 flex-col justify-center px-4 py-3 lg:px-6 lg:py-5">
+            <p
+              className={
+                "line-clamp-2 font-display font-bold leading-tight text-ink lg:text-2xl " +
+                (pase.foto ? "text-base" : "text-lg")
+              }
+            >
+              {pase.hotel}
+            </p>
+            {lugar ? <p className="mt-1 truncate text-sm text-ink-soft lg:text-base">{lugar}</p> : null}
+            {incluye ? <p className="mt-3 hidden text-sm leading-snug text-ink-soft lg:line-clamp-2">{incluye}</p> : null}
+          </div>
         </div>
       </Boleto>
     </Link>

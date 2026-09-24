@@ -12,6 +12,10 @@ export interface PaseHero {
   /** "hasta 30 nov" (fin de venta) o el texto de vigencia del tarifario. */
   vigencia: string | null;
   incluye: string[];
+  /** Foto del alojamiento, solo cuando el fondo es la foto del destino: el
+   * hero arma el collage lugar + hospedaje. Con la foto del hotel de fondo
+   * repetirla en el pase sobraría. */
+  foto?: string;
 }
 
 export interface FotoHero {
@@ -39,9 +43,10 @@ function vigenciaDe(p: Promocion): string | null {
   return texto && /\d/.test(texto) ? texto : null;
 }
 
-function paseDe(p: Promocion, hotel: string): PaseHero | undefined {
+function paseDe(p: Promocion, hotel: string, foto?: string): PaseHero | undefined {
   if (!p.producto) return undefined;
   return {
+    foto,
     promoId: p.id,
     href: `/producto/${p.producto.id}`,
     hotel,
@@ -69,29 +74,22 @@ function esFotoDeLugar(f: Foto): boolean {
 }
 
 /** Foto del DESTINO para el hero (pedido del dueño, 2026-09-24: el hero vende
- * el lugar; el hotel ya lo vende el pase). Elegidas a mano entre las fotos que
- * ya están en el bucket: la más espectacular de cada destino, no la de mayor
- * resolución -- casi todas rondan 1000-1300 px de ancho y no hay más grandes
- * del lugar en sí (las de 2000 px son habitaciones).
+ * el lugar y el pase, el hotel). Son de Pexels: licencia de uso comercial sin
+ * atribución, y ninguna con personas reconocibles (regla del dueño). Viven en
+ * `public/destinos/<archivo>-<ancho>.jpg` (ver `imageLoader`) porque a
+ * pantalla completa piden 2560 px y el Worker de fotos no pasa de 2048.
+ * El comentario de cada una es su id de Pexels, para rehacer los derivados.
  *
- * Son fotos de la galería de algún alojamiento: si una se borra o se
- * desactiva en el CRM, hay que sacarla de acá, porque el Worker da 404 y el
- * hero mostraría un hueco. Destino sin entrada = foto del hotel, como antes.
+ * Coche, La Tortuga y Delta Amacuro tuvieron una foto del bucket (commit
+ * 30351a6) y salieron: medían 1000-1300 px y se veían blandas. Vuelven cuando
+ * haya una de 2500 px o más; hasta entonces no entran a la rotación.
  * Clave: el destino del producto normalizado con `claveDestino`. */
-const FOTOS_DESTINO: Record<string, { path: string; alt: string }> = {
-  canaima: { path: "hoteles/323/03-your-included-to-the.jpg", alt: "Salto Ángel entre las nubes, Canaima" },
-  "los roques": {
-    path: "hoteles/294/02-los-roques2-1920w.webp",
-    alt: "Vista aérea del archipiélago de Los Roques",
-  },
-  margarita: { path: "hoteles/9/01-paradise-surf-2.jpg", alt: "Costa de la Isla de Margarita vista desde el aire" },
-  merida: {
-    path: "hoteles/319/manual-1784352668763-merida.jpg",
-    alt: "Laguna y picos nevados de la Sierra Nevada de Mérida",
-  },
-  coche: { path: "hoteles/14/05-welcome-again-to-coche.jpg", alt: "Playa de la Isla de Coche vista desde el aire" },
-  "la tortuga": { path: "hoteles/32/00-127983425-cayoherradura.jpg", alt: "Cayo Herradura, Isla La Tortuga" },
-  "delta amacuro": { path: "hoteles/29/03-vj3.jpg", alt: "Palafitos a orillas de un caño del Delta del Orinoco" },
+const FOTOS_DESTINO: Record<string, { archivo: string; alt: string }> = {
+  canaima: { archivo: "canaima", alt: "Cascada y tepuy en el Parque Nacional Canaima" }, // 7360544
+  "los roques": { archivo: "los-roques", alt: "Aguas turquesa frente a un cayo de Los Roques" }, // 30587633
+  margarita: { archivo: "margarita", alt: "Bahía de Pampatar, Isla de Margarita" }, // 26241556
+  merida: { archivo: "merida", alt: "Valle entre montañas en Mérida" }, // 19199162
+  caracas: { archivo: "caracas", alt: "Caracas con El Ávila al fondo" }, // 38556235
 };
 
 const claveDestino = (d: string) =>
@@ -99,14 +97,17 @@ const claveDestino = (d: string) =>
 
 /** Fotos para el hero de la home, sacadas de las Hot Sales vigentes.
  *
- * Una entrada por DESTINO con oferta: la foto del lugar (FOTOS_DESTINO) y, de
- * pase, su promo mejor rankeada (`hotSales` ya viene por ranking, así que es
- * la primera que aparece). Si el destino no tiene foto elegida, cae a la del
- * alojamiento, que se prefiere a la de la promoción: las de la promo suelen
- * ser el flyer de la oferta. Sin destino cargado, una por alojamiento. */
+ * Una entrada por DESTINO con oferta y, de pase, su promo mejor rankeada
+ * (`hotSales` ya viene por ranking, así que es la primera que aparece). Rotan
+ * solo los destinos con foto propia (FOTOS_DESTINO), con la foto del
+ * alojamiento dentro del pase. Si ningún destino con oferta tiene foto, el
+ * respaldo es el de antes: la foto del alojamiento de fondo, que se prefiere a
+ * la de la promoción porque esas suelen ser el flyer. Sin destino cargado,
+ * una por alojamiento. */
 export function fotosHeroDeHotSales(hotSales: Promocion[], limite = 8): FotoHero[] {
   const vistos = new Set<string>();
-  const out: FotoHero[] = [];
+  const deDestino: FotoHero[] = [];
+  const respaldo: FotoHero[] = [];
 
   for (const p of hotSales) {
     // Sin alojamiento asociado no hay nombre de lugar que mostrar, y caer al
@@ -119,16 +120,26 @@ export function fotosHeroDeHotSales(hotSales: Promocion[], limite = 8): FotoHero
     if (vistos.has(llave)) continue;
 
     const delDestino = destino ? FOTOS_DESTINO[claveDestino(destino)] : undefined;
-    const delHotel = delDestino
-      ? undefined
-      : [...ordenarFotos(p.producto?.producto_fotos), ...ordenarFotos(p.promocion_fotos)].find(esFotoDeLugar);
-    const path = delDestino?.path ?? delHotel?.storage_path;
-    if (!path) continue;
+    const delHotel = [...ordenarFotos(p.producto?.producto_fotos), ...ordenarFotos(p.promocion_fotos)].find(
+      esFotoDeLugar,
+    );
+    const fotoHotel = delHotel ? fotoUrl(delHotel.storage_path) : undefined;
 
-    vistos.add(llave);
-    out.push({ url: fotoUrl(path), alt: delDestino?.alt ?? nombre, destino, pase: paseDe(p, nombre) });
-    if (out.length >= limite) break;
+    if (delDestino) {
+      vistos.add(llave);
+      if (deDestino.length < limite) {
+        deDestino.push({
+          url: `/destinos/${delDestino.archivo}.jpg`,
+          alt: delDestino.alt,
+          destino,
+          pase: paseDe(p, nombre, fotoHotel),
+        });
+      }
+    } else if (fotoHotel) {
+      vistos.add(llave);
+      if (respaldo.length < limite) respaldo.push({ url: fotoHotel, alt: nombre, destino, pase: paseDe(p, nombre) });
+    }
   }
 
-  return out;
+  return deDestino.length > 0 ? deDestino : respaldo;
 }

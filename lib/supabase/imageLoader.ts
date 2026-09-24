@@ -56,7 +56,18 @@ function anchoDerivado(pedido: number): AnchoDerivado {
  * no dependen de ninguna función de pago, y además pesan ~11x menos que el
  * original -- servir originales reventó la cuota de Cached Egress (21,6 GB
  * sobre 5 GB). */
+/** Fotos de destino del hero (`public/destinos/`): no están en el bucket
+ * porque el Worker no pasa de 2048 y a pantalla completa hacen falta 2560.
+ * Cada una existe en estos anchos como `<clave>-<ancho>.jpg`. */
+const ANCHOS_DESTINO = [828, 1280, 1920, 2560] as const;
+const FOTO_DESTINO = /^\/destinos\/([a-z-]+)\.jpg$/;
+
 export default function supabaseImageLoader({ src, width }: { src: string; width: number; quality?: number }): string {
+  const destino = FOTO_DESTINO.exec(src);
+  if (destino) {
+    const ancho = ANCHOS_DESTINO.find((a) => a >= width) ?? 2560;
+    return `/destinos/${destino[1]}-${ancho}.jpg`;
+  }
   if (src.startsWith(CDN_FOTOS)) return src;
   if (!src.includes(OBJECT_PREFIX)) return src;
 
