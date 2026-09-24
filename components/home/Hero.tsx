@@ -117,6 +117,17 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
     return () => clearTimeout(t);
   }, [rotando, activo, orden.length, i, vuelta]);
 
+  // Una foto que no baja (red cortada, archivo borrado) sale de la rotación y
+  // se salta ya a la próxima que sí bajó: si no, queda el texto alternativo
+  // del <img> roto en pantalla completa hasta que venza el reloj.
+  const alFallar = (idx: number) => {
+    cargadas.current.delete(idx);
+    for (let paso = 1; paso < orden.length; paso++) {
+      const siguiente = (idx + paso) % orden.length;
+      if (cargadas.current.has(siguiente)) return setI(siguiente);
+    }
+  };
+
   const actual = hero.image ? null : orden[i] ?? fotoPrincipal;
   const heroAlt = actual?.alt ?? fotoPrincipal?.alt ?? "Experiencia de viaje";
   // El tablero muestra el destino de la foto que está en pantalla; si el
@@ -182,9 +193,10 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
                 alt={heroAlt}
                 fill
                 sizes="100vw"
-                className={"object-cover " + (i % 2 ? "hero-kenburns-inv" : "hero-kenburns")}
+                className={"object-cover text-transparent " + (i % 2 ? "hero-kenburns-inv" : "hero-kenburns")}
                 priority={i === 0}
                 onLoad={() => marcarCargada(i)}
+                onError={() => alFallar(i)}
               />
             </m.div>
           </AnimatePresence>
