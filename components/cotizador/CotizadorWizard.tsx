@@ -18,11 +18,11 @@ import { enviarASheetMonkey } from "@/lib/leads/sheetMonkey";
 import { detectarProcedencia, esInstagramInApp } from "@/lib/utils/procedencia";
 
 const TITULOS: Record<TipoCotizacion, string> = {
-  hospedaje: "Cotiza tu hospedaje",
-  boleteria: "Cotiza tu vuelo",
-  fullday: "Reserva tu grupo",
-  paquete: "Consulta tu paquete",
-  personalizado: "Cotizador Personalizado",
+  hospedaje: "Cotice su hospedaje",
+  boleteria: "Cotice su vuelo",
+  fullday: "Cotice su grupo",
+  paquete: "Consulte su paquete",
+  personalizado: "Cotizador personalizado",
 };
 
 function defaultsDe(tipo: TipoCotizacion): Respuestas {
@@ -125,7 +125,7 @@ export function CotizadorWizard({
       <div className="rounded-2xl border border-ink/10 bg-card p-6 text-center">
         <p className="mb-2 font-display text-2xl font-semibold text-ink">¡Listo!</p>
         <p className="mb-5 text-ink-soft">
-          Ya armamos tu solicitud. Envíala por WhatsApp y un asesor te responde.
+          Ya armamos su solicitud. Envíela por WhatsApp y un asesor le responde.
         </p>
         <a
           href={waHref}
@@ -179,7 +179,7 @@ export function CotizadorWizard({
 
       {faltanRequeridos ? (
         <p className="mt-4 text-sm text-ink-soft" role="status">
-          Completa los campos obligatorios (*) para continuar.
+          Complete los campos obligatorios (*) para continuar.
         </p>
       ) : null}
 

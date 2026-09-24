@@ -4,18 +4,18 @@ const ninosMasCero = (r: Respuestas) => Number(r.ninos ?? 0) > 0;
 
 const CAMPO_NOMBRE: CampoDef = {
   key: "nombre",
-  label: "Tu nombre",
+  label: "Su nombre",
   tipo: "text",
-  placeholder: "Escribe tu nombre completo",
+  placeholder: "Escriba su nombre completo",
   required: true,
 };
 
 const CAMPO_TELEFONO: CampoDef = {
   key: "telefono",
-  label: "Tu número de teléfono",
+  label: "Su número de teléfono",
   tipo: "tel",
   placeholder: "Ej: 0412-1234567",
-  hint: "Solo para contactarte más rápido si hay ofertas relámpago",
+  hint: "Solo para comunicarnos más rápido con usted si hay ofertas relámpago",
 };
 
 const CAMPO_NOTAS: CampoDef = {
@@ -65,10 +65,10 @@ export const DESTINOS_VENEZUELA: import("@/components/cotizador/types").OpcionCa
 export const WIZARD_CONFIG: Record<TipoCotizacion, PasoDef[]> = {
   hospedaje: [
     {
-      titulo: "¿A dónde quieres ir?",
+      titulo: "¿A dónde quiere ir?",
       campos: [
         { key: "destino", label: "Destino", tipo: "cards", opciones: DESTINOS_VENEZUELA, required: true, default: "Isla de Margarita" },
-        { key: "destinoOtro", label: "Escribe tu destino ideal", tipo: "text", condicion: (r) => r.destino === "Extranjero" || r.destino === undefined },
+        { key: "destinoOtro", label: "Escriba su destino ideal", tipo: "text", condicion: (r) => r.destino === "Extranjero" || r.destino === undefined },
         CAMPO_NOMBRE,
       ],
     },
@@ -85,7 +85,7 @@ export const WIZARD_CONFIG: Record<TipoCotizacion, PasoDef[]> = {
             { value: "Apartamento / Suite", label: "Apartamento / Suite", desc: "Más espacio y privacidad, ideal para familias", emoji: "🏠" },
             { value: "Posada / Ecolodge", label: "Posada / Ecolodge", desc: "Experiencia auténtica y contacto con la naturaleza", emoji: "🌿" },
             { value: "Resort", label: "Resort", desc: "Todo incluido con actividades y entretenimiento", emoji: "🌴" },
-            { value: "Sin preferencia", label: "Sin preferencia", desc: "Te recomendamos la mejor opción", emoji: "✨" },
+            { value: "Sin preferencia", label: "Sin preferencia", desc: "Le recomendamos la mejor opción", emoji: "✨" },
           ],
         },
         {
@@ -135,7 +135,7 @@ export const WIZARD_CONFIG: Record<TipoCotizacion, PasoDef[]> = {
       ],
     },
     {
-      titulo: "¿Cómo llegas al destino?",
+      titulo: "¿Cómo llega al destino?",
       campos: [
         {
           key: "transporte", label: "Medio de transporte", tipo: "tags", default: "vehiculo-propio",
@@ -176,9 +176,9 @@ export const WIZARD_CONFIG: Record<TipoCotizacion, PasoDef[]> = {
 
   boleteria: [
     {
-      titulo: "Tu vuelo",
+      titulo: "Su vuelo",
       campos: [
-        { key: "tipoViaje", label: "¿Qué necesitas?", tipo: "tags", default: "ida-vuelta", opciones: [
+        { key: "tipoViaje", label: "¿Qué necesita?", tipo: "tags", default: "ida-vuelta", opciones: [
           { value: "ida", label: "Solo Ida" }, { value: "ida-vuelta", label: "Ida y Vuelta" },
         ] },
         { key: "origen", label: "Origen", tipo: "select", default: "Valencia", opciones: [
@@ -242,7 +242,7 @@ export const WIZARD_CONFIG: Record<TipoCotizacion, PasoDef[]> = {
 
   fullday: [
     {
-      titulo: "Tu grupo",
+      titulo: "Su grupo",
       campos: [
         CAMPO_NOMBRE,
         { key: "adultos", label: "Adultos (11+ años)", tipo: "number", min: 1, max: 100, default: 15, required: true, hint: "Servicio privado por grupo, mínimo 15 personas en total." },
@@ -250,7 +250,7 @@ export const WIZARD_CONFIG: Record<TipoCotizacion, PasoDef[]> = {
       ],
     },
     {
-      titulo: "Elige tu plan",
+      titulo: "Elija su plan",
       campos: [
         {
           key: "plan", label: "Plan (precio por persona)", tipo: "cards", default: "basico",
@@ -269,7 +269,7 @@ export const WIZARD_CONFIG: Record<TipoCotizacion, PasoDef[]> = {
 
   paquete: [
     {
-      titulo: "Tu consulta",
+      titulo: "Su consulta",
       campos: [
         CAMPO_NOMBRE,
         { key: "destino", label: "Destino de interés", tipo: "text", required: true, placeholder: "Ej: Los Roques, Dubái, Tepuy Roraima..." },
@@ -294,7 +294,7 @@ export const WIZARD_CONFIG: Record<TipoCotizacion, PasoDef[]> = {
   // destino/tipo ya se sabe y no se vuelve a preguntar acá.
   personalizado: [
     {
-      titulo: "¿Qué tipo de experiencia buscas?",
+      titulo: "¿Qué tipo de experiencia busca?",
       campos: [
         {
           key: "tipoServicio",
@@ -307,17 +307,17 @@ export const WIZARD_CONFIG: Record<TipoCotizacion, PasoDef[]> = {
             { value: "Full Day / Tour", label: "Full Day / Tour", desc: "Excursión de un día o varios", emoji: "🌴" },
             { value: "Boletería aérea", label: "Boletería aérea", desc: "Vuelos nacionales o internacionales", emoji: "✈️" },
             { value: "Paquete completo", label: "Paquete completo", desc: "Vuelo + hospedaje + actividades", emoji: "🌍" },
-            { value: "No estoy seguro", label: "No estoy seguro/a", desc: "Cuéntanos qué tienes en mente y te asesoramos", emoji: "💬" },
+            { value: "No estoy seguro", label: "No estoy seguro/a", desc: "Cuéntenos qué tiene en mente y le asesoramos", emoji: "💬" },
           ],
         },
         CAMPO_NOMBRE,
       ],
     },
     {
-      titulo: "¿A dónde quieres ir?",
+      titulo: "¿A dónde quiere ir?",
       campos: [
         { key: "destino", label: "Destino", tipo: "cards", opciones: DESTINOS_VENEZUELA, required: true, default: "Isla de Margarita" },
-        { key: "destinoOtro", label: "Escribe tu destino ideal", tipo: "text", condicion: (r) => r.destino === "Extranjero" || r.destino === undefined },
+        { key: "destinoOtro", label: "Escriba su destino ideal", tipo: "text", condicion: (r) => r.destino === "Extranjero" || r.destino === undefined },
       ],
     },
     {

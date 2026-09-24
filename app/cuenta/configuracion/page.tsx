@@ -44,7 +44,7 @@ function ConfiguracionForm() {
     const { error: rpcError } = await supabaseBrowser().rpc("web_actualizar_perfil", { p_nombre: nombre });
     setGuardando(false);
     if (rpcError) {
-      setError("No se pudo guardar. Inténtalo de nuevo.");
+      setError("No se pudo guardar. Inténtelo de nuevo.");
       return;
     }
     setGuardado(true);
@@ -85,7 +85,7 @@ function ConfiguracionForm() {
               value={nombre}
               disabled={cargandoNombre}
               onChange={(e) => setNombre(e.target.value)}
-              placeholder="Tu nombre"
+              placeholder="Su nombre"
               className="w-full rounded-xl border border-ink/15 bg-card px-4 py-3 text-base text-ink disabled:opacity-60"
             />
           </div>

@@ -265,7 +265,7 @@ function LightboxFoto({ src, alt, onClose }: { src: string; alt: string; onClose
 
 const MENSAJE_BIENVENIDA: Mensaje = {
   rol: "ia",
-  texto: "¡Hola! 😊 Soy Lotus, tu asistente virtual. Cuéntame qué viaje tienes en mente y te ayudo a armarlo.",
+  texto: "¡Hola! Soy Lotus, su asistente virtual. Cuénteme qué viaje tiene en mente y le ayudo a armarlo.",
 };
 
 // Este panel nunca se renderiza en el server -- ContactoFab solo
@@ -396,7 +396,7 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
-        setError("No pudimos conectar, prueba de nuevo 🙈");
+        setError("No pudimos conectar. Intente de nuevo en un momento.");
         return;
       }
       setMensajes((m) => [
@@ -413,7 +413,7 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
         },
       ]);
     } catch {
-      setError("No pudimos conectar, prueba de nuevo 🙈");
+      setError("No pudimos conectar. Intente de nuevo en un momento.");
     } finally {
       setEnviando(false);
     }
@@ -423,7 +423,7 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
     <>
       <div
         role="dialog"
-        aria-label="Lotus, tu asistente virtual para tus viajes"
+        aria-label="Lotus, su asistente virtual"
         className={
           "fixed inset-x-0 bottom-0 z-50 flex h-[75vh] w-full flex-col overflow-hidden rounded-t-2xl bg-card shadow-2xl ring-1 ring-black/10 " +
           "sm:inset-x-auto sm:bottom-24 sm:right-4 sm:h-[70vh] sm:max-h-[600px] sm:w-[90vw] sm:max-w-[380px] sm:rounded-2xl sm:mb-[env(safe-area-inset-bottom)] sm:mr-[env(safe-area-inset-right)] " +
@@ -444,8 +444,8 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
           <span className="h-1 w-9 rounded-full bg-white/30 sm:hidden" aria-hidden="true" />
           <div className="flex w-full items-center justify-between px-4 pb-3">
             <div>
-              <p className="font-display text-base font-semibold">Lotus, tu asistente virtual</p>
-              <p className="text-xs text-white/80">Te ayuda a armar tu viaje al instante</p>
+              <p className="font-display text-base font-semibold">Lotus, su asistente virtual</p>
+              <p className="text-xs text-white/80">Le ayuda a armar su viaje al instante</p>
             </div>
             <button
               type="button"
@@ -542,7 +542,7 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
             onChange={(e) => setTexto(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), enviar())}
             disabled={enviando}
-            placeholder="Escribí tu mensaje…"
+            placeholder="Escriba su mensaje…"
             rows={1}
             className="max-h-[104px] flex-1 resize-none rounded-2xl border border-black/10 bg-sand px-4 py-2 text-sm text-ink outline-none focus:border-coral disabled:opacity-60"
           />

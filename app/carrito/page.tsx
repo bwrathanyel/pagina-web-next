@@ -55,7 +55,7 @@ export default function CarritoPage() {
         <div className="rounded-2xl border border-ink/10 bg-card p-6">
           <p className="mb-2 font-display text-2xl font-semibold text-ink">¡Listo!</p>
           <p className="mb-5 text-ink-soft">
-            Armamos tu solicitud con todo lo del carrito. Envíala por WhatsApp y un asesor te
+            Armamos su solicitud con todo lo del carrito. Envíela por WhatsApp y un asesor le
             responde.
           </p>
           <a
@@ -74,8 +74,8 @@ export default function CarritoPage() {
   if (items.length === 0) {
     return (
       <main className="mx-auto max-w-md px-5 py-12 text-center">
-        <h1 className="mb-2 font-display text-3xl font-semibold text-ink">Tu carrito</h1>
-        <p className="mb-6 text-ink-soft">Está vacío. Agregá hoteles, tours o promociones desde el catálogo.</p>
+        <h1 className="mb-2 font-display text-3xl font-semibold text-ink">Su carrito</h1>
+        <p className="mb-6 text-ink-soft">Está vacío. Agregue hoteles, tours o promociones desde el catálogo.</p>
         <Link
           href="/catalogo/promociones"
           className="inline-flex min-h-11 items-center justify-center rounded-full bg-gradient-to-br from-coral to-gold px-6 font-semibold text-btn-ink"
@@ -98,7 +98,7 @@ export default function CarritoPage() {
             <path d="M15 19l-7-7 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </Link>
-        <h1 className="font-display text-3xl font-semibold text-ink">Tu carrito</h1>
+        <h1 className="font-display text-3xl font-semibold text-ink">Su carrito</h1>
       </div>
 
       <ul className="mb-8 flex flex-col gap-3">
@@ -131,11 +131,11 @@ export default function CarritoPage() {
 
       <form onSubmit={enviar} className="flex flex-col gap-4 rounded-2xl border border-ink/10 bg-card p-6">
         <p className="text-sm text-ink-soft">
-          Ya elegiste qué te interesa — solo faltan tus datos para que un asesor te contacte.
+          Ya eligió lo que le interesa. Solo faltan sus datos para que un asesor se comunique con usted.
         </p>
         <div>
           <label htmlFor="nombre" className="mb-1.5 block text-sm font-semibold text-ink">
-            Tu nombre <span className="text-coral">*</span>
+            Su nombre <span className="text-coral">*</span>
           </label>
           <input
             id="nombre"

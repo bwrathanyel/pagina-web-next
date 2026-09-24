@@ -33,7 +33,7 @@ const IDS_OCULTOS_HEADER = new Set(["paquetes"]);
 // Labels cortos solo para el header (pasada 3): el label largo se conserva en
 // site-content para el BottomTabBar y el editor de contenido del admin.
 const LABEL_HEADER: Record<string, string> = {
-  empleo: "Únete",
+  empleo: "Empleo",
   "ia-negocio": "IA para empresas",
 };
 

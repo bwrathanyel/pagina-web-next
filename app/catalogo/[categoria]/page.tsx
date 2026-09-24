@@ -22,13 +22,13 @@ const SEO_POR_CATEGORIA: Record<Categoria, { title: string; description: string;
   promociones: {
     title: "Promociones y Ofertas de Viajes en Venezuela",
     description:
-      "Ofertas de temporada en hoteles, posadas, full days y paquetes todo incluido: Los Roques, Margarita, Morrocoy y más. Precios reales, cotiza en línea o por WhatsApp.",
+      "Ofertas de temporada en hoteles, posadas, full days y paquetes todo incluido: Los Roques, Margarita, Morrocoy y más. Precios reales, cotice en línea o por WhatsApp.",
     heading: "Promociones",
   },
   hoteles: {
     title: "Hoteles y Posadas en Venezuela — Margarita, Los Roques, Morrocoy",
     description:
-      "Reserva hoteles y posadas en Isla de Margarita, Los Roques, Morrocoy, Chichiriviche y Mérida. Fotos, precios y disponibilidad real — también si compras desde el exterior.",
+      "Hoteles y posadas en Isla de Margarita, Los Roques, Morrocoy, Chichiriviche y Mérida. Fotos, precios y disponibilidad real, también si compra desde el exterior.",
     heading: "Hoteles y posadas",
   },
   paquetes: {
@@ -40,8 +40,8 @@ const SEO_POR_CATEGORIA: Record<Categoria, { title: string; description: string;
   "guias-tours": {
     title: "Tours y Full Days en Venezuela — Los Roques, Canaima, Morrocoy",
     description:
-      "Full days de playa y tours guiados por Venezuela: Los Roques, Canaima, Morrocoy y Chichiriviche, Mérida. Salidas con todo coordinado, cotiza tu fecha por WhatsApp.",
-    heading: "Guías / Tours",
+      "Full days de playa y tours guiados por Venezuela: Los Roques, Canaima, Morrocoy y Chichiriviche, Mérida. Salidas con todo coordinado, cotice su fecha por WhatsApp.",
+    heading: "Guías y tours",
   },
 };
 

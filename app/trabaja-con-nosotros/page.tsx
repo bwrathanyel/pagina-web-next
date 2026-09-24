@@ -2,7 +2,7 @@ import { PostulacionForm } from "@/components/empleo/PostulacionForm";
 import { EntrevistaIA } from "@/components/empleo/EntrevistaIA";
 
 export const metadata = {
-  title: "Trabaja con nosotros | Destino y Eventos Lotus 360",
+  title: "Trabaje con nosotros | Destino y Eventos Lotus 360",
   description: "Estamos contratando: vacantes presenciales en Naguanagua (Valencia) y posiciones freelance por turnos.",
 };
 
@@ -36,7 +36,7 @@ export default function TrabajaConNosotrosPage() {
         <div className="mx-auto max-w-6xl px-5 py-9 md:py-20">
           <p className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-coral-bright">Estamos contratando</p>
           <h1 className="mt-3 max-w-2xl text-balance font-display text-4xl font-semibold leading-tight text-dusk-text md:text-6xl">
-            Forma parte de <span className="text-gold">nuestro equipo</span>.
+            Forme parte de <span className="text-gold">nuestro equipo</span>.
           </h1>
           <p className="mt-5 max-w-xl leading-7 text-dusk-text-soft">
             Buscamos personal que resida en Valencia, preferiblemente en Naguanagua. Tenemos vacantes
@@ -58,9 +58,9 @@ export default function TrabajaConNosotrosPage() {
               <p className="font-mono text-xs font-bold uppercase tracking-[0.14em] text-gold">Modalidad freelance</p>
               <h2 className="mt-2 font-display text-2xl font-semibold text-dusk-text">Asesor de Ventas Freelance</h2>
               <p className="mt-2 text-sm leading-6 text-dusk-text-soft">
-                Trabajo remoto por turnos -- diurno (9:00am a 5:00pm) o nocturno (6:00pm a 12:00am). Sueldo
-                base más comisión por venta; los detalles de compensación te los compartimos apenas
-                recibamos tu postulación.
+                Trabajo remoto por turnos: diurno (9:00am a 5:00pm) o nocturno (6:00pm a 12:00am). Sueldo
+                base más comisión por venta; los detalles de compensación se los compartimos apenas
+                recibamos su postulación.
               </p>
               <p className="mt-4 text-sm font-bold text-dusk-text">Requisitos para trabajar desde casa:</p>
               <ul className="mt-3 flex flex-col gap-3">
@@ -70,7 +70,7 @@ export default function TrabajaConNosotrosPage() {
           </div>
 
           <p className="mt-10 text-sm leading-6 text-dusk-text-soft">
-            Experiencia comprobable. También puedes enviar tu CV directo a{" "}
+            Experiencia comprobable. También puede enviar su CV directo a{" "}
             <a href="mailto:corporativo.lotus360@gmail.com" className="font-bold text-gold underline underline-offset-2">
               corporativo.lotus360@gmail.com
             </a>.
@@ -88,11 +88,11 @@ export default function TrabajaConNosotrosPage() {
             Opción rápida
           </p>
           <h2 className="mb-3 font-display text-2xl font-semibold text-dusk-text md:text-3xl">
-            Postúlate conversando
+            Postúlese conversando
           </h2>
           <p className="mb-6 text-sm leading-6 text-dusk-text-soft">
-            Cuéntale a nuestra asistente qué buscas y cuál es tu experiencia. Te hace unas preguntas,
-            te pide tu CV (puedes adjuntarlo con el botón de clip) y deja tu postulación registrada al
+            Cuéntele a nuestra asistente qué busca y cuál es su experiencia. Le hace unas preguntas,
+            le pide su CV (puede adjuntarlo con el botón de clip) y deja su postulación registrada al
             instante, sin llenar formularios.
           </p>
           <EntrevistaIA />
@@ -102,10 +102,10 @@ export default function TrabajaConNosotrosPage() {
       <section className="bg-sand">
         <div className="mx-auto max-w-2xl px-5 py-9 md:py-16">
           <p className="mb-3 font-mono text-xs font-bold uppercase tracking-[0.14em] text-coral">
-            O si prefieres el formulario
+            O si prefiere el formulario
           </p>
           <h2 className="mb-6 font-display text-2xl font-semibold text-ink md:text-3xl">
-            Envía tus datos y tu CV
+            Envíe sus datos y su CV
           </h2>
           <PostulacionForm modalidadInicial="presencial" />
         </div>

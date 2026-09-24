@@ -165,12 +165,12 @@ export function CotizacionOpcionForm({ opcion }: { opcion: CotizacionOpcion }) {
     } catch (submitError) {
       const codigo = submitError instanceof Error ? submitError.message : "";
       setError(codigo === "tiempo_agotado"
-        ? "El sistema tardó demasiado en responder. No se registró la solicitud; espera unos segundos e inténtalo nuevamente."
+        ? "El sistema tardó demasiado en responder. No se registró la solicitud; espere unos segundos e inténtelo nuevamente."
         : codigo === "servicio_no_disponible"
-          ? "El servicio no está disponible temporalmente. Tus datos no se perdieron; inténtalo nuevamente en un momento."
+          ? "El servicio no está disponible temporalmente. Sus datos no se perdieron; inténtelo nuevamente en un momento."
           : codigo === "datos_invalidos"
-            ? "Revisa el nombre y el teléfono antes de continuar."
-            : "No pudimos registrar tu solicitud. Inténtalo nuevamente en un momento.");
+            ? "Revise el nombre y el teléfono antes de continuar."
+            : "No pudimos registrar su solicitud. Inténtelo nuevamente en un momento.");
     } finally {
       setEnviando(false);
     }
@@ -189,7 +189,7 @@ export function CotizacionOpcionForm({ opcion }: { opcion: CotizacionOpcion }) {
           {confirmacion.numero ? `Cotización #${confirmacion.numero}` : "Cotización recibida"}
         </h1>
         <p className="mt-3 leading-7 text-ink-soft">
-          Un asesor verificará disponibilidad y tarifa. Tu solicitud quedó registrada y fue asignada a {confirmacion.asesor}.
+          Un asesor verificará disponibilidad y tarifa. Su solicitud quedó registrada y fue asignada a {confirmacion.asesor}.
         </p>
 
         <dl className="my-7 grid gap-3 rounded-2xl bg-sand-2 p-5 text-sm sm:grid-cols-2">
@@ -207,7 +207,7 @@ export function CotizacionOpcionForm({ opcion }: { opcion: CotizacionOpcion }) {
             Volver a la opción
           </Link>
         </div>
-        <p className="mt-4 text-xs leading-5 text-ink-soft">WhatsApp es opcional: tu solicitud ya fue enviada correctamente.</p>
+        <p className="mt-4 text-xs leading-5 text-ink-soft">WhatsApp es opcional: su solicitud ya fue enviada correctamente.</p>
       </section>
     );
   }
@@ -230,13 +230,13 @@ export function CotizacionOpcionForm({ opcion }: { opcion: CotizacionOpcion }) {
 
       <form onSubmit={enviar} className="rounded-[28px] border border-ink/10 bg-card p-6 shadow-[0_24px_70px_-38px_rgba(36,31,26,.45)] md:p-8">
         <p className="font-mono text-xs font-bold uppercase tracking-[0.15em] text-coral">Solicitud de cotización</p>
-        <h2 className="mt-2 font-display text-3xl font-semibold text-ink">Cuéntanos quiénes viajan.</h2>
+        <h2 className="mt-2 font-display text-3xl font-semibold text-ink">Cuéntenos quiénes viajan.</h2>
         <p className="mt-2 text-sm leading-6 text-ink-soft">La opción ya está seleccionada. Solo necesitamos los datos esenciales para que un asesor confirme disponibilidad.</p>
 
         <div className="mt-7 grid gap-5 sm:grid-cols-2">
-          <label className="text-sm font-bold text-ink sm:col-span-2">Nombre y apellido<input required autoComplete="name" value={nombre} onChange={(e) => setNombre(e.target.value)} className={inputClass} placeholder="Escribe tu nombre completo" /></label>
+          <label className="text-sm font-bold text-ink sm:col-span-2">Nombre y apellido<input required autoComplete="name" value={nombre} onChange={(e) => setNombre(e.target.value)} className={inputClass} placeholder="Escriba su nombre completo" /></label>
           <label className="text-sm font-bold text-ink">Teléfono opcional<input autoComplete="tel" inputMode="tel" value={telefono} onChange={(e) => { setTelefono(e.target.value); setError(null); }} className={inputClass} placeholder="Ej: 0412-1234567 o +58 412-1234567" /><span className="mt-1.5 block text-xs font-normal leading-5 text-ink-soft">Aceptamos formato nacional o internacional.</span></label>
-          <label className="text-sm font-bold text-ink">Correo opcional<input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="tu@correo.com" /></label>
+          <label className="text-sm font-bold text-ink">Correo opcional<input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="su@correo.com" /></label>
           <label className="text-sm font-bold text-ink">{opcion.esHotel ? "Fecha de entrada" : "Fecha de viaje"}<input required type="date" min={hoy} max={opcion.vigenciaFin ?? undefined} value={fechaEntrada} onChange={(e) => { setFechaEntrada(e.target.value); if (fechaSalida && fechaSalida <= e.target.value) setFechaSalida(""); }} className={inputClass} /></label>
           <label className="text-sm font-bold text-ink">{opcion.esHotel ? "Fecha de salida" : "Regreso opcional"}<input required={opcion.esHotel} type="date" min={fechaEntrada ? sumarDias(fechaEntrada, 1) : hoy} max={opcion.vigenciaFin ?? undefined} value={fechaSalida} onChange={(e) => setFechaSalida(e.target.value)} className={inputClass} /></label>
           <label className="text-sm font-bold text-ink">Adultos<input required type="number" min={1} max={50} value={adultos} onChange={(e) => setAdultos(Number(e.target.value))} className={inputClass} /></label>
@@ -252,7 +252,7 @@ export function CotizacionOpcionForm({ opcion }: { opcion: CotizacionOpcion }) {
           {totalEstimado != null ? (
             <><p className="mt-2 font-display text-3xl font-semibold text-ink">${totalEstimado.toFixed(2)} USD</p><p className="mt-2 text-sm leading-6 text-ink-soft">{viajerosPagos} viajero(s) con tarifa × {noches} {noches === 1 ? "noche" : "noches"} × ${opcion.precioUnitarioUsd?.toFixed(2)}. {opcion.ninosGratis > 0 ? `${Math.min(ninos, opcion.ninosGratis)} niño(s) incluidos sin cargo.` : ""}</p></>
           ) : opcion.calculoPrecio === "persona_noche" ? (
-            <><p className="mt-2 text-xl font-bold text-ink">Selecciona entrada y salida</p><p className="mt-1 text-sm leading-6 text-ink-soft">El total se actualizará automáticamente según noches, adultos y niños.</p></>
+            <><p className="mt-2 text-xl font-bold text-ink">Seleccione entrada y salida</p><p className="mt-1 text-sm leading-6 text-ink-soft">El total se actualizará automáticamente según noches, adultos y niños.</p></>
           ) : (
             <><p className="mt-2 text-xl font-bold text-ink">Total por confirmar</p><p className="mt-1 text-sm leading-6 text-ink-soft">Esta opción no tiene una tarifa única por persona y noche; el asesor calculará el total exacto.</p></>
           )}

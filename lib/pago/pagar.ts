@@ -43,9 +43,9 @@ const INSTRUCTIVOS: Record<RielPago, InstructivoRiel> = {
   zelle: {
     titulo: "Pago por Zelle",
     pasos: [
-      "Envía el monto exacto indicado arriba desde tu app bancaria por Zelle.",
-      "Copia el número de confirmación de Zelle.",
-      "Pégalo abajo en “Referencia” y adjunta la captura del comprobante.",
+      "Envíe el monto exacto indicado arriba desde su app bancaria por Zelle.",
+      "Copie el número de confirmación de Zelle.",
+      "Péguelo abajo en “Referencia” y adjunte la captura del comprobante.",
     ],
     datos: [
       { etiqueta: "Correo Zelle", valor: "corporativo.lotus360@gmail.com" },
@@ -55,9 +55,9 @@ const INSTRUCTIVOS: Record<RielPago, InstructivoRiel> = {
   pago_movil: {
     titulo: "Pago Móvil (Bs)",
     pasos: [
-      "Haz un Pago Móvil por el monto exacto en bolívares indicado arriba.",
-      "Guarda el número de referencia que te da el banco.",
-      "Escríbelo abajo en “Referencia” y adjunta la captura.",
+      "Haga un Pago Móvil por el monto exacto en bolívares indicado arriba.",
+      "Guarde el número de referencia que le da el banco.",
+      "Escríbalo abajo en “Referencia” y adjunte la captura.",
     ],
     datos: [
       { etiqueta: "Teléfono", valor: "0414-0415685" },
@@ -68,9 +68,9 @@ const INSTRUCTIVOS: Record<RielPago, InstructivoRiel> = {
   c2p: {
     titulo: "Pago Móvil C2P (Bs)",
     pasos: [
-      "Haz un Pago Móvil por el monto exacto en bolívares indicado arriba.",
-      "Guarda el número de referencia del banco.",
-      "Escríbelo abajo en “Referencia” y adjunta la captura.",
+      "Haga un Pago Móvil por el monto exacto en bolívares indicado arriba.",
+      "Guarde el número de referencia del banco.",
+      "Escríbalo abajo en “Referencia” y adjunte la captura.",
     ],
     datos: [
       { etiqueta: "Teléfono", valor: "0414-0415685" },
@@ -81,9 +81,9 @@ const INSTRUCTIVOS: Record<RielPago, InstructivoRiel> = {
   binance: {
     titulo: "Pago con USDT (Binance)",
     pasos: [
-      "Envía el monto exacto en USDT a la cuenta indicada.",
-      "Copia el ID de la transacción (TxID) o el número de orden de Binance Pay.",
-      "Pégalo abajo en “Referencia” y adjunta la captura.",
+      "Envíe el monto exacto en USDT a la cuenta indicada.",
+      "Copie el ID de la transacción (TxID) o el número de orden de Binance Pay.",
+      "Péguelo abajo en “Referencia” y adjunte la captura.",
     ],
     datos: [
       { etiqueta: "Binance Pay ID / correo", valor: "andricarevalo@gmail.com" },
@@ -92,9 +92,9 @@ const INSTRUCTIVOS: Record<RielPago, InstructivoRiel> = {
   transferencia: {
     titulo: "Transferencia bancaria",
     pasos: [
-      "Transfiere el monto exacto a la cuenta indicada.",
-      "Guarda el número de referencia de la transferencia.",
-      "Escríbelo abajo en “Referencia” y adjunta el comprobante.",
+      "Transfiera el monto exacto a la cuenta indicada.",
+      "Guarde el número de referencia de la transferencia.",
+      "Escríbalo abajo en “Referencia” y adjunte el comprobante.",
     ],
     datos: [
       { etiqueta: "Banco", valor: "CONFIGURAR banco" },
@@ -104,12 +104,12 @@ const INSTRUCTIVOS: Record<RielPago, InstructivoRiel> = {
   },
   tarjeta: {
     titulo: "Pago con tarjeta",
-    pasos: ["Este link no procesa tarjetas todavía. Escríbele a tu asesor para coordinar el pago."],
+    pasos: ["Este link no procesa tarjetas todavía. Escríbale a su asesor para coordinar el pago."],
     datos: [],
   },
   efectivo: {
     titulo: "Pago en efectivo",
-    pasos: ["El pago en efectivo se hace en la oficina. Coordina con tu asesor la entrega y trae este link."],
+    pasos: ["El pago en efectivo se hace en la oficina. Coordine con su asesor la entrega y traiga este link."],
     datos: [],
   },
 };

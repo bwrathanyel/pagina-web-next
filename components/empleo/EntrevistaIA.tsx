@@ -15,14 +15,14 @@ interface Mensaje {
 const BIENVENIDA: Mensaje = {
   rol: "ia",
   texto:
-    "¡Hola! Soy Lotus, del equipo de Destino y Eventos Lotus 360. Cuéntame un poco de ti y vemos juntos si encajas con alguna de las vacantes abiertas. ¿Te interesa la modalidad presencial en nuestra oficina de Naguanagua, o freelance desde casa?",
+    "¡Hola! Soy Lotus, del equipo de Destino y Eventos Lotus 360. Cuénteme un poco de usted y vemos juntos si encaja con alguna de las vacantes abiertas. ¿Le interesa la modalidad presencial en nuestra oficina de Naguanagua, o freelance desde casa?",
 };
 
 const CV_ERROR_TEXTO: Record<string, string> = {
   cv_formato_invalido: "El CV debe ser PDF, JPG o PNG.",
-  cv_invalido: "No pudimos leer ese archivo -- prueba con otro.",
+  cv_invalido: "No pudimos leer ese archivo. Pruebe con otro.",
   cv_muy_grande: "El archivo no puede pesar más de 5MB.",
-  cv_error_subida: "No pudimos subir el CV justo ahora. Prueba de nuevo en un momento.",
+  cv_error_subida: "No pudimos subir el CV justo ahora. Pruebe de nuevo en un momento.",
 };
 
 // Mismo blindaje que AsistenteVirtualPanel: el in-app browser de Instagram
@@ -118,22 +118,22 @@ export function EntrevistaIA() {
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
-        setError("No pudimos conectar. Intenta de nuevo en un momento.");
+        setError("No pudimos conectar. Intente de nuevo en un momento.");
         return;
       }
       setMensajes((m) => [...m, { rol: "ia", texto: data.respuesta }]);
       if (data.entrevista_completa) setRegistrada(true);
       if (data.cv_recibido) {
         setCvConfirmado(true);
-        setMensajes((m) => [...m, { rol: "sistema", texto: "📎 Recibimos tu CV, gracias." }]);
+        setMensajes((m) => [...m, { rol: "sistema", texto: "Recibimos su CV, gracias." }]);
       } else if (data.cv_error) {
         // El archivo no se pudo procesar del lado del servidor (poco común,
         // ya se validó en el navegador) -- se deja el mismo adjunto puesto
         // para que la persona pueda intentar de nuevo con el próximo mensaje.
-        setCvError(CV_ERROR_TEXTO[data.cv_error as string] ?? "No pudimos procesar el CV. Probá con otro archivo.");
+        setCvError(CV_ERROR_TEXTO[data.cv_error as string] ?? "No pudimos procesar el CV. Pruebe con otro archivo.");
       }
     } catch {
-      setError("No pudimos conectar. Intenta de nuevo en un momento.");
+      setError("No pudimos conectar. Intente de nuevo en un momento.");
     } finally {
       setEnviando(false);
     }
@@ -151,8 +151,8 @@ export function EntrevistaIA() {
           L
         </span>
         <div>
-          <p className="font-display text-base font-semibold text-dusk-text">Habla con Lotus</p>
-          <p className="text-xs text-dusk-text-soft">Te hace unas preguntas y registra tu postulación</p>
+          <p className="font-display text-base font-semibold text-dusk-text">Hable con Lotus</p>
+          <p className="text-xs text-dusk-text-soft">Le hace unas preguntas y registra su postulación</p>
         </div>
       </div>
 
@@ -178,7 +178,7 @@ export function EntrevistaIA() {
         {error && <p className="text-xs text-gold">{error}</p>}
         {registrada && (
           <p className="rounded-2xl bg-dusk px-4 py-3 text-xs leading-5 text-dusk-text-soft">
-            ✓ Tu postulación quedó registrada. El equipo la revisa y te contacta si tu perfil encaja.
+            Su postulación quedó registrada. El equipo la revisa y se comunica con usted si su perfil encaja.
           </p>
         )}
       </div>
@@ -186,7 +186,7 @@ export function EntrevistaIA() {
       {hayCvPendiente && (
         <div className="mx-4 mb-2 flex items-center gap-2 rounded-xl bg-dusk px-3 py-2 text-xs text-dusk-text-soft">
           <span aria-hidden="true">📎</span>
-          <span className="flex-1 truncate">{cvFile!.name} -- se envía con tu próximo mensaje</span>
+          <span className="flex-1 truncate">{cvFile!.name}: se envía con su próximo mensaje</span>
           <button type="button" onClick={quitarCV} aria-label="Quitar CV adjunto" className="shrink-0 font-bold text-gold">
             ✕
           </button>
@@ -220,8 +220,8 @@ export function EntrevistaIA() {
           onChange={(e) => setTexto(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), enviar())}
           disabled={enviando}
-          placeholder="Escribe tu respuesta…"
-          aria-label="Tu respuesta para la entrevista"
+          placeholder="Escriba su respuesta…"
+          aria-label="Su respuesta para la entrevista"
           className="flex-1 rounded-full border border-dusk-text/15 bg-dusk px-4 py-2.5 text-sm text-dusk-text outline-none placeholder:text-dusk-text-soft/60 focus:border-gold disabled:opacity-60"
         />
         <button

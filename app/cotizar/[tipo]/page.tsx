@@ -13,27 +13,27 @@ const SEO_POR_TIPO: Record<TipoCotizacion, { title: string; description: string 
   fullday: {
     title: "Cotizar Full Day en Venezuela",
     description:
-      "Cotiza tu full day de playa o montaña: Los Roques, Morrocoy, Chichiriviche y más. Dinos fecha y cuántos van, y un asesor te responde por WhatsApp.",
+      "Cotice su full day de playa o montaña: Los Roques, Morrocoy, Chichiriviche y más. Indíquenos la fecha y cuántos van, y un asesor le responde por WhatsApp.",
   },
   hospedaje: {
     title: "Cotizar Hospedaje — Hoteles y Posadas en Venezuela",
     description:
-      "Cotiza hoteles y posadas en Margarita, Los Roques, Morrocoy y Mérida. Indica fechas y personas, y recibe disponibilidad y precio real por WhatsApp.",
+      "Cotice hoteles y posadas en Margarita, Los Roques, Morrocoy y Mérida. Indique fechas y personas, y reciba disponibilidad y precio real por WhatsApp.",
   },
   boleteria: {
     title: "Cotizar Boletos Aéreos Nacionales en Venezuela",
     description:
-      "Cotiza boletos aéreos dentro de Venezuela: Caracas, Porlamar, Los Roques y más rutas nacionales. También si compras desde el exterior para un familiar.",
+      "Cotice boletos aéreos dentro de Venezuela: Caracas, Porlamar, Los Roques y más rutas nacionales. También si compra desde el exterior para un familiar.",
   },
   paquete: {
     title: "Cotizar Paquete Todo Incluido en Venezuela",
     description:
-      "Cotiza tu paquete todo incluido: Los Roques, Canaima, Margarita o Mérida. Vuelo, hospedaje y excursiones coordinados por un asesor en un solo lugar.",
+      "Cotice su paquete todo incluido: Los Roques, Canaima, Margarita o Mérida. Vuelo, hospedaje y excursiones coordinados por un asesor en un solo lugar.",
   },
   personalizado: {
     title: "Cotizador Personalizado",
     description:
-      "Cuéntanos destino, fechas, presupuesto y cantidad de personas — un asesor arma una propuesta de viaje a tu medida en Venezuela.",
+      "Cuéntenos destino, fechas, presupuesto y cantidad de personas, y un asesor arma una propuesta de viaje a su medida en Venezuela.",
   },
 };
 

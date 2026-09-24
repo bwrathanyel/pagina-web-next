@@ -70,10 +70,10 @@ export function PostulacionForm({ modalidadInicial }: { modalidadInicial: Modali
         codigo === "cv_muy_grande"
           ? "El CV no puede pesar más de 5MB."
           : codigo === "cv_formato_invalido" || codigo === "cv_invalido"
-            ? "No pudimos procesar el CV -- prueba con un PDF, JPG o PNG distinto."
+            ? "No pudimos procesar el CV. Pruebe con un PDF, JPG o PNG distinto."
             : codigo === "datos_invalidos"
-              ? "Revisa el nombre y el teléfono antes de continuar."
-              : "No pudimos enviar tu postulación. Inténtalo nuevamente en un momento.",
+              ? "Revise el nombre y el teléfono antes de continuar."
+              : "No pudimos enviar su postulación. Inténtelo nuevamente en un momento.",
       );
     } finally {
       setEnviando(false);
@@ -86,8 +86,8 @@ export function PostulacionForm({ modalidadInicial }: { modalidadInicial: Modali
         <span className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-seafoam-bg text-2xl text-seafoam-text" aria-hidden="true">✓</span>
         <h3 className="font-display text-2xl font-semibold text-ink">¡Postulación enviada!</h3>
         <p className="mt-3 leading-7 text-ink-soft">
-          Recibimos tus datos{cv ? " y tu CV" : ""}. Si tu perfil calza con lo que buscamos, te contactaremos por
-          teléfono o correo -- ahí te compartimos todos los detalles de la vacante.
+          Recibimos sus datos{cv ? " y su CV" : ""}. Si su perfil calza con lo que buscamos, nos comunicaremos por
+          teléfono o correo para compartirle todos los detalles de la vacante.
         </p>
       </div>
     );
@@ -96,7 +96,7 @@ export function PostulacionForm({ modalidadInicial }: { modalidadInicial: Modali
   return (
     <form onSubmit={enviar} className="rounded-[28px] border border-ink/10 bg-card p-6 shadow-[0_24px_70px_-38px_rgba(36,31,26,.45)] md:p-8">
       <p className="font-mono text-xs font-bold uppercase tracking-[0.15em] text-coral">Postulación</p>
-      <h2 className="mt-2 font-display text-3xl font-semibold text-ink">Cuéntanos de ti.</h2>
+      <h2 className="mt-2 font-display text-3xl font-semibold text-ink">Cuéntenos de usted.</h2>
 
       <div className="mt-6 grid grid-cols-2 gap-2 rounded-xl bg-sand-2 p-1.5">
         {(["presencial", "freelance"] as const).map((valor) => (
@@ -114,7 +114,7 @@ export function PostulacionForm({ modalidadInicial }: { modalidadInicial: Modali
       <div className="mt-6 grid gap-5 sm:grid-cols-2">
         <label className="text-sm font-bold text-ink sm:col-span-2">
           Nombre y apellido
-          <input required autoComplete="name" value={nombre} onChange={(e) => setNombre(e.target.value)} className={inputClass} placeholder="Escribe tu nombre completo" />
+          <input required autoComplete="name" value={nombre} onChange={(e) => setNombre(e.target.value)} className={inputClass} placeholder="Escriba su nombre completo" />
         </label>
         <label className="text-sm font-bold text-ink">
           Teléfono
@@ -122,7 +122,7 @@ export function PostulacionForm({ modalidadInicial }: { modalidadInicial: Modali
         </label>
         <label className="text-sm font-bold text-ink">
           Correo opcional
-          <input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="tu@correo.com" />
+          <input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="su@correo.com" />
         </label>
 
         {modalidad === "presencial" ? (
@@ -135,13 +135,13 @@ export function PostulacionForm({ modalidadInicial }: { modalidadInicial: Modali
         ) : null}
 
         <label className="text-sm font-bold text-ink sm:col-span-2">
-          {modalidad === "presencial" ? "Experiencia comprobable" : "Contanos tu experiencia y disponibilidad de turno"}
+          {modalidad === "presencial" ? "Experiencia comprobable" : "Cuéntenos su experiencia y disponibilidad de turno"}
           <textarea
             rows={4}
             value={mensaje}
             onChange={(e) => setMensaje(e.target.value)}
             className={`${inputClass} py-3`}
-            placeholder={modalidad === "presencial" ? "Años de experiencia, empresas anteriores, lo que quieras contarnos" : "Ej: experiencia en ventas, prefiero turno nocturno, etc."}
+            placeholder={modalidad === "presencial" ? "Años de experiencia, empresas anteriores, lo que desee contarnos" : "Ej: experiencia en ventas, prefiero turno nocturno, etc."}
           />
         </label>
 

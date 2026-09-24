@@ -72,7 +72,7 @@ const ENLACES_SECUNDARIOS = [
   { href: "/catalogo/hot-sales", label: "Hot Sales", Icono: FuegoIcon },
   { href: "/cotizador-personalizado", label: "Cotizador personalizado", Icono: CalculadoraIcon },
   { href: "/", label: "Ir a la página web", Icono: GloboIcon },
-  { href: "/trabaja-con-nosotros", label: "Trabaja con nosotros", Icono: MaletinIcon },
+  { href: "/trabaja-con-nosotros", label: "Trabaje con nosotros", Icono: MaletinIcon },
 ];
 
 /** Página puente única para la bio de cada red (TikTok deja un solo enlace

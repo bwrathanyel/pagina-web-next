@@ -29,7 +29,7 @@ export default function LoginPage() {
   return (
     <main className="mx-auto max-w-md px-5 py-8 md:py-12">
       <h1 className="mb-1 font-display text-3xl font-semibold text-ink">Iniciar sesión</h1>
-      <p className="mb-6 text-ink-soft">Accede a tus favoritos y a tu carrito guardado.</p>
+      <p className="mb-6 text-ink-soft">Acceda a sus favoritos y a su carrito guardado.</p>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <div>
@@ -52,7 +52,7 @@ export default function LoginPage() {
               Contraseña
             </label>
             <Link href="/cuenta/recuperar" className="text-sm font-semibold text-coral">
-              ¿Olvidaste tu contraseña?
+              ¿Olvidó su contraseña?
             </Link>
           </div>
           <input
@@ -78,9 +78,9 @@ export default function LoginPage() {
       </form>
 
       <p className="mt-6 text-sm text-ink-soft">
-        ¿No tienes cuenta?{" "}
+        ¿No tiene cuenta?{" "}
         <Link href="/cuenta/registro" className="font-semibold text-coral">
-          Registrate
+          Regístrese
         </Link>
       </p>
     </main>

@@ -20,7 +20,7 @@ export default function TerminosPage() {
             comercializa Lotus 360. Los precios, disponibilidad y vigencia de cada promoción
             son referenciales y están sujetos a confirmación directa con un asesor de viaje
             antes de cerrar cualquier compra. El sitio en sí no procesa pagos ni reservas
-            automáticas -- toda solicitud se coordina por WhatsApp con un asesor humano.
+            automáticas: toda solicitud se coordina por WhatsApp con un asesor humano.
           </p>
         </section>
 
@@ -28,8 +28,8 @@ export default function TerminosPage() {
           <h2 className="mb-2 font-display text-xl font-semibold text-ink">Formularios y contacto</h2>
           <p>
             Al llenar un formulario del sitio (contacto, cotizador, carrito) o escribirnos por
-            WhatsApp/redes sociales, autorizás a Lotus 360 a contactarte para darte seguimiento
-            a tu solicitud, según lo descrito en nuestra{" "}
+            WhatsApp/redes sociales, autoriza a Lotus 360 a comunicarse con usted para dar seguimiento
+            a su solicitud, según lo descrito en nuestra{" "}
             <a href="/privacidad" className="underline">política de privacidad</a>.
           </p>
         </section>
@@ -46,7 +46,7 @@ export default function TerminosPage() {
 
         <section>
           <h2 className="mb-2 font-display text-xl font-semibold text-ink">Contacto</h2>
-          <p>Para dudas sobre estos términos, escríbenos por WhatsApp o nuestras redes sociales.</p>
+          <p>Para dudas sobre estos términos, escríbanos por WhatsApp o por nuestras redes sociales.</p>
         </section>
       </div>
     </main>

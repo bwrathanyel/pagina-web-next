@@ -33,8 +33,8 @@ export default function RegistroPage() {
       setCargando(false);
       setError(
         signUpError.message.includes("already registered")
-          ? "Ese correo ya tiene una cuenta — iniciá sesión."
-          : "No se pudo crear la cuenta. Inténtalo de nuevo.",
+          ? "Ese correo ya tiene una cuenta. Inicie sesión."
+          : "No se pudo crear la cuenta. Inténtelo de nuevo.",
       );
       return;
     }
@@ -58,7 +58,7 @@ export default function RegistroPage() {
   return (
     <main className="mx-auto max-w-md px-5 py-8 md:py-12">
       <h1 className="mb-1 font-display text-3xl font-semibold text-ink">Crear cuenta</h1>
-      <p className="mb-6 text-ink-soft">Guardá favoritos y tu carrito entre visitas.</p>
+      <p className="mb-6 text-ink-soft">Guarde sus favoritos y su carrito entre visitas.</p>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <div>
@@ -117,9 +117,9 @@ export default function RegistroPage() {
       </form>
 
       <p className="mt-6 text-sm text-ink-soft">
-        ¿Ya tienes cuenta?{" "}
+        ¿Ya tiene cuenta?{" "}
         <Link href="/cuenta/login" className="font-semibold text-coral">
-          Inicia sesión
+          Inicie sesión
         </Link>
       </p>
     </main>

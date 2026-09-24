@@ -108,7 +108,7 @@ export function WhatsAppLeadButton({
       </button>
       {abierto ? (
         <Modal
-          titulo="Escríbenos por WhatsApp"
+          titulo="Escríbanos por WhatsApp"
           onClose={() => setAbierto(false)}
           icono={<WhatsAppIcon size={22} />}
           acentoClassName="from-whatsapp to-[#0a5c30]"
@@ -117,8 +117,8 @@ export function WhatsAppLeadButton({
             <p className="flex items-start gap-2 text-sm text-ink-soft">
               <ClockIcon />
               <span>
-                Cuéntanos un poco y te conectamos directo con tu asesor —
-                respuesta en minutos en horario de atención.
+                Cuéntenos un poco y lo conectamos directo con su asesor.
+                Respuesta en minutos en horario de atención.
               </span>
             </p>
             <div>
@@ -133,7 +133,7 @@ export function WhatsAppLeadButton({
                   id="wa-lead-nombre"
                   type="text"
                   className={inputClass}
-                  placeholder="¿Cómo te llamas?"
+                  placeholder="¿Cómo se llama?"
                   value={nombre}
                   onChange={(e) => setNombre(e.target.value)}
                   required
@@ -142,7 +142,7 @@ export function WhatsAppLeadButton({
             </div>
             <div>
               <label htmlFor="wa-lead-destino" className="mb-1.5 block text-sm font-semibold text-ink">
-                Destino que te interesa<span className="ml-1 text-coral">*</span>
+                Destino que le interesa<span className="ml-1 text-coral">*</span>
               </label>
               <div className="relative">
                 <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-soft/70">

@@ -2,19 +2,21 @@
 
 import { useState } from "react";
 import { BrandMark } from "@/components/layout/BrandMark";
+import { Boton } from "@/components/ui/Boton";
+import { Icono, type NombreIcono } from "@/components/ui/Icono";
 import { useOnboarding } from "@/lib/onboarding/useOnboarding";
 
 interface Slide {
-  emoji?: string;
+  icono?: NombreIcono;
   titulo: string;
   texto: string;
 }
 
 const SLIDES: Slide[] = [
-  { titulo: "Destino y Eventos Lotus 360", texto: "Tu agencia de viajes en Venezuela — hospedaje, vuelos, tours y paquetes con asesoría real." },
-  { emoji: "🧑‍💼", titulo: "Un asesor real te acompaña", texto: "Cada solicitud la atiende una persona de verdad, no solo un bot." },
-  { emoji: "❤️", titulo: "Guarda tus favoritos", texto: "Marca los hoteles y planes que te gusten y encuéntralos después en un solo lugar." },
-  { emoji: "🧭", titulo: "Cotiza en 3 pasos", texto: "Cuéntanos qué buscas y recibe una propuesta real por WhatsApp." },
+  { titulo: "Destino y Eventos Lotus 360", texto: "Su agencia de viajes en Venezuela: hospedaje, vuelos, tours y paquetes con asesoría real." },
+  { icono: "usuario", titulo: "Un asesor real lo acompaña", texto: "Cada solicitud la atiende una persona de verdad, no solo un bot." },
+  { icono: "corazon", titulo: "Guarde sus favoritos", texto: "Marque los hoteles y planes que le gusten y encuéntrelos después en un solo lugar." },
+  { icono: "cotizar", titulo: "Cotice en pocos pasos", texto: "Cuéntenos qué busca y reciba una propuesta real por WhatsApp." },
 ];
 
 export function OnboardingOverlay() {
@@ -35,30 +37,31 @@ export function OnboardingOverlay() {
       </div>
 
       <div className="flex flex-1 flex-col items-center justify-center px-8 text-center">
-        {paso === 0 ? (
+        {slide.icono ? (
+          <span
+            className="mb-6 flex h-20 w-20 items-center justify-center rounded-card bg-acento-suave text-acento"
+            aria-hidden="true"
+          >
+            <Icono nombre={slide.icono} tamano={36} />
+          </span>
+        ) : (
           <div className="mb-6 scale-150">
             <BrandMark size="md" priority />
           </div>
-        ) : (
-          <span className="mb-6 text-6xl" aria-hidden="true">{slide.emoji}</span>
         )}
-        <h1 className="max-w-xs text-balance font-display text-2xl font-semibold text-ink">{slide.titulo}</h1>
+        <h1 className="max-w-xs text-balance font-display text-2xl font-bold text-ink">{slide.titulo}</h1>
         <p className="mt-3 max-w-xs text-balance leading-6 text-ink-soft">{slide.texto}</p>
       </div>
 
       <div className="flex flex-col items-center gap-6 px-8 pb-10">
         <div className="flex items-center gap-2" aria-hidden="true">
           {SLIDES.map((_, i) => (
-            <span key={i} className={"h-2 rounded-full transition-all " + (i === paso ? "w-6 bg-coral" : "w-2 bg-ink/15")} />
+            <span key={i} className={"h-2 rounded-pill transition-all " + (i === paso ? "w-6 bg-acento" : "w-2 bg-ink/15")} />
           ))}
         </div>
-        <button
-          type="button"
-          onClick={() => (esUltimo ? cerrar() : setPaso((p) => p + 1))}
-          className="flex min-h-12 w-full max-w-xs items-center justify-center rounded-full bg-gradient-to-br from-coral to-gold px-6 font-semibold text-btn-ink"
-        >
+        <Boton ancho className="max-w-xs" onClick={() => (esUltimo ? cerrar() : setPaso((p) => p + 1))}>
           {esUltimo ? "Comenzar" : "Siguiente"}
-        </button>
+        </Boton>
       </div>
     </div>
   );

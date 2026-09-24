@@ -10,7 +10,7 @@ import type { Metadata } from "next";
 // sí lista contenido real). Ver auditoría 2026-07-23.
 export const metadata: Metadata = {
   title: "Buscar",
-  description: "Busca hoteles, paquetes, tours y promociones de viaje en Venezuela por nombre o destino.",
+  description: "Busque hoteles, paquetes, tours y promociones de viaje en Venezuela por nombre o destino.",
   alternates: { canonical: "/buscar" },
   robots: { index: false, follow: true },
 };

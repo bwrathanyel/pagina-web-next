@@ -20,7 +20,7 @@ export function HotSalesGrid({ pool }: { pool: Promocion[] }) {
       <DestinoChips destinos={destinos} activo={destino} onChange={setDestino} />
       {filtradas.length === 0 ? (
         <p className="text-ink-soft">
-          No hay Hot Sales en este destino ahora mismo. Escríbenos por WhatsApp y te contamos qué opciones podemos preparar.
+          No hay Hot Sales en este destino ahora mismo. Escríbanos por WhatsApp y le contamos qué opciones podemos preparar.
         </p>
       ) : (
         <CatalogoGrid>

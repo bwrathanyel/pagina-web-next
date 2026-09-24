@@ -19,7 +19,7 @@ export default function RecuperarPage() {
     });
     setCargando(false);
     if (error) {
-      setError("No se pudo enviar el correo. Inténtalo de nuevo.");
+      setError("No se pudo enviar el correo. Inténtelo de nuevo.");
       return;
     }
     setEnviado(true);
@@ -28,9 +28,9 @@ export default function RecuperarPage() {
   if (enviado) {
     return (
       <main className="mx-auto max-w-md px-5 py-8 md:py-12">
-        <h1 className="mb-1 font-display text-3xl font-semibold text-ink">Revisá tu correo</h1>
+        <h1 className="mb-1 font-display text-3xl font-semibold text-ink">Revise su correo</h1>
         <p className="text-ink-soft">
-          Si el correo tiene una cuenta asociada, te enviamos un enlace para restablecer la contraseña.
+          Si el correo tiene una cuenta asociada, le enviamos un enlace para restablecer la contraseña.
         </p>
       </main>
     );
@@ -39,7 +39,7 @@ export default function RecuperarPage() {
   return (
     <main className="mx-auto max-w-md px-5 py-8 md:py-12">
       <h1 className="mb-1 font-display text-3xl font-semibold text-ink">Recuperar contraseña</h1>
-      <p className="mb-6 text-ink-soft">Te mandamos un enlace a tu correo para elegir una nueva.</p>
+      <p className="mb-6 text-ink-soft">Le enviamos un enlace a su correo para elegir una contraseña nueva.</p>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <div>

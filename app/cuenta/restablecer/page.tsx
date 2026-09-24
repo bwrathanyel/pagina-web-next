@@ -32,7 +32,7 @@ export default function RestablecerPage() {
     const { error } = await supabaseBrowser().auth.updateUser({ password });
     setCargando(false);
     if (error) {
-      setError("No se pudo actualizar la contraseña. Inténtalo de nuevo.");
+      setError("No se pudo actualizar la contraseña. Inténtelo de nuevo.");
       return;
     }
     router.push("/cuenta");
@@ -44,7 +44,7 @@ export default function RestablecerPage() {
       <main className="mx-auto max-w-md px-5 py-8 md:py-12">
         <h1 className="mb-1 font-display text-3xl font-semibold text-ink">Enlace inválido</h1>
         <p className="text-ink-soft">
-          Este enlace ya venció o no es válido. Pedí uno nuevo desde{" "}
+          Este enlace ya venció o no es válido. Pida uno nuevo desde{" "}
           <a href="/cuenta/recuperar" className="font-semibold text-coral">
             recuperar contraseña
           </a>
@@ -56,7 +56,7 @@ export default function RestablecerPage() {
 
   return (
     <main className="mx-auto max-w-md px-5 py-8 md:py-12">
-      <h1 className="mb-1 font-display text-3xl font-semibold text-ink">Elige una nueva contraseña</h1>
+      <h1 className="mb-1 font-display text-3xl font-semibold text-ink">Elija una contraseña nueva</h1>
 
       <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-4">
         <div>

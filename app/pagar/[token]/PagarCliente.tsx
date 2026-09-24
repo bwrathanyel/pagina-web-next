@@ -18,17 +18,17 @@ const inputClass =
   "mt-1.5 min-h-12 w-full rounded-xl border border-ink/15 bg-sand px-4 text-base text-ink outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/15";
 
 const ERRORES: Record<string, string> = {
-  falta_referencia: "Escribe el número de referencia del pago.",
-  captcha_invalido: "No pudimos verificar que no eres un robot. Recarga la página e inténtalo de nuevo.",
+  falta_referencia: "Escriba el número de referencia del pago.",
+  captcha_invalido: "No pudimos verificar que no es un robot. Recargue la página e inténtelo de nuevo.",
   comprobante_formato_invalido: "El comprobante debe ser PDF, JPG, PNG o WebP.",
   comprobante_muy_grande: "El comprobante no puede pesar más de 5MB.",
-  comprobante_invalido: "No pudimos procesar el comprobante. Prueba con otro archivo.",
+  comprobante_invalido: "No pudimos procesar el comprobante. Pruebe con otro archivo.",
   estado_no_declarable: "Este pago ya no admite una nueva declaración.",
-  vencido: "El link de pago venció. Pídele a tu asesor un link nuevo.",
-  tiempo_agotado: "El servicio tardó demasiado en responder. Inténtalo de nuevo en un momento.",
+  vencido: "El link de pago venció. Pídale a su asesor un link nuevo.",
+  tiempo_agotado: "El servicio tardó demasiado en responder. Inténtelo de nuevo en un momento.",
 };
 const mensajeError = (codigo?: string) =>
-  (codigo && ERRORES[codigo]) || "No pudimos registrar tu pago. Inténtalo de nuevo en un momento.";
+  (codigo && ERRORES[codigo]) || "No pudimos registrar su pago. Inténtelo de nuevo en un momento.";
 
 function Marco({ children }: { children: React.ReactNode }) {
   return (
@@ -87,7 +87,7 @@ export function PagarCliente({ token }: { token: string }) {
   async function enviar(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (enviando) return;
-    if (!referencia.trim()) { setError("Escribe el número de referencia del pago."); return; }
+    if (!referencia.trim()) { setError("Escriba el número de referencia del pago."); return; }
     if (!turnstileToken) { setError("Completa la verificación de seguridad."); return; }
 
     setEnviando(true);
@@ -116,15 +116,15 @@ export function PagarCliente({ token }: { token: string }) {
   }
 
   if (!estado.ok) {
-    return <Aviso tono="malo" titulo="Link no válido" texto="Este link de pago no existe o ya no está disponible. Pídele a tu asesor uno nuevo." />;
+    return <Aviso tono="malo" titulo="Link no válido" texto="Este link de pago no existe o ya no está disponible. Pídale a su asesor uno nuevo." />;
   }
 
   if (declarado || estado.estado === "pendiente_verificacion") {
     return (
       <Aviso
         tono="ok"
-        titulo="¡Recibimos tu pago!"
-        texto="Estamos verificando la transferencia. Apenas quede confirmada, tu asesor te avisa. No necesitas hacer nada más."
+        titulo="¡Recibimos su pago!"
+        texto="Estamos verificando la transferencia. Apenas quede confirmada, su asesor le avisa. No necesita hacer nada más."
       />
     );
   }
@@ -132,13 +132,13 @@ export function PagarCliente({ token }: { token: string }) {
     return <Aviso tono="ok" titulo="Pago confirmado" texto="Este pago ya fue verificado. Gracias." />;
   }
   if (estado.estado === "vencido") {
-    return <Aviso tono="malo" titulo="El link venció" texto="Este link de pago expiró. Pídele a tu asesor un link nuevo para completar el pago." />;
+    return <Aviso tono="malo" titulo="El link venció" texto="Este link de pago expiró. Pídale a su asesor un link nuevo para completar el pago." />;
   }
   if (estado.estado === "rechazado") {
-    return <Aviso tono="malo" titulo="Pago rechazado" texto="No pudimos validar este pago. Comunícate con tu asesor para resolverlo." />;
+    return <Aviso tono="malo" titulo="Pago rechazado" texto="No pudimos validar este pago. Comuníquese con su asesor para resolverlo." />;
   }
   if (estado.estado === "reembolsado") {
-    return <Aviso titulo="Pago reembolsado" texto="Este pago fue reembolsado. Si tienes dudas, escríbele a tu asesor." />;
+    return <Aviso titulo="Pago reembolsado" texto="Este pago fue reembolsado. Si tiene dudas, escríbale a su asesor." />;
   }
 
   return <Formulario
@@ -237,7 +237,7 @@ function Formulario({
           {enviando ? "Enviando…" : "Ya pagué, enviar comprobante"}
         </button>
         <p className="text-center text-xs leading-5 text-ink-soft">
-          Verificamos cada pago manualmente. No compartas tu clave ni datos de tu tarjeta en este formulario.
+          Verificamos cada pago manualmente. No comparta su clave ni los datos de su tarjeta en este formulario.
         </p>
       </form>
     </Marco>

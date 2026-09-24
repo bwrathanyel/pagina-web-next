@@ -8,7 +8,7 @@ import { jsonLdScript, buildBreadcrumbJsonLd } from "@/lib/seo/jsonld";
 
 const TITLE = "Catálogo — Hoteles, Paquetes, Tours y Promociones en Venezuela";
 const DESCRIPTION =
-  "Explora hoteles, paquetes todo incluido, tours/full days y promociones de viajes en Venezuela: Los Roques, Margarita, Canaima, Morrocoy, Mérida y más.";
+  "Explore hoteles, paquetes todo incluido, tours/full days y promociones de viajes en Venezuela: Los Roques, Margarita, Canaima, Morrocoy, Mérida y más.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -44,8 +44,7 @@ export default async function CatalogoIndexPage() {
         dangerouslySetInnerHTML={jsonLdScript(buildBreadcrumbJsonLd([{ name: "Inicio", url: "/" }, { name: "Catálogo", url: "/catalogo" }]))}
       />
       <header className="mb-4 md:mb-8">
-        <p className="mb-2 font-mono text-xs font-bold uppercase tracking-[0.18em] text-coral">Catálogo</p>
-        <h1 className="font-display text-4xl font-semibold leading-none text-ink md:text-5xl">¿Qué estás buscando?</h1>
+        <h1 className="font-display text-4xl font-semibold leading-none text-ink md:text-5xl">¿Qué está buscando?</h1>
       </header>
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -68,7 +67,7 @@ export default async function CatalogoIndexPage() {
         href="/catalogo/hot-sales"
         className="mt-4 flex items-center justify-between gap-4 rounded-[28px] bg-coral px-6 py-6 text-white"
       >
-        <span className="font-display text-xl font-semibold">🔥 Hot Sales — ofertas imperdibles</span>
+        <span className="font-display text-xl font-semibold">Hot Sales: la mejor promoción de cada hotel</span>
         <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-white text-sm text-[#18181b]" aria-hidden="true">↗</span>
       </Link>
     </main>

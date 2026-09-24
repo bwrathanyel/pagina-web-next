@@ -156,5 +156,5 @@ export const CATEGORIAS: { slug: Categoria; label: string }[] = [
   { slug: "promociones", label: "Promociones" },
   { slug: "hoteles", label: "Hoteles" },
   { slug: "paquetes", label: "Paquetes" },
-  { slug: "guias-tours", label: "Guías / Tours" },
+  { slug: "guias-tours", label: "Guías y tours" },
 ];
