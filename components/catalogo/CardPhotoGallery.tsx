@@ -6,6 +6,11 @@ import { useEffect, useRef, useState } from "react";
 
 const CURVA = [0.22, 1, 0.36, 1] as const;
 
+// Ancho real de la tarjeta: carrusel con 1,15 tarjetas en móvil, 2 columnas
+// desde sm, 3 desde lg y 4 desde xl (el contenedor topa en 78rem, así que
+// pasado xl la tarjeta deja de crecer con el viewport).
+const SIZES_TARJETA = "(min-width: 1280px) 280px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 88vw";
+
 export function CardPhotoGallery({
   fotos,
   alt,
@@ -127,7 +132,7 @@ export function CardPhotoGallery({
             alt=""
             aria-hidden="true"
             fill
-            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            sizes={SIZES_TARJETA}
             {...carga(indice === 0)}
             onLoad={() => setCargadas((prev) => (prev.has(indice) ? prev : new Set(prev).add(indice)))}
             className="object-cover opacity-0"
@@ -146,7 +151,7 @@ export function CardPhotoGallery({
               src={fotos[activa]}
               alt={alt}
               fill
-              sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+              sizes={SIZES_TARJETA}
               {...carga(activa === 0)}
               className="object-cover"
             />

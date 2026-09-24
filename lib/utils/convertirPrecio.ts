@@ -6,6 +6,17 @@
 
 const FORMATO_BS = new Intl.NumberFormat("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+// Lee un monto en el formato en que llega: es-VE ("1.200", "1.200,50", que es
+// como lo emite formatearPrecioDesde), en-US ("1,200", "1,200.50") o simple
+// ("115", "115.50", "115,50"). Un solo separador con 1-2 dígitos detrás es decimal.
+function parsearMonto(bruto: string): number {
+  const t = bruto.replace(/[.,]+$/, "");
+  if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)) return parseFloat(t.replace(/\./g, "").replace(",", "."));
+  if (/^\d{1,3}(,\d{3})+(\.\d+)?$/.test(t)) return parseFloat(t.replace(/,/g, ""));
+  if (/^\d+,\d{1,2}$/.test(t)) return parseFloat(t.replace(",", "."));
+  return parseFloat(t);
+}
+
 export function convertirPrecioTexto(
   precioTexto: string | null | undefined,
   tasaUSD: number | null,
@@ -17,7 +28,7 @@ export function convertirPrecioTexto(
 
   if (tasaUSD) {
     resultado = resultado.replace(/\$\s?([\d.,]+)/g, (match, monto) => {
-      const num = parseFloat(monto.replace(/,/g, ""));
+      const num = parsearMonto(monto);
       if (!Number.isFinite(num)) return match;
       return `Bs ${FORMATO_BS.format(num * tasaUSD)}`;
     });
@@ -25,7 +36,7 @@ export function convertirPrecioTexto(
 
   if (tasaEUR) {
     resultado = resultado.replace(/€\s?([\d.,]+)/g, (match, monto) => {
-      const num = parseFloat(monto.replace(/,/g, ""));
+      const num = parsearMonto(monto);
       if (!Number.isFinite(num)) return match;
       return `Bs ${FORMATO_BS.format(num * tasaEUR)}`;
     });

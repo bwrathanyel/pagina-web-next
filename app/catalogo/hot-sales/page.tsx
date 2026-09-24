@@ -44,7 +44,7 @@ export default async function HotSalesPage() {
           <div>
             <h1 className="font-display text-3xl font-bold leading-none md:text-6xl">Hot Sales</h1>
             <p className="mt-3 max-w-xl leading-7 text-ink-soft md:mt-4 md:text-dusk-text-soft">
-              La mejor promoción de cada hotel, ordenada de menor a mayor precio.
+              La mejor promoción vigente de cada hotel, con las destacadas primero.
             </p>
           </div>
           <span className="w-fit rounded-pill border border-linea-fuerte px-4 py-2 font-mono text-xs text-ink-soft md:border-dusk-text/20 md:text-dusk-text-soft">

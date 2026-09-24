@@ -8,8 +8,8 @@ import { destinosDelPool } from "@/lib/promociones/hotSales";
 import { Revelar } from "@/components/ui/Revelar";
 import type { Promocion } from "@/types/supabase";
 
-// Grid plano (sin agrupar por destino, para no romper el orden por precio
-// que ya trae el pool) con el mismo filtro de chips que la sección del home,
+// Grid plano (sin agrupar por destino, para no romper el orden que ya trae el
+// pool: manuales primero, después ranking) con el mismo filtro de chips que la sección del home,
 // acá pegado bajo la barra porque la lista es larga.
 export function HotSalesGrid({ pool }: { pool: Promocion[] }) {
   const [destino, setDestino] = useState<string | null>(null);
