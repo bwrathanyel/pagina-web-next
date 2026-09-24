@@ -225,6 +225,15 @@ Split-flap en `dusk-2` con celdas de radio `0.18em`, línea de bisagra a media a
 ### Boleto y talón (firma)
 Tarjeta con muesca y perforación. El cuerpo lleva foto, destino y detalle; el talón, de tamaño fijo, lleva el código en mono, el precio "desde $X" convertible a Bs y el canto con el degradado de marca.
 
+### Filtros del catálogo
+`DestinoChips` y `CategoriaTabs` marcan la opción activa con un indicador `layoutId` que se desliza entre opciones. Chips sin emoji; objetivo táctil de 44px.
+
+### Favorito
+`BotonFavorito`: botón de 44px con el corazón de `Icono`. El latido (`corazon-latido`) corre solo cuando la persona toca, nunca al montar, y con `prefers-reduced-motion` no anima.
+
+### Esqueletos
+`EsqueletoTarjeta` repite la proporción del boleto para que la carga no salte. Catálogo y producto tienen su `loading.tsx`.
+
 ## Do's and Don'ts
 
 ### Do:
