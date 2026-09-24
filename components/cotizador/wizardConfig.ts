@@ -35,6 +35,21 @@ const CAMPO_NOTAS: CampoDef = {
   placeholder: "¿Algo más que debamos saber?",
 };
 
+const CAMPO_BEBES: CampoDef = {
+  key: "bebes",
+  label: "Bebés (0-23 meses)",
+  tipo: "select",
+  default: "0",
+  opciones: [
+    { value: "0", label: "Sin bebés" },
+    { value: "1", label: "1 bebé" },
+    { value: "2", label: "2 bebés" },
+  ],
+};
+
+const conEstadia = (r: Respuestas) => r.tipoServicio === "Hospedaje" || r.tipoServicio === "Paquete completo";
+const esVuelo = (r: Respuestas) => r.tipoServicio === "Boletería aérea";
+
 function campoNinos(edadMax = 11): CampoDef[] {
   return [
     {
@@ -228,9 +243,7 @@ export const WIZARD_CONFIG: Record<TipoCotizacion, PasoDef[]> = {
         { key: "cedulaAdultos", label: "Todos los adultos tienen cédula vigente", tipo: "checkbox", default: true },
         ...campoNinos(),
         { key: "cedulaNinos", label: "Los niños que viajan tienen cédula", tipo: "checkbox", condicion: ninosMasCero },
-        { key: "bebes", label: "Bebés (0-23 meses)", tipo: "select", default: "0", opciones: [
-          { value: "0", label: "Sin bebés" }, { value: "1", label: "1 bebé" }, { value: "2", label: "2 bebés" },
-        ] },
+        CAMPO_BEBES,
         { key: "equipaje", label: "Equipaje", tipo: "tags", multiple: true, default: ["Equipaje de mano"], opciones: [
           { value: "Equipaje de mano", label: "Mano" }, { value: "Equipaje facturado", label: "Facturado" }, { value: "Sin equipaje", label: "Sin equipaje" },
         ] },
@@ -334,9 +347,16 @@ export const WIZARD_CONFIG: Record<TipoCotizacion, PasoDef[]> = {
       titulo: "Presupuesto y fechas",
       campos: [
         { key: "presupuesto", label: "Presupuesto total aproximado (USD)", tipo: "slider", min: 50, max: 3000, step: 50, default: 500 },
-        { key: "fechaAprox", label: "Fecha aproximada de viaje", tipo: "date" },
+        // Las fechas se llaman como en la barra del hero: entrada y salida
+        // para una estadía, ida y vuelta para un vuelo, una sola si no.
+        { key: "fechaAprox", label: "Fecha de entrada", tipo: "date", condicion: conEstadia },
+        { key: "fechaFin", label: "Fecha de salida", tipo: "date", condicion: conEstadia },
+        { key: "fechaAprox", label: "Fecha de ida", tipo: "date", condicion: esVuelo },
+        { key: "fechaFin", label: "Fecha de vuelta", tipo: "date", condicion: esVuelo },
+        { key: "fechaAprox", label: "Fecha aproximada de viaje", tipo: "date", condicion: (r) => !conEstadia(r) && !esVuelo(r) },
         { key: "adultos", label: "Adultos", tipo: "number", min: 1, max: 50, default: 2, required: true },
         ...campoNinos(),
+        CAMPO_BEBES,
       ],
     },
     {

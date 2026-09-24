@@ -1,4 +1,5 @@
 import type { Respuestas } from "@/components/cotizador/types";
+import { contarNoches, textoDuracion } from "@/lib/cotizador/cotizacionRapida";
 import { calcularTotalFullDay } from "@/lib/fullday-pricing";
 
 export interface ResultadoCotizacion {
@@ -188,11 +189,17 @@ export function armarPersonalizado(r: Respuestas): ResultadoCotizacion {
   const servicio = s(r, "tipoServicio", "No especificado");
   const adultos = n(r, "adultos", 1);
   const ninos = n(r, "ninos", 0);
+  const bebes = n(r, "bebes", 0);
   const presupuesto = n(r, "presupuesto", 500);
   // El slider (wizardConfig.ts, max:3000) muestra "Sin límite" en pantalla
   // al llegar al tope — el mensaje al asesor tiene que decir lo mismo, si
   // no el asesor recibe "$3000" como techo fijo en vez de "sin techo real".
   const presTexto = presupuesto >= 3000 ? "Sin límite" : `$${presupuesto} USD`;
+  // fechaFin solo existe para estadías y vuelos: si el cliente cambió a Full
+  // Day en el wizard, la que quedó guardada ya no aplica.
+  const inicio = s(r, "fechaAprox");
+  const fin = servicio === "Full Day / Tour" || servicio === "No estoy seguro" ? "" : s(r, "fechaFin");
+  const noches = contarNoches(inicio, fin);
 
   const { emoji: mensajeEmoji, texto: mensajeTexto } = armarMensajes(
     "🧭 *COTIZADOR PERSONALIZADO - DESTINO Y EVENTOS LOTUS 360*",
@@ -200,8 +207,12 @@ export function armarPersonalizado(r: Respuestas): ResultadoCotizacion {
       ["👤", `*Nombre:* ${s(r, "nombre")}`],
       ["🧳", `*Tipo de servicio:* ${servicio}`],
       ["📍", `*Destino:* ${destino}`],
-      r.fechaAprox ? ["📅", `*Fecha aproximada:* ${r.fechaAprox}`] : null,
-      ["👥", `*Adultos:* ${adultos} | *Niños:* ${ninos}`],
+      noches > 0
+        ? ["📅", `*Fechas:* ${inicio} al ${fin} (${textoDuracion(noches)})`]
+        : inicio
+          ? ["📅", `*Fecha aproximada:* ${inicio}`]
+          : null,
+      ["👥", `*Adultos:* ${adultos} | *Niños:* ${ninos}${bebes > 0 ? ` | *Bebés:* ${bebes}` : ""}`],
       ninos > 0 ? ["👶", `*Edades niños:* ${s(r, "edadesNinos", "No especificadas")}`] : null,
       ["💰", `*Presupuesto aproximado:* ${presTexto}`],
       s(r, "notas") ? ["📝", `*Notas:* ${r.notas}`] : null,
@@ -212,8 +223,8 @@ export function armarPersonalizado(r: Respuestas): ResultadoCotizacion {
   return {
     destino,
     servicio,
-    personas: `${adultos + ninos} persona(s)`,
-    consulta: `Cotizador personalizado: ${servicio}${r.notas ? ` · ${r.notas}` : ""}`,
+    personas: `${adultos + ninos + bebes} persona(s)`,
+    consulta: `Cotizador personalizado:${servicio}${r.notas ? ` · ${r.notas}` : ""}`,
     mensajeEmoji,
     mensajeTexto,
   };

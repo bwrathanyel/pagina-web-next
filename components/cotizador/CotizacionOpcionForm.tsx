@@ -9,6 +9,7 @@ import { Boton } from "@/components/ui/Boton";
 import { Aviso } from "@/components/ui/Aviso";
 import { AreaTexto, Campo, Entrada, Selector } from "@/components/ui/Campo";
 import { Icono } from "@/components/ui/Icono";
+import { contarNoches, sumarDias } from "@/lib/cotizador/cotizacionRapida";
 import { armarMensajes } from "@/lib/leads/buildCotizacion";
 import { crearLeadCRM } from "@/lib/leads/ingestWebLead";
 import { asesorPorNombre, elegirAsesor } from "@/lib/asesores";
@@ -48,17 +49,6 @@ function fechaLegible(valor: string) {
   );
 }
 
-function sumarDias(valor: string, dias: number) {
-  if (!valor) return "";
-  const fecha = new Date(`${valor}T00:00:00Z`);
-  fecha.setUTCDate(fecha.getUTCDate() + dias);
-  return fecha.toISOString().slice(0, 10);
-}
-
-function contarNoches(entrada: string, salida: string) {
-  if (!entrada || !salida || salida <= entrada) return 0;
-  return Math.round((Date.parse(`${salida}T00:00:00Z`) - Date.parse(`${entrada}T00:00:00Z`)) / 86_400_000);
-}
 
 function telefonoPareceValido(valor: string) {
   if (!/^[+\d\s().-]+$/.test(valor.trim())) return false;

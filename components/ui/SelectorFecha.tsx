@@ -2,33 +2,28 @@
 
 import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { Icono } from "@/components/ui/Icono";
-import { hoyCaracas } from "@/lib/cotizador/cotizacionRapida";
+import { hoyCaracas, sumarDias } from "@/lib/cotizador/cotizacionRapida";
 
 // Calendario propio: el de <input type="date"> en Chromium no se puede
 // estilizar. Es un popover (capa superior: la foto del hero no lo recorta, y
 // Esc y el clic afuera lo cierran solos). La fecha viaja en un input oculto con
-// el mismo name, así el formulario GET no cambia. Nada antes de hoy (Caracas).
-// Todo se calcula en UTC para que la zona del navegador no corra un día.
+// el mismo name, así el formulario GET no cambia. Nada antes de `min` (hoy en
+// Caracas si no se pasa). Con `rango` se pintan los días entre entrada y
+// salida. Todo se calcula en UTC para que la zona del navegador no corra un día.
 
 const DIAS = ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"];
 const MES = new Intl.DateTimeFormat("es-VE", { month: "long", year: "numeric", timeZone: "UTC" });
-const CORTA = new Intl.DateTimeFormat("es-VE", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+const CORTA = new Intl.DateTimeFormat("es-VE", { day: "numeric", month: "short", timeZone: "UTC" });
+const CON_ANO = new Intl.DateTimeFormat("es-VE", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 const LARGA = new Intl.DateTimeFormat("es-VE", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
 const PASOS: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
 
 const aFecha = (iso: string) => new Date(`${iso}T00:00:00Z`);
-const aIso = (d: Date) => d.toISOString().slice(0, 10);
-
-function sumarDias(iso: string, n: number) {
-  const d = aFecha(iso);
-  d.setUTCDate(d.getUTCDate() + n);
-  return aIso(d);
-}
 
 function moverMes(mes: string, n: number) {
   const d = aFecha(`${mes}-01`);
   d.setUTCMonth(d.getUTCMonth() + n);
-  return aIso(d).slice(0, 7);
+  return d.toISOString().slice(0, 7);
 }
 
 /** Celdas del mes "AAAA-MM": null para los huecos antes del día 1. */
@@ -45,8 +40,31 @@ const FLECHA =
   "flex h-9 w-9 items-center justify-center rounded-control text-ink transition-colors duration-150 ease-salida " +
   "enabled:hover:bg-sand-2 disabled:text-ink-soft/40";
 
-export function SelectorFecha({ id, name, className = "" }: { id: string; name: string; className?: string }) {
-  const [valor, setValor] = useState("");
+interface Props {
+  id: string;
+  name: string;
+  /** Nombre visible del campo ("Entrada", "Ida"...): arma el nombre accesible. */
+  etiqueta: string;
+  valor: string;
+  onCambio: (iso: string) => void;
+  min?: string;
+  rango?: { desde: string; hasta: string };
+  /** Texto sin fecha elegida: en tramos angostos, uno más corto. */
+  vacio?: string;
+  className?: string;
+}
+
+export function SelectorFecha({
+  id,
+  name,
+  etiqueta,
+  valor,
+  onCambio,
+  min,
+  rango,
+  vacio = "Cualquier fecha",
+  className = "",
+}: Props) {
   const [mes, setMes] = useState("");
   const [foco, setFoco] = useState("");
   const [aperturas, setAperturas] = useState(0);
@@ -56,6 +74,7 @@ export function SelectorFecha({ id, name, className = "" }: { id: string; name: 
   const idPanel = useId();
   const ancla = `--fecha-${idPanel.replace(/[^a-zA-Z0-9]/g, "")}`;
   const hoy = hoyCaracas();
+  const piso = min && min > hoy ? min : hoy;
 
   // Solo el teclado y la apertura mueven el foco a la grilla: con las flechas
   // de mes, el foco se queda en la flecha para poder avanzar varios meses.
@@ -67,7 +86,7 @@ export function SelectorFecha({ id, name, className = "" }: { id: string; name: 
 
   function alAbrir(abierto: boolean) {
     if (!abierto) return;
-    const base = valor || hoy;
+    const base = valor && valor >= piso ? valor : piso;
     enfocar.current = true;
     setFoco(base);
     setMes(base.slice(0, 7));
@@ -78,12 +97,12 @@ export function SelectorFecha({ id, name, className = "" }: { id: string; name: 
     const nuevo = moverMes(mes, n);
     const primero = `${nuevo}-01`;
     setMes(nuevo);
-    setFoco(primero < hoy ? hoy : primero);
+    setFoco(primero < piso ? piso : primero);
   }
 
   function elegir(iso: string) {
-    setValor(iso);
     panel.current?.hidePopover();
+    onCambio(iso);
   }
 
   function teclas(e: KeyboardEvent<HTMLDivElement>) {
@@ -91,13 +110,21 @@ export function SelectorFecha({ id, name, className = "" }: { id: string; name: 
     if (!paso) return;
     e.preventDefault();
     const nuevo = sumarDias(foco, paso);
-    if (nuevo < hoy) return;
+    if (nuevo < piso) return;
     enfocar.current = true;
     setFoco(nuevo);
     setMes(nuevo.slice(0, 7));
   }
 
-  const texto = valor ? CORTA.format(aFecha(valor)) : "Cualquier fecha";
+  function clasesDia(iso: string) {
+    if (iso === valor) return "bg-acento font-semibold text-sobre-acento";
+    if (rango && (iso === rango.desde || iso === rango.hasta)) return "bg-acento-suave font-semibold text-acento";
+    if (rango && rango.desde && iso > rango.desde && iso < rango.hasta) return "bg-acento-suave text-ink";
+    if (iso === hoy) return "font-semibold text-acento ring-1 ring-inset ring-acento/50 hover:bg-acento-suave";
+    return "enabled:hover:bg-sand-2";
+  }
+
+  const texto = valor ? (valor.slice(0, 4) === hoy.slice(0, 4) ? CORTA : CON_ANO).format(aFecha(valor)) : vacio;
 
   return (
     <>
@@ -105,11 +132,11 @@ export function SelectorFecha({ id, name, className = "" }: { id: string; name: 
         id={id}
         type="button"
         popoverTarget={idPanel}
-        aria-label={`Fecha: ${texto}`}
+        aria-label={`${etiqueta}: ${texto}`}
         style={{ anchorName: ancla } as CSSProperties}
         className={`flex items-center gap-2 text-left ${className}`}
       >
-        <span className={valor ? "" : "font-medium text-ink-soft"}>{texto}</span>
+        <span className={`min-w-0 truncate ${valor ? "" : "font-medium text-ink-soft"}`}>{texto}</span>
         <Icono nombre="calendario" tamano={18} className="ml-auto shrink-0 text-ink-soft" />
       </button>
       <input type="hidden" name={name} value={valor} disabled={!valor} />
@@ -119,7 +146,7 @@ export function SelectorFecha({ id, name, className = "" }: { id: string; name: 
         id={idPanel}
         popover="auto"
         role="dialog"
-        aria-label="Elegir fecha de viaje"
+        aria-label={etiqueta === "Fecha" ? "Elegir fecha" : `Elegir fecha de ${etiqueta.toLowerCase()}`}
         onToggle={(e) => alAbrir(e.newState === "open")}
         style={{ positionAnchor: ancla } as CSSProperties}
         className="calendario-flotante w-[19.5rem] rounded-card bg-card p-4 text-ink shadow-chrome"
@@ -130,7 +157,7 @@ export function SelectorFecha({ id, name, className = "" }: { id: string; name: 
               <button
                 type="button"
                 onClick={() => cambiarMes(-1)}
-                disabled={mes <= hoy.slice(0, 7)}
+                disabled={mes <= piso.slice(0, 7)}
                 aria-label="Mes anterior"
                 className={FLECHA}
               >
@@ -155,25 +182,20 @@ export function SelectorFecha({ id, name, className = "" }: { id: string; name: 
             <div ref={grilla} onKeyDown={teclas} className="grid grid-cols-7 gap-0.5">
               {celdas(mes).map((iso, k) => {
                 if (!iso) return <span key={`hueco-${k}`} />;
-                const elegido = iso === valor;
                 return (
                   <button
                     key={iso}
                     type="button"
                     data-dia={iso}
                     tabIndex={iso === foco ? 0 : -1}
-                    disabled={iso < hoy}
-                    aria-pressed={elegido}
+                    disabled={iso < piso}
+                    aria-pressed={iso === valor}
                     aria-current={iso === hoy ? "date" : undefined}
                     aria-label={LARGA.format(aFecha(iso))}
                     onClick={() => elegir(iso)}
                     className={
                       "flex h-10 items-center justify-center rounded-control text-sm tabular-nums transition-colors duration-150 ease-salida focus-visible:outline-offset-0 disabled:text-ink-soft/35 " +
-                      (elegido
-                        ? "bg-acento font-semibold text-sobre-acento"
-                        : iso === hoy
-                          ? "font-semibold text-acento ring-1 ring-inset ring-acento/50 hover:bg-acento-suave"
-                          : "enabled:hover:bg-sand-2")
+                      clasesDia(iso)
                     }
                   >
                     {Number(iso.slice(8))}
@@ -191,13 +213,15 @@ export function SelectorFecha({ id, name, className = "" }: { id: string; name: 
               >
                 Quitar fecha
               </button>
-              <button
-                type="button"
-                onClick={() => elegir(hoy)}
-                className="rounded-control px-2 py-1.5 text-acento transition-colors hover:bg-acento-suave"
-              >
-                Hoy
-              </button>
+              {piso === hoy ? (
+                <button
+                  type="button"
+                  onClick={() => elegir(hoy)}
+                  className="rounded-control px-2 py-1.5 text-acento transition-colors hover:bg-acento-suave"
+                >
+                  Hoy
+                </button>
+              ) : null}
             </div>
           </>
         )}

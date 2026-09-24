@@ -459,7 +459,8 @@ html {
   }
 }
 
-/* Calendario del cotizador (ui/SelectorFecha): popover anclado bajo su botón.
+/* Calendario y viajeros del cotizador (ui/SelectorFecha, ui/SelectorViajeros):
+   popover anclado bajo su botón.
    Sin anclaje CSS (Firefox) queda centrado en la pantalla, que es el lugar
    por defecto de un popover y sigue siendo usable. El margin: auto lo pone
    de vuelta: el preflight de Tailwind lo deja en 0 y el popover caía en la

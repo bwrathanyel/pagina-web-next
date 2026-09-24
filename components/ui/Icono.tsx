@@ -8,6 +8,7 @@ const TRAZOS = {
   "flecha-izq": <path d="M19 12H5M11 18l-6-6 6-6" />,
   "chevron-izq": <path d="m15 18-6-6 6-6" />,
   "chevron-der": <path d="m9 18 6-6-6-6" />,
+  "chevron-abajo": <path d="m6 9 6 6 6-6" />,
   calendario: (
     <>
       <rect x="3.5" y="5" width="17" height="15.5" rx="2" />
