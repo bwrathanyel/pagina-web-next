@@ -25,6 +25,11 @@ export const COTIZACION_RAPIDA_INICIAL = {
 
 const uno = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 
+/** Hoy en Caracas como "AAAA-MM-DD": el mínimo de todo campo de fecha de viaje.
+ * Con toISOString, de 20:00 a medianoche el mínimo ya era mañana (UTC). */
+export const hoyCaracas = (ahora = new Date()) =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: "America/Caracas" }).format(ahora);
+
 /** searchParams de la página -> respuestas iniciales del wizard. Todo lo que
  * no sea un valor conocido se ignora: la URL la puede escribir cualquiera. */
 export function inicialDesdeParams(sp: Record<string, string | string[] | undefined>): Respuestas {
@@ -34,7 +39,8 @@ export function inicialDesdeParams(sp: Record<string, string | string[] | undefi
   const destino = DESTINOS_RAPIDOS.find((d) => d.valor === uno(sp.destino));
   if (destino) r.destino = destino.valor;
   const fecha = uno(sp.fecha);
-  if (fecha && /^\d{4}-\d{2}-\d{2}$/.test(fecha) && !Number.isNaN(Date.parse(fecha))) r.fechaAprox = fecha;
+  if (fecha && /^\d{4}-\d{2}-\d{2}$/.test(fecha) && !Number.isNaN(Date.parse(fecha)) && fecha >= hoyCaracas())
+    r.fechaAprox = fecha;
   const adultos = Number(uno(sp.adultos));
   if (Number.isInteger(adultos) && adultos >= 1 && adultos <= ADULTOS_MAX) r.adultos = adultos;
   return r;

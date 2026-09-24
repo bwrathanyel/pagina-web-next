@@ -6,10 +6,12 @@ import { Boton, clasesBoton } from "@/components/ui/Boton";
 import { Campo, Entrada, Selector } from "@/components/ui/Campo";
 import { Hoja } from "@/components/ui/Hoja";
 import { Icono } from "@/components/ui/Icono";
+import { SelectorFecha } from "@/components/ui/SelectorFecha";
 import {
   ADULTOS_MAX,
   COTIZACION_RAPIDA_INICIAL as INICIAL,
   DESTINOS_RAPIDOS,
+  hoyCaracas,
   SERVICIOS_RAPIDOS,
 } from "@/lib/cotizador/cotizacionRapida";
 
@@ -89,7 +91,7 @@ export function CotizadorRapidoBarra() {
           )}
         </Tramo>
         <Tramo etiqueta="Fecha">
-          {(id) => <input id={id} type="date" name="fecha" className={CONTROL_TRAMO + " font-mono tabular-nums"} />}
+          {(id) => <SelectorFecha id={id} name="fecha" className={CONTROL_TRAMO} />}
         </Tramo>
         <Tramo etiqueta="Adultos">
           {(id) => (
@@ -152,7 +154,7 @@ export function CotizadorRapidoMovil() {
           </Campo>
           <div className="grid grid-cols-2 gap-3">
             <Campo etiqueta="Fecha aproximada">
-              {(a11y) => <Entrada {...a11y} type="date" name="fecha" className="font-mono tabular-nums" />}
+              {(a11y) => <Entrada {...a11y} type="date" name="fecha" min={hoyCaracas()} className="font-mono tabular-nums" />}
             </Campo>
             <Campo etiqueta="Adultos">
               {(a11y) => (

@@ -4,6 +4,7 @@ import { useId, type ReactNode } from "react";
 import type { CampoDef, Respuestas } from "@/components/cotizador/types";
 import { AreaTexto, Campo, Entrada, Selector } from "@/components/ui/Campo";
 import { Icono } from "@/components/ui/Icono";
+import { hoyCaracas } from "@/lib/cotizador/cotizacionRapida";
 
 interface Props {
   campo: CampoDef;
@@ -69,7 +70,7 @@ export function CampoRenderer({ campo, valor, onChange }: Props) {
             <Entrada
               {...a11y}
               type="date"
-              min={new Date().toISOString().split("T")[0]}
+              min={hoyCaracas()}
               value={texto}
               onChange={(e) => onChange(campo.key, e.target.value)}
             />

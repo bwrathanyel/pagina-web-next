@@ -6,6 +6,14 @@ const TRAZOS = {
   cerrar: <path d="M6 6l12 12M18 6 6 18" />,
   "flecha-der": <path d="M5 12h14M13 6l6 6-6 6" />,
   "flecha-izq": <path d="M19 12H5M11 18l-6-6 6-6" />,
+  "chevron-izq": <path d="m15 18-6-6 6-6" />,
+  "chevron-der": <path d="m9 18 6-6-6-6" />,
+  calendario: (
+    <>
+      <rect x="3.5" y="5" width="17" height="15.5" rx="2" />
+      <path d="M3.5 10h17M8 3v4M16 3v4" />
+    </>
+  ),
   externo: <path d="M7 17 17 7M8 7h9v9" />,
   buscar: (
     <>

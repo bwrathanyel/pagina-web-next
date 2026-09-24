@@ -459,6 +459,18 @@ html {
   }
 }
 
+/* Calendario del cotizador (ui/SelectorFecha): popover anclado bajo su botón.
+   Sin anclaje CSS (Firefox) queda centrado en la pantalla, que es el lugar
+   por defecto de un popover y sigue siendo usable. */
+@supports (position-area: bottom) {
+  .calendario-flotante {
+    inset: auto;
+    margin: 0.75rem 0;
+    position-area: bottom span-right;
+    position-try-fallbacks: flip-block, flip-inline;
+  }
+}
+
 :focus-visible {
   outline: 2px solid var(--color-acento);
   outline-offset: 3px;
