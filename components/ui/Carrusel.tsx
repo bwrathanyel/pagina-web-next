@@ -26,6 +26,7 @@ export function Carrusel({
   gap = "gap-4",
   className = "",
   flechas = false,
+  claseItem,
 }: {
   items: ReactNode[];
   anchoItem?: string;
@@ -34,6 +35,9 @@ export function Carrusel({
   gap?: string;
   className?: string;
   flechas?: boolean;
+  /** Clases extra por posición, para esconder ítems en un breakpoint de la
+   * grilla `desktop` (la celda es el envoltorio, no el ítem). */
+  claseItem?: (indice: number) => string;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [activo, setActivo] = useState(0);
@@ -83,7 +87,9 @@ export function Carrusel({
         ref={scrollerRef}
         onScroll={onScroll}
         className={
-          `-mx-5 flex snap-x snap-mandatory overflow-x-auto px-5 pb-1 ${gap} ` +
+          // py-2/-my-2: aire para el anillo de foco (3px de offset), que el
+          // overflow del scroller recortaba arriba y abajo; el alto no cambia.
+          `-mx-5 -my-2 flex snap-x snap-mandatory overflow-x-auto px-5 py-2 ${gap} ` +
           "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden " +
           desktop
         }
@@ -93,7 +99,8 @@ export function Carrusel({
             key={i}
             className={
               "w-[var(--ancho-item)] max-w-[var(--max-item)] shrink-0 snap-start " +
-              (desktop ? "sm:w-auto sm:max-w-none" : "")
+              (desktop ? "sm:w-auto sm:max-w-none " : "") +
+              (claseItem?.(i) ?? "")
             }
             style={{ "--ancho-item": anchoItem, "--max-item": maxItem } as React.CSSProperties}
           >

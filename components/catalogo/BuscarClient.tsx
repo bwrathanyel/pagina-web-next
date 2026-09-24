@@ -20,10 +20,10 @@ export function BuscarClient({
   autoFocus?: boolean;
   /** Consulta con la que arranca el campo (viene del buscador global). */
   consultaInicial?: string;
-  /** Usado en la home (BuscarAfordancia): sin el margen inferior heredado de
+  /** Usado en /catalogo/hot-sales: sin el margen inferior heredado de
    * /buscar y sin "Destinos populares" -- esos chips ya viven en Hot Sales
-   * (DestinoChips), duplicarlos empujaba el resto de la home hacia abajo
-   * (rediseño 2026-08-14). */
+   * (DestinoChips) y duplicarlos empuja la grilla hacia abajo (rediseño
+   * 2026-08-14). */
   compacto?: boolean;
 }) {
   const [query, setQuery] = useState(consultaInicial);

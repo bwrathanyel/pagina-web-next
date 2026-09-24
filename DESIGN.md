@@ -246,6 +246,15 @@ En listas largas (pestañas de `/catalogo/[categoria]`, chips de `/catalogo/hot-
 ### Esqueletos
 `EsqueletoTarjeta` repite la proporción del boleto para que la carga no salte. Catálogo y producto tienen su `loading.tsx`.
 
+### Home (pase de abordar premium)
+Orden: hero, Hot Sales, Destinos, Acompañamiento, Más de Lotus, footer. Acompañamiento es la única banda `dusk` entre el hero y el footer.
+- **Hero:** banda `dusk` bajo la barra (`bajo-barra` + `useHeroBajoBarra` + velo superior propio), `min-h-[calc(100svh-5rem)]` en móvil y `80svh` desde `lg` para que asome la primera fila de Hot Sales. Tablero con el destino de la foto; segmentos tipo historias (uno por foto, con barra de tiempo, clic para saltar, pausa fuera de pantalla). Entrada `.hero-sube` (CSS, 60/120 ms): el h1 no anima porque es el LCP.
+- **`PaseDestacado`:** `Boleto` vertical con la promo de la foto actual (hotel, destino y plan, "desde $X", vigencia `hasta 30 nov`, hasta 3 incluye, "Ver oferta"). Talón `clamp(7rem,34%,10.5rem)`, degradado solo en hover y foco. Cambia con `AnimatePresence popLayout`; en móvil va compacto y horizontal. Sin miniatura: la foto del hero ya es la del hotel.
+- **`CotizadorRapido`:** en `lg+`, barra ancha anclada al pie del hero (Servicio, Destino, Fecha, Adultos, botón firma "Cotizar"); en móvil, un botón-campo "¿A dónde quiere viajar?" que abre una `Hoja` con los cuatro campos. Los dos son `next/form` GET a `/cotizador-personalizado`, que arranca el wizard en el primer paso incompleto. La barra es una superficie `card` dentro de `dusk`: lleva `.sobre-claro` para que el foco vuelva a `acento`.
+- **Hot Sales:** grilla densa de 2, 3 y 4 columnas (`sm`, `lg`, `xl`) y carrusel con 1,15 tarjetas a la vista en el teléfono, en un solo árbol (`Carrusel` con `desktop`). Muestra 8 (6 en `lg`, para no dejar fila coja) y "Ver las N ofertas". Chips de destino arriba. El orden lo fija el servidor (`ordenDelDia`: manuales primero y el resto rota por día); el cliente no baraja.
+- **`DestinosRail`:** tiras 3:4 con foto a sangre, el destino en Archivo bold y, tras una perforación, "N ofertas" y "desde $X" en mono dorado. Ordenadas por cantidad de ofertas; el piso solo compara montos de la misma moneda. Cada tira abre `/catalogo/hot-sales?destino=X` (HotSalesGrid lee el parámetro al hidratar y lo reescribe con `replaceState`). Con menos de 3 destinos no se monta.
+- **Foco:** el radio del anillo (4px) vive en `@layer base`, así un `rounded-*` conserva su forma al recibir foco. Los carruseles dejan 8px de aire vertical para que el anillo no se recorte.
+
 ## Do's and Don'ts
 
 ### Do:

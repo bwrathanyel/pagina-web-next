@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useEffect, useId, useRef } from "react";
 import { m } from "motion/react";
 import { FILA_FIJA } from "@/components/layout/filaFija";
 
@@ -21,6 +21,20 @@ export function DestinoChips({
   fijo?: boolean;
 }) {
   const instancia = useId();
+  const filaRef = useRef<HTMLDivElement>(null);
+
+  // Si el destino llega elegido de afuera (`?destino=` en Hot Sales), su chip
+  // puede quedar fuera de la fila en el teléfono: se desplaza solo la fila,
+  // en horizontal (scrollIntoView movería también la página).
+  useEffect(() => {
+    const fila = filaRef.current;
+    const chip = fila?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (!fila || !chip || activo === null) return;
+    const f = fila.getBoundingClientRect();
+    const c = chip.getBoundingClientRect();
+    if (c.left < f.left || c.right > f.right) fila.scrollLeft += c.left - f.left - 20;
+  }, [activo]);
+
   if (destinos.length === 0) return null;
 
   const chip = (valor: string | null, etiqueta: string) => {
@@ -53,6 +67,7 @@ export function DestinoChips({
 
   const fila = (
     <div
+      ref={filaRef}
       className={
         "flex gap-2 overflow-x-auto px-5 py-1 scroll-px-5 snap-x snap-proximity [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_92%,transparent)] " +
         (fijo ? "" : "-mx-5 mb-6")

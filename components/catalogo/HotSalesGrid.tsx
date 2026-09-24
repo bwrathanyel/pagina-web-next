@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { CatalogoGrid } from "@/components/catalogo/CatalogoGrid";
 import { PromocionCard } from "@/components/catalogo/PromocionCard";
 import { DestinoChips } from "@/components/catalogo/DestinoChips";
@@ -11,9 +11,23 @@ import type { Promocion } from "@/types/supabase";
 // Grid plano (sin agrupar por destino, para no romper el orden que ya trae el
 // pool: manuales primero, después ranking) con el mismo filtro de chips que la sección del home,
 // acá pegado bajo la barra porque la lista es larga.
+//
+// El destino inicial sale de `?destino=` (las tiras de destino de la home
+// enlazan así). La página sigue estática: el servidor pinta "Todos" y el
+// cliente toma el parámetro al hidratar, sin useSearchParams (que sacaría la
+// grilla del HTML del servidor). Elegir un chip reescribe el parámetro con
+// replaceState para que el enlace se pueda compartir.
+const suscribirUrl = (aviso: () => void) => {
+  window.addEventListener("popstate", aviso);
+  return () => window.removeEventListener("popstate", aviso);
+};
+const destinoDeUrl = () => new URLSearchParams(window.location.search).get("destino");
+
 export function HotSalesGrid({ pool }: { pool: Promocion[] }) {
-  const [destino, setDestino] = useState<string | null>(null);
   const destinos = useMemo(() => destinosDelPool(pool), [pool]);
+  const desdeUrl = useSyncExternalStore(suscribirUrl, destinoDeUrl, () => null);
+  const [elegido, setElegido] = useState<string | null | undefined>(undefined);
+  const destino = elegido !== undefined ? elegido : desdeUrl && destinos.includes(desdeUrl) ? desdeUrl : null;
   const filtradas = destino ? pool.filter((p) => p.producto?.destino === destino) : pool;
   const raizRef = useRef<HTMLDivElement>(null);
 
@@ -21,7 +35,11 @@ export function HotSalesGrid({ pool }: { pool: Promocion[] }) {
   // corta que el scroll actual y dejaría al usuario mirando el pie: vuelve al
   // comienzo de la lista (suave o no según scroll-behavior de globals.css).
   function elegir(d: string | null) {
-    setDestino(d);
+    setElegido(d);
+    const url = new URL(window.location.href);
+    if (d) url.searchParams.set("destino", d);
+    else url.searchParams.delete("destino");
+    window.history.replaceState(null, "", url);
     const raiz = raizRef.current;
     if (raiz && raiz.getBoundingClientRect().top < 0) raiz.scrollIntoView({ block: "start" });
   }

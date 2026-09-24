@@ -384,7 +384,15 @@ html {
 :focus-visible {
   outline: 2px solid var(--color-acento);
   outline-offset: 3px;
-  border-radius: 4px;
+}
+/* El radio del anillo va en base: suelto (sin capa) le ganaba a cualquier
+   `rounded-*` de Tailwind y el botón, el chip o la tarjeta se volvían casi
+   cuadrados al recibir foco por teclado. Así solo lo toma lo que no tiene
+   radio propio (enlaces de texto). */
+@layer base {
+  :focus-visible {
+    border-radius: 4px;
+  }
 }
 
 /* Sobre dusk (hero, footer, bandas oscuras) el acento claro se pierde: el

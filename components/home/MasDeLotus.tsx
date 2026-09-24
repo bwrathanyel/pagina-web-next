@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { REDES } from "@/lib/social";
 import { whatsappHref } from "@/lib/whatsapp";
 import { EditableText } from "@/components/admin/EditableText";
@@ -37,6 +38,7 @@ export function MasDeLotus() {
     ? whatsappHref("Hola! Vengo de su página web y quiero información sobre planes corporativos.")
     : corporate.primaryHref;
   const secondaryHref = corporate.secondaryHref === "email" ? `mailto:${REDES.email}` : corporate.secondaryHref;
+  const iaNegocio = content.navigation.items.find((item) => item.id === "ia-negocio" && item.visible);
 
   return (
     <Seccion ritmo="densa">
@@ -115,6 +117,18 @@ export function MasDeLotus() {
           </Revelar>,
         ]}
       />
+
+      {/* "IA para su negocio" salió de la barra (etapa 1): en la home vive acá,
+          respetando el texto y la visibilidad que el admin le dé en el nav. */}
+      {iaNegocio ? (
+        <Link
+          href={iaNegocio.href}
+          className="mt-6 inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-acento underline-offset-4 hover:underline md:mt-8"
+        >
+          {iaNegocio.label}
+          <Icono nombre="flecha-der" tamano={16} />
+        </Link>
+      ) : null}
     </Seccion>
   );
 }

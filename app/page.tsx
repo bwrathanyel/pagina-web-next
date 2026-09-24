@@ -1,6 +1,7 @@
 import { Hero } from "@/components/home/Hero";
 import { HotSalesSection } from "@/components/home/HotSalesSection";
-import { promosHotSales } from "@/lib/promociones/hotSales";
+import { DestinosRail } from "@/components/home/DestinosRail";
+import { destinosConOfertas, ordenDelDia, promosHotSales } from "@/lib/promociones/hotSales";
 import { fotosHeroDeHotSales } from "@/lib/promociones/fotosHero";
 import { AcompanamientoSection } from "@/components/home/AcompanamientoSection";
 import { MasDeLotus } from "@/components/home/MasDeLotus";
@@ -31,13 +32,17 @@ export default async function Home() {
     .filter((f) => f.url);
 
   // Orden (comp B aprobado, 2026-09-24): Hot Sales asoma bajo el hero, con el
-  // precio a la vista; la vitrina de 4 ofertas y la afordancia de búsqueda
-  // salieron: el pase destacado y el cotizador rápido hacen ese trabajo.
+  // precio a la vista, y Destinos va después (el plan los ponía al revés); la
+  // vitrina de 4 ofertas y la afordancia de búsqueda salieron: el pase
+  // destacado y el cotizador rápido hacen ese trabajo. El hero y los destinos
+  // leen el pool por ranking; solo la grilla rota con el orden del día.
   return (
     <main>
       <Hero fotos={heroFotos.length > 0 ? heroFotos : heroFallback} />
 
-      <HotSalesSection pool={hotSales} />
+      <HotSalesSection pool={ordenDelDia(hotSales)} />
+
+      <DestinosRail destinos={destinosConOfertas(hotSales)} />
 
       <AcompanamientoSection />
 

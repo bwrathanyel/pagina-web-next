@@ -1,4 +1,6 @@
 import { fotosDe } from "@/lib/supabase/fotos";
+import { agruparPorDestino } from "@/lib/supabase/agruparPorDestino";
+import { formatearPrecioDesde } from "@/lib/utils/formatoPrecio";
 import type { Promocion } from "@/types/supabase";
 
 // Mismo fallback que PromocionCard: fotos propias, y solo si no tiene
@@ -64,22 +66,57 @@ export function destinosDelPool(pool: Promocion[]): string[] {
   return [...destinos].sort();
 }
 
-// Las N ofertas que van en la vitrina de la home: la mejor de cada destino,
-// sin repetir destino. El pool ya viene ordenado por score descendente desde
-// getPromociones(), asi que alcanza con recorrerlo en orden -- no usar
-// agruparPorDestino aca, que reordena alfabeticamente y pierde el ranking. Se
-// exigen promo con producto (sin producto no hay destino ni ficha a la que
-// linkear) y al menos una foto.
-export function ofertasVitrina(pool: Promocion[], cantidad = 4): Promocion[] {
-  const destinos = new Set<string>();
-  const resultado: Promocion[] = [];
-  for (const p of pool) {
-    const destino = p.producto?.destino;
-    if (!destino || destinos.has(destino)) continue;
-    if (fotosDeLaPromo(p).length === 0) continue;
-    destinos.add(destino);
-    resultado.push(p);
-    if (resultado.length === cantidad) break;
+// Orden de Hot Sales en la home (plan 2026-09-24): las manuales quedan arriba
+// en el orden que fijó el dueño y el resto rota una vez por día, con la fecha
+// de Caracas como semilla. Se calcula en el servidor: antes el cliente
+// barajaba después de hidratar y la grilla saltaba en cada carga.
+export function ordenDelDia(pool: Promocion[], ahora = new Date()): Promocion[] {
+  const dia = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Caracas" }).format(ahora);
+  let semilla = 0;
+  for (const c of dia) semilla = (Math.imul(semilla, 31) + c.charCodeAt(0)) | 0;
+  // mulberry32: alcanza para barajar y da lo mismo en cada render del día.
+  const azar = () => {
+    semilla = (semilla + 0x6d2b79f5) | 0;
+    let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const manuales = pool.filter((p) => p.hot_sale_estado === "poner");
+  const resto = pool.filter((p) => p.hot_sale_estado !== "poner");
+  for (let i = resto.length - 1; i > 0; i--) {
+    const j = Math.floor(azar() * (i + 1));
+    [resto[i], resto[j]] = [resto[j], resto[i]];
   }
-  return resultado;
+  return [...manuales, ...resto];
+}
+
+export type DestinoConOfertas = { destino: string; ofertas: number; foto: string; desde: string | null };
+
+// Tiras de destino de la home: cuántas Hot Sales hay en cada uno, la foto de
+// la mejor rankeada (el pool llega por score) y el piso de precio. El piso
+// solo compara montos de la misma moneda: `precio_desde_usd` a veces es EUR
+// (ver formatearPrecioDesde), y un "desde" que mezcla monedas mentiría. Se
+// prefiere el piso en dólares; si el destino no tiene ninguno, el de euros.
+export function destinosConOfertas(pool: Promocion[]): DestinoConOfertas[] {
+  const conDestino = pool.filter((p) => p.producto?.destino);
+  const grupos = agruparPorDestino(conDestino, (p) => p.producto!.destino);
+  const resultado: DestinoConOfertas[] = [];
+  for (const { destino, items } of grupos) {
+    const foto = items.map((p) => fotosDeLaPromo(p)[0]).find(Boolean);
+    if (!foto) continue;
+    const pisos = { $: Infinity, "€": Infinity };
+    for (const p of items) {
+      if (typeof p.precio_desde_usd !== "number" || !Number.isFinite(p.precio_desde_usd)) continue;
+      const simbolo = p.precio_texto?.includes("€") ? "€" : "$";
+      pisos[simbolo] = Math.min(pisos[simbolo], p.precio_desde_usd);
+    }
+    const desde = Number.isFinite(pisos.$)
+      ? formatearPrecioDesde(pisos.$, null)
+      : Number.isFinite(pisos["€"])
+        ? formatearPrecioDesde(pisos["€"], "€")
+        : null;
+    resultado.push({ destino, ofertas: items.length, foto, desde });
+  }
+  // Más ofertas primero; a igual cantidad queda el orden alfabético del grupo.
+  return resultado.sort((a, b) => b.ofertas - a.ofertas);
 }
