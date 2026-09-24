@@ -32,7 +32,10 @@ function vigenciaDe(p: Promocion): string | null {
     const fecha = new Date(`${p.fecha_venta_fin}T00:00:00Z`);
     if (!Number.isNaN(fecha.getTime())) return `hasta ${FECHA_PASE.format(fecha).replace(".", "")}`;
   }
-  return p.vigencia_texto?.trim() || null;
+  // Sin fecha de venta, el texto libre solo si trae una fecha: "Sujeto a
+  // disponibilidad" no es una vigencia y en el talón se lee como ruido.
+  const texto = p.vigencia_texto?.trim();
+  return texto && /\d/.test(texto) ? texto : null;
 }
 
 function paseDe(p: Promocion, hotel: string): PaseHero | undefined {
