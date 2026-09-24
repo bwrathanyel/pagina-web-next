@@ -5,6 +5,7 @@ import { Boton } from "@/components/ui/Boton";
 import { BotonFavorito } from "@/components/ui/BotonFavorito";
 import { Icono } from "@/components/ui/Icono";
 import { Etiqueta } from "@/components/ui/Insignia";
+import { SelloNinoGratis } from "@/components/catalogo/SelloNinoGratis";
 
 export interface TicketCardProps {
   href: string | null;
@@ -25,6 +26,9 @@ export interface TicketCardProps {
   precioMuted: boolean;
   vigenciaLabel?: string | null;
   ninosGratis?: number | null;
+  /** Regalo de niño gratis vigente (Hot Sales): el sello dorado ocupa el
+   * lugar de la etiqueta y reemplaza a la de `ninosGratis`. */
+  selloNinoGratis?: number | null;
   enCarrito?: boolean;
   onToggleCarrito?: () => void;
   /** null = sesión no iniciada (el corazón igual se ve, pero al tocarlo
@@ -58,6 +62,7 @@ export function TicketCard({
   precioMuted,
   vigenciaLabel,
   ninosGratis,
+  selloNinoGratis,
   enCarrito = false,
   onToggleCarrito,
   favorito = null,
@@ -86,9 +91,13 @@ export function TicketCard({
     >
       <div className="flex h-full flex-col">
         <div className="group/foto relative aspect-[3/4] overflow-hidden bg-sand-2">
-          <Etiqueta tono="dusk" className="absolute left-3 top-3 z-10 backdrop-blur-sm">
-            {badge}
-          </Etiqueta>
+          {selloNinoGratis ? (
+            <SelloNinoGratis cantidad={selloNinoGratis} className="absolute left-3 top-3 z-10" />
+          ) : (
+            <Etiqueta tono="dusk" className="absolute left-3 top-3 z-10 backdrop-blur-sm">
+              {badge}
+            </Etiqueta>
+          )}
           {onToggleFavorito ? (
             <BotonFavorito
               activo={favorito}
@@ -135,7 +144,7 @@ export function TicketCard({
           {resumen ? (
             <p className="mt-1.5 line-clamp-2 text-xs leading-snug text-ink-soft">{resumen}</p>
           ) : null}
-          {ninosGratis && ninosGratis > 0 ? (
+          {!selloNinoGratis && ninosGratis && ninosGratis > 0 ? (
             <p className="mt-2">
               <Etiqueta tono="seafoam">
                 {ninosGratis} {ninosGratis === 1 ? "niño gratis" : "niños gratis"}

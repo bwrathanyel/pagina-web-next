@@ -2,6 +2,7 @@ import { cache } from "react";
 import { supabaseServer } from "@/lib/supabase/server";
 import type { Categoria, HotSale, Producto, Promocion, ProductoTipo } from "@/types/supabase";
 import { CATEGORIA_A_TIPO } from "@/types/supabase";
+import { ninoGratisVigente } from "@/lib/promociones/ninosGratis";
 
 // "Casa Vacacional Playa del Sur" vive así en productos.destino a propósito
 // (pedido real 2026-07-22) -- el bot de ventas de ManyChat lo usa como gate
@@ -104,7 +105,7 @@ export const getHotSales = cache(async (): Promise<HotSale[]> => {
     .sort((a, b) => a.posicion - b.posicion)
     .flatMap((f) => {
       const p = detalle.get(f.id);
-      return p ? [{ ...promoConDestinoPublico(p), posicion: f.posicion, manual: f.manual, nino_gratis: f.nino_gratis }] : [];
+      return p ? [{ ...promoConDestinoPublico(p), posicion: f.posicion, manual: f.manual, nino_gratis: ninoGratisVigente(f.nino_gratis) }] : [];
     });
 });
 

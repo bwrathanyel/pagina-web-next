@@ -12,7 +12,7 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 import { revalidarSitioPublico } from "@/lib/admin/revalidate";
 import { formatearPrecioCliente } from "@/lib/utils/formatoPrecio";
 import { nombrePromo, precioDobleHero } from "@/lib/tarifas";
-import type { Promocion, Tarifa } from "@/types/supabase";
+import type { HotSale, Promocion, Tarifa } from "@/types/supabase";
 
 export function PromocionCard({ promocion, prioridad = false }: { promocion: Promocion; prioridad?: boolean }) {
   const router = useRouter();
@@ -70,6 +70,7 @@ export function PromocionCard({ promocion, prioridad = false }: { promocion: Pro
         }
         vigenciaLabel={promocion.vigencia_texto}
         ninosGratis={promocion.ninos_gratis_cantidad}
+        selloNinoGratis={"nino_gratis" in promocion ? (promocion as HotSale).nino_gratis?.cantidad : null}
         oculto={!visible}
         enCarrito={tieneItem(key)}
         onToggleCarrito={() =>

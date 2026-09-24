@@ -92,6 +92,13 @@ const FOTOS_DESTINO: Record<string, { archivo: string; alt: string }> = {
   caracas: { archivo: "caracas", alt: "Caracas con El Ávila al fondo" }, // 38556235
 };
 
+/** Foto del alojamiento, no del flyer: primero las del hotel, después las de
+ * la promo, siempre que muestren el lugar. */
+export function fotoDelAlojamiento(p: Promocion): string | undefined {
+  const foto = [...ordenarFotos(p.producto?.producto_fotos), ...ordenarFotos(p.promocion_fotos)].find(esFotoDeLugar);
+  return foto ? fotoUrl(foto.storage_path) : undefined;
+}
+
 const claveDestino = (d: string) =>
   d.trim().toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
 
@@ -120,10 +127,7 @@ export function fotosHeroDeHotSales(hotSales: Promocion[], limite = 8): FotoHero
     if (vistos.has(llave)) continue;
 
     const delDestino = destino ? FOTOS_DESTINO[claveDestino(destino)] : undefined;
-    const delHotel = [...ordenarFotos(p.producto?.producto_fotos), ...ordenarFotos(p.promocion_fotos)].find(
-      esFotoDeLugar,
-    );
-    const fotoHotel = delHotel ? fotoUrl(delHotel.storage_path) : undefined;
+    const fotoHotel = fotoDelAlojamiento(p);
 
     if (delDestino) {
       vistos.add(llave);

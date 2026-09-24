@@ -3,6 +3,8 @@ import { HotSalesSection } from "@/components/home/HotSalesSection";
 import { DestinosRail } from "@/components/home/DestinosRail";
 import { destinosConOfertas, ordenDelDia, soloDestinosHome } from "@/lib/promociones/hotSales";
 import { fotosHeroDeHotSales } from "@/lib/promociones/fotosHero";
+import { ninosGratisEn } from "@/lib/promociones/ninosGratis";
+import { NinosGratisBanda } from "@/components/home/NinosGratisBanda";
 import { AcompanamientoSection } from "@/components/home/AcompanamientoSection";
 import { MasDeLotus } from "@/components/home/MasDeLotus";
 import { fotosDe } from "@/lib/supabase/fotos";
@@ -20,7 +22,10 @@ export default async function Home() {
   // (pedido del dueño, 2026-07-26), con la foto del lugar (2026-09-24) y su
   // mejor promo como "pase destacado". La curaduría de fotos por destino, el
   // respaldo a la foto del hotel y el armado del pase viven en fotosHeroDeHotSales.
-  const heroFotos = fotosHeroDeHotSales(hotSales);
+  // Hero, banda, Hot Sales y destinos leen solo los 5 destinos de la home
+  // (pedido del dueño, 2026-09-24); /catalogo/hot-sales conserva el resto.
+  const deLaHome = soloDestinosHome(hotSales);
+  const heroFotos = fotosHeroDeHotSales(deLaHome);
 
   // Respaldo si todavía no hay Hot Sales con foto propia -- la portada nunca
   // se queda sin imagen (sin pase: no hay promo detrás).
@@ -38,9 +43,13 @@ export default async function Home() {
     <main>
       <Hero fotos={heroFotos.length > 0 ? heroFotos : heroFallback} />
 
-      <HotSalesSection pool={ordenDelDia(soloDestinosHome(hotSales))} />
+      {/* Opción C aprobada (2026-09-24): la banda de niños gratis abre las
+          ofertas; sin regalos vigentes no se monta y Hot Sales sube. */}
+      <NinosGratisBanda bloque={ninosGratisEn(deLaHome, "Margarita")} />
 
-      <DestinosRail destinos={destinosConOfertas(hotSales)} />
+      <HotSalesSection pool={ordenDelDia(deLaHome)} />
+
+      <DestinosRail destinos={destinosConOfertas(deLaHome)} />
 
       <AcompanamientoSection />
 

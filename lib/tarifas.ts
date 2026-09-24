@@ -94,18 +94,23 @@ export function badgePrecio(t: Tarifa | null | undefined): string | null {
  * tal cual si es por persona. Sin clave `dbl` -> null (la tarjeta usa su grilla
  * o su precio_texto de siempre). */
 export function precioDobleHero(t: Tarifa | null | undefined): { monto: string; nota: string } | null {
-  const p = t?.precios;
+  const monto = montoDoble(t?.precios);
+  if (monto === null) return null;
+  return {
+    monto: montoConMoneda(monto, t?.moneda),
+    nota: "por persona / noche · ocupación doble",
+  };
+}
+
+/** El mismo doble por persona y noche como número (para comparar pisos). */
+export function montoDoble(p: Tarifa["precios"] | null | undefined): number | null {
   if (!p || typeof p !== "object" || Array.isArray(p)) return null;
   const dbl = numeroDe(p["dbl"]);
   if (dbl === null) return null;
   const sgl = numeroDe(p["sgl"]);
   const porHabitacion =
     p["base"] === "habitacion" ? true : p["base"] === "persona" ? false : sgl !== null && dbl > sgl;
-  const monto = porHabitacion ? dbl / 2 : dbl;
-  return {
-    monto: montoConMoneda(Math.round(monto * 100) / 100, t?.moneda),
-    nota: "por persona / noche · ocupación doble",
-  };
+  return Math.round((porHabitacion ? dbl / 2 : dbl) * 100) / 100;
 }
 
 /** La única regla de precio de una oferta (plan 2026-09-24): el doble por
