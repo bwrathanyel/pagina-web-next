@@ -18,10 +18,10 @@ export default async function Home() {
 
   const hotSales = promosHotSales(promociones);
 
-  // Fotos del hero: salen de las Hot Sales vigentes y van rotando (pedido del
-  // dueño, 2026-07-26), cada una con su promo como "pase destacado". El
-  // filtrado (descartar flyers, referenciales y fotos chicas) y el armado del
-  // pase viven en fotosHeroDeHotSales.
+  // Fotos del hero: un destino por cada uno con Hot Sales vigentes, rotando
+  // (pedido del dueño, 2026-07-26), con la foto del lugar (2026-09-24) y su
+  // mejor promo como "pase destacado". La curaduría de fotos por destino, el
+  // respaldo a la foto del hotel y el armado del pase viven en fotosHeroDeHotSales.
   const heroFotos = fotosHeroDeHotSales(hotSales);
 
   // Respaldo si todavía no hay Hot Sales con foto propia -- la portada nunca
