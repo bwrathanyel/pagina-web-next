@@ -12,7 +12,8 @@ import { BOTON_ICONO } from "@/components/layout/botonIcono";
 import { Icono } from "@/components/ui/Icono";
 import { Contador } from "@/components/ui/Insignia";
 
-/** `compacto`: header móvil, solo buscar y carrito -- la campana (notificaciones
+/** Sin `compacto`: barra del escritorio (favoritos, carrito, campana y cuenta).
+ * `compacto`: header móvil, solo buscar y carrito -- la campana (notificaciones
  * del chat IA) vive en el FAB unificado (ContactoFab) y la cuenta en la barra
  * inferior. Evita montar useNotificacionesChat/panel dos veces (móvil y
  * escritorio) cuando el móvil no los necesita. */
@@ -83,9 +84,20 @@ export function HeaderControls({
     );
   }
 
+  // Escritorio: sin lupa (la barra tiene el campo "¿A dónde quiere viajar?"),
+  // con favoritos a la vista.
   return (
     <div className="flex items-center gap-1">
-      {buscar}
+      <Link
+        href="/cuenta/favoritos"
+        onClick={onNavigate}
+        aria-label="Favoritos"
+        aria-current={pathname.startsWith("/cuenta/favoritos") ? "page" : undefined}
+        className={BOTON_ICONO}
+      >
+        <Icono nombre="corazon" />
+      </Link>
+      {carrito}
       <button
         ref={campanaRef}
         type="button"
@@ -116,7 +128,6 @@ export function HeaderControls({
       <Link href={user ? "/cuenta" : "/cuenta/login"} onClick={onNavigate} aria-label="Mi cuenta" className={BOTON_ICONO}>
         <Icono nombre="usuario" />
       </Link>
-      {carrito}
     </div>
   );
 }

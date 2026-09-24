@@ -1,19 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { m } from "motion/react";
 import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
 import { HeaderControls } from "@/components/layout/HeaderControls";
 import { HojaMas } from "@/components/layout/HojaMas";
+import { PreferenciasPopover } from "@/components/layout/PreferenciasPopover";
 import { BOTON_ICONO } from "@/components/layout/botonIcono";
 import { BrandMark } from "@/components/layout/BrandMark";
 import { Wordmark } from "@/components/layout/Wordmark";
 import { Icono } from "@/components/ui/Icono";
-import { SelectorTema } from "@/components/ui/SelectorTema";
-import { CurrencySwitch } from "@/components/ui/CurrencySwitch";
-import { IconoNav } from "@/components/layout/IconosNav";
 import { useHeaderAutoHide } from "@/lib/layout/useHeaderAutoHide";
+import { useBarraSobreFoto } from "@/lib/layout/barraSobreFoto";
+import { usePaneles } from "@/lib/layout/paneles";
 import { useSiteContent } from "@/components/providers/SiteContentProvider";
 
 function WhatsAppIconNav() {
@@ -24,81 +25,43 @@ function WhatsAppIconNav() {
   );
 }
 
-// "Paquetes" sale de la barra (pasada 3, pedido del dueño) pero la categoría
-// sigue viva en /catalogo/paquetes -- solo se oculta del header, igual que
-// antes se agrupaba por id bajo "Más" en vez de tocar site-content (el editor
-// de contenido no tiene UI para eso todavía).
-const IDS_OCULTOS_HEADER = new Set(["paquetes"]);
-
-// Labels cortos solo para el header (pasada 3): el label largo se conserva en
-// site-content para el BottomTabBar y el editor de contenido del admin.
-const LABEL_HEADER: Record<string, string> = {
-  empleo: "Empleo",
-  "ia-negocio": "IA para empresas",
-};
+// Empleo e "IA para su negocio" no son categorías del catálogo: viven en el
+// footer y en la hoja "Más". Todo lo demás que el admin deja visible en el
+// contenido editable entra en la fila de categorías.
+const IDS_FUERA_DE_FILA = new Set(["empleo", "ia-negocio"]);
 
 // Rutas con su propia barra sticky arriba (propuesta de cliente con otra
 // paleta, fuera del rediseño): en el móvil la barra del sitio no se pega, para
 // no pelear el mismo `top-0`.
 const RUTAS_CON_BARRA_PROPIA = ["/ia-para-tu-negocio"];
 
+// Fondo de cada fila de la barra según haya o no un hero detrás. La clase
+// `barra-sobre-foto` (tinta clara) va aparte, en lo que se pinta encima: el
+// campo de búsqueda queda fuera porque es un campo sobre card.
+const FONDO_TRANSPARENTE = "border-transparent bg-transparent";
+const FONDO_SOLIDO = "border-linea bg-sand";
+
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { content } = useSiteContent();
   const [masAbierta, setMasAbierta] = useState(false);
-  const itemsPrincipales = content.navigation.items.filter(
-    (item) => item.visible && !IDS_OCULTOS_HEADER.has(item.id),
-  );
+  const [prefAbiertas, setPrefAbiertas] = useState(false);
+  const prefRef = useRef<HTMLButtonElement>(null);
+  const abrirBuscador = usePaneles((s) => s.abrirBuscador);
+  const sobreFoto = useBarraSobreFoto((s) => s.sobreFoto);
+  const categorias = content.navigation.items.filter((item) => item.visible && !IDS_FUERA_DE_FILA.has(item.id));
   const { visible, propsContenedor } = useHeaderAutoHide();
 
   const esActiva = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
-  // Indicador deslizante que reemplaza los after: independientes de cada
-  // ítem: sigue al hover y vuelve al ítem activo al salir. Arranca invisible
-  // hasta la primera medición real para no flashear en la esquina izquierda
-  // antes de hidratar.
-  const [indicador, setIndicador] = useState({ left: 0, width: 0, visible: false });
-  const navElRef = useRef<HTMLElement | null>(null);
-  const roRef = useRef<ResizeObserver | null>(null);
-
-  function medirYSetear(el: Element | null) {
-    const navEl = navElRef.current;
-    if (!el || !navEl) return;
-    const navRect = navEl.getBoundingClientRect();
-    const elRect = el.getBoundingClientRect();
-    setIndicador({ left: elRect.left - navRect.left, width: elRect.width, visible: true });
-  }
-
-  function medirActivo() {
-    medirYSetear(navElRef.current?.querySelector('[aria-current="page"]') ?? null);
-  }
-
-  // Callback ref: no depende de itemsPrincipales/pathname (busca el activo
-  // por [aria-current] en el DOM), así que arranca una sola vez -- evita
-  // reconectar el ResizeObserver en cada render.
-  const setNavRef = useCallback((node: HTMLElement | null) => {
-    navElRef.current = node;
-    roRef.current?.disconnect();
-    if (!node) return;
-    medirActivo();
-    const ro = new ResizeObserver(() => medirActivo());
-    ro.observe(node);
-    roRef.current = ro;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // El cambio de ruta no dispara setState directo en el cuerpo del efecto
-  // (react-hooks/set-state-in-effect es error acá): la medición corre dentro
-  // del callback de requestAnimationFrame, no en el efecto mismo.
-  useEffect(() => {
-    const raf = requestAnimationFrame(() => medirActivo());
-    return () => cancelAnimationFrame(raf);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
-
   const esHome = pathname === "/";
   const barraPropia = RUTAS_CON_BARRA_PROPIA.some((r) => pathname === r || pathname.startsWith(`${r}/`));
+  // Transparente solo mientras el hero (que avisa vía useHeroBajoBarra) sigue
+  // detrás de la barra; en cualquier otra ruta, sólida.
+  const transparente = esHome && sobreFoto;
+  const fondo = transparente ? FONDO_TRANSPARENTE : FONDO_SOLIDO;
+  const grupoSobreFoto = transparente ? "barra-sobre-foto" : "";
 
   // Sin historial propio (llegó desde una red social a esta página) "atrás"
   // llevaría fuera del sitio o no haría nada: en ese caso va al inicio.
@@ -108,106 +71,153 @@ export function Navbar() {
   }
 
   return (
-    <header
-      {...propsContenedor}
-      className={
-        (barraPropia ? "lg:sticky " : "sticky ") +
-        "top-0 z-30 transition-[opacity,transform] duration-500 ease-out lg:px-4 lg:pt-4 " +
-        // El auto-hide por inactividad es un patrón móvil (pedido del dueño
-        // 2026-07-26); en desktop el header queda siempre sólido y estable --
-        // "lg:translate-y-0 lg:opacity-100 lg:pointer-events-auto" pisa el
-        // estado oculto a partir de lg sin tocar el hook.
-        (visible ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-3 opacity-0") +
-        " lg:pointer-events-auto lg:translate-y-0 lg:opacity-100"
-      }
-    >
-      {/* Móvil: barra compacta en todas las rutas. En Home, marca completa; en
-          el resto, atrás + símbolo. Buscar y carrito a la derecha, y "Más"
-          para lo que no cabe en las pestañas de abajo. */}
-      <div className="flex h-14 items-center gap-1 border-b border-linea bg-card pl-2 pr-1 lg:hidden">
-        {esHome ? null : (
-          <button type="button" onClick={volver} aria-label="Volver" className={BOTON_ICONO}>
-            <Icono nombre="flecha-izq" />
-          </button>
-        )}
-        <Link href="/" className="flex min-w-0 items-center gap-2.5">
-          <BrandMark size="sm" priority={esHome} />
-          {esHome ? <Wordmark /> : null}
-        </Link>
-        <div className="ml-auto flex items-center">
-          <HeaderControls compacto />
-          <button
-            type="button"
-            onClick={() => setMasAbierta(true)}
-            aria-label="Más opciones"
-            aria-haspopup="dialog"
-            className={BOTON_ICONO}
-          >
-            <Icono nombre="menu" />
-          </button>
-        </div>
-      </div>
-      <HojaMas abierta={masAbierta} onCerrar={() => setMasAbierta(false)} />
-
-      <div className="mx-auto hidden max-w-[var(--ancho-contenido)] flex-nowrap items-center justify-between gap-4 rounded-full border border-linea bg-card/95 px-5 py-2 shadow-chrome backdrop-blur-xl lg:flex xl:px-6 xl:py-2.5">
-        <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2.5">
-          <BrandMark priority />
-          <Wordmark />
-        </Link>
-
-        <nav
-          ref={setNavRef}
-          aria-label="Catálogo"
-          onPointerLeave={() => medirActivo()}
-          className="relative hidden min-w-0 items-center lg:flex lg:gap-2 xl:gap-3 2xl:gap-6"
+    <>
+      <header
+        {...propsContenedor}
+        className={
+          (barraPropia ? "lg:sticky " : "sticky ") +
+          "top-0 z-30 transition-[opacity,transform] duration-500 ease-out " +
+          // El auto-hide por inactividad es un patrón móvil (pedido del dueño
+          // 2026-07-26); en desktop la barra queda siempre a la vista --
+          // "lg:translate-y-0 lg:opacity-100 lg:pointer-events-auto" pisa el
+          // estado oculto a partir de lg sin tocar el hook.
+          (visible ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-3 opacity-0") +
+          " lg:pointer-events-auto lg:translate-y-0 lg:opacity-100"
+        }
+      >
+        {/* Móvil: barra compacta en todas las rutas. En Home, marca completa; en
+            el resto, atrás + símbolo. Buscar y carrito a la derecha, y "Más"
+            para lo que no cabe en las pestañas de abajo. */}
+        <div
+          className={
+            "flex h-14 items-center gap-1 border-b pl-2 pr-1 transition-colors duration-(--dur-media) lg:hidden " +
+            fondo +
+            " " +
+            grupoSobreFoto
+          }
         >
-          <span
-            aria-hidden="true"
-            className={
-              "pointer-events-none absolute bottom-0 h-px bg-coral transition-[left,width] duration-[250ms] ease-out " +
-              (indicador.visible ? "opacity-100" : "opacity-0")
-            }
-            style={{ left: indicador.left, width: indicador.width }}
-          />
-          {itemsPrincipales.map(({ id, href, label }) => (
-            <Link
-              key={id}
-              href={href}
-              aria-current={esActiva(href) ? "page" : undefined}
-              onPointerEnter={(e) => medirYSetear(e.currentTarget)}
-              onFocus={(e) => medirYSetear(e.currentTarget)}
-              className={
-                "group relative flex items-center gap-1.5 whitespace-nowrap py-2 font-body text-sm transition-colors " +
-                (esActiva(href) ? "text-ink" : "text-ink-soft hover:text-ink")
-              }
-            >
-              <IconoNav id={id} className="hidden xl:block" activo={esActiva(href)} />
-              {LABEL_HEADER[id] ?? label}
-            </Link>
-          ))}
-
-          <Link
-            href={content.navigation.quoteHref}
-            aria-current={esActiva(content.navigation.quoteHref) ? "page" : undefined}
-            className="hidden shrink-0 whitespace-nowrap font-body text-sm font-semibold text-ink hover:text-coral xl:inline"
-          >
-            {content.navigation.quoteLabel}
+          {esHome ? null : (
+            <button type="button" onClick={volver} aria-label="Volver" className={BOTON_ICONO}>
+              <Icono nombre="flecha-izq" />
+            </button>
+          )}
+          <Link href="/" className="flex min-w-0 items-center gap-2.5">
+            <BrandMark size="sm" priority={esHome} />
+            {esHome ? <Wordmark /> : null}
           </Link>
-          <WhatsAppLeadButton
-            mensajeBase="Hola! Vengo de su página web."
-            triggerClassName="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-coral text-white lg:h-11 lg:w-11 xl:w-auto xl:px-5 xl:text-sm xl:font-semibold"
-          >
-            <WhatsAppIconNav />
-            <span className="hidden xl:inline">{content.navigation.whatsappLabel}</span>
-          </WhatsAppLeadButton>
-          <div className="flex shrink-0 items-center gap-3 border-l border-linea pl-4 ml-1">
-            <CurrencySwitch className="hidden xl:block" />
-            <SelectorTema compacto />
-            <HeaderControls />
+          <div className="ml-auto flex items-center">
+            <HeaderControls compacto />
+            <button
+              type="button"
+              onClick={() => setMasAbierta(true)}
+              aria-label="Más opciones"
+              aria-haspopup="dialog"
+              className={BOTON_ICONO}
+            >
+              <Icono nombre="menu" />
+            </button>
           </div>
-        </nav>
+        </div>
+        <HojaMas abierta={masAbierta} onCerrar={() => setMasAbierta(false)} />
 
-      </div>
-    </header>
+        {/* Escritorio, fila 1: logo · campo de búsqueda · acciones. Nada de
+            anchos fijos: el campo es el único que se estira y se encoge
+            (min-w-0), y las etiquetas aparecen por breakpoint. */}
+        <div
+          className={"hidden h-16 border-b transition-colors duration-(--dur-media) lg:block " + fondo}
+        >
+          <div className="mx-auto flex h-full max-w-[var(--ancho-contenido)] items-center gap-4 px-5 xl:gap-8">
+            <Link href="/" className={"flex shrink-0 items-center gap-2.5 " + grupoSobreFoto}>
+              <BrandMark priority />
+              <Wordmark />
+            </Link>
+
+            <button
+              type="button"
+              onClick={abrirBuscador}
+              aria-keyshortcuts="Control+K Meta+K"
+              title="Buscar (Ctrl K)"
+              className="mx-auto flex h-11 min-w-0 max-w-xl flex-1 items-center gap-3 rounded-pill border border-linea bg-card px-4 text-left text-base text-ink-soft transition-colors duration-(--dur-rapida) hover:border-linea-fuerte hover:text-ink"
+            >
+              <Icono nombre="buscar" tamano={18} className="shrink-0 text-ink" />
+              <span className="truncate">¿A dónde quiere viajar?</span>
+            </button>
+
+            <div className={"flex shrink-0 items-center gap-1 " + grupoSobreFoto}>
+              <Link
+                href={content.navigation.quoteHref}
+                aria-current={esActiva(content.navigation.quoteHref) ? "page" : undefined}
+                className="flex h-11 items-center whitespace-nowrap rounded-pill px-3 text-base font-semibold text-ink underline-offset-4 hover:underline"
+              >
+                {content.navigation.quoteLabel}
+              </Link>
+              <WhatsAppLeadButton
+                mensajeBase="Hola! Vengo de su página web."
+                triggerClassName="inline-flex h-11 w-11 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-pill bg-coral text-white xl:w-auto xl:px-4 xl:text-base xl:font-semibold"
+              >
+                <WhatsAppIconNav />
+                <span className="hidden xl:inline">{content.navigation.whatsappLabel}</span>
+              </WhatsAppLeadButton>
+              <HeaderControls />
+              <button
+                ref={prefRef}
+                type="button"
+                onClick={() => setPrefAbiertas(true)}
+                aria-label="Preferencias de moneda y tema"
+                aria-haspopup="dialog"
+                aria-expanded={prefAbiertas}
+                className={BOTON_ICONO}
+              >
+                <Icono nombre="ajustes" />
+              </button>
+              {prefAbiertas ? (
+                <PreferenciasPopover onCerrar={() => setPrefAbiertas(false)} anclaRef={prefRef} />
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Escritorio, fila 2: categorías. Fuera del <header> sticky a propósito:
+          se va con el scroll y solo la fila 1 queda pegada. Así la barra no
+          cambia de alto mientras se lee (no hay salto de contenido) y las
+          filas pegadas del catálogo quedan justo bajo la fila 1. */}
+      <nav
+        aria-label="Categorías"
+        className={
+          "relative z-20 hidden h-11 border-b transition-colors duration-(--dur-media) lg:block " +
+          fondo +
+          " " +
+          grupoSobreFoto
+        }
+      >
+        <div className="mx-auto flex h-full max-w-[var(--ancho-contenido)] items-stretch gap-6 px-5 xl:gap-8">
+          {categorias.map(({ id, href, label }) => {
+            const activa = esActiva(href);
+            return (
+              <Link
+                key={id}
+                href={href}
+                aria-current={activa ? "page" : undefined}
+                className={
+                  "relative flex items-center whitespace-nowrap text-base font-semibold transition-colors duration-(--dur-rapida) " +
+                  (activa ? "text-ink" : "text-ink-soft hover:text-ink")
+                }
+              >
+                {label}
+                {activa ? (
+                  <m.span
+                    layoutId="categoria-activa"
+                    aria-hidden="true"
+                    transition={{ type: "spring", stiffness: 500, damping: 38 }}
+                    className="franja-marca absolute inset-x-0 bottom-0 h-0.5 rounded-pill"
+                  />
+                ) : null}
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+    </>
   );
 }

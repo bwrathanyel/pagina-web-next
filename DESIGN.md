@@ -177,7 +177,7 @@ Paleta terrosa y marina: arena mate, tinta cálida, un marino profundo (`dusk`) 
 
 Contenedor de `78rem` (`--ancho-contenido`) con gutter de 20px en móvil; ancho medio de `64rem` para formularios y lectura. Ritmo de sección de `3.5rem` en móvil y `6rem` desde `md` (`--ritmo-seccion`, `--ritmo-seccion-md`). Se alternan bandas `dusk` y arena; el primer viewport es una banda `dusk` con foto a sangre.
 
-En móvil, barra superior `h-14` y barra inferior de 5 pestañas (Inicio, Promos, Cotizar central levantado, Favoritos, Cuenta). El resto (Empleo, IA para su negocio, moneda, tema) vive en la hoja "Más". En escritorio, píldora flotante de navegación con buscador ⌘K. Objetivos táctiles de 44px como mínimo.
+En móvil, barra superior `h-14` y barra inferior de 5 pestañas (Inicio, Promos, Cotizar central levantado, Favoritos, Cuenta). El resto (Empleo, IA para su negocio, moneda, tema) vive en la hoja "Más". En escritorio, barra a lo ancho de dos filas (ver Navigation). Objetivos táctiles de 44px como mínimo.
 
 ## Elevation & Depth
 
@@ -224,7 +224,11 @@ Radios de 12 a 16px: `card` 16px, `media` y `control` 12px, `pill` 999px solo pa
 `SolicitudLista`: la confirmación de carrito, cotizador y cotización de una opción es un boleto ya emitido, con el envío por WhatsApp en el talón. El lead ya entró al CRM antes de mostrarlo; el botón solo abre la conversación.
 
 ### Navigation
-Píldora flotante en escritorio; en móvil barra superior compacta (atrás y símbolo, marca completa solo en la home) y barra inferior con pestaña central "Cotizar" en `coral-bright`. Indicador de pestaña activa con `layoutId` y el degradado de marca. Sin blur.
+Escritorio: barra a lo ancho de dos filas dentro de `--ancho-contenido`. Fila 1 (`h-16`, sticky): logo, campo "¿A dónde quiere viajar?" que abre `BuscadorGlobal`, y a la derecha Cotizar (texto), WhatsApp, favoritos, carrito, campana, cuenta y "Preferencias" (`PreferenciasPopover`: moneda y tema, mismo contenido que la hoja "Más" del móvil vía `PreferenciasControles`). Fila 2 (`h-11`, NO sticky, se va con el scroll): categorías del contenido editable (todo menos Empleo e IA, que viven en el footer y en "Más"), con indicador `layoutId` y `franja-marca`. Nada de anchos fijos: solo el campo de búsqueda se estira (`min-w-0`) y las etiquetas aparecen por breakpoint.
+
+Sobre el hero, en móvil y escritorio, la barra es transparente con tinta `dusk-text` (clase `barra-sobre-foto`, que redefine `ink`, `ink-soft`, `sand-2` y `linea` dentro del grupo) y pasa a sólida `sand` con filete `linea` en `--dur-media` cuando el hero sale de detrás. El hero lo avisa con `useHeroBajoBarra` (`lib/layout/barraSobreFoto.ts`) y se mete bajo la barra con la utility `bajo-barra`; necesita un velo superior propio para que la tinta clara se lea. El campo de búsqueda queda fuera de `barra-sobre-foto` porque es un campo sobre `card`.
+
+Móvil: barra superior compacta (atrás y símbolo, marca completa solo en la home) y barra inferior con pestaña central "Cotizar" en `coral-bright`. Indicador de pestaña activa con `layoutId` y el degradado de marca. Sin blur.
 
 ### Tablero de salidas (firma)
 Split-flap en `dusk-2` con celdas de radio `0.18em`, línea de bisagra a media altura y sombra interior. Muestra el destino de la foto actual del hero; corta en palabra hacia los 18 caracteres y solo anima las celdas que cambian (110ms). Con `prefers-reduced-motion` queda estático.

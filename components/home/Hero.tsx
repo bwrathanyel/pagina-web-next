@@ -10,6 +10,7 @@ import { Boton, clasesBoton } from "@/components/ui/Boton";
 import { Icono } from "@/components/ui/Icono";
 import { TableroSalidas } from "@/components/ui/TableroSalidas";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
+import { useHeroBajoBarra } from "@/lib/layout/barraSobreFoto";
 import type { FotoHero } from "@/lib/promociones/fotosHero";
 
 const MS_POR_FOTO = 5000;
@@ -52,6 +53,7 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
   const [pestanaVisible, setPestanaVisible] = useState(true);
   const [enPantalla, setEnPantalla] = useState(true);
   const seccion = useRef<HTMLElement>(null);
+  useHeroBajoBarra(seccion);
   const activo = pestanaVisible && enPantalla;
 
   useEffect(() => {
@@ -118,7 +120,7 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
     <section
       ref={seccion}
       className={
-        "sobre-dusk relative isolate flex min-h-[62svh] flex-col justify-end overflow-hidden bg-dusk sm:min-h-[68svh] lg:min-h-[70svh] lg:max-h-[720px]" +
+        "sobre-dusk bajo-barra relative isolate flex min-h-[62svh] flex-col justify-end overflow-hidden bg-dusk sm:min-h-[68svh] lg:min-h-[70svh] lg:max-h-[720px]" +
         (activo ? "" : " en-pausa")
       }
     >
@@ -182,6 +184,9 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
 
       <div className="absolute inset-0 bg-gradient-to-t from-dusk via-dusk/70 to-dusk/20" />
       <div className="absolute inset-0 bg-gradient-to-r from-dusk/60 via-dusk/10 to-transparent" />
+      {/* Bajo la barra transparente: sin esto, el texto claro de la barra se
+          pierde sobre un cielo o una playa clara. */}
+      <div aria-hidden="true" className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-dusk/70 to-transparent" />
 
       {/* Sin Revelar: el texto del hero está en pantalla desde el primer pintado
           (es candidato a LCP y no debe esperar a hidratar). El único movimiento

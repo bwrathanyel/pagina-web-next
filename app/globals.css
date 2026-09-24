@@ -150,6 +150,13 @@
      el alto real de la barra del sitio, que mide useHeaderAutoHide en
      --alto-barra, o 0 cuando la barra del móvil se oculta (abajo). */
   --offset-sticky: var(--alto-barra, 3.5rem);
+  /* Fila de categorías del escritorio (Navbar): no es sticky, se va con el
+     scroll. Solo cuenta para meter un hero debajo de la barra (bajo-barra). */
+  --alto-categorias: 0px;
+  /* Alto de la barra antes de medirla (h-14 móvil, h-16 escritorio, con
+     filete): el valor real lo pone useHeaderAutoHide en <html> al hidratar y
+     gana sobre este. Igual al real para que el hero no salte al medir. */
+  --alto-barra: 3.5rem;
 }
 
 /* La barra se oculta por inactividad solo en el móvil; en desktop queda fija
@@ -157,6 +164,13 @@
 @media (max-width: 1023.98px) {
   :root[data-barra-oculta] {
     --offset-sticky: 0px;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --alto-barra: 4rem;
+    --alto-categorias: 2.75rem;
   }
 }
 
@@ -378,6 +392,29 @@ html {
 .sobre-dusk :focus-visible,
 .sobre-dusk:focus-visible {
   outline-color: var(--color-gold);
+}
+
+/* Barra del sitio transparente sobre la foto del hero: los tokens de texto,
+   hover y filete pasan a sus pares de dusk dentro del grupo, así los mismos
+   componentes (logo, BOTON_ICONO, enlaces) sirven en los dos estados sin
+   clases duplicadas. El buscador central queda fuera del grupo: es un campo
+   sobre card y necesita su tinta normal. */
+.barra-sobre-foto {
+  --color-ink: var(--color-dusk-text);
+  --color-ink-soft: var(--color-dusk-text-soft);
+  --color-sand-2: color-mix(in srgb, var(--color-dusk-text) 16%, transparent);
+  --color-linea: color-mix(in srgb, var(--color-dusk-text) 24%, transparent);
+}
+.barra-sobre-foto :focus-visible,
+.barra-sobre-foto:focus-visible {
+  outline-color: var(--color-gold);
+}
+
+/* Mete el hero bajo la barra del sitio para que esta pueda ser transparente:
+   sube la sección lo que mide la barra (--alto-barra, medido) más la fila de
+   categorías del escritorio. Lo usa quien llame a useHeroBajoBarra. */
+@utility bajo-barra {
+  margin-top: calc(-1 * (var(--alto-barra, 3.5rem) + var(--alto-categorias)));
 }
 
 /* Entrada al hacer scroll (Revelar.tsx). El estado inicial vive acá y no en

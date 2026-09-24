@@ -3,9 +3,7 @@
 import Link from "next/link";
 import { Hoja } from "@/components/ui/Hoja";
 import { Icono } from "@/components/ui/Icono";
-import { SelectorTema } from "@/components/ui/SelectorTema";
-import { CurrencySwitch } from "@/components/ui/CurrencySwitch";
-import { useCurrency } from "@/components/providers/CurrencyProvider";
+import { PreferenciasControles } from "@/components/layout/PreferenciasControles";
 import { useSiteContent } from "@/components/providers/SiteContentProvider";
 
 // Hot Sales ya es la pestaña "Promos" de la barra inferior. El resto de las
@@ -17,7 +15,6 @@ const IDS_EN_BARRA = new Set(["hot-sales"]);
  * de menú de la barra superior (Navbar). */
 export function HojaMas({ abierta, onCerrar }: { abierta: boolean; onCerrar: () => void }) {
   const { content } = useSiteContent();
-  const { moneda } = useCurrency();
   const items = content.navigation.items.filter((item) => item.visible && !IDS_EN_BARRA.has(item.id));
 
   return (
@@ -39,14 +36,8 @@ export function HojaMas({ abierta, onCerrar }: { abierta: boolean; onCerrar: () 
         </ul>
       </nav>
 
-      <div className="mt-4 flex flex-col gap-4 border-t border-linea pt-4">
-        <div className="flex min-h-12 items-center justify-between gap-3">
-          <span className="font-semibold text-ink">
-            Precios en {moneda === "VES" ? "bolívares (Bs)" : "dólares (US$)"}
-          </span>
-          <CurrencySwitch />
-        </div>
-        <SelectorTema />
+      <div className="mt-4 border-t border-linea pt-4">
+        <PreferenciasControles />
       </div>
     </Hoja>
   );

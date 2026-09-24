@@ -15,7 +15,7 @@ const ANCHO: Record<"true" | "medio", string> = {
 /** Envoltorio de sección con el ritmo vertical estándar del sitio -- evita que
  * cada sección invente su propio py-* (era la causa del aire excesivo entre
  * bloques en móvil, auditoría de rediseño 2026-08-14). `ancho="medio"` es
- * para bloques de puro texto -- a --ancho-contenido (86rem) la línea de
+ * para bloques de puro texto -- a --ancho-contenido (78rem) la línea de
  * lectura queda demasiado larga (auditoría redesign desktop 2026-08-22). */
 export function Seccion({
   ritmo = "normal",
