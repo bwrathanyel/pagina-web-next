@@ -275,7 +275,9 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
             {rotando ? (
               // Segmentos tipo historias: uno por foto, el activo se llena con
               // el reloj y los ya vistos quedan llenos. Un clic salta a esa foto.
-              <div className="flex w-full max-w-xs items-center lg:w-72">
+              // En móvil van a la izquierda y con margen a la derecha: el botón
+              // flotante de contacto (fixed, bottom-24) se les montaba encima.
+              <div className="flex w-full max-w-xs items-center self-start pr-16 lg:self-auto lg:w-72 lg:pr-0">
                 {orden.map((foto, idx) => (
                   <button
                     key={foto.url}
