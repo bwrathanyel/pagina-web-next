@@ -461,7 +461,12 @@ html {
 
 /* Calendario del cotizador (ui/SelectorFecha): popover anclado bajo su botón.
    Sin anclaje CSS (Firefox) queda centrado en la pantalla, que es el lugar
-   por defecto de un popover y sigue siendo usable. */
+   por defecto de un popover y sigue siendo usable. El margin: auto lo pone
+   de vuelta: el preflight de Tailwind lo deja en 0 y el popover caía en la
+   esquina superior izquierda. */
+.calendario-flotante {
+  margin: auto;
+}
 @supports (position-area: bottom) {
   .calendario-flotante {
     inset: auto;
