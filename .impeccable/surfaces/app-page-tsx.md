@@ -60,4 +60,22 @@ reduced-motion = estático con cambio de estado. Verificación: sin navegador (c
 del dueño), comp-led liviano con comps de OpenRouter en `.impeccable/mocks/decision/`, sin gates
 build-phase/comp-diff.
 
+Comps aprobados (2026-09-24, el dueño): escritorio `.impeccable/mocks/decision/b-desktop.jpg`
+("buscador protagonista": cotizador ancho y dominante en el tercio inferior del hero, pase
+destacado a la derecha arriba, primera fila de Hot Sales visible bajo el hero); móvil
+`.impeccable/mocks/decision/a-movil.jpg` (tablero, h1, pase compacto horizontal, botón-campo
+"¿A dónde quiere viajar?" y "Cotizar mi viaje" a la altura del pulgar, segmentos de historias).
+No literalizar: logos dibujados por el modelo, la tipografía aproximada, los hoteles y precios
+de ejemplo. Tarjeta de oferta (Etapa 3): aprobada la v2, `tarjeta-v2-desktop.jpg`,
+`tarjeta-v2-movil-home.jpg` y `tarjeta-v2-movil-lista.jpg` (`tarjeta-grilla.jpg` queda como
+descartada). La v2 lleva estos cambios:
+(1) la etiqueta solo en las destacadas, y lo que incluye como una línea de texto, sin chips;
+(2) el talón integrado: una perforación fina con muescas, sin caja; debajo, el precio grande
+en mono, "por persona, doble", "hasta <fecha>" y una flecha; el degradado solo en hover y foco;
+(3) en móvil, el catálogo se muestra como lista estilo Booking (foto cuadrada de 112px, datos
+y precio a la derecha, filas separadas por perforación) y la home conserva el carrusel;
+(4) los chips de destino llevan el conteo, y el carrusel móvil de la home usa foto 1:1.
+Del comp no se copian la barra vieja que repite el v2 de escritorio, la caja crema del
+carrusel móvil ni la mono en el texto corrido.
+
 Pendiente: pasarelas de pago en construcción (no prometer métodos).
