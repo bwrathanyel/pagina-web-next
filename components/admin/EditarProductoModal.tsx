@@ -1,5 +1,6 @@
 "use client";
 
+import { CLASE_CONTROL } from "@/components/ui/Campo";
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { supabaseBrowser } from "@/lib/supabase/client";
@@ -16,7 +17,7 @@ export type CambiosProducto = {
   vigenciaTexto: string;
 };
 
-const inputClass = "w-full rounded-xl border border-ink/15 bg-sand px-4 py-3 text-base text-ink outline-none focus:border-coral";
+const inputClass = `${CLASE_CONTROL} min-h-12 py-3`;
 
 export function EditarProductoModal({ producto, onClose, onGuardado }: { producto: Producto; onClose: () => void; onGuardado: (cambios: CambiosProducto) => void }) {
   const tarifa = producto.tarifas.find((item) => item.vigente) ?? producto.tarifas[0];
@@ -76,8 +77,8 @@ export function EditarProductoModal({ producto, onClose, onGuardado }: { product
         <label className="text-sm font-semibold text-ink sm:col-span-2">Requisitos<textarea rows={3} value={campos.requisitos} onChange={(e) => cambiar("requisitos", e.target.value)} className={`${inputClass} mt-1.5`} /></label>
         <label className="text-sm font-semibold text-ink">Precio visible<input value={campos.precioTexto} onChange={(e) => cambiar("precioTexto", e.target.value)} placeholder="Ej: Desde $120 por persona" className={`${inputClass} mt-1.5`} /></label>
         <label className="text-sm font-semibold text-ink">Vigencia<input value={campos.vigenciaTexto} onChange={(e) => cambiar("vigenciaTexto", e.target.value)} placeholder="Ej: Hasta el 30 de agosto" className={`${inputClass} mt-1.5`} /></label>
-        {error ? <p className="text-sm text-coral sm:col-span-2">{error}</p> : null}
-        <button type="submit" disabled={guardando} className="min-h-12 rounded-full bg-coral px-5 font-semibold text-white disabled:opacity-60 sm:col-span-2">{guardando ? "Guardando…" : "Guardar cambios"}</button>
+        {error ? <p className="text-sm text-peligro sm:col-span-2">{error}</p> : null}
+        <button type="submit" disabled={guardando} className="min-h-12 rounded-pill bg-acento px-5 font-semibold text-sobre-acento disabled:opacity-60 sm:col-span-2">{guardando ? "Guardando…" : "Guardar cambios"}</button>
       </form>
     </Modal>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Icono } from "@/components/ui/Icono";
 import { archivoABase64, validarArchivoCV } from "@/lib/empleo/postularEmpleo";
 
 const SESSION_KEY = "lotus360_entrevista_session_id";
@@ -142,21 +143,27 @@ export function EntrevistaIA() {
   const hayCvPendiente = !!cvFile && !cvConfirmado;
 
   return (
-    <div className="overflow-hidden rounded-[28px] border border-dusk-text/12 bg-dusk-2">
+    <div className="overflow-hidden rounded-card border border-dusk-text/12 bg-dusk-2">
       <div className="flex items-center gap-3 border-b border-dusk-text/12 px-5 py-4">
         <span
           aria-hidden="true"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold font-display text-lg font-bold text-dusk"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-gold font-display text-lg font-bold text-dusk"
         >
           L
         </span>
         <div>
-          <p className="font-display text-base font-semibold text-dusk-text">Hable con Lotus</p>
+          <p className="font-display text-lg font-bold leading-tight text-dusk-text">Hable con Lotus</p>
           <p className="text-xs text-dusk-text-soft">Le hace unas preguntas y registra su postulación</p>
         </div>
       </div>
 
-      <div ref={listaRef} className="flex h-[380px] flex-col gap-3 overflow-y-auto px-5 py-5">
+      <div
+        ref={listaRef}
+        role="log"
+        aria-live="polite"
+        aria-label="Conversación con Lotus"
+        className="flex h-96 flex-col gap-3 overflow-y-auto overscroll-contain px-5 py-5"
+      >
         {mensajes.map((m, i) =>
           m.rol === "sistema" ? (
             <p key={i} className="text-center text-xs leading-5 text-dusk-text-soft">
@@ -165,7 +172,7 @@ export function EntrevistaIA() {
           ) : (
             <div key={i} className={`flex ${m.rol === "candidato" ? "justify-end" : "justify-start"}`}>
               <div
-                className={`max-w-[85%] whitespace-pre-line rounded-2xl px-4 py-2.5 text-sm leading-6 ${
+                className={`max-w-[85%] whitespace-pre-line rounded-card px-4 py-2.5 text-sm leading-6 ${
                   m.rol === "candidato" ? "bg-gold text-dusk" : "bg-dusk text-dusk-text"
                 }`}
               >
@@ -175,24 +182,29 @@ export function EntrevistaIA() {
           ),
         )}
         {enviando && <p className="text-xs text-dusk-text-soft">Lotus está escribiendo…</p>}
-        {error && <p className="text-xs text-gold">{error}</p>}
+        {error && <p role="alert" className="text-sm text-gold">{error}</p>}
         {registrada && (
-          <p className="rounded-2xl bg-dusk px-4 py-3 text-xs leading-5 text-dusk-text-soft">
+          <p className="rounded-card bg-dusk px-4 py-3 text-sm text-dusk-text-soft">
             Su postulación quedó registrada. El equipo la revisa y se comunica con usted si su perfil encaja.
           </p>
         )}
       </div>
 
       {hayCvPendiente && (
-        <div className="mx-4 mb-2 flex items-center gap-2 rounded-xl bg-dusk px-3 py-2 text-xs text-dusk-text-soft">
-          <span aria-hidden="true">📎</span>
+        <div className="mx-4 mb-2 flex min-h-11 items-center gap-2 rounded-control bg-dusk pl-3 text-sm text-dusk-text-soft">
+          <Icono nombre="clip" tamano={16} />
           <span className="flex-1 truncate">{cvFile!.name}: se envía con su próximo mensaje</span>
-          <button type="button" onClick={quitarCV} aria-label="Quitar CV adjunto" className="shrink-0 font-bold text-gold">
-            ✕
+          <button
+            type="button"
+            onClick={quitarCV}
+            aria-label="Quitar CV adjunto"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control text-gold transition-colors duration-150 hover:bg-dusk-2"
+          >
+            <Icono nombre="cerrar" tamano={18} />
           </button>
         </div>
       )}
-      {cvError && <p className="mx-5 mb-2 text-xs text-gold">{cvError}</p>}
+      {cvError && <p role="alert" className="mx-5 mb-2 text-sm text-gold">{cvError}</p>}
 
       <div className="flex items-center gap-2 border-t border-dusk-text/12 p-4">
         <input
@@ -208,11 +220,9 @@ export function EntrevistaIA() {
           disabled={enviando}
           aria-label="Adjuntar CV"
           title="Adjuntar CV (PDF, JPG o PNG, máx. 5MB)"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-dusk-text/15 text-dusk-text-soft transition hover:border-gold hover:text-gold disabled:opacity-50"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill border border-dusk-text/15 text-dusk-text-soft transition-colors duration-150 hover:border-gold hover:text-gold disabled:opacity-50"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M21.44 11.05l-9.19 9.19a5 5 0 01-7.07-7.07l9.19-9.19a3.5 3.5 0 014.95 4.95l-9.2 9.19a1.5 1.5 0 01-2.12-2.12l8.49-8.48" />
-          </svg>
+          <Icono nombre="clip" tamano={18} />
         </button>
         <input
           type="text"
@@ -222,18 +232,16 @@ export function EntrevistaIA() {
           disabled={enviando}
           placeholder="Escriba su respuesta…"
           aria-label="Su respuesta para la entrevista"
-          className="flex-1 rounded-full border border-dusk-text/15 bg-dusk px-4 py-2.5 text-sm text-dusk-text outline-none placeholder:text-dusk-text-soft/60 focus:border-gold disabled:opacity-60"
+          className="min-h-11 min-w-0 flex-1 rounded-pill border border-dusk-text/15 bg-dusk px-4 text-base text-dusk-text placeholder:text-dusk-text-soft transition-[border-color,box-shadow] duration-150 focus:border-gold focus:outline-none focus:ring-4 focus:ring-gold/25 disabled:opacity-60"
         />
         <button
           type="button"
           onClick={enviar}
           disabled={enviando || (!texto.trim() && !hayCvPendiente)}
           aria-label="Enviar respuesta"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gold text-dusk disabled:opacity-50"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill bg-gold text-dusk transition-[filter,transform] duration-150 hover:brightness-105 active:scale-95 disabled:opacity-50"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M2 21l21-9L2 3v7l15 2-15 2v7z" />
-          </svg>
+          <Icono nombre="enviar" tamano={18} />
         </button>
       </div>
     </div>

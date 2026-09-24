@@ -1,9 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Aviso } from "@/components/ui/Aviso";
+import { Boton } from "@/components/ui/Boton";
+import { Campo, Entrada } from "@/components/ui/Campo";
 import { supabaseBrowser } from "@/lib/supabase/client";
+
+const sinSuscripcion = () => () => {};
+const leerConfirmar = () => new URLSearchParams(window.location.search).has("confirmar");
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,6 +17,9 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
+  // /cuenta/registro manda acá con ?confirmar=1 cuando Supabase pide
+  // confirmar el correo antes de abrir sesión.
+  const porConfirmar = useSyncExternalStore(sinSuscripcion, leerConfirmar, () => false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -27,59 +36,49 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-5 py-8 md:py-12">
-      <h1 className="mb-1 font-display text-3xl font-semibold text-ink">Iniciar sesión</h1>
-      <p className="mb-6 text-ink-soft">Acceda a sus favoritos y a su carrito guardado.</p>
+    <main className="mx-auto max-w-md px-5 py-10 md:py-16">
+      <h1 className="font-display text-4xl font-bold leading-none text-ink">Iniciar sesión</h1>
+      <p className="mb-8 mt-3 text-ink-soft">Acceda a sus favoritos y a su carrito guardado.</p>
 
-      <form onSubmit={onSubmit} className="flex flex-col gap-4">
-        <div>
-          <label htmlFor="email" className="mb-1.5 block text-sm font-semibold text-ink">
-            Correo
-          </label>
-          <input
-            id="email"
-            type="email"
-            required
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-xl border border-ink/15 bg-card px-4 py-3 text-base text-ink"
-          />
-        </div>
-        <div>
-          <div className="mb-1.5 flex items-center justify-between">
-            <label htmlFor="password" className="block text-sm font-semibold text-ink">
-              Contraseña
-            </label>
-            <Link href="/cuenta/recuperar" className="text-sm font-semibold text-coral">
-              ¿Olvidó su contraseña?
-            </Link>
-          </div>
-          <input
-            id="password"
-            type="password"
-            required
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-xl border border-ink/15 bg-card px-4 py-3 text-base text-ink"
-          />
+      {porConfirmar ? (
+        <Aviso tono="ok" className="mb-6">
+          Cuenta creada. Le enviamos un correo: abra el enlace para confirmarla y luego inicie sesión aquí.
+        </Aviso>
+      ) : null}
+
+      <form onSubmit={onSubmit} className="flex flex-col gap-5">
+        <Campo etiqueta="Correo" requerido>
+          {(a11y) => (
+            <Entrada {...a11y} type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          )}
+        </Campo>
+        <div className="flex flex-col gap-2">
+          <Campo etiqueta="Contraseña" requerido>
+            {(a11y) => (
+              <Entrada
+                {...a11y}
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            )}
+          </Campo>
+          <Link href="/cuenta/recuperar" className="inline-flex min-h-11 items-center self-start text-sm font-semibold text-acento underline-offset-4 hover:underline">
+            ¿Olvidó su contraseña?
+          </Link>
         </div>
 
-        {error ? <p className="text-sm text-coral">{error}</p> : null}
+        {error ? <Aviso>{error}</Aviso> : null}
 
-        <button
-          type="submit"
-          disabled={cargando}
-          className="min-h-11 rounded-full bg-gradient-to-br from-coral to-gold px-4 font-semibold text-btn-ink disabled:opacity-60"
-        >
-          {cargando ? "Entrando…" : "Entrar"}
-        </button>
+        <Boton type="submit" tamano="lg" ancho cargando={cargando}>
+          Entrar
+        </Boton>
       </form>
 
-      <p className="mt-6 text-sm text-ink-soft">
+      <p className="mt-8 border-t border-linea pt-6 text-ink-soft">
         ¿No tiene cuenta?{" "}
-        <Link href="/cuenta/registro" className="font-semibold text-coral">
+        <Link href="/cuenta/registro" className="font-semibold text-acento underline-offset-4 hover:underline">
           Regístrese
         </Link>
       </p>

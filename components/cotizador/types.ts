@@ -4,7 +4,6 @@ export interface OpcionCampo {
   value: string;
   label: string;
   desc?: string;
-  emoji?: string;
 }
 
 export type CampoTipo =

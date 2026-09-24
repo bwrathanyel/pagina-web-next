@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Aviso } from "@/components/ui/Aviso";
+import { Boton } from "@/components/ui/Boton";
+import { Campo, Entrada } from "@/components/ui/Campo";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
 export default function RecuperarPage() {
@@ -27,49 +30,41 @@ export default function RecuperarPage() {
 
   if (enviado) {
     return (
-      <main className="mx-auto max-w-md px-5 py-8 md:py-12">
-        <h1 className="mb-1 font-display text-3xl font-semibold text-ink">Revise su correo</h1>
-        <p className="text-ink-soft">
+      <main className="mx-auto max-w-md px-5 py-10 md:py-16">
+        <h1 className="font-display text-4xl font-bold leading-none text-ink">Revise su correo</h1>
+        <p className="mt-3 text-ink-soft">
           Si el correo tiene una cuenta asociada, le enviamos un enlace para restablecer la contraseña.
+        </p>
+        <p className="mt-8 border-t border-linea pt-6">
+          <Link href="/cuenta/login" className="font-semibold text-acento underline-offset-4 hover:underline">
+            Volver a iniciar sesión
+          </Link>
         </p>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto max-w-md px-5 py-8 md:py-12">
-      <h1 className="mb-1 font-display text-3xl font-semibold text-ink">Recuperar contraseña</h1>
-      <p className="mb-6 text-ink-soft">Le enviamos un enlace a su correo para elegir una contraseña nueva.</p>
+    <main className="mx-auto max-w-md px-5 py-10 md:py-16">
+      <h1 className="font-display text-4xl font-bold leading-none text-ink">Recuperar contraseña</h1>
+      <p className="mb-8 mt-3 text-ink-soft">Le enviamos un enlace a su correo para elegir una contraseña nueva.</p>
 
-      <form onSubmit={onSubmit} className="flex flex-col gap-4">
-        <div>
-          <label htmlFor="email" className="mb-1.5 block text-sm font-semibold text-ink">
-            Correo
-          </label>
-          <input
-            id="email"
-            type="email"
-            required
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-xl border border-ink/15 bg-card px-4 py-3 text-base text-ink"
-          />
-        </div>
+      <form onSubmit={onSubmit} className="flex flex-col gap-5">
+        <Campo etiqueta="Correo" requerido>
+          {(a11y) => (
+            <Entrada {...a11y} type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          )}
+        </Campo>
 
-        {error ? <p className="text-sm text-coral">{error}</p> : null}
+        {error ? <Aviso>{error}</Aviso> : null}
 
-        <button
-          type="submit"
-          disabled={cargando}
-          className="min-h-11 rounded-full bg-gradient-to-br from-coral to-gold px-4 font-semibold text-btn-ink disabled:opacity-60"
-        >
-          {cargando ? "Enviando…" : "Enviar enlace"}
-        </button>
+        <Boton type="submit" tamano="lg" ancho cargando={cargando}>
+          Enviar enlace
+        </Boton>
       </form>
 
-      <p className="mt-6 text-sm text-ink-soft">
-        <Link href="/cuenta/login" className="font-semibold text-coral">
+      <p className="mt-8 border-t border-linea pt-6">
+        <Link href="/cuenta/login" className="font-semibold text-acento underline-offset-4 hover:underline">
           Volver a iniciar sesión
         </Link>
       </p>

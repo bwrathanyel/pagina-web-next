@@ -215,6 +215,13 @@ Radios de 12 a 16px: `card` 16px, `media` y `control` 12px, `pill` 999px solo pa
 - **Style:** borde `linea-fuerte`, fondo `card`, radio 12px, alto mínimo 48px, texto 16px.
 - **Focus:** borde `acento` y anillo `ring-4` al 20 %.
 - **Error / Disabled:** `aria-invalid` pinta borde y anillo de `peligro`; deshabilitado al 60 %.
+- **Opciones:** radios y casillas nativos ocultos (`sr-only`) dentro de una etiqueta que pinta el estado con `has-[:checked]` y el foco con `has-[:focus-visible]`. Tarjetas de opción: borde `acento` y fondo `acento-suave` al elegir, con un círculo de check. Etiquetas cortas: píldora que pasa a `acento`. Los grupos van en `fieldset` + `legend`.
+- **Cantidades:** `− valor +` con botones de 44px y el número en mono (`Cantidad` en `CotizacionOpcionForm`).
+- **Adjuntos:** `Archivo`, borde punteado y botón del sistema vestido de secundario.
+- **Avisos:** `Aviso` (`error`, `ok`, `info`) en bloque con icono; los errores se anuncian con `role="alert"`.
+
+### Cierre de solicitud
+`SolicitudLista`: la confirmación de carrito, cotizador y cotización de una opción es un boleto ya emitido, con el envío por WhatsApp en el talón. El lead ya entró al CRM antes de mostrarlo; el botón solo abre la conversación.
 
 ### Navigation
 Píldora flotante en escritorio; en móvil barra superior compacta (atrás y símbolo, marca completa solo en la home) y barra inferior con pestaña central "Cotizar" en `coral-bright`. Indicador de pestaña activa con `layoutId` y el degradado de marca. Sin blur.

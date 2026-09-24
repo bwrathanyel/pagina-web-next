@@ -1,5 +1,15 @@
 import type { CampoDef, PasoDef, Respuestas, TipoCotizacion } from "@/components/cotizador/types";
 
+/** Nombre de cada cotizador: h1 de /cotizar/[tipo], campo "pagina" del lead y
+ * detalle de la confirmación. */
+export const TITULOS_COTIZADOR: Record<TipoCotizacion, string> = {
+  hospedaje: "Cotice su hospedaje",
+  boleteria: "Cotice su vuelo",
+  fullday: "Cotice su grupo",
+  paquete: "Consulte su paquete",
+  personalizado: "Cotizador personalizado",
+};
+
 const ninosMasCero = (r: Respuestas) => Number(r.ninos ?? 0) > 0;
 
 const CAMPO_NOMBRE: CampoDef = {
@@ -52,14 +62,14 @@ function campoNinos(edadMax = 11): CampoDef[] {
 }
 
 export const DESTINOS_VENEZUELA: import("@/components/cotizador/types").OpcionCampo[] = [
-  { value: "Isla de Margarita", label: "Isla de Margarita", desc: "Playas paradisíacas, duty free y vida nocturna", emoji: "🏖️" },
-  { value: "Morrocoy", label: "Morrocoy", desc: "Cayos de arena blanca y snorkel de clase mundial", emoji: "🐠" },
-  { value: "Los Roques", label: "Los Roques", desc: "Archipiélago virgen ideal para desconectar", emoji: "🏝️" },
-  { value: "Mérida", label: "Mérida", desc: "Montañas andinas y el teleférico más alto", emoji: "🚡" },
-  { value: "Canaima", label: "Canaima", desc: "Tepuyes milenarios y el Salto Ángel", emoji: "💧" },
-  { value: "Catatumbo", label: "Catatumbo", desc: "El relámpago eterno, único en el mundo", emoji: "⚡" },
-  { value: "Colonia Tovar", label: "Colonia Tovar", desc: "Pueblo alemán, fresas y arquitectura bávara", emoji: "🏘️" },
-  { value: "Extranjero", label: "Viajar al extranjero", desc: "Destinos internacionales", emoji: "🌍" },
+  { value: "Isla de Margarita", label: "Isla de Margarita", desc: "Playas paradisíacas, duty free y vida nocturna" },
+  { value: "Morrocoy", label: "Morrocoy", desc: "Cayos de arena blanca y snorkel de clase mundial" },
+  { value: "Los Roques", label: "Los Roques", desc: "Archipiélago virgen ideal para desconectar" },
+  { value: "Mérida", label: "Mérida", desc: "Montañas andinas y el teleférico más alto" },
+  { value: "Canaima", label: "Canaima", desc: "Tepuyes milenarios y el Salto Ángel" },
+  { value: "Catatumbo", label: "Catatumbo", desc: "El relámpago eterno, único en el mundo" },
+  { value: "Colonia Tovar", label: "Colonia Tovar", desc: "Pueblo alemán, fresas y arquitectura bávara" },
+  { value: "Extranjero", label: "Viajar al extranjero", desc: "Destinos internacionales" },
 ];
 
 export const WIZARD_CONFIG: Record<TipoCotizacion, PasoDef[]> = {
@@ -81,11 +91,11 @@ export const WIZARD_CONFIG: Record<TipoCotizacion, PasoDef[]> = {
           tipo: "cards",
           default: "Hotel",
           opciones: [
-            { value: "Hotel", label: "Hotel", desc: "Servicio completo, recepción 24h y amenities", emoji: "🏨" },
-            { value: "Apartamento / Suite", label: "Apartamento / Suite", desc: "Más espacio y privacidad, ideal para familias", emoji: "🏠" },
-            { value: "Posada / Ecolodge", label: "Posada / Ecolodge", desc: "Experiencia auténtica y contacto con la naturaleza", emoji: "🌿" },
-            { value: "Resort", label: "Resort", desc: "Todo incluido con actividades y entretenimiento", emoji: "🌴" },
-            { value: "Sin preferencia", label: "Sin preferencia", desc: "Le recomendamos la mejor opción", emoji: "✨" },
+            { value: "Hotel", label: "Hotel", desc: "Servicio completo, recepción 24h y amenities" },
+            { value: "Apartamento / Suite", label: "Apartamento / Suite", desc: "Más espacio y privacidad, ideal para familias" },
+            { value: "Posada / Ecolodge", label: "Posada / Ecolodge", desc: "Experiencia auténtica y contacto con la naturaleza" },
+            { value: "Resort", label: "Resort", desc: "Todo incluido con actividades y entretenimiento" },
+            { value: "Sin preferencia", label: "Sin preferencia", desc: "Le recomendamos la mejor opción" },
           ],
         },
         {
@@ -94,11 +104,11 @@ export const WIZARD_CONFIG: Record<TipoCotizacion, PasoDef[]> = {
           tipo: "cards",
           default: "Solo Alojamiento",
           opciones: [
-            { value: "Solo Alojamiento", label: "Solo Alojamiento", emoji: "🛏️" },
-            { value: "Desayuno Incluido", label: "Desayuno Incluido", emoji: "☕" },
-            { value: "Media Pensión", label: "Media Pensión", desc: "Desayuno + cena", emoji: "🍽️" },
-            { value: "Pensión Completa", label: "Pensión Completa", desc: "Desayuno, almuerzo y cena", emoji: "🥩" },
-            { value: "Todo Incluido", label: "Todo Incluido", emoji: "🍹" },
+            { value: "Solo Alojamiento", label: "Solo Alojamiento" },
+            { value: "Desayuno Incluido", label: "Desayuno Incluido" },
+            { value: "Media Pensión", label: "Media Pensión", desc: "Desayuno + cena" },
+            { value: "Pensión Completa", label: "Pensión Completa", desc: "Desayuno, almuerzo y cena" },
+            { value: "Todo Incluido", label: "Todo Incluido" },
           ],
         },
         {
@@ -163,10 +173,10 @@ export const WIZARD_CONFIG: Record<TipoCotizacion, PasoDef[]> = {
           key: "ocasion", label: "Ocasión especial", tipo: "select", default: "Vacaciones",
           opciones: [
             { value: "Vacaciones", label: "Vacaciones" },
-            { value: "Luna de Miel / Aniversario", label: "💑 Luna de Miel" },
-            { value: "Cumpleaños", label: "🎂 Cumpleaños" },
-            { value: "Viaje de Negocios", label: "💼 Negocios" },
-            { value: "Despedida de Soltero/a", label: "🥂 Despedida" },
+            { value: "Luna de Miel / Aniversario", label: "Luna de Miel" },
+            { value: "Cumpleaños", label: "Cumpleaños" },
+            { value: "Viaje de Negocios", label: "Negocios" },
+            { value: "Despedida de Soltero/a", label: "Despedida" },
           ],
         },
         CAMPO_NOTAS,
@@ -231,9 +241,9 @@ export const WIZARD_CONFIG: Record<TipoCotizacion, PasoDef[]> = {
       campos: [
         CAMPO_TELEFONO,
         { key: "ocasion", label: "Ocasión especial", tipo: "select", default: "Viaje regular", opciones: [
-          { value: "Viaje regular", label: "Viaje regular" }, { value: "Luna de Miel", label: "💑 Luna de Miel" },
-          { value: "Cumpleaños", label: "🎂 Cumpleaños" }, { value: "Viaje de Negocios", label: "💼 Negocios" },
-          { value: "Emergencia", label: "🏥 Emergencia" },
+          { value: "Viaje regular", label: "Viaje regular" }, { value: "Luna de Miel", label: "Luna de Miel" },
+          { value: "Cumpleaños", label: "Cumpleaños" }, { value: "Viaje de Negocios", label: "Negocios" },
+          { value: "Emergencia", label: "Emergencia" },
         ] },
         CAMPO_NOTAS,
       ],
@@ -255,8 +265,8 @@ export const WIZARD_CONFIG: Record<TipoCotizacion, PasoDef[]> = {
         {
           key: "plan", label: "Plan (precio por persona)", tipo: "cards", default: "basico",
           opciones: [
-            { value: "basico", label: "Plan Básico · $25", desc: "Traslado, lancha, hidratación y logística", emoji: "🧊" },
-            { value: "full360", label: "Plan Full360 · $35", desc: "Todo lo del Básico + almuerzo playero", emoji: "🐟" },
+            { value: "basico", label: "Plan Básico · $25", desc: "Traslado, lancha, hidratación y logística" },
+            { value: "full360", label: "Plan Full360 · $35", desc: "Todo lo del Básico + almuerzo playero" },
           ],
         },
       ],
@@ -303,11 +313,11 @@ export const WIZARD_CONFIG: Record<TipoCotizacion, PasoDef[]> = {
           required: true,
           default: "Hospedaje",
           opciones: [
-            { value: "Hospedaje", label: "Hospedaje", desc: "Hotel, resort, posada o apartamento", emoji: "🏨" },
-            { value: "Full Day / Tour", label: "Full Day / Tour", desc: "Excursión de un día o varios", emoji: "🌴" },
-            { value: "Boletería aérea", label: "Boletería aérea", desc: "Vuelos nacionales o internacionales", emoji: "✈️" },
-            { value: "Paquete completo", label: "Paquete completo", desc: "Vuelo + hospedaje + actividades", emoji: "🌍" },
-            { value: "No estoy seguro", label: "No estoy seguro/a", desc: "Cuéntenos qué tiene en mente y le asesoramos", emoji: "💬" },
+            { value: "Hospedaje", label: "Hospedaje", desc: "Hotel, resort, posada o apartamento" },
+            { value: "Full Day / Tour", label: "Full Day / Tour", desc: "Excursión de un día o varios" },
+            { value: "Boletería aérea", label: "Boletería aérea", desc: "Vuelos nacionales o internacionales" },
+            { value: "Paquete completo", label: "Paquete completo", desc: "Vuelo + hospedaje + actividades" },
+            { value: "No estoy seguro", label: "No estoy seguro/a", desc: "Cuéntenos qué tiene en mente y le asesoramos" },
           ],
         },
         CAMPO_NOMBRE,

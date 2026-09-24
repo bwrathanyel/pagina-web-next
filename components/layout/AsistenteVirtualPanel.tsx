@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CHAT_ACTUALIZADO_EVENTO } from "@/lib/notificaciones/useNotificacionesChat";
 import { BrandMark } from "@/components/layout/BrandMark";
+import { Icono } from "@/components/ui/Icono";
 
 const SESSION_KEY = "lotus360_chat_session_id";
 const HISTORIAL_KEY = "lotus360_chat_historial";
@@ -24,7 +25,7 @@ interface Mensaje {
 function HoraMensaje({ ts }: { ts?: number }) {
   if (!ts) return null;
   const hora = new Date(ts).toLocaleTimeString("es-VE", { hour: "2-digit", minute: "2-digit" });
-  return <span className="mt-1 block text-right text-[10px] opacity-60">{hora}</span>;
+  return <span className="mt-1 block text-right font-mono text-xs opacity-75">{hora}</span>;
 }
 
 // URL pública, no un secreto -- mismo criterio que AUDIO_BASE/CDN_FOTOS en el
@@ -88,7 +89,6 @@ function ContenidoMensaje({ mensaje }: { mensaje: Mensaje }) {
     return () => {
       cancelado = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mensaje.audio_url]);
 
   // Con audio listo se oculta el texto... salvo que el texto traiga un link
@@ -99,7 +99,6 @@ function ContenidoMensaje({ mensaje }: { mensaje: Mensaje }) {
     const conLink = tieneLink(mensaje.texto);
     return (
       <>
-        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
         <audio controls src={audioListo} className="w-full" style={{ height: 32 }} />
         {conLink ? <span className="mt-2 block">{conLinks(mensaje.texto)}</span> : null}
       </>
@@ -227,9 +226,9 @@ function LightboxFoto({ src, alt, onClose }: { src: string; alt: string; onClose
         type="button"
         onClick={onClose}
         aria-label="Cerrar imagen"
-        className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-xl text-white hover:bg-white/20"
+        className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-pill bg-white/10 text-white transition-colors duration-150 hover:bg-white/20"
       >
-        ✕
+        <Icono nombre="cerrar" />
       </button>
       {/* El zoom/pan calcula la geometría del nodo de imagen; next/image agrega un wrapper. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -252,7 +251,7 @@ function LightboxFoto({ src, alt, onClose }: { src: string; alt: string; onClose
         }}
         onMouseUp={() => (arrastre.current = null)}
         onMouseLeave={() => (arrastre.current = null)}
-        className="max-h-[90vh] max-w-[92vw] rounded-lg object-contain transition-transform duration-150 ease-out"
+        className="max-h-[90vh] max-w-[92vw] rounded-media object-contain transition-transform duration-150 ease-salida"
         style={{
           transform: `translate(${pos.x}px, ${pos.y}px) scale(${escala})`,
           cursor: escala > 1 ? "grab" : "zoom-in",
@@ -425,10 +424,10 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
         role="dialog"
         aria-label="Lotus, su asistente virtual"
         className={
-          "fixed inset-x-0 bottom-0 z-50 flex h-[75vh] w-full flex-col overflow-hidden rounded-t-2xl bg-card shadow-2xl ring-1 ring-black/10 " +
-          "sm:inset-x-auto sm:bottom-24 sm:right-4 sm:h-[70vh] sm:max-h-[600px] sm:w-[90vw] sm:max-w-[380px] sm:rounded-2xl sm:mb-[env(safe-area-inset-bottom)] sm:mr-[env(safe-area-inset-right)] " +
+          "fixed inset-x-0 bottom-0 z-50 flex h-[75dvh] w-full flex-col overflow-hidden rounded-t-card bg-card shadow-chrome " +
+          "sm:inset-x-auto sm:bottom-24 sm:right-4 sm:h-[70vh] sm:max-h-[600px] sm:w-[90vw] sm:max-w-[380px] sm:rounded-card sm:mb-[env(safe-area-inset-bottom)] sm:mr-[env(safe-area-inset-right)] " +
           (cerrando
-            ? "transition-transform duration-200 ease-in translate-y-full sm:translate-y-0 sm:opacity-0"
+            ? "transition-[transform,opacity] duration-200 ease-in translate-y-full sm:translate-y-0 sm:opacity-0"
             : "animate-panel-abrir")
         }
         style={
@@ -439,26 +438,32 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
       >
         <div
           ref={handleRef}
-          className="flex flex-col items-center gap-1.5 rounded-t-2xl bg-coral pt-2 text-white sm:pt-0"
+          className="flex flex-col items-center gap-1.5 bg-dusk pt-2 text-dusk-text sm:pt-0"
         >
-          <span className="h-1 w-9 rounded-full bg-white/30 sm:hidden" aria-hidden="true" />
-          <div className="flex w-full items-center justify-between px-4 pb-3">
-            <div>
-              <p className="font-display text-base font-semibold">Lotus, su asistente virtual</p>
-              <p className="text-xs text-white/80">Le ayuda a armar su viaje al instante</p>
+          <span className="h-1 w-9 rounded-pill bg-dusk-text/30 sm:hidden" aria-hidden="true" />
+          <div className="flex w-full items-center justify-between gap-3 py-1 pl-4 pr-2 sm:py-2">
+            <div className="min-w-0">
+              <p className="font-display text-lg font-bold leading-tight">Lotus, su asistente virtual</p>
+              <p className="text-sm text-dusk-text-soft">Le ayuda a armar su viaje al instante</p>
             </div>
             <button
               type="button"
               onClick={onClose}
               aria-label="Cerrar chat"
-              className="flex h-8 w-8 items-center justify-center rounded-full text-white/90 hover:bg-white/10"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-dusk-text transition-colors duration-150 hover:bg-dusk-2"
             >
-              ✕
+              <Icono nombre="cerrar" />
             </button>
           </div>
         </div>
 
-        <div ref={listaRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+        <div
+          ref={listaRef}
+          role="log"
+          aria-live="polite"
+          aria-label="Conversación con Lotus"
+          className="flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 py-4"
+        >
           {mensajes.map((m, i) => (
             <div
               key={i}
@@ -470,15 +475,15 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
                 </div>
               ) : null}
               <div
-                className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm whitespace-pre-line ${
+                className={`max-w-[80%] whitespace-pre-line rounded-card px-3.5 py-2.5 text-sm ${
                   m.rol === "lead"
-                    ? "animate-msg-in-right bg-coral text-white"
+                    ? "animate-msg-in-right bg-acento text-sobre-acento"
                     : "animate-msg-in-left bg-sand-2 text-ink"
                 }`}
               >
                 {m.rol === "ia" ? <ContenidoMensaje mensaje={m} /> : m.texto}
                 {(m.foto_1 || m.opcion_titulo) && (
-                  <div className="mt-2 overflow-hidden rounded-xl border border-black/5">
+                  <div className="mt-2 overflow-hidden rounded-media border border-linea">
                     {m.foto_1 && (
                       <button
                         type="button"
@@ -491,9 +496,9 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
                       </button>
                     )}
                     {(m.opcion_titulo || m.opcion_precio) && (
-                      <div className="bg-card px-2 py-1.5 text-xs text-ink">
+                      <div className="bg-card px-3 py-2 text-sm text-ink">
                         {m.opcion_titulo && <p className="font-semibold">{m.opcion_titulo}</p>}
-                        {m.opcion_precio && <p className="text-ink-soft">{m.opcion_precio}</p>}
+                        {m.opcion_precio && <p className="font-mono font-bold tabular-nums">{m.opcion_precio}</p>}
                       </div>
                     )}
                   </div>
@@ -510,7 +515,7 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
                     key={sugerencia}
                     type="button"
                     onClick={() => enviar(sugerencia)}
-                    className="rounded-full border border-coral/25 bg-card px-3 py-1.5 text-xs font-medium text-coral hover:bg-coral/5"
+                    className="min-h-11 rounded-pill border border-linea-fuerte bg-card px-4 text-sm font-semibold text-ink transition-colors duration-150 hover:border-acento hover:text-acento"
                   >
                     {sugerencia}
                   </button>
@@ -521,21 +526,25 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
           {enviando ? (
             <div className="flex items-center gap-2 pl-9" aria-live="polite">
               <span className="sr-only">Lotus está escribiendo…</span>
-              <div className="flex items-center gap-1 rounded-2xl bg-sand-2 px-3 py-2.5" aria-hidden="true">
+              <div className="flex items-center gap-1 rounded-card bg-sand-2 px-3 py-2.5" aria-hidden="true">
                 {[0, 1, 2].map((i) => (
                   <span
                     key={i}
-                    className="animate-typing-dot h-1.5 w-1.5 rounded-full bg-ink-soft"
+                    className="animate-typing-dot h-1.5 w-1.5 rounded-pill bg-ink-soft"
                     style={{ animationDelay: `${i * 0.15}s` }}
                   />
                 ))}
               </div>
             </div>
           ) : null}
-          {error && <div className="text-xs text-coral">{error}</div>}
+          {error && (
+            <p role="alert" className="text-sm font-semibold text-peligro">
+              {error}
+            </p>
+          )}
         </div>
 
-        <div className="flex items-end gap-2 border-t border-black/5 p-3">
+        <div className="flex items-end gap-2 border-t border-linea p-3">
           <textarea
             ref={textareaRef}
             value={texto}
@@ -544,18 +553,17 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
             disabled={enviando}
             placeholder="Escriba su mensaje…"
             rows={1}
-            className="max-h-[104px] flex-1 resize-none rounded-2xl border border-black/10 bg-sand px-4 py-2 text-sm text-ink outline-none focus:border-coral disabled:opacity-60"
+            aria-label="Su mensaje"
+            className="max-h-[104px] min-h-11 min-w-0 flex-1 resize-none rounded-control border border-linea-fuerte bg-sand px-4 py-2.5 text-base text-ink placeholder:text-ink-soft transition-[border-color,box-shadow] duration-150 focus:border-acento focus:outline-none focus:ring-4 focus:ring-acento/20 disabled:opacity-60"
           />
           <button
             type="button"
             onClick={() => enviar()}
             disabled={enviando || !texto.trim()}
             aria-label="Enviar mensaje"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-coral text-white disabled:opacity-50"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill bg-acento text-sobre-acento transition-[filter,transform] duration-150 hover:brightness-110 active:scale-95 disabled:opacity-50"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M2 21l21-9L2 3v7l15 2-15 2v7z" />
-            </svg>
+            <Icono nombre="enviar" tamano={18} />
           </button>
         </div>
       </div>

@@ -11,12 +11,8 @@ export const metadata: Metadata = {
 export default function CotizadorPersonalizadoPage() {
   return (
     <main className="mx-auto max-w-xl px-5 py-6 pb-28 md:py-10 lg:pb-10">
-      <div className="mb-4 text-center">
-        <h1 className="font-display text-3xl font-semibold text-ink">Cotizador personalizado</h1>
-        <p className="mt-2 text-ink-soft">
-          Cuéntenos qué busca y armamos una propuesta a su medida.
-        </p>
-      </div>
+      <h1 className="font-display text-4xl font-bold leading-none text-ink md:text-5xl">Cotizador personalizado</h1>
+      <p className="mb-6 mt-3 text-ink-soft">Cuéntenos qué busca y armamos una propuesta a su medida.</p>
       <CotizadorWizard tipo="personalizado" />
     </main>
   );

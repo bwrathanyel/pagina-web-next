@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { CotizadorWizard } from "@/components/cotizador/CotizadorWizard";
 import type { TipoCotizacion } from "@/components/cotizador/types";
+import { TITULOS_COTIZADOR } from "@/components/cotizador/wizardConfig";
 import { getProductoPorId } from "@/lib/supabase/queries";
 
 const TIPOS: TipoCotizacion[] = ["fullday", "hospedaje", "boleteria", "paquete"];
@@ -76,11 +77,16 @@ export default async function CotizarPage({
 
   return (
     <main className="mx-auto max-w-xl px-5 py-6 pb-28 md:py-10 lg:pb-10">
-      {producto ? (
-        <p className="mb-4 rounded-xl bg-seafoam-bg px-4 py-2.5 text-sm text-seafoam-text">
-          Cotizando para <strong>{producto.nombre}</strong>
-        </p>
-      ) : null}
+      <h1 className="font-display text-4xl font-bold leading-none text-ink md:text-5xl">{TITULOS_COTIZADOR[tipo]}</h1>
+      <p className="mb-6 mt-3 text-ink-soft">
+        {producto ? (
+          <>
+            Para <strong className="font-semibold text-ink">{producto.nombre}</strong>. Un asesor le responde por WhatsApp.
+          </>
+        ) : (
+          "Complete unos pasos y un asesor le responde por WhatsApp."
+        )}
+      </p>
       <CotizadorWizard tipo={tipo} productoNombre={producto?.nombre} />
     </main>
   );

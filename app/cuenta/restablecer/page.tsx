@@ -1,12 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Aviso } from "@/components/ui/Aviso";
+import { Boton } from "@/components/ui/Boton";
+import { Campo, Entrada } from "@/components/ui/Campo";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 
 export default function RestablecerPage() {
   const router = useRouter();
-  const [listo, setListo] = useState(false);
+  // "verificando" mientras supabase-js procesa el token del enlace: antes se
+  // mostraba "Enlace inválido" por un instante aunque el enlace sirviera.
+  const [estado, setEstado] = useState<"verificando" | "listo" | "invalido">("verificando");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
@@ -17,10 +24,10 @@ export default function RestablecerPage() {
     // cliente lo procesa solo (detectSessionInUrl) y dispara este evento
     // o ya deja una sesión activa antes de que el efecto corra.
     const { data: sub } = sb.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") setListo(true);
+      if (event === "PASSWORD_RECOVERY") setEstado("listo");
     });
     sb.auth.getSession().then(({ data }) => {
-      if (data.session) setListo(true);
+      setEstado((actual) => (data.session || actual === "listo" ? "listo" : "invalido"));
     });
     return () => sub.subscription.unsubscribe();
   }, []);
@@ -39,15 +46,25 @@ export default function RestablecerPage() {
     router.refresh();
   }
 
-  if (!listo) {
+  if (estado === "verificando") {
     return (
-      <main className="mx-auto max-w-md px-5 py-8 md:py-12">
-        <h1 className="mb-1 font-display text-3xl font-semibold text-ink">Enlace inválido</h1>
-        <p className="text-ink-soft">
+      <main className="mx-auto max-w-md px-5 py-10 md:py-16" aria-busy="true">
+        <span className="sr-only">Verificando el enlace…</span>
+        <Esqueleto className="h-10 w-3/4" />
+        <Esqueleto className="mt-8 h-12" />
+      </main>
+    );
+  }
+
+  if (estado === "invalido") {
+    return (
+      <main className="mx-auto max-w-md px-5 py-10 md:py-16">
+        <h1 className="font-display text-4xl font-bold leading-none text-ink">Enlace inválido</h1>
+        <p className="mt-3 text-ink-soft">
           Este enlace ya venció o no es válido. Pida uno nuevo desde{" "}
-          <a href="/cuenta/recuperar" className="font-semibold text-coral">
+          <Link href="/cuenta/recuperar" className="font-semibold text-acento underline-offset-4 hover:underline">
             recuperar contraseña
-          </a>
+          </Link>
           .
         </p>
       </main>
@@ -55,35 +72,28 @@ export default function RestablecerPage() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-5 py-8 md:py-12">
-      <h1 className="mb-1 font-display text-3xl font-semibold text-ink">Elija una contraseña nueva</h1>
+    <main className="mx-auto max-w-md px-5 py-10 md:py-16">
+      <h1 className="font-display text-4xl font-bold leading-none text-ink">Elija una contraseña nueva</h1>
 
-      <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-4">
-        <div>
-          <label htmlFor="password" className="mb-1.5 block text-sm font-semibold text-ink">
-            Contraseña nueva
-          </label>
-          <input
-            id="password"
-            type="password"
-            required
-            minLength={6}
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-xl border border-ink/15 bg-card px-4 py-3 text-base text-ink"
-          />
-        </div>
+      <form onSubmit={onSubmit} className="mt-8 flex flex-col gap-5">
+        <Campo etiqueta="Contraseña nueva" ayuda="Al menos 6 caracteres." requerido>
+          {(a11y) => (
+            <Entrada
+              {...a11y}
+              type="password"
+              minLength={6}
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          )}
+        </Campo>
 
-        {error ? <p className="text-sm text-coral">{error}</p> : null}
+        {error ? <Aviso>{error}</Aviso> : null}
 
-        <button
-          type="submit"
-          disabled={cargando}
-          className="min-h-11 rounded-full bg-gradient-to-br from-coral to-gold px-4 font-semibold text-btn-ink disabled:opacity-60"
-        >
-          {cargando ? "Guardando…" : "Guardar contraseña"}
-        </button>
+        <Boton type="submit" tamano="lg" ancho cargando={cargando}>
+          Guardar contraseña
+        </Boton>
       </form>
     </main>
   );

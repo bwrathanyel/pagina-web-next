@@ -26,7 +26,7 @@ export function EditableText({
     as,
     {
       id,
-      className: `${className ?? ""} ${editable ? "cursor-text rounded outline outline-1 outline-dashed outline-coral/55 outline-offset-4 hover:outline-2" : ""}`,
+      className: `${className ?? ""} ${editable ? "cursor-text rounded outline outline-1 outline-dashed outline-acento/55 outline-offset-4 hover:outline-2" : ""}`,
       contentEditable: editable,
       suppressContentEditableWarning: editable,
       onClick: editable

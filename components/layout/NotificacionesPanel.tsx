@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { Icono } from "@/components/ui/Icono";
 import type { NotificacionChat } from "@/lib/notificaciones/useNotificacionesChat";
 
 /** Popover de notificaciones anclado a la campana del header.
@@ -86,52 +87,51 @@ export function NotificacionesPanel({
         ref={panelRef}
         role="dialog"
         aria-label="Notificaciones"
-        className="fixed z-50 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-linea bg-card shadow-[0_20px_50px_-12px_rgba(36,31,26,.35)]"
+        className="fixed z-50 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-card bg-card shadow-chrome"
         style={pos ? { top: pos.top, right: pos.right } : { top: 72, right: 16 }}
       >
-        <div className="flex items-center justify-between gap-2 border-b border-ink/8 px-4 py-2.5">
-          <h2 className="font-display text-sm font-semibold text-ink">Notificaciones</h2>
+        <div className="flex items-center justify-between gap-2 border-b border-linea py-1 pl-4 pr-1">
+          <h2 className="font-display text-lg font-bold text-ink">Notificaciones</h2>
           <button
             type="button"
             onClick={cerrar}
             aria-label="Cerrar notificaciones"
-            className="flex h-7 w-7 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-sand-2 hover:text-ink"
+            className="flex h-11 w-11 items-center justify-center rounded-pill text-ink-soft transition-colors duration-150 hover:bg-sand-2 hover:text-ink"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M18 6 6 18M6 6l12 12" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-            </svg>
+            <Icono nombre="cerrar" tamano={18} />
           </button>
         </div>
 
         <div className="max-h-[min(24rem,60vh)] overflow-y-auto">
           {snapshot.length === 0 ? (
             <div className="flex flex-col items-center gap-2 px-6 py-8 text-center">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-seafoam-bg text-seafoam-text" aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-                  <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                </svg>
+              <span className="flex h-10 w-10 items-center justify-center rounded-pill bg-seafoam-bg text-seafoam-text" aria-hidden="true">
+                <Icono nombre="campana" tamano={18} />
               </span>
               <p className="text-sm font-semibold text-ink">Sin notificaciones</p>
-              <p className="text-xs leading-5 text-ink-soft">Las respuestas de Lotus IA aparecerán aquí.</p>
+              <p className="text-sm text-ink-soft">Las respuestas de Lotus IA aparecerán aquí.</p>
             </div>
           ) : (
             <ul>
               {snapshot.map((n) => (
-                <li key={n.id} className="flex gap-2.5 border-b border-ink/8 px-4 py-3 last:border-b-0">
+                <li key={n.id} className="flex gap-3 border-b border-linea px-4 py-3 last:border-b-0">
                   <span
                     aria-hidden="true"
-                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-coral to-gold text-xs font-bold text-btn-ink"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-pill bg-dusk font-display text-sm font-bold text-dusk-text"
                   >
                     L
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[0.8rem] font-semibold text-ink">
+                    <p className="truncate text-sm font-semibold text-ink">
                       Lotus IA{n.opcionTitulo ? ` · ${n.opcionTitulo}` : ""}
                     </p>
-                    <p className="mt-0.5 line-clamp-2 text-[0.78rem] leading-[1.35] text-ink-soft">{n.texto}</p>
+                    <p className="mt-0.5 line-clamp-2 text-sm leading-snug text-ink-soft">{n.texto}</p>
                   </div>
-                  {!n.leida ? <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-coral" aria-hidden="true" /> : null}
+                  {!n.leida ? (
+                    <span className="mt-1.5 h-2 w-2 shrink-0 rounded-pill bg-acento">
+                      <span className="sr-only">No leída</span>
+                    </span>
+                  ) : null}
                 </li>
               ))}
             </ul>

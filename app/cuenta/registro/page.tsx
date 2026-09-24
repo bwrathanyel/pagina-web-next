@@ -3,6 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Aviso } from "@/components/ui/Aviso";
+import { Boton } from "@/components/ui/Boton";
+import { Campo, Entrada } from "@/components/ui/Campo";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
 export default function RegistroPage() {
@@ -56,69 +59,42 @@ export default function RegistroPage() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-5 py-8 md:py-12">
-      <h1 className="mb-1 font-display text-3xl font-semibold text-ink">Crear cuenta</h1>
-      <p className="mb-6 text-ink-soft">Guarde sus favoritos y su carrito entre visitas.</p>
+    <main className="mx-auto max-w-md px-5 py-10 md:py-16">
+      <h1 className="font-display text-4xl font-bold leading-none text-ink">Crear cuenta</h1>
+      <p className="mb-8 mt-3 text-ink-soft">Guarde sus favoritos y su carrito entre visitas.</p>
 
-      <form onSubmit={onSubmit} className="flex flex-col gap-4">
-        <div>
-          <label htmlFor="nombre" className="mb-1.5 block text-sm font-semibold text-ink">
-            Nombre
-          </label>
-          <input
-            id="nombre"
-            type="text"
-            required
-            autoComplete="name"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            className="w-full rounded-xl border border-ink/15 bg-card px-4 py-3 text-base text-ink"
-          />
-        </div>
-        <div>
-          <label htmlFor="email" className="mb-1.5 block text-sm font-semibold text-ink">
-            Correo
-          </label>
-          <input
-            id="email"
-            type="email"
-            required
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-xl border border-ink/15 bg-card px-4 py-3 text-base text-ink"
-          />
-        </div>
-        <div>
-          <label htmlFor="password" className="mb-1.5 block text-sm font-semibold text-ink">
-            Contraseña
-          </label>
-          <input
-            id="password"
-            type="password"
-            required
-            minLength={6}
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-xl border border-ink/15 bg-card px-4 py-3 text-base text-ink"
-          />
-        </div>
+      <form onSubmit={onSubmit} className="flex flex-col gap-5">
+        <Campo etiqueta="Nombre" requerido>
+          {(a11y) => <Entrada {...a11y} autoComplete="name" value={nombre} onChange={(e) => setNombre(e.target.value)} />}
+        </Campo>
+        <Campo etiqueta="Correo" requerido>
+          {(a11y) => (
+            <Entrada {...a11y} type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          )}
+        </Campo>
+        <Campo etiqueta="Contraseña" ayuda="Al menos 6 caracteres." requerido>
+          {(a11y) => (
+            <Entrada
+              {...a11y}
+              type="password"
+              minLength={6}
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          )}
+        </Campo>
 
-        {error ? <p className="text-sm text-coral">{error}</p> : null}
+        {error ? <Aviso>{error}</Aviso> : null}
 
-        <button
-          type="submit"
-          disabled={cargando}
-          className="min-h-11 rounded-full bg-gradient-to-br from-coral to-gold px-4 font-semibold text-btn-ink disabled:opacity-60"
-        >
-          {cargando ? "Creando…" : "Crear cuenta"}
-        </button>
+        <Boton type="submit" tamano="lg" ancho cargando={cargando}>
+          Crear cuenta
+        </Boton>
       </form>
 
-      <p className="mt-6 text-sm text-ink-soft">
+      <p className="mt-8 border-t border-linea pt-6 text-ink-soft">
         ¿Ya tiene cuenta?{" "}
-        <Link href="/cuenta/login" className="font-semibold text-coral">
+        <Link href="/cuenta/login" className="font-semibold text-acento underline-offset-4 hover:underline">
           Inicie sesión
         </Link>
       </p>

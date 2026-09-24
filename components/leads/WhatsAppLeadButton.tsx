@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { Aviso } from "@/components/ui/Aviso";
+import { Boton } from "@/components/ui/Boton";
+import { Campo, Entrada } from "@/components/ui/Campo";
 import { Modal } from "@/components/ui/Modal";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import { crearLeadCRM } from "@/lib/leads/ingestWebLead";
 import { whatsappHref } from "@/lib/whatsapp";
-
-const inputClass =
-  "w-full rounded-xl border border-ink/15 bg-card py-3 pl-11 pr-4 text-base text-ink placeholder:text-ink-soft/60 transition-colors focus:border-whatsapp focus:outline-none focus:ring-2 focus:ring-whatsapp/25";
 
 /** Reemplaza los enlaces directos de WhatsApp del sitio (que mandaban
  * siempre al mismo número fijo, sin pasar por el CRM ni por el sistema de
@@ -53,7 +53,7 @@ export function WhatsAppLeadButton({
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
     if (!nombre.trim() || !destino.trim()) {
-      setError("Completa nombre y destino para continuar.");
+      setError("Complete su nombre y el destino para continuar.");
       return;
     }
     setEnviando(true);
@@ -111,117 +111,41 @@ export function WhatsAppLeadButton({
           titulo="Escríbanos por WhatsApp"
           onClose={() => setAbierto(false)}
           icono={<WhatsAppIcon size={22} />}
-          acentoClassName="from-whatsapp to-[#0a5c30]"
+          acentoClassName="from-whatsapp to-whatsapp"
         >
-          <form onSubmit={enviar} className="flex flex-col gap-4">
-            <p className="flex items-start gap-2 text-sm text-ink-soft">
-              <ClockIcon />
-              <span>
-                Cuéntenos un poco y lo conectamos directo con su asesor.
-                Respuesta en minutos en horario de atención.
-              </span>
+          <form onSubmit={enviar} className="flex flex-col gap-5">
+            <p className="text-ink-soft">
+              Cuéntenos un poco y lo conectamos directo con su asesor. Respuesta en minutos en horario de atención.
             </p>
-            <div>
-              <label htmlFor="wa-lead-nombre" className="mb-1.5 block text-sm font-semibold text-ink">
-                Nombre<span className="ml-1 text-coral">*</span>
-              </label>
-              <div className="relative">
-                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-soft/70">
-                  <PersonaIcon />
-                </span>
-                <input
-                  id="wa-lead-nombre"
-                  type="text"
-                  className={inputClass}
-                  placeholder="¿Cómo se llama?"
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-            <div>
-              <label htmlFor="wa-lead-destino" className="mb-1.5 block text-sm font-semibold text-ink">
-                Destino que le interesa<span className="ml-1 text-coral">*</span>
-              </label>
-              <div className="relative">
-                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-soft/70">
-                  <PinIcon />
-                </span>
-                <input
-                  id="wa-lead-destino"
-                  type="text"
-                  className={inputClass}
-                  placeholder="Ej. Los Roques, Mérida, Margarita..."
+            <Campo etiqueta="Su nombre" requerido>
+              {(a11y) => (
+                <Entrada {...a11y} autoComplete="name" value={nombre} onChange={(e) => setNombre(e.target.value)} />
+              )}
+            </Campo>
+            <Campo etiqueta="Destino que le interesa" requerido>
+              {(a11y) => (
+                <Entrada
+                  {...a11y}
+                  placeholder="Los Roques, Mérida, Margarita…"
                   value={destino}
                   onChange={(e) => setDestino(e.target.value)}
-                  required
                 />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label htmlFor="wa-lead-adultos" className="mb-1.5 block text-sm font-semibold text-ink">
-                  Adultos
-                </label>
-                <input
-                  id="wa-lead-adultos"
-                  type="number"
-                  min={0}
-                  className={inputClass.replace("pl-11", "pl-4")}
-                  placeholder="0"
-                  value={adultos}
-                  onChange={(e) => setAdultos(e.target.value)}
-                />
-              </div>
-              <div>
-                <label htmlFor="wa-lead-ninos" className="mb-1.5 block text-sm font-semibold text-ink">
-                  Niños
-                </label>
-                <input
-                  id="wa-lead-ninos"
-                  type="number"
-                  min={0}
-                  className={inputClass.replace("pl-11", "pl-4")}
-                  placeholder="0"
-                  value={ninos}
-                  onChange={(e) => setNinos(e.target.value)}
-                />
-              </div>
-              <div>
-                <label htmlFor="wa-lead-infantes" className="mb-1.5 block text-sm font-semibold text-ink">
-                  Infantes
-                </label>
-                <input
-                  id="wa-lead-infantes"
-                  type="number"
-                  min={0}
-                  className={inputClass.replace("pl-11", "pl-4")}
-                  placeholder="0"
-                  value={infantes}
-                  onChange={(e) => setInfantes(e.target.value)}
-                />
-              </div>
-            </div>
-            {error ? (
-              <p className="rounded-lg border border-coral/25 bg-coral/10 px-3 py-2 text-sm text-coral">
-                {error}
-              </p>
-            ) : null}
-            <button
-              type="submit"
-              disabled={enviando}
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-whatsapp px-6 font-semibold text-white transition hover:brightness-110 active:scale-[0.98] disabled:opacity-60 disabled:active:scale-100"
-            >
-              {enviando ? (
-                "Conectando..."
-              ) : (
-                <>
-                  <WhatsAppIcon size={18} />
-                  Continuar a WhatsApp
-                </>
               )}
-            </button>
+            </Campo>
+            <fieldset>
+              <legend className="mb-1.5 text-sm font-semibold text-ink">¿Cuántos viajan?</legend>
+              <div className="grid grid-cols-3 gap-3">
+                <Cantidad etiqueta="Adultos" valor={adultos} onChange={setAdultos} />
+                <Cantidad etiqueta="Niños" valor={ninos} onChange={setNinos} />
+                <Cantidad etiqueta="Infantes" valor={infantes} onChange={setInfantes} />
+              </div>
+            </fieldset>
+            {error ? (
+              <Aviso>{error}</Aviso>
+            ) : null}
+            <Boton type="submit" variante="whatsapp" tamano="lg" ancho cargando={enviando} iconoInicio={<WhatsAppIcon size={20} />}>
+              Continuar a WhatsApp
+            </Boton>
           </form>
         </Modal>
       ) : null}
@@ -229,29 +153,29 @@ export function WhatsAppLeadButton({
   );
 }
 
-function ClockIcon() {
+function Cantidad({
+  etiqueta,
+  valor,
+  onChange,
+}: {
+  etiqueta: string;
+  valor: string;
+  onChange: (valor: string) => void;
+}) {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 flex-shrink-0" aria-hidden="true">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v5l3.5 2" />
-    </svg>
-  );
-}
-
-function PersonaIcon() {
-  return (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 20c0-4 3.5-7 8-7s8 3 8 7" />
-    </svg>
-  );
-}
-
-function PinIcon() {
-  return (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z" />
-      <circle cx="12" cy="9.5" r="2.5" />
-    </svg>
+    <Campo etiqueta={<span className="font-normal text-ink-soft">{etiqueta}</span>}>
+      {(a11y) => (
+        <Entrada
+          {...a11y}
+          type="number"
+          min={0}
+          inputMode="numeric"
+          placeholder="0"
+          className="text-center font-mono tabular-nums"
+          value={valor}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      )}
+    </Campo>
   );
 }

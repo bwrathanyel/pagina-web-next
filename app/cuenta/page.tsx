@@ -5,18 +5,40 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { RequiereSesion } from "@/components/cuenta/RequiereSesion";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { Boton } from "@/components/ui/Boton";
+import { Icono, type NombreIcono } from "@/components/ui/Icono";
+import { Etiqueta } from "@/components/ui/Insignia";
 import { useCarritoStore } from "@/lib/carrito/store";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
-function MenuItem({ href, label, count }: { href: string; label: string; count?: number }) {
+function FilaMenu({
+  href,
+  icono,
+  label,
+  cuenta,
+}: {
+  href: string;
+  icono: NombreIcono;
+  label: string;
+  cuenta?: number;
+}) {
   return (
-    <Link
-      href={href}
-      className="flex min-h-14 items-center justify-between gap-3 rounded-xl border border-ink/10 bg-card px-4 font-semibold text-ink"
-    >
-      <span>{label}{count !== undefined ? ` (${count})` : ""}</span>
-      <span aria-hidden="true" className="text-ink-soft">›</span>
-    </Link>
+    <li className="border-b border-linea last:border-b-0">
+      <Link
+        href={href}
+        className="flex min-h-14 items-center gap-4 px-4 font-semibold text-ink transition-colors duration-150 hover:bg-sand-2"
+      >
+        <Icono nombre={icono} className="text-ink-soft" />
+        <span className="flex-1">{label}</span>
+        {cuenta !== undefined ? (
+          <span className="font-mono text-sm font-bold tabular-nums text-ink-soft">
+            {cuenta}
+            <span className="sr-only"> {cuenta === 1 ? "elemento" : "elementos"}</span>
+          </span>
+        ) : null}
+        <Icono nombre="flecha-der" tamano={18} className="text-ink-soft" />
+      </Link>
+    </li>
   );
 }
 
@@ -44,44 +66,42 @@ function CuentaDashboard() {
   const inicial = (user?.email?.[0] ?? "?").toUpperCase();
 
   return (
-    <main className="mx-auto max-w-md px-5 py-8 md:py-12">
-      <div className="mb-6 flex items-center gap-4">
+    <main className="mx-auto max-w-md px-5 py-10 md:py-16">
+      <div className="mb-8 flex items-center gap-4">
         <span
           aria-hidden="true"
-          className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-coral to-gold font-display text-xl font-bold text-btn-ink"
+          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-pill bg-dusk font-display text-2xl font-bold text-dusk-text"
         >
           {inicial}
         </span>
         <div className="min-w-0">
-          <h1 className="truncate font-display text-2xl font-semibold text-ink">Mi cuenta</h1>
-          <p className="truncate text-sm text-ink-soft">
-            {user?.email}
-            {rol === "admin" ? (
-              <span className="ml-2 rounded-full bg-gradient-to-br from-coral to-gold px-2 py-0.5 font-mono text-[0.65rem] uppercase tracking-wide text-btn-ink">
-                Admin
-              </span>
-            ) : null}
+          <h1 className="font-display text-4xl font-bold leading-none text-ink">Mi cuenta</h1>
+          <p className="mt-2 flex min-w-0 items-center gap-2 text-sm text-ink-soft">
+            <span className="truncate">{user?.email}</span>
+            {rol === "admin" ? <Etiqueta tono="dusk">Admin</Etiqueta> : null}
           </p>
         </div>
       </div>
 
-      <div className="flex flex-col gap-3">
-        <MenuItem href="/cuenta/favoritos" label="Mis favoritos" count={favoritosCount ?? undefined} />
-        <MenuItem href="/carrito" label="Mi carrito" count={items.length} />
-        <MenuItem href="/cuenta/configuracion" label="Configuración" />
-        {rol === "admin" ? <MenuItem href="/cuenta/admin" label="Panel de administración" /> : null}
-        <button
-          type="button"
-          onClick={async () => {
-            await signOut();
-            router.push("/");
-            router.refresh();
-          }}
-          className="mt-3 flex min-h-11 items-center justify-center rounded-full border border-ink/20 px-4 font-semibold text-ink"
-        >
-          Cerrar sesión
-        </button>
-      </div>
+      <ul className="overflow-hidden rounded-card border border-linea bg-card">
+        <FilaMenu href="/cuenta/favoritos" icono="corazon" label="Mis favoritos" cuenta={favoritosCount ?? undefined} />
+        <FilaMenu href="/carrito" icono="carrito" label="Mi carrito" cuenta={items.length} />
+        <FilaMenu href="/cuenta/configuracion" icono="ajustes" label="Configuración" />
+        {rol === "admin" ? <FilaMenu href="/cuenta/admin" icono="maletin" label="Panel de administración" /> : null}
+      </ul>
+
+      <Boton
+        variante="secundario"
+        ancho
+        className="mt-6"
+        onClick={async () => {
+          await signOut();
+          router.push("/");
+          router.refresh();
+        }}
+      >
+        Cerrar sesión
+      </Boton>
     </main>
   );
 }

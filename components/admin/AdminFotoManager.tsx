@@ -1,5 +1,6 @@
 "use client";
 
+import { Icono } from "@/components/ui/Icono";
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import { fotoUrl } from "@/lib/supabase/fotos";
@@ -125,29 +126,29 @@ export function AdminFotoManager({ fotos, tabla, productoId }: { fotos: Foto[]; 
   }
 
   return (
-    <div className="mt-4 rounded-2xl border border-dashed border-ink/20 bg-sand/40 p-4">
+    <div className="mt-4 rounded-card border border-dashed border-ink/20 bg-sand/40 p-4">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div><p className="font-mono text-xs font-bold uppercase tracking-wide text-ink-soft">Galería · {estado.length} fotos</p><p className="mt-1 text-xs text-ink-soft">Sube, ordena, oculta o elige la portada.</p></div>
-        <label className="inline-flex min-h-10 cursor-pointer items-center rounded-full bg-coral px-4 text-xs font-bold text-white">
+        <label className="inline-flex min-h-11 cursor-pointer items-center rounded-pill bg-acento px-4 text-xs font-bold text-sobre-acento">
           {trabajando ? "Procesando…" : "Añadir foto"}
           <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" disabled={trabajando} className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; if (file) void subir(file); event.currentTarget.value = ""; }} />
         </label>
       </div>
-      {error ? <p className="mb-3 rounded-xl bg-coral/10 px-3 py-2 text-xs text-coral">{error}</p> : null}
+      {error ? <p className="mb-3 rounded-control bg-peligro-suave px-3 py-2 text-xs text-peligro">{error}</p> : null}
       {ordenadas.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{ordenadas.map((foto, index) => (
-        <div key={foto.id} className="rounded-xl border border-ink/10 bg-card p-2">
-          <div className={`relative aspect-square overflow-hidden rounded-lg bg-sand-2 ${!foto.activo ? "opacity-40" : ""}`}>
+        <div key={foto.id} className="rounded-control border border-ink/10 bg-card p-2">
+          <div className={`relative aspect-square overflow-hidden rounded-control bg-sand-2 ${!foto.activo ? "opacity-40" : ""}`}>
             <Image src={fotoUrl(foto.storage_path)} alt="" fill sizes="160px" className="object-cover" />
-            {foto.es_principal ? <span className="absolute left-1.5 top-1.5 rounded-full bg-coral px-2 py-1 font-mono text-[0.58rem] font-bold uppercase text-white">Portada</span> : null}
+            {foto.es_principal ? <span className="absolute left-1.5 top-1.5 rounded-pill bg-acento px-2 py-1 font-mono text-xs font-bold uppercase text-sobre-acento">Portada</span> : null}
           </div>
           <div className="mt-2 grid grid-cols-2 gap-1">
-            <button type="button" onClick={() => void toggleActivo(foto)} className="min-h-8 rounded-lg border border-ink/15 text-[0.65rem] font-bold text-ink">{foto.activo ? "Ocultar" : "Mostrar"}</button>
-            {!foto.es_principal ? <button type="button" onClick={() => void hacerPrincipal(foto)} className="min-h-8 rounded-lg border border-ink/15 text-[0.65rem] font-bold text-ink">Portada</button> : <span />}
-            <button type="button" disabled={index === 0 || trabajando} onClick={() => void mover(index, -1)} className="min-h-8 rounded-lg bg-sand-2 text-xs font-bold text-ink disabled:opacity-30" aria-label="Mover antes">←</button>
-            <button type="button" disabled={index === ordenadas.length - 1 || trabajando} onClick={() => void mover(index, 1)} className="min-h-8 rounded-lg bg-sand-2 text-xs font-bold text-ink disabled:opacity-30" aria-label="Mover después">→</button>
+            <button type="button" onClick={() => void toggleActivo(foto)} className="min-h-11 rounded-control border border-ink/15 text-xs font-bold text-ink">{foto.activo ? "Ocultar" : "Mostrar"}</button>
+            {!foto.es_principal ? <button type="button" onClick={() => void hacerPrincipal(foto)} className="min-h-11 rounded-control border border-ink/15 text-xs font-bold text-ink">Portada</button> : <span />}
+            <button type="button" disabled={index === 0 || trabajando} onClick={() => void mover(index, -1)} className="min-h-11 rounded-control bg-sand-2 text-xs font-bold text-ink disabled:opacity-30" aria-label="Mover antes"><Icono nombre="flecha-izq" tamano={16} className="mx-auto" /></button>
+            <button type="button" disabled={index === ordenadas.length - 1 || trabajando} onClick={() => void mover(index, 1)} className="min-h-11 rounded-control bg-sand-2 text-xs font-bold text-ink disabled:opacity-30" aria-label="Mover después"><Icono nombre="flecha-der" tamano={16} className="mx-auto" /></button>
           </div>
         </div>
-      ))}</div> : <p className="rounded-xl bg-card p-4 text-sm text-ink-soft">Todavía no hay fotos. Añade la primera para crear la galería.</p>}
+      ))}</div> : <p className="rounded-control bg-card p-4 text-sm text-ink-soft">Todavía no hay fotos. Agregue la primera para crear la galería.</p>}
     </div>
   );
 }

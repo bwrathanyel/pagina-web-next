@@ -2,6 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { TurnstileWidget } from "@/components/pago/TurnstileWidget";
+import { Boleto } from "@/components/ui/Boleto";
+import { Aviso } from "@/components/ui/Aviso";
+import { Boton } from "@/components/ui/Boton";
+import { Archivo, Campo, Entrada } from "@/components/ui/Campo";
+import { Esqueleto } from "@/components/ui/Esqueleto";
+import { Icono } from "@/components/ui/Icono";
 import { registrarEvento } from "@/lib/analitica/eventos";
 import {
   archivoABase64,
@@ -13,9 +19,6 @@ import {
   type PagoPublico,
   type RespuestaEstado,
 } from "@/lib/pago/pagar";
-
-const inputClass =
-  "mt-1.5 min-h-12 w-full rounded-xl border border-ink/15 bg-sand px-4 text-base text-ink outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/15";
 
 const ERRORES: Record<string, string> = {
   falta_referencia: "Escriba el número de referencia del pago.",
@@ -30,27 +33,21 @@ const ERRORES: Record<string, string> = {
 const mensajeError = (codigo?: string) =>
   (codigo && ERRORES[codigo]) || "No pudimos registrar su pago. Inténtelo de nuevo en un momento.";
 
-function Marco({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="rounded-[28px] border border-ink/10 bg-card p-6 shadow-[0_24px_70px_-38px_rgba(36,31,26,.45)] md:p-8">
-      {children}
-    </div>
-  );
-}
+const ETIQUETA = "font-mono text-xs font-bold uppercase tracking-[0.14em] text-ink-soft";
 
-function Aviso({ titulo, texto, tono = "neutro" }: { titulo: string; texto: string; tono?: "ok" | "malo" | "neutro" }) {
+function Estado({ titulo, texto, tono = "neutro" }: { titulo: string; texto: string; tono?: "ok" | "malo" | "neutro" }) {
   const color =
     tono === "ok" ? "bg-seafoam-bg text-seafoam-text"
-      : tono === "malo" ? "bg-coral/10 text-coral"
+      : tono === "malo" ? "bg-peligro-suave text-peligro"
         : "bg-sand-2 text-ink-soft";
   return (
-    <Marco>
-      <span className={`mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl text-2xl ${color}`} aria-hidden="true">
-        {tono === "ok" ? "✓" : tono === "malo" ? "!" : "•"}
+    <div className="rounded-card border border-linea bg-card p-6 md:p-8" role={tono === "malo" ? "alert" : "status"}>
+      <span className={`mb-5 flex h-12 w-12 items-center justify-center rounded-pill ${color}`} aria-hidden="true">
+        <Icono nombre={tono === "ok" ? "check" : "alerta"} tamano={22} />
       </span>
-      <h1 className="text-center font-display text-2xl font-semibold text-ink">{titulo}</h1>
-      <p className="mt-3 text-center leading-7 text-ink-soft">{texto}</p>
-    </Marco>
+      <h1 className="font-display text-3xl font-bold leading-tight text-ink">{titulo}</h1>
+      <p className="mt-3 text-ink-soft">{texto}</p>
+    </div>
   );
 }
 
@@ -88,7 +85,7 @@ export function PagarCliente({ token }: { token: string }) {
     e.preventDefault();
     if (enviando) return;
     if (!referencia.trim()) { setError("Escriba el número de referencia del pago."); return; }
-    if (!turnstileToken) { setError("Completa la verificación de seguridad."); return; }
+    if (!turnstileToken) { setError("Complete la verificación de seguridad."); return; }
 
     setEnviando(true);
     setError(null);
@@ -105,23 +102,30 @@ export function PagarCliente({ token }: { token: string }) {
       setError(mensajeError(res.error));
       setTurnstileToken(null); // el token de Turnstile es de un solo uso
     } catch {
-      setError("No pudimos leer el comprobante. Prueba con otro archivo.");
+      setError("No pudimos leer el comprobante. Pruebe con otro archivo.");
     } finally {
       setEnviando(false);
     }
   }
 
   if (!estado) {
-    return <Marco><p className="text-center text-ink-soft">Cargando…</p></Marco>;
+    return (
+      <div aria-busy="true" className="flex flex-col gap-4">
+        <span className="sr-only">Cargando el pago…</span>
+        <Esqueleto className="h-64 rounded-card" />
+        <Esqueleto className="h-12" />
+        <Esqueleto className="h-12" />
+      </div>
+    );
   }
 
   if (!estado.ok) {
-    return <Aviso tono="malo" titulo="Link no válido" texto="Este link de pago no existe o ya no está disponible. Pídale a su asesor uno nuevo." />;
+    return <Estado tono="malo" titulo="Link no válido" texto="Este link de pago no existe o ya no está disponible. Pídale a su asesor uno nuevo." />;
   }
 
   if (declarado || estado.estado === "pendiente_verificacion") {
     return (
-      <Aviso
+      <Estado
         tono="ok"
         titulo="¡Recibimos su pago!"
         texto="Estamos verificando la transferencia. Apenas quede confirmada, su asesor le avisa. No necesita hacer nada más."
@@ -129,16 +133,16 @@ export function PagarCliente({ token }: { token: string }) {
     );
   }
   if (estado.estado === "verificado") {
-    return <Aviso tono="ok" titulo="Pago confirmado" texto="Este pago ya fue verificado. Gracias." />;
+    return <Estado tono="ok" titulo="Pago confirmado" texto="Este pago ya fue verificado. Gracias." />;
   }
   if (estado.estado === "vencido") {
-    return <Aviso tono="malo" titulo="El link venció" texto="Este link de pago expiró. Pídale a su asesor un link nuevo para completar el pago." />;
+    return <Estado tono="malo" titulo="El link venció" texto="Este link de pago expiró. Pídale a su asesor un link nuevo para completar el pago." />;
   }
   if (estado.estado === "rechazado") {
-    return <Aviso tono="malo" titulo="Pago rechazado" texto="No pudimos validar este pago. Comuníquese con su asesor para resolverlo." />;
+    return <Estado tono="malo" titulo="Pago rechazado" texto="No pudimos validar este pago. Comuníquese con su asesor para resolverlo." />;
   }
   if (estado.estado === "reembolsado") {
-    return <Aviso titulo="Pago reembolsado" texto="Este pago fue reembolsado. Si tiene dudas, escríbale a su asesor." />;
+    return <Estado titulo="Pago reembolsado" texto="Este pago fue reembolsado. Si tiene dudas, escríbale a su asesor." />;
   }
 
   return <Formulario
@@ -168,78 +172,129 @@ function Formulario({
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
 }) {
   const ins = instructivoDe(pago.riel);
-  const vence = new Date(pago.expira_en);
+  const vence = new Date(pago.expira_en).toLocaleString("es-VE");
 
   return (
-    <Marco>
-      <p className="font-mono text-xs font-bold uppercase tracking-[0.15em] text-coral">
-        {pago.tipo === "abono" ? "Abono / Reserva" : "Pago total"}
-      </p>
-      <h1 className="mt-2 font-display text-3xl font-semibold text-ink">{ins.titulo}</h1>
+    <div className="flex flex-col gap-8">
+      <Boleto
+        tamanoTalon="7rem"
+        talon={
+          <div className="flex h-full flex-col justify-center px-5">
+            <p className={ETIQUETA}>Monto a pagar</p>
+            <p className="mt-1 font-mono text-3xl font-bold leading-none tabular-nums text-ink">
+              {formatearMonto(pago.monto_centavos, pago.moneda)}
+            </p>
+            <p className="mt-2 text-xs text-ink-soft">
+              {pago.moneda === "VES" && pago.tasa_usd_ves
+                ? `Tasa: Bs ${pago.tasa_usd_ves} por USD, válida hasta el ${vence}.`
+                : `Link válido hasta el ${vence}.`}
+            </p>
+            <span aria-hidden="true" className="franja-marca absolute inset-x-0 bottom-0 h-1" />
+          </div>
+        }
+      >
+        <div className="p-6">
+          <h1 className="font-display text-3xl font-bold leading-tight text-ink md:text-4xl">{ins.titulo}</h1>
+          <p className={"mt-2 " + ETIQUETA}>{pago.tipo === "abono" ? "Abono / reserva" : "Pago total"}</p>
 
-      <div className="mt-5 rounded-2xl bg-sand-2 px-5 py-4">
-        <p className="text-sm text-ink-soft">Monto a pagar</p>
-        <p className="font-display text-3xl font-semibold text-ink">{formatearMonto(pago.monto_centavos, pago.moneda)}</p>
-        {pago.moneda === "VES" && pago.tasa_usd_ves ? (
-          <p className="mt-1 text-xs text-ink-soft">Tasa aplicada: Bs {pago.tasa_usd_ves} por USD. Válida hasta el {vence.toLocaleString("es-VE")}.</p>
-        ) : (
-          <p className="mt-1 text-xs text-ink-soft">Link válido hasta el {vence.toLocaleString("es-VE")}.</p>
-        )}
-      </div>
+          {ins.datos.length > 0 ? (
+            <dl className="mt-5 flex flex-col border-t border-dashed border-linea-fuerte">
+              {ins.datos.map((d) => (
+                <DatoCopiable key={d.etiqueta} etiqueta={d.etiqueta} valor={d.valor} />
+              ))}
+            </dl>
+          ) : null}
+        </div>
+      </Boleto>
 
-      {ins.datos.length > 0 ? (
-        <dl className="mt-4 divide-y divide-ink/10 rounded-2xl border border-ink/10">
-          {ins.datos.map((d) => (
-            <div key={d.etiqueta} className="flex items-center justify-between gap-3 px-4 py-3">
-              <dt className="text-sm text-ink-soft">{d.etiqueta}</dt>
-              <dd className="text-right text-sm font-bold text-ink">{d.valor}</dd>
-            </div>
+      <section aria-labelledby="pasos-pago">
+        <h2 id="pasos-pago" className="font-display text-2xl font-bold leading-tight text-ink">Cómo pagar</h2>
+        <ol className="mt-4 flex flex-col gap-3">
+          {ins.pasos.map((p, i) => (
+            <li key={p} className="flex gap-3 text-ink-soft">
+              <span
+                aria-hidden="true"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-pill bg-sand-2 font-mono text-xs font-bold text-ink"
+              >
+                {i + 1}
+              </span>
+              <span className="pt-0.5">{p}</span>
+            </li>
           ))}
-        </dl>
-      ) : null}
+        </ol>
+      </section>
 
-      <ol className="mt-4 flex list-decimal flex-col gap-2 pl-5 text-sm leading-6 text-ink-soft">
-        {ins.pasos.map((p) => <li key={p}>{p}</li>)}
-      </ol>
+      <form onSubmit={onSubmit} className="flex flex-col gap-5 border-t border-linea pt-8">
+        <h2 className="font-display text-2xl font-bold leading-tight text-ink">¿Ya pagó? Avísenos</h2>
+        <Campo etiqueta="Número de referencia" requerido>
+          {(a11y) => (
+            <Entrada
+              {...a11y}
+              value={referencia}
+              onChange={(e) => setReferencia(e.target.value)}
+              placeholder="Ej: 001234567890"
+              inputMode="numeric"
+              autoComplete="off"
+              className="font-mono tabular-nums"
+            />
+          )}
+        </Campo>
 
-      <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-5">
-        <label className="text-sm font-bold text-ink">
-          Número de referencia
-          <input
-            required
-            value={referencia}
-            onChange={(e) => setReferencia(e.target.value)}
-            className={inputClass}
-            placeholder="Ej: 001234567890"
-            inputMode="numeric"
-          />
-        </label>
-
-        <label className="text-sm font-bold text-ink">
-          Adjuntar comprobante (PDF, JPG, PNG o WebP, máx. 5MB)
-          <input
-            type="file"
-            accept=".pdf,.jpg,.jpeg,.png,.webp"
-            onChange={(e) => onArchivo(e.target.files?.[0] ?? null)}
-            className="mt-1.5 block w-full text-sm text-ink-soft file:mr-4 file:min-h-11 file:rounded-xl file:border-0 file:bg-sand-2 file:px-4 file:font-bold file:text-ink"
-          />
-        </label>
+        <Campo etiqueta="Comprobante" ayuda="Opcional. PDF, JPG, PNG o WebP, hasta 5 MB.">
+          {(a11y) => (
+            <Archivo {...a11y} accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={(e) => onArchivo(e.target.files?.[0] ?? null)} />
+          )}
+        </Campo>
 
         <TurnstileWidget onToken={onTurnstile} />
 
-        {error ? <p className="rounded-xl bg-coral/10 px-4 py-3 text-sm font-semibold text-coral" role="alert">{error}</p> : null}
+        {error ? (
+          <Aviso>{error}</Aviso>
+        ) : null}
 
-        <button
-          type="submit"
-          disabled={enviando || !turnstileOk}
-          className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-coral px-6 font-bold text-white shadow-[0_12px_28px_rgba(206,56,10,.18)] disabled:opacity-60"
-        >
-          {enviando ? "Enviando…" : "Ya pagué, enviar comprobante"}
-        </button>
-        <p className="text-center text-xs leading-5 text-ink-soft">
-          Verificamos cada pago manualmente. No comparta su clave ni los datos de su tarjeta en este formulario.
+        <Boton type="submit" tamano="lg" ancho cargando={enviando} disabled={!turnstileOk}>
+          Ya pagué, enviar comprobante
+        </Boton>
+        <p className="text-center text-sm text-ink-soft">
+          Verificamos cada pago a mano. No comparta su clave ni los datos de su tarjeta en este formulario.
         </p>
       </form>
-    </Marco>
+    </div>
+  );
+}
+
+/** Fila de datos bancarios con botón de copiar: en el teléfono se paga desde
+ * otra app, y transcribir una cédula o un número de cuenta es donde se falla. */
+function DatoCopiable({ etiqueta, valor }: { etiqueta: string; valor: string }) {
+  const [copiado, setCopiado] = useState(false);
+
+  async function copiar() {
+    try {
+      await navigator.clipboard.writeText(valor);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 1800);
+    } catch {
+      // Sin permiso de portapapeles: el valor sigue visible para copiarlo a mano.
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-3 border-b border-dashed border-linea-fuerte py-2 last:border-b-0">
+      <div className="min-w-0 flex-1">
+        <dt className="text-sm text-ink-soft">{etiqueta}</dt>
+        <dd className="break-words font-mono font-bold text-ink">{valor}</dd>
+      </div>
+      <button
+        type="button"
+        onClick={copiar}
+        aria-label={copiado ? `${etiqueta} copiado` : `Copiar ${etiqueta}`}
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control text-ink-soft transition-colors duration-150 hover:bg-sand-2 hover:text-ink"
+      >
+        <Icono nombre={copiado ? "check" : "copiar"} tamano={18} className={copiado ? "text-seafoam-text" : ""} />
+      </button>
+      <span className="sr-only" aria-live="polite">
+        {copiado ? `${etiqueta} copiado` : ""}
+      </span>
+    </div>
   );
 }

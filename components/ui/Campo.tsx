@@ -67,6 +67,24 @@ export function AreaTexto({ className = "", rows = 4, ...props }: ComponentProps
   return <textarea rows={rows} className={`${CLASE_CONTROL} min-h-28 py-3 leading-relaxed ${className}`} {...props} />;
 }
 
+/** Adjunto (CV, comprobante): borde punteado de "suelte aquí" y el botón del
+ * sistema vestido como botón secundario. */
+export function Archivo({ className = "", ...props }: Omit<ComponentProps<"input">, "type">) {
+  return (
+    <input
+      type="file"
+      className={
+        "block w-full cursor-pointer rounded-control border border-dashed border-linea-fuerte bg-card p-2 text-sm text-ink-soft " +
+        "transition-[border-color,box-shadow] duration-150 ease-salida hover:border-ink/35 " +
+        "file:mr-4 file:min-h-11 file:cursor-pointer file:rounded-control file:border-0 file:bg-sand-2 file:px-4 file:font-semibold file:text-ink " +
+        "focus:border-acento focus:outline-none focus:ring-4 focus:ring-acento/20 " +
+        className
+      }
+      {...props}
+    />
+  );
+}
+
 export function Selector({ className = "", children, ...props }: ComponentProps<"select">) {
   return (
     <select className={`${CLASE_CONTROL} ${ALTO_LINEA} cursor-pointer pr-10 ${className}`} {...props}>

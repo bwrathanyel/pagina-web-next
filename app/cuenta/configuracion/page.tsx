@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { RequiereSesion } from "@/components/cuenta/RequiereSesion";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { Aviso } from "@/components/ui/Aviso";
+import { Boton } from "@/components/ui/Boton";
+import { Campo, Entrada } from "@/components/ui/Campo";
 import { SelectorTema } from "@/components/ui/SelectorTema";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
@@ -51,52 +54,42 @@ function ConfiguracionForm() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-5 py-8 md:py-12">
-      <h1 className="mb-6 font-display text-3xl font-semibold text-ink">Configuración</h1>
+    <main className="mx-auto max-w-md px-5 py-10 md:py-16">
+      <h1 className="font-display text-4xl font-bold leading-none text-ink">Configuración</h1>
 
-      <section className="mb-8 flex items-center justify-between rounded-xl border border-ink/10 bg-card px-4 py-4">
+      <section aria-labelledby="apariencia" className="mt-8 flex flex-col gap-3">
         <div>
-          <p className="font-semibold text-ink">Apariencia</p>
-          <p className="text-sm text-ink-soft">Modo claro u oscuro</p>
+          <h2 id="apariencia" className="font-display text-2xl font-bold leading-tight text-ink">Apariencia</h2>
+          <p className="mt-1 text-sm text-ink-soft">Claro, oscuro o según su dispositivo.</p>
         </div>
-        <SelectorTema className="max-w-sm" />
+        <SelectorTema />
       </section>
 
-      <section className="rounded-xl border border-ink/10 bg-card p-4">
-        <p className="mb-3 font-semibold text-ink">Perfil</p>
-        <form onSubmit={guardar} className="flex flex-col gap-3">
-          <div>
-            <label htmlFor="correo" className="mb-1.5 block text-sm font-semibold text-ink">
-              Correo
-            </label>
-            <input
-              id="correo"
-              disabled
-              value={user?.email ?? ""}
-              className="w-full rounded-xl border border-ink/15 bg-sand-2 px-4 py-3 text-base text-ink-soft"
-            />
-          </div>
-          <div>
-            <label htmlFor="nombre" className="mb-1.5 block text-sm font-semibold text-ink">
-              Nombre
-            </label>
-            <input
-              id="nombre"
-              value={nombre}
-              disabled={cargandoNombre}
-              onChange={(e) => setNombre(e.target.value)}
-              placeholder="Su nombre"
-              className="w-full rounded-xl border border-ink/15 bg-card px-4 py-3 text-base text-ink disabled:opacity-60"
-            />
-          </div>
-          {error ? <p className="text-sm text-coral">{error}</p> : null}
-          <button
-            type="submit"
-            disabled={guardando || cargandoNombre}
-            className="min-h-11 rounded-full bg-gradient-to-br from-coral to-gold px-4 font-semibold text-btn-ink disabled:opacity-60"
-          >
-            {guardando ? "Guardando…" : guardado ? "Guardado ✓" : "Guardar cambios"}
-          </button>
+      <section aria-labelledby="perfil" className="mt-10 border-t border-linea pt-8">
+        <h2 id="perfil" className="font-display text-2xl font-bold leading-tight text-ink">Perfil</h2>
+        <form onSubmit={guardar} className="mt-5 flex flex-col gap-5">
+          <Campo etiqueta="Correo" ayuda="El correo de la cuenta no se puede cambiar desde aquí.">
+            {(a11y) => <Entrada {...a11y} disabled value={user?.email ?? ""} readOnly />}
+          </Campo>
+          <Campo etiqueta="Nombre" requerido>
+            {(a11y) => (
+              <Entrada
+                {...a11y}
+                autoComplete="name"
+                value={nombre}
+                disabled={cargandoNombre}
+                onChange={(e) => {
+                  setNombre(e.target.value);
+                  setGuardado(false);
+                }}
+              />
+            )}
+          </Campo>
+          {error ? <Aviso>{error}</Aviso> : null}
+          {guardado ? <Aviso tono="ok">Cambios guardados.</Aviso> : null}
+          <Boton type="submit" tamano="lg" ancho cargando={guardando} disabled={cargandoNombre}>
+            Guardar cambios
+          </Boton>
         </form>
       </section>
     </main>

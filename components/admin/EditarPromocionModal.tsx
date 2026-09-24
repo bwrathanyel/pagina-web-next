@@ -1,5 +1,6 @@
 "use client";
 
+import { CLASE_CONTROL } from "@/components/ui/Campo";
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { supabaseBrowser } from "@/lib/supabase/client";
@@ -7,7 +8,7 @@ import { revalidarSitioPublico } from "@/lib/admin/revalidate";
 import type { Promocion } from "@/types/supabase";
 
 export type CambiosPromocion = { titulo: string; precioTexto: string; vigenciaTexto: string; ninosGratis: number; tags: string[] };
-const inputClass = "w-full rounded-xl border border-ink/15 bg-sand px-4 py-3 text-base text-ink outline-none focus:border-coral";
+const inputClass = `${CLASE_CONTROL} min-h-12 py-3`;
 
 export function EditarPromocionModal({ promocion, onClose, onGuardado }: { promocion: Promocion; onClose: () => void; onGuardado: (cambios: CambiosPromocion) => void }) {
   const [titulo, setTitulo] = useState(promocion.titulo);
@@ -55,8 +56,8 @@ export function EditarPromocionModal({ promocion, onClose, onGuardado }: { promo
         <label className="text-sm font-semibold text-ink">Vigencia<input value={vigenciaTexto} onChange={(e) => setVigenciaTexto(e.target.value)} placeholder="Ej: Hasta el 30 de agosto" className={`${inputClass} mt-1.5`} /></label>
         <label className="text-sm font-semibold text-ink">Niños gratis<input type="number" min={0} max={20} value={ninosGratis} onChange={(e) => setNinosGratis(Number(e.target.value))} className={`${inputClass} mt-1.5`} /></label>
         <label className="text-sm font-semibold text-ink sm:col-span-2">Incluye / etiquetas<textarea rows={3} value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Desayuno, traslado, piscina" className={`${inputClass} mt-1.5`} /><span className="mt-1 block text-xs font-normal text-ink-soft">Separa cada elemento con una coma.</span></label>
-        {error ? <p className="text-sm text-coral sm:col-span-2">{error}</p> : null}
-        <button type="submit" disabled={guardando} className="min-h-12 rounded-full bg-coral px-5 font-semibold text-white disabled:opacity-60 sm:col-span-2">{guardando ? "Guardando…" : "Guardar cambios"}</button>
+        {error ? <p className="text-sm text-peligro sm:col-span-2">{error}</p> : null}
+        <button type="submit" disabled={guardando} className="min-h-12 rounded-pill bg-acento px-5 font-semibold text-sobre-acento disabled:opacity-60 sm:col-span-2">{guardando ? "Guardando…" : "Guardar cambios"}</button>
       </form>
     </Modal>
   );

@@ -22,12 +22,12 @@ export function AdminEditToggle() {
         if (!modoEdicion) setEditorOpen(true);
       }}
       className={
-        "fixed bottom-24 left-5 z-40 flex min-h-11 items-center gap-2 rounded-full px-4 font-mono text-xs font-semibold uppercase tracking-wide shadow-[0_10px_28px_-8px_rgba(0,0,0,0.4)] lg:bottom-5 " +
-        (modoEdicion ? "bg-coral text-white" : "bg-dusk text-dusk-text")
+        "fixed bottom-24 left-5 z-40 flex min-h-11 items-center gap-2 rounded-pill px-4 font-mono text-xs font-semibold uppercase tracking-wide shadow-chrome lg:bottom-5 " +
+        (modoEdicion ? "bg-acento text-sobre-acento" : "bg-dusk text-dusk-text")
       }
       style={{ marginLeft: "env(safe-area-inset-left)" }}
     >
-      <span className={"h-2 w-2 rounded-full " + (modoEdicion ? "bg-white" : "bg-dusk-text-soft")} aria-hidden="true" />
+      <span className={"h-2 w-2 rounded-pill " + (modoEdicion ? "bg-sobre-acento" : "bg-dusk-text-soft")} aria-hidden="true" />
       {modoEdicion ? "Modo edición: ON" : "Modo edición"}
     </button>
     {modoEdicion ? <SiteEditorPanel /> : null}

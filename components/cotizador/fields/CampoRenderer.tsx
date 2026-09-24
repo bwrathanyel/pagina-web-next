@@ -1,6 +1,9 @@
 "use client";
 
+import { useId, type ReactNode } from "react";
 import type { CampoDef, Respuestas } from "@/components/cotizador/types";
+import { AreaTexto, Campo, Entrada, Selector } from "@/components/ui/Campo";
+import { Icono } from "@/components/ui/Icono";
 
 interface Props {
   campo: CampoDef;
@@ -8,116 +11,135 @@ interface Props {
   onChange: (key: string, valor: Respuestas[string]) => void;
 }
 
-const inputClass =
-  "w-full rounded-xl border border-ink/15 bg-card px-4 py-3 text-base text-ink placeholder:text-ink-soft/60";
+// Opciones como radios/checkbox nativos (teclado y lector de pantalla gratis)
+// con el input oculto y el foco pintado en la etiqueta con has-[:focus-visible].
+const FOCO_OPCION = "has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-acento/20";
+
+/** fieldset + legend para grupos de opciones: un <label for> no sirve para
+ * nombrar varios controles a la vez. */
+function Grupo({ campo, children }: { campo: CampoDef; children: ReactNode }) {
+  const id = useId();
+  return (
+    <fieldset aria-describedby={campo.hint ? `${id}-ayuda` : undefined} className="flex flex-col gap-1.5">
+      <legend className="mb-1.5 text-sm font-semibold text-ink">
+        {campo.label}
+        {campo.required ? (
+          <span className="ml-0.5 text-acento" aria-hidden="true">
+            *
+          </span>
+        ) : null}
+      </legend>
+      {children}
+      {campo.hint ? (
+        <p id={`${id}-ayuda`} className="text-sm text-ink-soft">
+          {campo.hint}
+        </p>
+      ) : null}
+    </fieldset>
+  );
+}
 
 export function CampoRenderer({ campo, valor, onChange }: Props) {
-  const label = (
-    <label htmlFor={campo.key} className="mb-1.5 block text-sm font-semibold text-ink">
-      {campo.label}
-      {campo.required ? <span className="ml-1 text-coral">*</span> : null}
-    </label>
-  );
-  const hint = campo.hint ? <p className="mt-1.5 text-xs text-ink-soft">{campo.hint}</p> : null;
+  const nombreGrupo = useId();
+  const texto = (valor as string) ?? "";
 
   switch (campo.tipo) {
     case "text":
     case "tel":
       return (
-        <div>
-          {label}
-          <input
-            id={campo.key}
-            type={campo.tipo}
-            className={inputClass}
-            placeholder={campo.placeholder}
-            value={(valor as string) ?? ""}
-            onChange={(e) => onChange(campo.key, e.target.value)}
-          />
-          {hint}
-        </div>
+        <Campo etiqueta={campo.label} ayuda={campo.hint} requerido={campo.required}>
+          {(a11y) => (
+            <Entrada
+              {...a11y}
+              type={campo.tipo}
+              inputMode={campo.tipo === "tel" ? "tel" : undefined}
+              autoComplete={campo.tipo === "tel" ? "tel" : campo.key === "nombre" ? "name" : undefined}
+              placeholder={campo.placeholder}
+              value={texto}
+              onChange={(e) => onChange(campo.key, e.target.value)}
+            />
+          )}
+        </Campo>
       );
 
     case "date":
       return (
-        <div>
-          {label}
-          <input
-            id={campo.key}
-            type="date"
-            min={new Date().toISOString().split("T")[0]}
-            className={inputClass}
-            value={(valor as string) ?? ""}
-            onChange={(e) => onChange(campo.key, e.target.value)}
-          />
-          {hint}
-        </div>
+        <Campo etiqueta={campo.label} ayuda={campo.hint} requerido={campo.required}>
+          {(a11y) => (
+            <Entrada
+              {...a11y}
+              type="date"
+              min={new Date().toISOString().split("T")[0]}
+              value={texto}
+              onChange={(e) => onChange(campo.key, e.target.value)}
+            />
+          )}
+        </Campo>
       );
 
     case "number":
       return (
-        <div>
-          {label}
-          <input
-            id={campo.key}
-            type="number"
-            inputMode="numeric"
-            min={campo.min}
-            max={campo.max}
-            className={inputClass}
-            value={(valor as number) ?? ""}
-            onChange={(e) => onChange(campo.key, e.target.value === "" ? "" : Number(e.target.value))}
-          />
-          {hint}
-        </div>
+        <Campo etiqueta={campo.label} ayuda={campo.hint} requerido={campo.required}>
+          {(a11y) => (
+            <Entrada
+              {...a11y}
+              type="number"
+              inputMode="numeric"
+              min={campo.min}
+              max={campo.max}
+              className="font-mono tabular-nums"
+              value={(valor as number) ?? ""}
+              onChange={(e) => onChange(campo.key, e.target.value === "" ? "" : Number(e.target.value))}
+            />
+          )}
+        </Campo>
       );
 
     case "textarea":
       return (
-        <div>
-          {label}
-          <textarea
-            id={campo.key}
-            rows={3}
-            className={inputClass}
-            placeholder={campo.placeholder}
-            value={(valor as string) ?? ""}
-            onChange={(e) => onChange(campo.key, e.target.value)}
-          />
-          {hint}
-        </div>
+        <Campo etiqueta={campo.label} ayuda={campo.hint} requerido={campo.required}>
+          {(a11y) => (
+            <AreaTexto
+              {...a11y}
+              rows={3}
+              placeholder={campo.placeholder}
+              value={texto}
+              onChange={(e) => onChange(campo.key, e.target.value)}
+            />
+          )}
+        </Campo>
       );
 
     case "select":
       return (
-        <div>
-          {label}
-          <select
-            id={campo.key}
-            className={inputClass}
-            value={(valor as string) ?? ""}
-            onChange={(e) => onChange(campo.key, e.target.value)}
-          >
-            {campo.opciones?.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-          {hint}
-        </div>
+        <Campo etiqueta={campo.label} ayuda={campo.hint} requerido={campo.required}>
+          {(a11y) => (
+            <Selector {...a11y} value={texto} onChange={(e) => onChange(campo.key, e.target.value)}>
+              {campo.opciones?.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </Selector>
+          )}
+        </Campo>
       );
 
     case "checkbox":
       return (
-        <label className="flex min-h-11 items-center gap-3 rounded-xl border border-ink/15 bg-card px-4 py-3">
+        <label
+          className={
+            "flex min-h-12 cursor-pointer items-center gap-3 rounded-control border border-linea-fuerte bg-card px-4 py-3 " +
+            "transition-colors duration-150 hover:border-ink/35 has-[:checked]:border-acento"
+          }
+        >
           <input
             type="checkbox"
             checked={Boolean(valor)}
             onChange={(e) => onChange(campo.key, e.target.checked)}
-            className="h-5 w-5 accent-coral"
+            className="h-5 w-5 shrink-0 accent-acento"
           />
-          <span className="text-sm text-ink">{campo.label}</span>
+          <span className="text-base text-ink">{campo.label}</span>
         </label>
       );
 
@@ -125,54 +147,64 @@ export function CampoRenderer({ campo, valor, onChange }: Props) {
       const v = Number(valor ?? campo.default ?? campo.min ?? 0);
       const esMax = campo.max != null && v >= campo.max;
       return (
-        <div>
-          {label}
-          <input
-            id={campo.key}
-            type="range"
-            min={campo.min}
-            max={campo.max}
-            step={campo.step}
-            value={v}
-            onChange={(e) => onChange(campo.key, Number(e.target.value))}
-            className="w-full accent-coral"
-          />
-          <p className="mt-1 font-mono text-sm text-ink-soft">
-            {esMax ? "Sin límite — lo mejor" : `Hasta $${v} USD`}
-          </p>
-          {hint}
-        </div>
+        <Campo etiqueta={campo.label} ayuda={campo.hint} requerido={campo.required}>
+          {(a11y) => (
+            <div className="flex flex-col gap-2">
+              <output htmlFor={a11y.id} className="font-mono text-2xl font-bold tabular-nums text-ink">
+                {esMax ? "Sin límite" : `Hasta $${v} USD`}
+              </output>
+              <input
+                {...a11y}
+                type="range"
+                min={campo.min}
+                max={campo.max}
+                step={campo.step}
+                value={v}
+                aria-valuetext={esMax ? "Sin límite" : `Hasta ${v} dólares`}
+                onChange={(e) => onChange(campo.key, Number(e.target.value))}
+                className="h-11 w-full cursor-pointer accent-acento"
+              />
+            </div>
+          )}
+        </Campo>
       );
     }
 
     case "cards":
       return (
-        <div>
-          {label}
+        <Grupo campo={campo}>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {campo.opciones?.map((o) => {
-              const sel = valor === o.value;
-              return (
-                <button
-                  key={o.value}
-                  type="button"
-                  onClick={() => onChange(campo.key, o.value)}
-                  className={
-                    "flex min-h-11 items-start gap-3 rounded-xl border-2 px-4 py-3 text-left " +
-                    (sel ? "border-coral bg-coral/10" : "border-ink/10 bg-card")
-                  }
+            {campo.opciones?.map((o) => (
+              <label
+                key={o.value}
+                className={
+                  "group relative flex min-h-12 cursor-pointer items-start gap-3 rounded-control border border-linea-fuerte bg-card px-4 py-3 " +
+                  "transition-colors duration-150 hover:border-ink/35 has-[:checked]:border-acento has-[:checked]:bg-acento-suave " +
+                  FOCO_OPCION
+                }
+              >
+                <input
+                  type="radio"
+                  name={nombreGrupo}
+                  value={o.value}
+                  checked={valor === o.value}
+                  onChange={() => onChange(campo.key, o.value)}
+                  className="sr-only"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold text-ink">{o.label}</span>
+                  {o.desc ? <span className="mt-0.5 block text-sm text-ink-soft">{o.desc}</span> : null}
+                </span>
+                <span
+                  aria-hidden="true"
+                  className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-pill border border-linea-fuerte text-sobre-acento group-has-[:checked]:border-acento group-has-[:checked]:bg-acento"
                 >
-                  {o.emoji ? <span className="text-xl">{o.emoji}</span> : null}
-                  <span>
-                    <span className="block text-sm font-semibold text-ink">{o.label}</span>
-                    {o.desc ? <span className="block text-xs text-ink-soft">{o.desc}</span> : null}
-                  </span>
-                </button>
-              );
-            })}
+                  <Icono nombre="check" tamano={14} className="opacity-0 group-has-[:checked]:opacity-100" />
+                </span>
+              </label>
+            ))}
           </div>
-          {hint}
-        </div>
+        </Grupo>
       );
 
     case "tags": {
@@ -186,28 +218,32 @@ export function CampoRenderer({ campo, valor, onChange }: Props) {
         }
       };
       return (
-        <div>
-          {label}
+        <Grupo campo={campo}>
           <div className="flex flex-wrap gap-2">
-            {campo.opciones?.map((o) => {
-              const sel = seleccionadas.includes(o.value);
-              return (
-                <button
-                  key={o.value}
-                  type="button"
-                  onClick={() => toggle(o.value)}
-                  className={
-                    "inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-medium " +
-                    (sel ? "border-transparent bg-gradient-to-br from-coral to-gold text-btn-ink" : "border-ink/15 bg-card text-ink")
-                  }
-                >
-                  {o.label}
-                </button>
-              );
-            })}
+            {campo.opciones?.map((o) => (
+              <label
+                key={o.value}
+                className={
+                  "inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-pill border border-linea-fuerte bg-card px-4 text-sm font-semibold text-ink-soft " +
+                  "transition-colors duration-150 hover:border-ink/40 hover:text-ink " +
+                  "has-[:checked]:border-transparent has-[:checked]:bg-acento has-[:checked]:text-sobre-acento " +
+                  FOCO_OPCION
+                }
+              >
+                <input
+                  type={campo.multiple ? "checkbox" : "radio"}
+                  name={nombreGrupo}
+                  value={o.value}
+                  checked={seleccionadas.includes(o.value)}
+                  onChange={() => toggle(o.value)}
+                  className="sr-only"
+                />
+                {campo.multiple && seleccionadas.includes(o.value) ? <Icono nombre="check" tamano={16} /> : null}
+                {o.label}
+              </label>
+            ))}
           </div>
-          {hint}
-        </div>
+        </Grupo>
       );
     }
 
