@@ -20,7 +20,10 @@ async function consultarCatalogoAdmin() {
   const sb = supabaseBrowser();
   const [{ data: productos, error: errorProductos }, { data: promociones, error: errorPromociones }] = await Promise.all([
     sb.from("productos").select(`${PRODUCTO_SELECT},activo`).order("nombre"),
-    sb.from("promociones").select(`${PROMOCION_SELECT},revisado`).order("titulo"),
+    // Los flyers son filas de `tarifas` (`origen='flyer'`); `revisado` es
+    // `vigente`. El admin del sitio ve también las ocultas -- por eso no hay
+    // filtro por `vigente` acá, solo el alias.
+    sb.from("tarifas").select(`${PROMOCION_SELECT},revisado:vigente`).eq("origen", "flyer").order("titulo"),
   ]);
   if (errorProductos || errorPromociones) throw new Error("catalogo-no-disponible");
   return { productos: (productos ?? []) as unknown as ProductoAdmin[], promociones: (promociones ?? []) as unknown as PromocionAdmin[] };
@@ -88,7 +91,7 @@ function PanelAdmin() {
     } catch { setMensajeAccion("El cambio se guardó, pero la web pública no pudo actualizarse."); }
   }
   function aplicarProducto(id: number, cambios: CambiosProducto) {
-    setProductos((actual) => actual.map((item) => item.id === id ? { ...item, nombre: cambios.nombre, tipo: cambios.tipo, destino: cambios.destino || null, descripcion: cambios.descripcion, requisitos: cambios.requisitos, tarifas: item.tarifas.length ? item.tarifas.map((tarifa, index) => index === 0 ? { ...tarifa, precio_texto: cambios.precioTexto, vigencia_texto: cambios.vigenciaTexto || null } : tarifa) : [{ precio_texto: cambios.precioTexto, precio_desde_usd: null, vigencia_texto: cambios.vigenciaTexto || null, vigente: true }] } : item));
+    setProductos((actual) => actual.map((item) => item.id === id ? { ...item, nombre: cambios.nombre, tipo: cambios.tipo, destino: cambios.destino || null, descripcion: cambios.descripcion, requisitos: cambios.requisitos, tarifas: item.tarifas.length ? item.tarifas.map((tarifa, index) => index === 0 ? { ...tarifa, precio_texto: cambios.precioTexto, vigencia_texto: cambios.vigenciaTexto || null } : tarifa) : [{ id: 0, precio_texto: cambios.precioTexto, precio_desde_usd: null, vigencia_texto: cambios.vigenciaTexto || null, vigente: true }] } : item));
   }
   function aplicarPromocion(id: number, cambios: CambiosPromocion) {
     setPromociones((actual) => actual.map((item) => item.id === id ? { ...item, titulo: cambios.titulo, precio_texto: cambios.precioTexto || null, vigencia_texto: cambios.vigenciaTexto || null, ninos_gratis_cantidad: cambios.ninosGratis, incluye_tags: cambios.tags } : item));

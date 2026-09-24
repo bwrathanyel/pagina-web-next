@@ -1,4 +1,5 @@
 import { fotosDeAncho } from "@/lib/supabase/fotos";
+import { precioPorPersona, tarifaDestacada } from "@/lib/tarifas";
 import { REDES } from "@/lib/social";
 import type { Producto } from "@/types/supabase";
 
@@ -130,7 +131,12 @@ export function buildBreadcrumbJsonLd(items: { name: string; url: string }[]) {
 }
 
 export function buildProductJsonLd(producto: Producto) {
-  const tarifa = producto.tarifas.find((t) => t.vigente);
+  // Misma tarifa que muestra la ficha: la destacada que elige la base. Con
+  // precios estructurados la Offer lleva el precio POR PERSONA; sin ellos se
+  // mantiene el `precio_desde_usd` legacy (no se inventa un número nuevo).
+  const tarifa = tarifaDestacada(producto);
+  const porPersona = tarifa?.precios ? precioPorPersona(tarifa) : null;
+  const precio = porPersona !== null ? Math.round(porPersona * 100) / 100 : tarifa?.precio_desde_usd ?? undefined;
   const fotos = fotosDeAncho(producto.producto_fotos, 1280);
 
   return {
@@ -146,8 +152,10 @@ export function buildProductJsonLd(producto: Producto) {
     offers: tarifa
       ? {
           "@type": "Offer",
-          priceCurrency: "USD",
-          price: tarifa.precio_desde_usd ?? undefined,
+          // La columna se llama `_usd` pero hay fichas facturadas en euros
+          // (PARADISE ADÍCORA, LD PLUS...): la moneda sale de la fila.
+          priceCurrency: String(tarifa.moneda || "USD").toUpperCase(),
+          price: precio,
           availability: "https://schema.org/InStock",
           url: `${SITE_URL}/producto/${producto.id}`,
           seller: { "@id": ORG_ID },

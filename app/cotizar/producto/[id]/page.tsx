@@ -2,8 +2,18 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { CotizacionOpcionForm } from "@/components/cotizador/CotizacionOpcionForm";
 import { fotosDe } from "@/lib/supabase/fotos";
-import { getProductoPorId } from "@/lib/supabase/queries";
+import { getProductoPorId, getTodosLosProductoIds } from "@/lib/supabase/queries";
 import { formatearPrecioCliente } from "@/lib/utils/formatoPrecio";
+
+// Prerenderizada + ISR (revalidate del layout), igual que /producto/[id]. Antes
+// era dinámica: cada clic en "Ver y cotizar" disparaba un render en vivo del
+// Worker con la query pesada del producto y bajo pico saturaba el límite (1102).
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  const ids = await getTodosLosProductoIds();
+  return ids.map((id) => ({ id: String(id) }));
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;

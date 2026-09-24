@@ -23,7 +23,10 @@ function FavoritosLista() {
     let vigente = true;
     supabaseBrowser()
       .from("web_favoritos")
-      .select(`producto_id, promocion_id, producto:productos(${PRODUCTO_SELECT}), promocion:promociones(${PROMOCION_SELECT})`)
+      // `web_favoritos.promocion_id` ya apunta a `tarifas` (Fase 5 paso 4: los
+      // flyers se mudaron y la FK se repuntó), así que el embed va a la tabla
+      // real, no a la vista de compatibilidad.
+      .select(`producto_id, promocion_id, producto:productos(${PRODUCTO_SELECT}), promocion:tarifas(${PROMOCION_SELECT})`)
       .eq("usuario_id", user.id)
       .then(({ data, error: err }) => {
         if (!vigente) return;

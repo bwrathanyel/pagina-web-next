@@ -10,7 +10,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { EditarProductoModal } from "@/components/admin/EditarProductoModal";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { revalidarSitioPublico } from "@/lib/admin/revalidate";
-import { formatearPrecioCliente } from "@/lib/utils/formatoPrecio";
+import { badgePrecio, tarifaDestacada } from "@/lib/tarifas";
 import type { Producto } from "@/types/supabase";
 
 export const BADGE_POR_TIPO: Record<Producto["tipo"], string> = {
@@ -34,8 +34,12 @@ export function ProductoCard({ producto }: { producto: Producto }) {
   const fotos = fotosDe(producto.producto_fotos);
   const foto = fotos[0] ?? null;
   const fotosReferenciales = esSoloReferencial(producto.producto_fotos);
-  const tarifaVigente = producto.tarifas.find((t) => t.vigente);
-  const precioLabel = formatearPrecioCliente(tarifaVigente?.precio_texto) ?? "Consultar disponibilidad";
+  // La destacada la elige la base (`tarifa_destacada_id`), no el orden de
+  // llegada de PostgREST: así el listado, la ficha y el bot anuncian la MISMA
+  // promoción del hotel. Con precios estructurados el badge dice el precio por
+  // persona; sin ellos se queda con el `precio_texto` de siempre.
+  const destacada = tarifaDestacada(producto);
+  const precioLabel = badgePrecio(destacada) ?? "Consultar disponibilidad";
   const href = `/producto/${producto.id}`;
   const key = `producto-${producto.id}`;
   const puedeEditar = rol === "admin" && modoEdicion;
@@ -51,7 +55,7 @@ export function ProductoCard({ producto }: { producto: Producto }) {
         fotosReferenciales={fotosReferenciales}
         cotizarHref={`/cotizar/producto/${producto.id}`}
         precioLabel={precioLabel}
-        precioMuted={!tarifaVigente}
+        precioMuted={!destacada}
         oculto={!activo}
         enCarrito={tieneItem(key)}
         onToggleCarrito={() =>

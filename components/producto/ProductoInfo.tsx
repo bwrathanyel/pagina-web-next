@@ -7,7 +7,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { EditarProductoModal } from "@/components/admin/EditarProductoModal";
 import { AdminFotoManager } from "@/components/admin/AdminFotoManager";
 import { resumenBullets } from "@/lib/utils/resumenBullets";
-import { formatearPrecioCliente } from "@/lib/utils/formatoPrecio";
+import { badgePrecio, tarifaDestacada, ventanasDe, rangoFechas } from "@/lib/tarifas";
 import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
 import type { Producto } from "@/types/supabase";
 
@@ -18,7 +18,13 @@ export function ProductoInfo({ producto }: { producto: Producto }) {
   const [requisitos, setRequisitos] = useState(producto.requisitos);
   const [editando, setEditando] = useState(false);
 
-  const tarifaVigente = producto.tarifas.find((t) => t.vigente);
+  // La cabecera anuncia la tarifa DESTACADA (la elige la base: la más barata
+  // por persona vendible hoy), no la primera fila que llegue. El detalle de las
+  // demás promociones vive abajo, en la carpeta.
+  const destacada = tarifaDestacada(producto);
+  const precioLabel = badgePrecio(destacada);
+  const ventanas = destacada ? ventanasDe(destacada) : [];
+  const vigencia = ventanas.length ? rangoFechas(ventanas[0]) : destacada?.vigencia_texto ?? null;
   const puedeEditar = rol === "admin" && modoEdicion;
 
   return (
@@ -32,14 +38,12 @@ export function ProductoInfo({ producto }: { producto: Producto }) {
       <span
         className={
           "mb-5 inline-block rounded-full px-3 py-1.5 font-mono text-sm " +
-          (tarifaVigente ? "bg-gradient-to-br from-coral to-gold text-btn-ink" : "bg-seafoam-bg text-seafoam-text")
+          (precioLabel ? "bg-gradient-to-br from-coral to-gold text-btn-ink" : "bg-seafoam-bg text-seafoam-text")
         }
       >
-        <PrecioMostrado texto={formatearPrecioCliente(tarifaVigente?.precio_texto) ?? "Consultar disponibilidad"} />
+        <PrecioMostrado texto={precioLabel ?? "Consultar disponibilidad"} />
       </span>
-      {tarifaVigente?.vigencia_texto ? (
-        <p className="mb-5 -mt-3 text-sm text-ink-soft">{tarifaVigente.vigencia_texto}</p>
-      ) : null}
+      {vigencia ? <p className="mb-5 -mt-3 text-sm text-ink-soft">{vigencia}</p> : null}
 
       {descripcion ? (
         <ul className="mb-4 space-y-1 text-ink">

@@ -2,11 +2,15 @@
  * encontrar YA generadas en `_d/<ancho>/<ruta>.jpg`. Debe coincidir con `ANCHOS`
  * de ese módulo -- no se reexporta desde ahí porque ese archivo no exporta la
  * constante, solo el tipo derivado de ella. */
-export const ANCHOS_DERIVADOS = [256, 384, 640, 1280] as const;
+export const ANCHOS_DERIVADOS = [256, 384, 640, 1280, 2048] as const;
+
+/** Igual que CALIDAD_POR_ANCHO de `CRM/scripts/generar_derivados_fotos.py`: el
+ * de 2048 es la "resolución original" del hero y la galería. */
+const calidadDe = (ancho: number) => (ancho === 2048 ? 0.86 : 0.78);
 
 type Fuente = ImageBitmap | HTMLImageElement;
 
-/** Genera en el navegador los 4 derivados JPEG que normalmente produce
+/** Genera en el navegador los derivados JPEG que normalmente produce
  * `CRM/scripts/generar_derivados_fotos.py` en el servidor, para que una foto
  * recién subida no se vea rota mientras no corre ese script. Nunca lanza: si
  * algo falla devuelve lo que haya podido generar (puede ser []). */
@@ -18,7 +22,7 @@ export async function generarDerivados(file: File): Promise<{ ancho: number; blo
     const resultados: { ancho: number; blob: Blob }[] = [];
     for (const ancho of ANCHOS_DERIVADOS) {
       try {
-        const blob = await recortar(fuente, ancho);
+        const blob = await recortar(fuente, ancho, calidadDe(ancho));
         if (blob) resultados.push({ ancho, blob });
       } catch {
         // Un ancho fallido no debe tumbar los demás.
@@ -53,7 +57,7 @@ function cargarConImg(file: File): Promise<HTMLImageElement | null> {
   });
 }
 
-async function recortar(fuente: Fuente, anchoObjetivo: number): Promise<Blob | null> {
+async function recortar(fuente: Fuente, anchoObjetivo: number, calidad: number): Promise<Blob | null> {
   const anchoOriginal = fuente.width;
   const altoOriginal = fuente.height;
   if (!anchoOriginal || !altoOriginal) return null;
@@ -67,7 +71,7 @@ async function recortar(fuente: Fuente, anchoObjetivo: number): Promise<Blob | n
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
     dibujarSobreBlanco(ctx, fuente, ancho, alto);
-    return await canvas.convertToBlob({ type: "image/jpeg", quality: 0.78 });
+    return await canvas.convertToBlob({ type: "image/jpeg", quality: calidad });
   }
 
   const canvas = document.createElement("canvas");
@@ -76,7 +80,7 @@ async function recortar(fuente: Fuente, anchoObjetivo: number): Promise<Blob | n
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
   dibujarSobreBlanco(ctx, fuente, ancho, alto);
-  return await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.78));
+  return await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", calidad));
 }
 
 function dibujarSobreBlanco(

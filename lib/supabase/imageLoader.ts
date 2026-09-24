@@ -6,10 +6,13 @@ const OBJECT_PREFIX = "/storage/v1/object/public/";
 const CDN_FOTOS = "https://fotos.destinoyeventoslotus360.com/";
 
 /** Anchos de las miniaturas pregeneradas, que viven en el bucket bajo
- * `_d/<ancho>/<ruta_original>.jpg`. Los cuatro existen SIEMPRE para toda foto
- * (los genera `CRM/scripts/generar_derivados_fotos.py`), así que la URL se arma
- * por convención pura, sin consultar si el archivo está. */
-export type AnchoDerivado = 256 | 384 | 640 | 1280;
+ * `_d/<ancho>/<ruta_original>.jpg`. Existen SIEMPRE para toda foto (los genera
+ * `CRM/scripts/generar_derivados_fotos.py`), así que la URL se arma por
+ * convención pura, sin consultar si el archivo está.
+ *
+ * 2048 es en la práctica "resolución original" (mediana de los originales:
+ * 1000 px de ancho) recomprimida a q86 en vez de q78. */
+export type AnchoDerivado = 256 | 384 | 640 | 1280 | 2048;
 
 /** Las miniaturas se sirven con `max-age=31536000, immutable`, así que cambiar el
  * archivo en el origen NO alcanza: el navegador que ya lo tiene no vuelve a
@@ -25,26 +28,20 @@ export type AnchoDerivado = 256 | 384 | 640 | 1280;
  * el CRM y la web bajan dos copias de la misma imagen. */
 const FOTOS_VERSION = "?v=2";
 
-/** next/image pide `slot_css * densidad_de_pantalla`. En un celular de 390px a
- * 3x eso da 1170 y terminaba bajando la versión de 1280 (130 KB) para pintar
- * una card de 390 -- 30 MB por recorrer el catálogo desde el teléfono.
+/** next/image pide `slot_css * densidad_de_pantalla`; se sirve el derivado más
+ * chico que lo cubra. Una card de 390 css a 3x pide 1170 y recibe 1280; un
+ * hero o galería de escritorio pide 1440+ y recibe 2048.
  *
- * Se decide por RANGOS en vez de "el primero que cubra", porque el ancho pedido
- * ya viene multiplicado por la densidad y no distingue una card en pantalla
- * retina de un hero real. Los rangos sí: una card nunca pasa de ~500 css (o sea
- * ~1200 pedidos a 3x), un hero a pantalla completa pide 1440+. Servir 640 para
- * una card de 390 css es ~1.6x de densidad efectiva: nítido en el teléfono, y
- * menos de la mitad de bytes. El hero, que sí se ve grande, conserva 1280.
- *
- * El corte de 1200 no es arbitrario: por debajo solo caen cards (una card de
- * 500 css necesitaría 3x para pasarlo, y a 500 css ya no estás en un teléfono),
- * y por encima entra el hero de escritorio a 1x (1440), que sí se ve borroso
- * si se le sirve 640. */
+ * Hasta el 2026-09-23 esto iba por rangos que le daban 640 a esa misma card
+ * (~1.6x de densidad efectiva) para ahorrar datos: se veía blando. El dueño
+ * priorizó nitidez aunque recorrer el catálogo desde el celular pese ~2x. Los
+ * bytes salen de R2, no de Supabase: no le cuestan nada a Lotus. */
 function anchoDerivado(pedido: number): AnchoDerivado {
-  if (pedido <= 320) return 256;
-  if (pedido <= 500) return 384;
-  if (pedido <= 1200) return 640;
-  return 1280;
+  if (pedido <= 256) return 256;
+  if (pedido <= 384) return 384;
+  if (pedido <= 640) return 640;
+  if (pedido <= 1280) return 1280;
+  return 2048;
 }
 
 /** Reescribe una URL del bucket a su miniatura pregenerada del ancho más chico
@@ -53,9 +50,9 @@ function anchoDerivado(pedido: number): AnchoDerivado {
  *
  * Antes esto apuntaba al endpoint de transformación on-demand de Supabase
  * (`/storage/v1/render/image/`), pero ese es de plan Pro ("Image Resizing is
- * currently enabled for Pro Plan and above") y el proyecto está en Free: en
- * cuanto Supabase aplique la restricción devuelve 402 y el sitio se queda sin
- * NINGUNA imagen. Las miniaturas pregeneradas son objetos normales del bucket,
+ * currently enabled for Pro Plan and above") y el proyecto estaba en Free. Ya
+ * en Pro (sep-2026) tampoco conviene: incluye 100 imágenes origen por mes y el
+ * catálogo pasa de 1.000. Las miniaturas pregeneradas son objetos normales del bucket,
  * no dependen de ninguna función de pago, y además pesan ~11x menos que el
  * original -- servir originales reventó la cuota de Cached Egress (21,6 GB
  * sobre 5 GB). */

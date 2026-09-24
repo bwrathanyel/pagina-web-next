@@ -11,8 +11,11 @@ import doQueue from "@opennextjs/cloudflare/overrides/queue/do-queue";
 // el bug original de contenido vencido en Netlify). withRegionalCache
 // tampoco se usa: metería una segunda capa de caché delante de R2, y la
 // latencia de R2 es espera de red, no cuenta para el límite de CPU.
+// enableCacheInterception: un HIT de ISR se sirve desde R2 sin cargar NextServer
+// (Error 1102 del plan Free, 10 ms de CPU). Incompatible con PPR, que no se usa.
 export default defineCloudflareConfig({
   incrementalCache: r2IncrementalCache,
   tagCache: d1NextTagCache,
   queue: doQueue,
+  enableCacheInterception: true,
 });

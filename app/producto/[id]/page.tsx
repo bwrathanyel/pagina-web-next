@@ -5,12 +5,9 @@ import { ProductoInfo } from "@/components/producto/ProductoInfo";
 import { ProductoAccionesOverlay, ProductoFooterMobile } from "@/components/producto/ProductoAccionesMobile";
 import { fotosDe, fotosDeAncho } from "@/lib/supabase/fotos";
 import { jsonLdScript, buildProductJsonLd, buildBreadcrumbJsonLd } from "@/lib/seo/jsonld";
-import {
-  getProductoPorId,
-  getPromocionesPorProductoId,
-  getTodosLosProductoIds,
-} from "@/lib/supabase/queries";
-import { formatearPrecioCliente } from "@/lib/utils/formatoPrecio";
+import { CarpetaTarifas } from "@/components/producto/CarpetaTarifas";
+import { getProductoPorId, getTodosLosProductoIds } from "@/lib/supabase/queries";
+import { tarifaDestacada } from "@/lib/tarifas";
 
 export const dynamicParams = true;
 
@@ -27,7 +24,9 @@ export async function generateMetadata({
   const { id } = await params;
   const producto = await getProductoPorId(Number(id));
   if (!producto) return {};
-  const tarifa = producto.tarifas.find((t) => t.vigente);
+  // La destacada la elige la base (`tarifa_destacada_id`): la más barata por
+  // persona que se pueda vender hoy, no la primera fila que llegue.
+  const tarifa = tarifaDestacada(producto);
   // "Nombre — Destino" mete el destino (la keyword long-tail real: "posada en
   // Los Roques", "hotel en Margarita") en el title sin inventar texto.
   const title = producto.destino ? `${producto.nombre} — ${producto.destino}` : producto.nombre;
@@ -59,10 +58,7 @@ export default async function ProductoPage({ params }: { params: Promise<{ id: s
   const producto = await getProductoPorId(Number(id));
   if (!producto) notFound();
 
-  const [promociones, fotos] = [
-    await getPromocionesPorProductoId(producto.id),
-    fotosDe(producto.producto_fotos),
-  ];
+  const fotos = fotosDe(producto.producto_fotos);
 
   return (
     <main className="mx-auto max-w-5xl px-5 py-6 pb-28 md:py-10 lg:pb-10">
@@ -88,26 +84,7 @@ export default async function ProductoPage({ params }: { params: Promise<{ id: s
       </div>
       <ProductoFooterMobile cotizarHref={`/cotizar/producto/${producto.id}`} />
 
-      {promociones.length > 0 ? (
-        <section className="mt-8 md:mt-12">
-          <h2 className="mb-4 font-display text-2xl font-semibold text-ink">
-            Promociones activas
-          </h2>
-          <ul className="flex flex-col gap-3">
-            {promociones.map((promo) => (
-              <li
-                key={promo.id}
-                className="rounded-xl bg-card p-4 shadow-[0_10px_28px_-14px_rgba(36,31,26,0.28)]"
-              >
-                <p className="font-bold text-ink">{promo.titulo}</p>
-                {promo.precio_texto ? (
-                  <p className="font-mono text-sm text-seafoam-text">{formatearPrecioCliente(promo.precio_texto)}</p>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+      <CarpetaTarifas producto={producto} />
     </main>
   );
 }

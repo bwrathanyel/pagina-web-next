@@ -2,8 +2,15 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { CotizacionOpcionForm } from "@/components/cotizador/CotizacionOpcionForm";
 import { fotosDe } from "@/lib/supabase/fotos";
-import { getPromocionPorId } from "@/lib/supabase/queries";
+import { getPromocionPorId, getTodasLasPromocionIds } from "@/lib/supabase/queries";
 import { formatearPrecioCliente } from "@/lib/utils/formatoPrecio";
+
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  const ids = await getTodasLasPromocionIds();
+  return ids.map((id) => ({ id: String(id) }));
+}
 import { nombrePromo, precioDobleHero } from "@/lib/tarifas";
 import type { Tarifa } from "@/types/supabase";
 
