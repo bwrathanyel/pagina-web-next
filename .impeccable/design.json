@@ -1,0 +1,544 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-24T03:17:17.217Z",
+  "title": "Design System: Destino y Eventos Lotus 360 (web pública)",
+  "extensions": {
+    "colorMeta": {
+      "dusk": {
+        "role": "neutral",
+        "displayName": "Marino de Andén",
+        "canonical": "#12262b",
+        "tonalRamp": [
+          "#000e12",
+          "#14282e",
+          "#31464b",
+          "#50656b",
+          "#70878d",
+          "#92aab0",
+          "#b6ced5",
+          "#dbf4fa"
+        ]
+      },
+      "dusk-2": {
+        "role": "neutral",
+        "displayName": "Marino de Tablero",
+        "canonical": "#1c3238",
+        "tonalRamp": [
+          "#000e13",
+          "#13292f",
+          "#30464c",
+          "#4e666c",
+          "#6f878e",
+          "#91aab1",
+          "#b4ced6",
+          "#d9f4fc"
+        ]
+      },
+      "dusk-text": {
+        "role": "neutral",
+        "displayName": "Blanco de Señal",
+        "canonical": "#eaf1ef",
+        "tonalRamp": [
+          "#080c0b",
+          "#212625",
+          "#3e4342",
+          "#5d6361",
+          "#7e8482",
+          "#a0a7a5",
+          "#c4cbc9",
+          "#e9f0ee"
+        ]
+      },
+      "dusk-text-soft": {
+        "role": "neutral",
+        "displayName": "Niebla de Pista",
+        "canonical": "#a9bfbc",
+        "tonalRamp": [
+          "#010e0d",
+          "#172927",
+          "#334644",
+          "#526663",
+          "#738785",
+          "#95aaa7",
+          "#b8cfcc",
+          "#ddf4f1"
+        ]
+      },
+      "sand": {
+        "role": "neutral",
+        "displayName": "Arena Mate",
+        "canonical": "#ede5d8",
+        "tonalRamp": [
+          "#0f0a03",
+          "#2a241a",
+          "#474136",
+          "#676055",
+          "#898176",
+          "#aba498",
+          "#d0c8bb",
+          "#f5ede0"
+        ]
+      },
+      "sand-2": {
+        "role": "neutral",
+        "displayName": "Arena Profunda",
+        "canonical": "#e1d8c7",
+        "tonalRamp": [
+          "#100a02",
+          "#2b2417",
+          "#484133",
+          "#686051",
+          "#8a8172",
+          "#ada494",
+          "#d1c8b7",
+          "#f7eddc"
+        ]
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "Crema de Boleto",
+        "canonical": "#f7f1e6",
+        "tonalRamp": [
+          "#0e0b05",
+          "#29241c",
+          "#464139",
+          "#666157",
+          "#878278",
+          "#aaa49a",
+          "#cec8be",
+          "#f4eee3"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Tinta Cálida",
+        "canonical": "#2c2620",
+        "tonalRamp": [
+          "#0f0a06",
+          "#2a241e",
+          "#47413a",
+          "#676059",
+          "#88817a",
+          "#aba49c",
+          "#d0c8c0",
+          "#f5ede5"
+        ]
+      },
+      "ink-soft": {
+        "role": "neutral",
+        "displayName": "Tinta Suave",
+        "canonical": "#6b5e50",
+        "tonalRamp": [
+          "#130901",
+          "#2e2316",
+          "#4c4032",
+          "#6c5f51",
+          "#8d8071",
+          "#b1a293",
+          "#d5c6b7",
+          "#fbecdb"
+        ]
+      },
+      "acento": {
+        "role": "primary",
+        "displayName": "Coral Quemado",
+        "canonical": "#A83E00",
+        "tonalRamp": [
+          "#1d0200",
+          "#431400",
+          "#712700",
+          "#a03e0c",
+          "#ca5e2e",
+          "#f28153",
+          "#fdb69a",
+          "#feeae2"
+        ]
+      },
+      "acento-suave": {
+        "role": "primary",
+        "displayName": "Coral Pálido",
+        "canonical": "#fbe6d5",
+        "tonalRamp": [
+          "#150801",
+          "#312114",
+          "#4f3e30",
+          "#6f5d4f",
+          "#917e6f",
+          "#b5a191",
+          "#d9c5b4",
+          "#feeadb"
+        ]
+      },
+      "coral-bright": {
+        "role": "primary",
+        "displayName": "Naranja de Pase",
+        "canonical": "#FC7300",
+        "tonalRamp": [
+          "#1a0400",
+          "#3f1801",
+          "#6b2e03",
+          "#9b4400",
+          "#c96019",
+          "#fb7c2a",
+          "#fcb794",
+          "#ffeadf"
+        ]
+      },
+      "gold": {
+        "role": "secondary",
+        "displayName": "Dorado del Logo",
+        "canonical": "#FBC000",
+        "tonalRamp": [
+          "#120a00",
+          "#312300",
+          "#543e00",
+          "#795c0d",
+          "#a27c13",
+          "#cb9e24",
+          "#f7c02f",
+          "#ffedc6"
+        ]
+      },
+      "btn-ink": {
+        "role": "neutral",
+        "displayName": "Tinta de Botón",
+        "canonical": "#3a1505",
+        "tonalRamp": [
+          "#1c0300",
+          "#3e1908",
+          "#5e3625",
+          "#805544",
+          "#a47664",
+          "#c99885",
+          "#eebca8",
+          "#feeae1"
+        ]
+      },
+      "ambar": {
+        "role": "secondary",
+        "displayName": "Ámbar Tostado",
+        "canonical": "#8a5a00",
+        "tonalRamp": [
+          "#150800",
+          "#352000",
+          "#5b3a00",
+          "#83570c",
+          "#a9772e",
+          "#ce9a53",
+          "#f4be77",
+          "#ffebd2"
+        ]
+      },
+      "ambar-suave": {
+        "role": "secondary",
+        "displayName": "Ámbar Pálido",
+        "canonical": "#f8ecd0",
+        "tonalRamp": [
+          "#120a00",
+          "#2d240d",
+          "#4b412a",
+          "#6b6048",
+          "#8c8168",
+          "#afa48a",
+          "#d4c8ad",
+          "#faeed2"
+        ]
+      },
+      "seafoam": {
+        "role": "tertiary",
+        "displayName": "Verde Espuma",
+        "canonical": "#3e827d",
+        "tonalRamp": [
+          "#000f0e",
+          "#012c29",
+          "#034d49",
+          "#286e69",
+          "#4c908b",
+          "#70b3ae",
+          "#94d8d2",
+          "#b9fef8"
+        ]
+      },
+      "seafoam-text": {
+        "role": "tertiary",
+        "displayName": "Espuma Profunda",
+        "canonical": "#255954",
+        "tonalRamp": [
+          "#000f0d",
+          "#012c29",
+          "#164c47",
+          "#386c66",
+          "#5a8e88",
+          "#7cb1ab",
+          "#a0d6cf",
+          "#c5fbf5"
+        ]
+      },
+      "seafoam-bg": {
+        "role": "tertiary",
+        "displayName": "Espuma Suave",
+        "canonical": "#e4eeec",
+        "tonalRamp": [
+          "#060d0c",
+          "#1f2725",
+          "#3c4442",
+          "#5b6362",
+          "#7c8583",
+          "#9ea7a5",
+          "#c2ccca",
+          "#e7f1ef"
+        ]
+      },
+      "whatsapp": {
+        "role": "tertiary",
+        "displayName": "Verde WhatsApp",
+        "canonical": "#0f7a40",
+        "tonalRamp": [
+          "#001003",
+          "#022e14",
+          "#055028",
+          "#02753b",
+          "#39985c",
+          "#5fbc7d",
+          "#85e1a1",
+          "#c8fed6"
+        ]
+      },
+      "peligro": {
+        "role": "neutral",
+        "displayName": "Rojo de Aviso",
+        "canonical": "#b3261e",
+        "tonalRamp": [
+          "#200000",
+          "#4d0101",
+          "#810103",
+          "#b0221b",
+          "#d84c3f",
+          "#fc7667",
+          "#fcb4a9",
+          "#fee9e6"
+        ]
+      },
+      "peligro-suave": {
+        "role": "neutral",
+        "displayName": "Rosa de Aviso",
+        "canonical": "#f9e1de",
+        "tonalRamp": [
+          "#150706",
+          "#31201e",
+          "#4f3d3a",
+          "#705c59",
+          "#927d7a",
+          "#b59f9c",
+          "#dac3c0",
+          "#ffe9e6"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Titular del hero: Archivo condensado (wdth 82), bold, max 13ch."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Títulos de sección en Archivo bold, balanceados, max 22ch."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Texto corrido en Figtree; 16px mínimo en controles."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Etiqueta en Space Mono bajo el título de sección, códigos e insignias."
+      },
+      "price": {
+        "displayName": "Price",
+        "purpose": "Precios y códigos del talón, en Space Mono con cifras tabulares."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card",
+        "value": "0 18px 50px -30px rgba(10,14,13,.45)",
+        "purpose": "Tarjetas de catálogo sin borde."
+      },
+      {
+        "name": "lift",
+        "value": "0 24px 60px -24px rgba(10,14,13,.35)",
+        "purpose": "Hover de tarjeta elevada."
+      },
+      {
+        "name": "chrome",
+        "value": "0 12px 35px rgba(10,14,13,.12)",
+        "purpose": "Píldora de navegación, hojas y botones flotantes."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-salida",
+        "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Salida suave para hover, press y entradas."
+      },
+      {
+        "name": "ease-entrada-salida",
+        "value": "cubic-bezier(0.65, 0, 0.35, 1)",
+        "purpose": "Caída de las celdas del tablero."
+      },
+      {
+        "name": "dur-rapida",
+        "value": "160ms",
+        "purpose": "Cambios de estado en controles."
+      },
+      {
+        "name": "dur-media",
+        "value": "280ms",
+        "purpose": "Hojas y paneles."
+      },
+      {
+        "name": "dur-lenta",
+        "value": "600ms",
+        "purpose": "Entradas de sección."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botón firma",
+      "kind": "button",
+      "refersTo": "button-firma",
+      "description": "CTA principal sobre dusk y foto: naranja del logo con texto oscuro.",
+      "html": "<button class=\"ds-btn-firma\">Cotizar mi viaje <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14M13 6l6 6-6 6\"/></svg></button>",
+      "css": ".ds-btn-firma{display:inline-flex;align-items:center;justify-content:center;font-family:Figtree,system-ui,sans-serif;font-weight:600;line-height:1;border-radius:.75rem;border:1px solid transparent;cursor:pointer;transition:transform .15s cubic-bezier(.22,1,.36,1),filter .15s,background-color .15s,border-color .15s;gap:.625rem;min-height:3.5rem;padding:0 2rem;font-size:1.125rem;background:var(--color-coral-bright, #FC7300);color:var(--color-btn-ink, #3a1505)}.ds-btn-firma:hover{filter:brightness(1.05)}.ds-btn-firma:active{transform:scale(.97)}.ds-btn-firma:focus-visible{outline:2px solid var(--color-acento, #A83E00);outline-offset:2px}"
+    },
+    {
+      "name": "Botón primario",
+      "kind": "button",
+      "refersTo": "button-primario",
+      "description": "Acción principal sobre superficies claras; el acento gira con el tema.",
+      "html": "<button class=\"ds-btn-primario\">Agregar a mi solicitud</button>",
+      "css": ".ds-btn-primario{display:inline-flex;align-items:center;justify-content:center;font-family:Figtree,system-ui,sans-serif;font-weight:600;line-height:1;border-radius:.75rem;border:1px solid transparent;cursor:pointer;transition:transform .15s cubic-bezier(.22,1,.36,1),filter .15s,background-color .15s,border-color .15s;gap:.5rem;min-height:3rem;padding:0 1.5rem;font-size:1rem;background:var(--color-acento, #A83E00);color:var(--color-sobre-acento, #ffffff)}.ds-btn-primario:hover{filter:brightness(1.1)}.ds-btn-primario:active{transform:scale(.97)}.ds-btn-primario:focus-visible{outline:2px solid var(--color-acento, #A83E00);outline-offset:2px}"
+    },
+    {
+      "name": "Botón secundario",
+      "kind": "button",
+      "refersTo": "button-secundario",
+      "description": "Acción de apoyo con contorno sobre crema.",
+      "html": "<button class=\"ds-btn-secundario\">Ver detalles</button>",
+      "css": ".ds-btn-secundario{display:inline-flex;align-items:center;justify-content:center;font-family:Figtree,system-ui,sans-serif;font-weight:600;line-height:1;border-radius:.75rem;border:1px solid transparent;cursor:pointer;transition:transform .15s cubic-bezier(.22,1,.36,1),filter .15s,background-color .15s,border-color .15s;gap:.5rem;min-height:3rem;padding:0 1.5rem;font-size:1rem;background:var(--color-card, #f7f1e6);color:var(--color-ink, #2c2620);border-color:var(--color-linea-fuerte, rgba(36,31,26,.24))}.ds-btn-secundario:hover{background:var(--color-sand-2, #e1d8c7)}.ds-btn-secundario:active{transform:scale(.97)}.ds-btn-secundario:focus-visible{outline:2px solid var(--color-acento, #A83E00);outline-offset:2px}"
+    },
+    {
+      "name": "Botón WhatsApp",
+      "kind": "button",
+      "refersTo": "button-whatsapp",
+      "description": "Contacto directo con un asesor; verde WhatsApp con texto blanco.",
+      "html": "<button class=\"ds-btn-whatsapp\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M4 12a8 8 0 1 1 3.2 6.4L4 20l1.2-3.6A7.96 7.96 0 0 1 4 12z\"/></svg>Hablar con un asesor</button>",
+      "css": ".ds-btn-whatsapp{display:inline-flex;align-items:center;justify-content:center;font-family:Figtree,system-ui,sans-serif;font-weight:600;line-height:1;border-radius:.75rem;border:1px solid transparent;cursor:pointer;transition:transform .15s cubic-bezier(.22,1,.36,1),filter .15s,background-color .15s,border-color .15s;gap:.5rem;min-height:3rem;padding:0 1.5rem;font-size:1rem;background:var(--color-whatsapp, #0f7a40);color:#fff}.ds-btn-whatsapp:hover{filter:brightness(1.1)}.ds-btn-whatsapp:active{transform:scale(.97)}.ds-btn-whatsapp:focus-visible{outline:2px solid var(--color-acento, #A83E00);outline-offset:2px}"
+    },
+    {
+      "name": "Campo de texto",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Input de 48px con anillo de foco en acento; 16px para evitar el zoom de iOS.",
+      "html": "<label class=\"ds-campo\"><span class=\"ds-campo-label\">Nombre</span><input class=\"ds-input\" placeholder=\"Su nombre\" /></label>",
+      "css": ".ds-campo{display:block;font-family:Figtree,system-ui,sans-serif}.ds-campo-label{display:block;margin-bottom:.375rem;font-size:.875rem;font-weight:600;color:var(--color-ink, #2c2620)}.ds-input{display:block;width:100%;box-sizing:border-box;min-height:3rem;padding:.625rem 1rem;font:inherit;font-size:1rem;color:var(--color-ink, #2c2620);background:var(--color-card, #f7f1e6);border:1px solid var(--color-linea-fuerte, rgba(36,31,26,.24));border-radius:.75rem;transition:border-color .15s,box-shadow .15s}.ds-input::placeholder{color:var(--color-ink-soft, #6b5e50)}.ds-input:hover{border-color:rgba(44,38,32,.35)}.ds-input:focus{outline:none;border-color:var(--color-acento, #A83E00);box-shadow:0 0 0 4px rgba(168,62,0,.2)}"
+    },
+    {
+      "name": "Insignia de contador",
+      "kind": "chip",
+      "refersTo": "colors.acento",
+      "description": "Contador píldora del carrito y favoritos; anillo del color de la superficie.",
+      "html": "<span class=\"ds-contador\">3</span>",
+      "css": ".ds-contador{display:inline-flex;align-items:center;justify-content:center;min-width:1.25rem;height:1.25rem;padding:0 .25rem;box-sizing:border-box;border-radius:999px;font:700 .75rem/1 Figtree,system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--color-sobre-acento, #ffffff);background:var(--color-acento, #A83E00);box-shadow:0 0 0 2px var(--color-card, #f7f1e6)}"
+    },
+    {
+      "name": "Boleto con talón",
+      "kind": "card",
+      "refersTo": "boleto",
+      "description": "Oferta como boleto perforado: destino y detalle a la izquierda, talón con código, precio y canto de marca.",
+      "html": "<article class=\"ds-boleto\"><div class=\"ds-boleto-cuerpo\"><p class=\"ds-boleto-dest\">Los Roques</p><p class=\"ds-boleto-det\">3 días, 2 noches. Vuelo y posada.</p></div><div class=\"ds-boleto-talon\"><p class=\"ds-boleto-cod\">LRQ-03</p><p class=\"ds-boleto-precio\">Desde $ 420</p><span class=\"ds-boleto-canto\"></span></div></article>",
+      "css": ".ds-boleto{position:relative;display:flex;overflow:hidden;box-sizing:border-box;width:22rem;max-width:100%;min-height:8rem;background:var(--color-card, #f7f1e6);color:var(--color-ink, #2c2620);border:1px solid var(--color-linea, rgba(36,31,26,.14));border-radius:1rem;font-family:Figtree,system-ui,sans-serif}.ds-boleto-cuerpo{flex:1;min-width:0;padding:1rem}.ds-boleto-dest{margin:0;font:700 1.5rem/1.05 Archivo,system-ui,sans-serif;font-stretch:82%;letter-spacing:-.015em}.ds-boleto-det{margin:.5rem 0 0;font-size:.875rem;color:var(--color-ink-soft, #6b5e50)}.ds-boleto-talon{position:relative;display:flex;flex-direction:column;justify-content:center;width:7rem;box-sizing:border-box;padding:0 1rem;border-left:2px dashed var(--color-linea-fuerte, rgba(36,31,26,.24))}.ds-boleto-cod{margin:0;font:700 .75rem/1 \"Space Mono\",ui-monospace,monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--color-ink-soft, #6b5e50)}.ds-boleto-precio{margin:.25rem 0 0;font:700 1rem/1.25 \"Space Mono\",ui-monospace,monospace;font-variant-numeric:tabular-nums}.ds-boleto-canto{position:absolute;left:0;right:0;bottom:0;height:4px;background:linear-gradient(90deg,#FC7300,#FBC000)}"
+    },
+    {
+      "name": "Tablero de salidas",
+      "kind": "custom",
+      "refersTo": "tablero-celda",
+      "description": "Split-flap del hero: una celda por carácter en dusk-2, línea de bisagra y sombra interior.",
+      "html": "<div class=\"ds-tablero\" role=\"img\" aria-label=\"Los Roques\"><span class=\"ds-celda\">L</span><span class=\"ds-celda\">O</span><span class=\"ds-celda\">S</span><span class=\"ds-celda ds-vacia\"></span><span class=\"ds-celda\">R</span><span class=\"ds-celda\">O</span><span class=\"ds-celda\">Q</span><span class=\"ds-celda\">U</span><span class=\"ds-celda\">E</span><span class=\"ds-celda\">S</span></div>",
+      "css": ".ds-tablero{display:inline-flex;gap:.12em;font:700 1.875rem/1 \"Space Mono\",ui-monospace,monospace;color:var(--color-dusk-text, #eaf1ef)}.ds-celda{position:relative;display:inline-grid;place-items:center;min-width:1.15ch;padding:.12em .08em;border-radius:.18em;background:var(--color-dusk-2, #1c3238);box-shadow:inset 0 -.12em 0 rgba(0,0,0,.28)}.ds-celda::after{content:\"\";position:absolute;inset:50% 0 auto;height:1px;background:rgba(0,0,0,.45)}.ds-vacia{background:transparent;box-shadow:none}.ds-vacia::after{display:none}"
+    }
+  ],
+  "narrative": {
+    "northStar": "El pase de abordar",
+    "overview": "Cada oferta se lee como un boleto: destino arriba, fecha y detalle al centro, precio en el talón. El sitio toma la señalética de aeropuerto (titulares condensados y en negrita, un tablero de salidas, códigos en mono) y la pone sobre bandas `dusk` con foto a sangre, alternadas con arena y crema mate. La marca evoluciona en proporción, no en color: los hex del logo y el mate calibrado por el dueño se conservan.\n\nLa pantalla es de un viajero en el teléfono que llegó desde redes. Densidad media, un solo momento orquestado (el tablero del hero), el resto es CSS quieto y respuesta táctil. El degradado del logo (`#FC7300` a `#FBC000`) queda reservado para el elemento firma: el canto del talón y el indicador activo, nunca detrás de texto.\n\nRechazos confirmados: la landing genérica de agencia (foto, serif y tarjetas crema), el grano `feTurbulence`, los emoji y glifos unicode como iconos, los eyebrows sobre los títulos, y la elevación con borde y sombra a la vez.",
+    "keyCharacteristics": [
+      "Bandas `dusk` con foto a sangre contra contenido en `sand`/`card` mate.",
+      "Titulares en Archivo condensado bold; precios, códigos y fechas en Space Mono.",
+      "Ofertas como boletos perforados con talón de tamaño fijo.",
+      "Un solo momento animado: el tablero split-flap del hero, que sigue a la foto rotativa.",
+      "Claro por defecto; oscuro y automático desde el selector de tema.",
+      "Voz \"usted\", cercana y respetuosa."
+    ],
+    "rules": [
+      {
+        "name": "The Logo Gradient Rule",
+        "body": "El degradado `#FC7300` a `#FBC000` es de la firma: canto del talón e indicador activo. Nunca detrás de texto, nunca de fondo de sección.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two Themes Rule",
+        "body": "Un color nuevo se define en claro y en oscuro, en las tres capas de tema y en `@theme`. Sin excepciones.",
+        "section": "colors"
+      },
+      {
+        "name": "The Orange-Where-You-Act Rule",
+        "body": "El naranja aparece donde hay una acción (cotizar, pagar, WhatsApp). Un ornamento naranja compite con el CTA.",
+        "section": "colors"
+      },
+      {
+        "name": "The 12px Floor Rule",
+        "body": "Ningún texto por debajo de 12px (`text-xs`). El wordmark del logo es lettering de marca y es la única excepción.",
+        "section": "typography"
+      },
+      {
+        "name": "The Mono-Is-Data Rule",
+        "body": "Space Mono solo para datos: precios, códigos, fechas, etiquetas. Nunca párrafos.",
+        "section": "typography"
+      },
+      {
+        "name": "The Border-Or-Shadow Rule",
+        "body": "Una superficie se eleva con borde o con sombra. Las dos juntas ensucian el mate.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** usar tokens (`bg-acento`, `text-ink-soft`, `rounded-card`); un hex suelto rompe el modo oscuro.",
+      "**Do** dejar el hero legible desde el primer pintado (sin `Revelar`): es candidato a LCP.",
+      "**Do** usar `clasesBoton` y `Boton` para toda acción; `CLASE_CONTROL` para todo campo.",
+      "**Do** escribir en usted y en oraciones cortas; el cotizador y WhatsApp siempre a un toque.",
+      "**Do** pausar loops fuera de pantalla y respetar `prefers-reduced-motion` con estado estático."
+    ],
+    "donts": [
+      "**Don't** volver a la landing de agencia con serif y tarjetas crema.",
+      "**Don't** poner eyebrows sobre los títulos; la etiqueta va debajo.",
+      "**Don't** usar emoji ni glifos unicode como iconos; usar `Icono`.",
+      "**Don't** meter el degradado del logo detrás de texto ni de una sección completa.",
+      "**Don't** usar `rounded-*` sueltos, sombras nuevas, `outline-none` sin reemplazo ni `cubic-bezier` en línea (`--ease-salida`).",
+      "**Don't** prometer métodos de pago que la pasarela todavía no tiene."
+    ]
+  }
+}

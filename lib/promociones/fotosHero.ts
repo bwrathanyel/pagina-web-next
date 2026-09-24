@@ -5,6 +5,8 @@ export interface FotoHero {
   url: string;
   /** Nombre del alojamiento -- se muestra en pantalla bajo la foto. */
   alt: string;
+  /** Destino del alojamiento: es lo que cae en el tablero de salidas del hero. */
+  destino?: string | null;
 }
 
 /** Palabras que aparecen en el nombre de archivo de los FLYERS y collages
@@ -49,7 +51,7 @@ export function fotosHeroDeHotSales(hotSales: Promocion[], limite = 8): FotoHero
     if (!elegida) continue;
 
     vistos.add(nombre);
-    out.push({ url: fotoUrl(elegida.storage_path), alt: nombre });
+    out.push({ url: fotoUrl(elegida.storage_path), alt: nombre, destino: p.producto?.destino });
     if (out.length >= limite) break;
   }
 

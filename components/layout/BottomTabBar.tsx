@@ -2,90 +2,99 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { m } from "motion/react";
+import { Icono, type NombreIcono } from "@/components/ui/Icono";
 
-const TABS = [
-  {
-    href: "/",
-    label: "Inicio",
-    icon: (
-      <path d="M4 11.5 12 4l8 7.5M6 10v9h5v-5h2v5h5v-9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    ),
-  },
+// Cinco pestañas: las dos de la izquierda y la de la derecha de "Cotizar" son
+// destinos de mirar; "Cotizar" va al centro, levantada, porque es lo que el
+// sitio quiere que se haga. Empleo, IA para negocios, tema y moneda viven en
+// la hoja "Más" del header (HojaMas).
+type Pestana = {
+  href: string;
+  label: string;
+  icono: NombreIcono;
+  /** Rutas que la marcan como activa; por defecto, su propio href. */
+  activaEn?: (pathname: string) => boolean;
+};
+
+const empieza = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`);
+
+const IZQUIERDA: Pestana[] = [
+  { href: "/", label: "Inicio", icono: "inicio", activaEn: (p) => p === "/" },
   {
     href: "/catalogo/hot-sales",
     label: "Promos",
-    icon: (
-      <path d="M3 12h18M8 6l-5 6 5 6M16 6l5 6-5 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    ),
-  },
-  {
-    href: "/cotizador-personalizado",
-    label: "Cotizar",
-    icon: (
-      <path d="M6 3h9l5 5v13H6V3zM14 3v5h5M9 12h6M9 16h6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    ),
-  },
-  {
-    href: "/cuenta",
-    label: "Cuenta",
-    icon: (
-      <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 20c1.5-4 4.7-6 8-6s6.5 2 8 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    ),
-  },
-  {
-    href: "/trabaja-con-nosotros",
-    label: "Empleo",
-    icon: (
-      <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M4 7h16v12H4V7zM4 12h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    ),
-  },
-  {
-    href: "/ia-para-tu-negocio",
-    label: "IA",
-    icon: (
-      <path d="M12 3v3M12 18v3M4.2 12H2M22 12h-2.2M6 6l1.5 1.5M16.5 16.5 18 18M18 6l-1.5 1.5M7.5 16.5 6 18M8 12a4 4 0 1 1 8 0 4 4 0 0 1-8 0z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    ),
+    icono: "etiqueta",
+    activaEn: (p) => empieza(p, "/catalogo/hot-sales") || empieza(p, "/catalogo/promociones"),
   },
 ];
 
+const DERECHA: Pestana[] = [
+  { href: "/cuenta/favoritos", label: "Favoritos", icono: "corazon" },
+  {
+    href: "/cuenta",
+    label: "Cuenta",
+    icono: "usuario",
+    activaEn: (p) => empieza(p, "/cuenta") && !empieza(p, "/cuenta/favoritos"),
+  },
+];
+
+const COTIZAR = { href: "/cotizador-personalizado", label: "Cotizar" };
+
 export function BottomTabBar() {
   const pathname = usePathname();
-  const esActiva = (href: string) => (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`));
+  const esActiva = ({ href, activaEn }: Pestana) => (activaEn ? activaEn(pathname) : empieza(pathname, href));
+  const cotizarActiva = empieza(pathname, COTIZAR.href) || empieza(pathname, "/cotizar");
+
+  const pestana = (p: Pestana) => {
+    const activa = esActiva(p);
+    return (
+      <li key={p.href} className="relative">
+        {activa ? (
+          <m.span
+            layoutId="pestana-activa"
+            aria-hidden="true"
+            transition={{ type: "spring", stiffness: 500, damping: 38 }}
+            className="absolute inset-x-5 top-0 h-[3px] rounded-b-pill bg-acento"
+          />
+        ) : null}
+        <Link
+          href={p.href}
+          aria-current={activa ? "page" : undefined}
+          className={
+            "flex h-full min-h-16 flex-col items-center justify-center gap-1 text-xs leading-none transition-colors duration-150 " +
+            (activa ? "font-bold text-acento" : "font-semibold text-ink-soft")
+          }
+        >
+          <Icono nombre={p.icono} tamano={22} />
+          {p.label}
+        </Link>
+      </li>
+    );
+  };
 
   return (
     <nav
       aria-label="Navegación principal"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-linea bg-card/95 backdrop-blur-lg lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-linea bg-card lg:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <div className="mx-auto flex max-w-md items-stretch justify-between px-1">
-        {TABS.map(({ href, label, icon }) => {
-          const activo = esActiva(href);
-          return (
-            <Link
-              key={href}
-              href={href}
-              aria-current={activo ? "page" : undefined}
-              className="flex min-w-0 flex-1 flex-col items-center gap-1 px-1 pb-2 pt-2.5 text-center"
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                className={"transition-transform active:scale-90 " + (activo ? "text-coral" : "text-ink-soft")}
-                aria-hidden="true"
-              >
-                {icon}
-              </svg>
-              <span className={`truncate text-[11px] leading-none ${activo ? "font-bold text-coral" : "font-medium text-ink-soft"}`}>
-                {label}
-              </span>
-              <span className={"h-1 w-1 rounded-full bg-coral transition-opacity " + (activo ? "opacity-100" : "opacity-0")} aria-hidden="true" />
-            </Link>
-          );
-        })}
-      </div>
+      <ul className="mx-auto grid max-w-md grid-cols-5 items-stretch">
+        {IZQUIERDA.map(pestana)}
+        <li>
+          <Link
+            href={COTIZAR.href}
+            aria-current={cotizarActiva ? "page" : undefined}
+            className="flex h-full min-h-16 flex-col items-center justify-end gap-1 pb-2 text-xs leading-none"
+          >
+            <span className="-mt-6 flex h-14 w-14 items-center justify-center rounded-control bg-coral-bright text-btn-ink shadow-chrome ring-4 ring-card transition-transform duration-150 ease-salida active:scale-95">
+              <Icono nombre="cotizar" tamano={26} />
+            </span>
+            <span className={cotizarActiva ? "font-bold text-acento" : "font-semibold text-ink"}>{COTIZAR.label}</span>
+          </Link>
+        </li>
+        {DERECHA.map(pestana)}
+      </ul>
     </nav>
   );
 }

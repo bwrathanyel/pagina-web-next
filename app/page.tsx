@@ -12,10 +12,8 @@ import { getProductosPorCategoria, getPromociones } from "@/lib/supabase/queries
 export default async function Home() {
   // Si Supabase falla acá, mejor una home con menos fotos que una home
   // rota entera — [] es un fallback seguro para todo lo que sigue.
-  const [hoteles, paquetes, guiasTours, promociones] = await Promise.all([
+  const [hoteles, promociones] = await Promise.all([
     getProductosPorCategoria("hoteles").catch(() => []),
-    getProductosPorCategoria("paquetes").catch(() => []),
-    getProductosPorCategoria("guias-tours").catch(() => []),
     getPromociones().catch(() => []),
   ]);
 
@@ -31,7 +29,7 @@ export default async function Home() {
   // se queda sin imagen.
   const heroFallback = [hoteles[0], hoteles[1], hoteles[2]]
     .filter((p): p is NonNullable<typeof p> => Boolean(p))
-    .map((p) => ({ url: fotosDe(p.producto_fotos)[0], alt: p.nombre }))
+    .map((p) => ({ url: fotosDe(p.producto_fotos)[0], alt: p.nombre, destino: p.destino }))
     .filter((f) => f.url);
 
   // Las 4 de la vitrina salen del mismo pool que la seccion Hot Sales, asi que
@@ -47,7 +45,7 @@ export default async function Home() {
 
       <VitrinaOfertas ofertas={ofertas} />
 
-      <BuscarAfordancia productos={[...hoteles, ...paquetes, ...guiasTours]} promociones={promociones} />
+      <BuscarAfordancia />
 
       <HotSalesSection pool={hotSalesRestantes} />
 

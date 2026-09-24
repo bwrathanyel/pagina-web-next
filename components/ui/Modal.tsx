@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
-import { createPortal } from "react-dom";
+import { useState } from "react";
+import { Hoja } from "@/components/ui/Hoja";
 
+// Diálogo centrado en escritorio, hoja inferior en el teléfono. La API es la
+// de siempre (se monta abierto y avisa con onClose); por dentro cierra con
+// animación y recién al terminarla llama a onClose, así el padre puede seguir
+// desmontándolo con un simple `{abierto && <Modal …/>}`.
 export function Modal({
   titulo,
   onClose,
@@ -14,63 +18,37 @@ export function Modal({
   onClose: () => void;
   children: React.ReactNode;
   /** Badge circular junto al título (ej. ícono de WhatsApp). Opcional: sin
-   * esto el modal se ve como siempre -- lo usan también formularios de admin
-   * y de postulación que no deben heredar ningún acento de marca. */
+   * esto el modal va neutro -- lo usan también formularios de admin y de
+   * postulación que no deben heredar ningún acento de marca. */
   icono?: React.ReactNode;
-  /** Clases de degradé para el badge y la franja superior, ej.
-   * "from-whatsapp to-[#0a5c30]". Sin efecto si no viene `icono`. */
+  /** Clases de degradé del badge, ej. "from-whatsapp to-…". Sin efecto si no
+   * viene `icono`. */
   acentoClassName?: string;
 }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  const [abierta, setAbierta] = useState(true);
 
-  // Portal a document.body: un ancestro con backdrop-blur/filter (ej. el
-  // navbar) crea un containing block nuevo para position:fixed -- sin el
-  // portal, el modal quedaba encuadrado dentro de ese ancestro filtrado en
-  // vez de centrado en toda la pantalla (bug real reportado: se veía
-  // pegado arriba cuando se abría desde el botón de WhatsApp del navbar).
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={titulo}
-        onClick={(e) => e.stopPropagation()}
-        className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-card shadow-2xl"
-      >
-        {icono ? (
-          <div aria-hidden="true" className={"h-[3px] w-full bg-gradient-to-r " + acentoClassName} />
-        ) : null}
-        <div className="p-6">
-          <div className="mb-4 flex items-center gap-3">
-            {icono ? (
-              <span
-                className={
-                  "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-white shadow-[0_8px_20px_-6px_rgba(15,122,64,0.5)] " +
-                  acentoClassName
-                }
-                aria-hidden="true"
-              >
-                {icono}
-              </span>
-            ) : null}
-            <h2 className="flex-1 font-display text-xl font-semibold text-ink">{titulo}</h2>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Cerrar"
-              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-sand-2 hover:text-ink"
-            >
-              ✕
-            </button>
-          </div>
-          {children}
-        </div>
-      </div>
-    </div>,
-    document.body,
+  return (
+    <Hoja
+      abierta={abierta}
+      onCerrar={() => setAbierta(false)}
+      onSalida={onClose}
+      titulo={titulo}
+      escritorio="centrado"
+      icono={
+        icono ? (
+          <span
+            aria-hidden="true"
+            className={
+              "flex h-11 w-11 shrink-0 items-center justify-center rounded-pill bg-gradient-to-br text-white " +
+              (acentoClassName ?? "")
+            }
+          >
+            {icono}
+          </span>
+        ) : undefined
+      }
+    >
+      {children}
+    </Hoja>
   );
 }

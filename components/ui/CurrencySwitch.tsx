@@ -2,10 +2,9 @@
 
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 
-/** Slider USD/Bs para el header, calco visual de ThemeSwitch (mismo slider
- * role="switch", misma perilla) para que se lea como el mismo lenguaje de UI
- * que el toggle de tema -- nunca se muestran las dos monedas a la vez, es
- * una u otra, para no saturar al cliente (pedido explícito del dueño). */
+/** Slider USD/Bs (role="switch") para el header de escritorio y la hoja "Más"
+ * del móvil -- nunca se muestran las dos monedas a la vez, es una u otra, para
+ * no saturar al cliente (pedido explícito del dueño). */
 export function CurrencySwitch({ className = "" }: { className?: string }) {
   const { moneda, alternarMoneda } = useCurrency();
   const esBs = moneda === "VES";
@@ -27,13 +26,13 @@ export function CurrencySwitch({ className = "" }: { className?: string }) {
     >
       <span
         aria-hidden="true"
-        className={"pointer-events-none absolute left-[0.4rem] text-[9px] font-bold transition-opacity duration-300 " + (esBs ? "opacity-40" : "opacity-0")}
+        className={"pointer-events-none absolute left-[0.4rem] text-xs font-bold transition-opacity duration-300 " + (esBs ? "opacity-40" : "opacity-0")}
       >
         $
       </span>
       <span
         aria-hidden="true"
-        className={"pointer-events-none absolute right-[0.3rem] text-[9px] font-bold transition-opacity duration-300 " + (esBs ? "opacity-0" : "opacity-45")}
+        className={"pointer-events-none absolute right-[0.3rem] text-xs font-bold transition-opacity duration-300 " + (esBs ? "opacity-0" : "opacity-45")}
       >
         Bs
       </span>
@@ -41,7 +40,7 @@ export function CurrencySwitch({ className = "" }: { className?: string }) {
       <span
         aria-hidden="true"
         className={
-          "pointer-events-none flex h-[1.375rem] w-[1.375rem] items-center justify-center rounded-full text-[9px] font-bold shadow-sm transition-transform duration-300 ease-out " +
+          "pointer-events-none flex h-[1.375rem] w-[1.375rem] items-center justify-center rounded-full text-xs font-bold shadow-sm transition-transform duration-300 ease-out " +
           (esBs ? "translate-x-[1.75rem] bg-seafoam text-white" : "translate-x-[0.19rem] bg-card text-coral")
         }
       >

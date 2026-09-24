@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { ViewTransition } from "react";
+import { MotionProvider } from "@/components/providers/MotionProvider";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { CromoSitio } from "@/components/layout/CromoSitio";
 import { ContactoFab } from "@/components/layout/ContactoFab";
 import { BottomTabBar } from "@/components/layout/BottomTabBar";
+import { BuscadorGlobal } from "@/components/layout/BuscadorGlobal";
+import { CarritoHoja } from "@/components/layout/CarritoHoja";
 import { OnboardingOverlay } from "@/components/onboarding/OnboardingOverlay";
 import { jsonLdScript, buildTravelAgencyJsonLd } from "@/lib/seo/jsonld";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
@@ -30,13 +34,16 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://destinoyeventoslot
 // avisa al admin.
 export const revalidate = 3600;
 
-const fraunces = localFont({
-  src: "./fonts/fraunces-latin.woff2",
+// Archivo instanciada a ancho fijo 82 (condensada, tipo señalética de
+// aeropuerto) y pesos 500-800: 32 KB contra 90 KB de la variable completa.
+// Se regenera con fontTools.varLib.instancer si hace falta otro ancho.
+const archivo = localFont({
+  src: "./fonts/archivo-cond-latin.woff2",
   variable: "--font-display",
-  weight: "600 700",
+  weight: "500 800",
   display: "swap",
-  fallback: ["Georgia", "serif"],
-  adjustFontFallback: "Times New Roman",
+  fallback: ["Arial Narrow", "Arial", "sans-serif"],
+  adjustFontFallback: "Arial",
 });
 
 const figtree = localFont({
@@ -114,7 +121,7 @@ export default async function RootLayout({
     <html
       lang="es-VE"
       suppressHydrationWarning
-      className={`${fraunces.variable} ${figtree.variable} ${spaceMono.variable} h-full antialiased`}
+      className={`${archivo.variable} ${figtree.variable} ${spaceMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-sand text-ink font-body">
         <script
@@ -125,18 +132,27 @@ export default async function RootLayout({
           <AuthProvider>
             <CurrencyProvider>
               <SiteContentProvider initialContent={siteContent}>
-                <CromoSitio><Navbar /></CromoSitio>
-                <div className="flex flex-1 flex-col pb-20 lg:pb-0">
-                  <div className="flex-1">{children}</div>
-                  <CromoSitio><Footer /></CromoSitio>
-                </div>
-                <CromoSitio>
-                  <ContactoFab />
-                  <BottomTabBar />
-                  <OnboardingOverlay />
-                </CromoSitio>
-                <AdminEditToggle />
-                <Analitica />
+                <MotionProvider>
+                  <CromoSitio><Navbar /></CromoSitio>
+                  <div className="flex flex-1 flex-col pb-20 lg:pb-0">
+                    {/* Las navegaciones son transiciones: solo el contenido
+                        cruza, el cromo queda quieto. default="none" evita que
+                        otros ViewTransition con nombre lo arrastren. */}
+                    <ViewTransition update="pagina" default="none">
+                      <div className="flex-1">{children}</div>
+                    </ViewTransition>
+                    <CromoSitio><Footer /></CromoSitio>
+                  </div>
+                  <CromoSitio>
+                    <ContactoFab />
+                    <BottomTabBar />
+                    <CarritoHoja />
+                    <BuscadorGlobal />
+                    <OnboardingOverlay />
+                  </CromoSitio>
+                  <AdminEditToggle />
+                  <Analitica />
+                </MotionProvider>
               </SiteContentProvider>
             </CurrencyProvider>
           </AuthProvider>

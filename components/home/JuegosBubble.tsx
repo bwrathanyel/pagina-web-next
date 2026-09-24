@@ -48,7 +48,7 @@ export function JuegosBubble() {
 
   return (
     <div
-      className="fixed bottom-40 left-4 z-40 animate-bounce-in motion-reduce:animate-none sm:left-5 lg:bottom-20"
+      className="fixed bottom-40 left-4 z-40 animate-globo-entrar motion-reduce:animate-none sm:left-5 lg:bottom-20"
       style={{
         marginBottom: "env(safe-area-inset-bottom)",
         marginLeft: "env(safe-area-inset-left)",

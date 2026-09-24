@@ -8,6 +8,9 @@ import { BrandMark } from "@/components/layout/BrandMark";
 import { EditableText } from "@/components/admin/EditableText";
 import { useSiteContent } from "@/components/providers/SiteContentProvider";
 import { SocialIcon, ICONS } from "@/components/layout/SocialIcon";
+import { clasesBoton } from "@/components/ui/Boton";
+import { CLASE_ETIQUETA_SECCION } from "@/components/ui/EncabezadoSeccion";
+import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 
 function CaretIcon() {
   return (
@@ -33,9 +36,9 @@ function CaretIcon() {
  * auditoría redesign desktop 2026-08-22. */
 function EnlacesCatalogo({ navItems }: { navItems: { id: string; href: string; label: string }[] }) {
   return (
-    <nav aria-label="Catálogo" className="flex flex-col gap-2">
+    <nav aria-label="Catálogo" className="flex flex-col md:gap-2">
       {navItems.map(({ id, href, label }) => (
-        <Link key={id} href={href} className="text-sm text-dusk-text-soft hover:text-dusk-text">
+        <Link key={id} href={href} className="py-2.5 text-sm text-dusk-text-soft hover:text-dusk-text md:py-0">
           {label}
         </Link>
       ))}
@@ -46,7 +49,7 @@ function EnlacesCatalogo({ navItems }: { navItems: { id: string; href: string; l
 function InfoContacto() {
   return (
     <div className="flex flex-col gap-2">
-      <a href={`mailto:${REDES.email}`} className="text-sm text-dusk-text-soft hover:text-dusk-text">
+      <a href={`mailto:${REDES.email}`} className="py-2.5 text-sm text-dusk-text-soft hover:text-dusk-text md:py-0">
         {REDES.email}
       </a>
       <div className="mt-1 flex gap-3">
@@ -71,17 +74,18 @@ export function Footer() {
   const { content } = useSiteContent();
   const navItems = content.navigation.items.filter((item) => item.visible);
   return (
-    <footer className="grano relative bg-dusk">
+    <footer className="sobre-dusk relative bg-dusk">
       <div className="mx-auto max-w-[var(--ancho-contenido)] px-5 py-9 md:py-16">
-        <div className="mb-8 grid gap-7 border-b border-dusk-text/12 pb-8 md:grid-cols-[1fr_auto] md:items-end">
+        <div className="mb-8 grid gap-7 border-b-2 border-dashed border-dusk-text/15 pb-8 md:grid-cols-[1fr_auto] md:items-end">
           <div>
-            <EditableText path="footer.eyebrow" as="p" className="mb-3 font-mono text-xs font-bold uppercase tracking-[0.18em] text-coral-bright" />
-            <EditableText path="footer.headline" as="p" multiline className="max-w-[15ch] text-balance font-display text-3xl font-semibold leading-tight text-dusk-text md:text-5xl" />
+            <EditableText path="footer.headline" as="p" multiline className="max-w-[15ch] text-balance font-display text-3xl font-bold leading-[1.02] tracking-[-0.015em] text-white md:text-5xl" />
+            <EditableText path="footer.eyebrow" as="p" className={CLASE_ETIQUETA_SECCION + " text-coral-bright"} />
           </div>
           <WhatsAppLeadButton
             mensajeBase="Hola! Vengo de su página web y quiero comenzar a planificar un viaje."
-            triggerClassName="inline-flex min-h-12 items-center justify-center rounded-full bg-coral px-7 font-semibold text-white"
+            triggerClassName={clasesBoton({ variante: "firma", tamano: "lg" })}
           >
+            <WhatsAppIcon size={20} />
             {content.footer.ctaLabel}
           </WhatsAppLeadButton>
         </div>
@@ -104,7 +108,7 @@ export function Footer() {
               2026-08-22) -- se renderiza una columna nativa aparte, más
               simple y sin pisar el display nativo de <details>. */}
           <details className="group md:hidden">
-            <summary className="mb-1 flex list-none items-center justify-between font-mono text-xs uppercase tracking-wide text-dusk-text-soft [&::-webkit-details-marker]:hidden">
+            <summary className="flex min-h-11 list-none items-center justify-between font-mono text-xs uppercase tracking-wide text-dusk-text-soft [&::-webkit-details-marker]:hidden">
               Catálogo
               <CaretIcon />
             </summary>
@@ -118,7 +122,7 @@ export function Footer() {
           </div>
 
           <details className="group md:hidden">
-            <summary className="mb-1 flex list-none items-center justify-between font-mono text-xs uppercase tracking-wide text-dusk-text-soft [&::-webkit-details-marker]:hidden">
+            <summary className="flex min-h-11 list-none items-center justify-between font-mono text-xs uppercase tracking-wide text-dusk-text-soft [&::-webkit-details-marker]:hidden">
               Contacto
               <CaretIcon />
             </summary>

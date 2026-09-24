@@ -65,6 +65,9 @@
      dejaría de leerse. Va pareado con el acento y cambia con él -- también
      cuando la paleta la aporta la marca del cliente. */
   --color-sobre-acento: #ffffff;
+  /* Errores de formulario. Sobre card: 6.2:1 (claro). */
+  --color-peligro: #b3261e;
+  --color-peligro-suave: #f9e1de;
 }
 
 /* Dark mode: only the light "sand/card/ink" surfaces invert. Dusk sections
@@ -92,6 +95,8 @@
   --color-ambar: #FBC000;
   --color-ambar-suave: #3a2f10;
   --color-sobre-acento: #1a1206;
+  --color-peligro: #ff8f85;
+  --color-peligro-suave: #3a1a18;
   --color-linea: rgba(238, 243, 241, 0.12);
   --color-linea-fuerte: rgba(238, 243, 241, 0.22);
 }
@@ -102,6 +107,8 @@
   --color-ambar: #8a5a00;
   --color-ambar-suave: #f8ecd0;
   --color-sobre-acento: #ffffff;
+  --color-peligro: #b3261e;
+  --color-peligro-suave: #f9e1de;
   --color-sand: #ede5d8;
   --color-sand-2: #e1d8c7;
   --color-card: #f7f1e6;
@@ -116,10 +123,22 @@
 /* Radios, sombras y anchos compartidos -- antes cada componente inventaba su
    propio valor arbitrario (rounded-[1.5rem], shadow-[0_18px_50px_-30px_...]),
    auditoría redesign desktop 2026-08-22. */
+/* Rediseño "pase de abordar" (2026-09-23): radios bajados a la franja 12-16px
+   (antes 20px en tarjeta: se leía blando, de plantilla) y un escalón nuevo
+   para controles (inputs, botones no-pill, chips cuadrados). */
 :root {
-  --radius-card: 1.25rem;
-  --radius-media: 1rem;
+  --radius-card: 1rem;
+  --radius-media: 0.75rem;
+  --radius-control: 0.75rem;
   --radius-pill: 999px;
+  /* Degradado real del logo. Reservado para la firma (talón, barra del hero,
+     indicador activo): nunca como fondo de texto ni en superficies grandes. */
+  --degradado-marca: linear-gradient(90deg, #FC7300 0%, #FBC000 100%);
+  --ease-salida: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-entrada-salida: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-rapida: 160ms;
+  --dur-media: 280ms;
+  --dur-lenta: 600ms;
   --shadow-card: 0 18px 50px -30px rgba(10, 14, 13, 0.45);
   --shadow-lift: 0 24px 60px -24px rgba(10, 14, 13, 0.35);
   --shadow-chrome: 0 12px 35px rgba(10, 14, 13, 0.12);
@@ -152,6 +171,8 @@
   --color-ambar: var(--color-ambar);
   --color-ambar-suave: var(--color-ambar-suave);
   --color-sobre-acento: var(--color-sobre-acento);
+  --color-peligro: var(--color-peligro);
+  --color-peligro-suave: var(--color-peligro-suave);
   --color-linea: var(--color-linea);
   --color-linea-fuerte: var(--color-linea-fuerte);
   --ritmo-seccion: var(--ritmo-seccion);
@@ -163,10 +184,13 @@
 
   --radius-card: var(--radius-card);
   --radius-media: var(--radius-media);
+  --radius-control: var(--radius-control);
   --radius-pill: var(--radius-pill);
   --shadow-card: var(--shadow-card);
   --shadow-lift: var(--shadow-lift);
   --shadow-chrome: var(--shadow-chrome);
+  --ease-salida: var(--ease-salida);
+  --ease-entrada-salida: var(--ease-entrada-salida);
 }
 
 body {
@@ -229,14 +253,14 @@ html {
   animation: hero-fade 0.9s ease-out forwards;
 }
 
-/* Globo de aviso del asistente virtual (ContactoFab) */
-@keyframes bounce-in {
-  0% { opacity: 0; transform: translateY(10px) scale(0.92); }
-  60% { opacity: 1; transform: translateY(-2px) scale(1.02); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
+/* Globo de aviso del asistente virtual (ContactoFab). Sin sobrepaso: desacelera
+   y se queda, como algo que se apoya, no que rebota. */
+@keyframes globo-entrar {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to { opacity: 1; transform: none; }
 }
-.animate-bounce-in {
-  animation: bounce-in 0.35s ease-out;
+.animate-globo-entrar {
+  animation: globo-entrar var(--dur-media) var(--ease-salida) both;
 }
 
 /* Animaciones de /ia-planes. `surge` se usaba en toda esa página sin estar
@@ -322,42 +346,53 @@ html {
   to { transform: translateX(320%); }
 }
 ::selection {
-  background: var(--color-coral);
-  color: white;
+  background: var(--color-acento);
+  color: var(--color-sobre-acento);
+}
+
+:root {
+  accent-color: var(--color-acento);
+  caret-color: var(--color-acento);
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-coral);
+  outline: 2px solid var(--color-acento);
   outline-offset: 3px;
   border-radius: 4px;
+}
+
+/* Sobre dusk (hero, footer, bandas oscuras) el acento claro se pierde: el
+   anillo pasa al dorado del logo, que ahí sí contrasta en ambos temas. */
+.sobre-dusk :focus-visible,
+.sobre-dusk:focus-visible {
+  outline-color: var(--color-gold);
 }
 
 /* Entrada al hacer scroll (Revelar.tsx). El estado inicial vive acá y no en
    el componente para que no haya flash de contenido antes de hidratar. */
 .revelar { opacity: 0; transform: translateY(16px); }
 .revelar.es-visible {
-  animation: revelar-entrada 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: revelar-entrada 0.55s var(--ease-salida) forwards;
   animation-delay: var(--retraso, 0ms);
 }
 @keyframes revelar-entrada {
   to { opacity: 1; transform: none; }
 }
-
-/* Grano sutil para superficies dusk (hero, footer, banda de acompañamiento):
-   sin esto el modo oscuro se ve de color plano. `feTurbulence` inline, sin
-   pedir ningún archivo -- opacity muy baja para que sea textura y no ruido
-   visible. Poner en un ::after (no bg-image directo) para no interferir con
-   los degradés que ya cubren el mismo elemento. */
-.grano::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  opacity: 0.04;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+/* Variante escalonada: entran los hijos, 60ms uno detrás de otro, con tope en
+   el octavo para que una grilla larga no tarde un segundo en completarse. */
+.revelar-escalonado > * { opacity: 0; transform: translateY(16px); }
+.revelar-escalonado.es-visible > * {
+  animation: revelar-entrada 0.55s var(--ease-salida) forwards;
+  animation-delay: calc(var(--retraso, 0ms) + var(--n, 7) * 60ms);
 }
+.revelar-escalonado > :nth-child(1) { --n: 0; }
+.revelar-escalonado > :nth-child(2) { --n: 1; }
+.revelar-escalonado > :nth-child(3) { --n: 2; }
+.revelar-escalonado > :nth-child(4) { --n: 3; }
+.revelar-escalonado > :nth-child(5) { --n: 4; }
+.revelar-escalonado > :nth-child(6) { --n: 5; }
+.revelar-escalonado > :nth-child(7) { --n: 6; }
+
 
 /* Acciones del FAB unificado (ContactoFab): salen escalonadas desde el botón. */
 @keyframes fab-item {
@@ -365,7 +400,7 @@ html {
   to { opacity: 1; transform: none; }
 }
 .animate-fab-item {
-  animation: fab-item 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: fab-item 0.28s var(--ease-salida) both;
   animation-delay: var(--retraso, 0ms);
 }
 
@@ -400,7 +435,7 @@ html {
 }
 .animate-panel-abrir {
   transform-origin: bottom right;
-  animation: panel-abrir-movil 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: panel-abrir-movil 0.28s var(--ease-salida) both;
 }
 @media (min-width: 640px) {
   .animate-panel-abrir { animation-name: panel-abrir-escritorio; }
@@ -425,7 +460,7 @@ html {
   to { clip-path: inset(0 0 0 0); }
 }
 .animate-wordmark-line {
-  animation: wordmark-reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: wordmark-reveal 0.6s var(--ease-salida) both;
   animation-delay: var(--retraso, 0ms);
 }
 
@@ -442,12 +477,12 @@ html {
   animation: campana-balanceo 0.6s ease-in-out;
 }
 @keyframes carrito-rebote {
-  0%, 100% { transform: scale(1); }
-  30% { transform: scale(1.25); }
-  60% { transform: scale(0.95); }
+  0% { transform: scale(1); }
+  35% { transform: scale(1.18); }
+  100% { transform: scale(1); }
 }
 .animate-carrito-rebote {
-  animation: carrito-rebote 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: carrito-rebote 0.42s var(--ease-salida);
 }
 
 /* Puntitos de "Lotus está escribiendo…". */
@@ -456,4 +491,155 @@ html {
   30% { transform: translateY(-4px); opacity: 1; }
 }
 .animate-typing-dot { animation: typing-dot 1s ease-in-out infinite; }
+
+/* Loops del hero congelados cuando el hero sale de pantalla o la pestaña se
+   oculta (Hero.tsx pone .en-pausa): no tiene sentido pagar un zoom continuo
+   sobre una foto de 1280px que nadie está mirando. */
+.en-pausa .hero-kenburns,
+.en-pausa .hero-kenburns-inv {
+  animation-play-state: paused;
+}
+
+/* ── Tablero de salidas (TableroSalidas.tsx) ─────────────────────────────
+   Firma del rediseño: cada letra es una paleta de tablero de aeropuerto con su
+   bisagra al medio. La paleta cae desde arriba al cambiar de letra. */
+.flap-celda {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.15ch;
+  padding: 0.12em 0.08em;
+  border-radius: 0.18em;
+  background: var(--color-dusk-2);
+  color: var(--color-dusk-text);
+  box-shadow: inset 0 -0.12em 0 rgba(0, 0, 0, 0.28);
+  perspective: 12em;
+}
+.flap-celda::after {
+  content: "";
+  position: absolute;
+  inset: 50% 0 auto;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.45);
+}
+.flap-celda > span {
+  display: block;
+  transform-origin: 50% 0;
+  backface-visibility: hidden;
+}
+.flap-celda.flap-cae > span {
+  animation: flap-caer 110ms var(--ease-entrada-salida);
+}
+.flap-celda.flap-vacia {
+  background: transparent;
+  box-shadow: none;
+}
+.flap-celda.flap-vacia::after {
+  display: none;
+}
+@keyframes flap-caer {
+  from { transform: rotateX(-88deg); filter: brightness(0.7); }
+  to { transform: none; filter: none; }
+}
+
+/* ── Boleto / talón (components/ui/Boleto.tsx) ───────────────────────────
+   Las muescas de la perforación salen de una máscara sobre la propia tarjeta:
+   la tarjeta queda recortada de verdad (se ve el fondo por el agujero) sin
+   pintar círculos del color del fondo, que se rompían al cambiar de tema.
+   --corte = dónde cae la perforación. Elevación = solo borde (la máscara
+   recortaría una sombra). */
+@utility boleto-v {
+  --corte: 68%;
+  --muesca: 0.6rem;
+  -webkit-mask:
+    radial-gradient(circle var(--muesca) at var(--corte) 0, #0000 98%, #000) top / 100% 51% no-repeat,
+    radial-gradient(circle var(--muesca) at var(--corte) 100%, #0000 98%, #000) bottom / 100% 51% no-repeat;
+  mask:
+    radial-gradient(circle var(--muesca) at var(--corte) 0, #0000 98%, #000) top / 100% 51% no-repeat,
+    radial-gradient(circle var(--muesca) at var(--corte) 100%, #0000 98%, #000) bottom / 100% 51% no-repeat;
+}
+@utility boleto-h {
+  --corte: 72%;
+  --muesca: 0.6rem;
+  -webkit-mask:
+    radial-gradient(circle var(--muesca) at 0 var(--corte), #0000 98%, #000) left / 51% 100% no-repeat,
+    radial-gradient(circle var(--muesca) at 100% var(--corte), #0000 98%, #000) right / 51% 100% no-repeat;
+  mask:
+    radial-gradient(circle var(--muesca) at 0 var(--corte), #0000 98%, #000) left / 51% 100% no-repeat,
+    radial-gradient(circle var(--muesca) at 100% var(--corte), #0000 98%, #000) right / 51% 100% no-repeat;
+}
+@utility perforacion-v {
+  border-left: 2px dashed var(--color-linea-fuerte);
+}
+@utility perforacion-h {
+  border-top: 2px dashed var(--color-linea-fuerte);
+}
+/* El degradado del logo como relleno: solo para la firma (canto del talón,
+   indicador activo), nunca detrás de texto. */
+@utility franja-marca {
+  background-image: var(--degradado-marca);
+}
+
+/* Transición entre páginas (<ViewTransition update="pagina"> en app/layout.tsx):
+   un cruce corto, no una coreografía. Lo viejo se va rápido; lo nuevo sube 8px
+   después, para que no compitan. El cromo (nav, footer, barra) queda quieto. */
+@keyframes pagina-sale {
+  to { opacity: 0; }
+}
+@keyframes pagina-entra {
+  from { opacity: 0; transform: translateY(8px); }
+}
+::view-transition-old(.pagina) {
+  animation: pagina-sale var(--dur-rapida) var(--ease-salida) both;
+}
+::view-transition-new(.pagina) {
+  animation: pagina-entra var(--dur-media) var(--ease-salida) var(--dur-rapida) both;
+}
+
+/* ── Movimiento reducido ─────────────────────────────────────────────────
+   No es un apagón global a 0.01ms: los loops decorativos se quitan, las
+   entradas quedan como un fundido corto (el cambio de estado se sigue
+   viendo), y lo que se revela al hacer scroll ya está en su lugar. */
+@keyframes aparecer-suave {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  .hero-kenburns,
+  .hero-kenburns-inv,
+  .hero-parallax,
+  .animate-fab-halo,
+  .animate-fab-shine,
+  .animate-typing-dot,
+  .animate-carrito-rebote,
+  .animate-campana-balanceo,
+  .flap-celda > span {
+    animation: none !important;
+  }
+
+  .revelar,
+  .revelar-escalonado > * { opacity: 1; transform: none; }
+  .revelar.es-visible,
+  .revelar-escalonado.es-visible > * { animation: none; }
+
+  .animate-globo-entrar,
+  .animate-fab-item,
+  .animate-panel-abrir,
+  .animate-msg-in-left,
+  .animate-msg-in-right,
+  .animate-hero-fade {
+    animation-name: aparecer-suave !important;
+    animation-duration: var(--dur-rapida) !important;
+  }
+
+  .animate-wordmark-line { animation: none !important; }
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
 

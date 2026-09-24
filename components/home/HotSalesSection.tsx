@@ -9,7 +9,9 @@ import { destinosDelPool } from "@/lib/promociones/hotSales";
 import { Seccion } from "@/components/ui/Seccion";
 import { Carrusel } from "@/components/ui/Carrusel";
 import { Revelar } from "@/components/ui/Revelar";
-import { EncabezadoSeccion } from "@/components/ui/EncabezadoSeccion";
+import { CLASE_ETIQUETA_SECCION, CLASE_TITULO_SECCION, EncabezadoSeccion } from "@/components/ui/EncabezadoSeccion";
+import { Boton } from "@/components/ui/Boton";
+import { Icono } from "@/components/ui/Icono";
 import type { Promocion } from "@/types/supabase";
 
 const POR_TANDA = 6;
@@ -49,8 +51,8 @@ export function HotSalesSection({ pool }: { pool: Promocion[] }) {
   return (
     <Seccion ritmo="intro">
       <EncabezadoSeccion
-        eyebrow={<EditableText path="home.hotSales.eyebrow" as="p" className="mb-2 font-mono text-xs font-bold uppercase tracking-[0.16em] text-coral" />}
-        titulo={<EditableText path="home.hotSales.title" as="h2" className="max-w-[20ch] text-balance font-display text-2xl font-semibold leading-tight text-ink md:text-4xl" />}
+        titulo={<EditableText path="home.hotSales.title" as="h2" className={CLASE_TITULO_SECCION + " text-ink"} />}
+        etiqueta={<EditableText path="home.hotSales.eyebrow" as="p" className={CLASE_ETIQUETA_SECCION + " text-acento"} />}
         verTodasHref="/catalogo/hot-sales"
       />
 
@@ -80,18 +82,15 @@ export function HotSalesSection({ pool }: { pool: Promocion[] }) {
 
       {visibles < filtradas.length && (
         <div className="mt-6 flex justify-center">
-          <button
-            type="button"
-            onClick={() => setVisibles((v) => v + POR_TANDA)}
-            className="min-h-11 rounded-full border border-linea-fuerte px-6 text-sm font-semibold text-ink transition-[background-color,border-color] hover:border-ink/30 hover:bg-sand-2"
-          >
-            Ver más
-          </button>
+          <Boton variante="secundario" tamano="sm" onClick={() => setVisibles((v) => v + POR_TANDA)}>
+            Ver más ofertas
+          </Boton>
         </div>
       )}
 
-      <Link href="/catalogo/hot-sales" className="mt-5 inline-flex min-h-11 items-center text-sm font-semibold text-coral sm:hidden">
-        Ver todas las Hot Sales ↗
+      <Link href="/catalogo/hot-sales" className="mt-5 inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-acento sm:hidden">
+        Ver todas las Hot Sales
+        <Icono nombre="flecha-der" tamano={16} />
       </Link>
     </Seccion>
   );

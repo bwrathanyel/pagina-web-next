@@ -4,30 +4,28 @@ import { useMemo, useState } from "react";
 import { ProductoCard } from "@/components/catalogo/ProductoCard";
 import { PromocionCard } from "@/components/catalogo/PromocionCard";
 import { CatalogoGrid } from "@/components/catalogo/CatalogoGrid";
+import { coincide, DESTINOS_SUGERIDOS } from "@/lib/catalogo/busqueda";
 import type { Producto, Promocion } from "@/types/supabase";
-
-const DESTINOS_SUGERIDOS = ["Canaima", "Chichiriviche", "Los Roques", "Margarita", "Mérida"];
-
-function coincide(texto: string, query: string): boolean {
-  return texto.toLowerCase().includes(query.toLowerCase());
-}
 
 export function BuscarClient({
   productos,
   promociones,
   autoFocus = true,
   compacto = false,
+  consultaInicial = "",
 }: {
   productos: Producto[];
   promociones: Promocion[];
   autoFocus?: boolean;
+  /** Consulta con la que arranca el campo (viene del buscador global). */
+  consultaInicial?: string;
   /** Usado en la home (BuscarAfordancia): sin el margen inferior heredado de
    * /buscar y sin "Destinos populares" -- esos chips ya viven en Hot Sales
    * (DestinoChips), duplicarlos empujaba el resto de la home hacia abajo
    * (rediseño 2026-08-14). */
   compacto?: boolean;
 }) {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(consultaInicial);
 
   const productosFiltrados = useMemo(() => {
     if (!query.trim()) return [];

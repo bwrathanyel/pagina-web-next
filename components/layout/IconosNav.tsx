@@ -1,5 +1,5 @@
-// SVG inline de 14px por ítem del header, mismo patrón que HeaderControls.tsx
-// y ThemeSwitch.tsx (el sitio no usa librería de iconos). Opacidad baja en
+// SVG inline de 14px por ítem del header de escritorio (el sitio no usa
+// librería de iconos; los del resto de la UI están en ui/Icono.tsx). Opacidad baja en
 // reposo, plena en hover/activo -- el color lo hereda del texto del link.
 const TAMANO = 14;
 const PROPS_BASE = {

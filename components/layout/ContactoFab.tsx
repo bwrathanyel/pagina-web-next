@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { AsistenteVirtualPanel } from "@/components/layout/AsistenteVirtualPanel";
 import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
+import { Icono } from "@/components/ui/Icono";
+import { Contador } from "@/components/ui/Insignia";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import { useNotificacionesChat } from "@/lib/notificaciones/useNotificacionesChat";
 import { tieneFooterStickyPropio } from "@/lib/layout/rutasConFooterSticky";
@@ -98,16 +100,16 @@ export function ContactoFab() {
           {mostrarTip && !abierto ? (
             <div
               role="status"
-              className="relative flex max-w-[200px] animate-bounce-in items-center gap-1.5 truncate rounded-full bg-card px-3.5 py-2 text-[11px] font-medium leading-none text-ink shadow-xl ring-1 ring-black/5"
+              className="relative flex max-w-64 animate-globo-entrar items-center gap-1 rounded-card bg-card py-1 pl-4 pr-1 text-sm font-medium text-ink shadow-chrome"
             >
-              <span className="truncate">¡Hola! Soy Lotus 🌸 Cotiza tu viaje al instante.</span>
+              <span>Soy Lotus. Cotice su viaje al instante.</span>
               <button
                 type="button"
                 onClick={ocultarTip}
                 aria-label="Cerrar aviso"
-                className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-ink/10 text-[9px] text-ink"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-ink-soft transition-colors duration-150 hover:bg-sand-2 hover:text-ink"
               >
-                ✕
+                <Icono nombre="cerrar" tamano={16} />
               </button>
             </div>
           ) : null}
@@ -123,28 +125,24 @@ export function ContactoFab() {
                     setChatAbierto(true);
                     setAbierto(false);
                   }}
-                  className="animate-fab-item relative flex h-12 items-center gap-2.5 rounded-full bg-coral pl-4 pr-5 text-sm font-semibold text-white shadow-[0_10px_28px_-8px_rgba(168,62,0,0.55)]"
+                  className="animate-fab-item relative flex h-12 items-center gap-2.5 rounded-pill bg-acento pl-4 pr-5 text-sm font-semibold text-sobre-acento shadow-chrome"
                 >
                   <ChatIcon />
-                  Cotiza con Lotus IA
-                  {noLeidas > 0 ? (
-                    <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-coral px-1 font-mono text-[0.6rem] font-bold text-white">
-                      {noLeidas}
-                    </span>
-                  ) : null}
+                  Cotice con Lotus IA
+                  <Contador valor={noLeidas} />
                 </button>
               ) : null}
               <WhatsAppLeadButton
                 mensajeBase="Hola! Vengo de su página web."
-                triggerAriaLabel="Escríbenos por WhatsApp"
-                triggerClassName="animate-fab-item relative flex h-12 items-center gap-2.5 overflow-hidden rounded-full bg-whatsapp pl-4 pr-5 text-sm font-semibold text-white shadow-[0_12px_32px_-8px_rgba(15,122,64,0.65)]"
+                triggerAriaLabel="Escríbanos por WhatsApp"
+                triggerClassName="animate-fab-item relative flex h-12 items-center gap-2.5 overflow-hidden rounded-pill bg-whatsapp pl-4 pr-5 text-sm font-semibold text-white shadow-chrome"
               >
                 {/* Mismo lenguaje visual que el halo/destello del botón coral
                     principal (`:166-176` más abajo) pero en verde -- antes
                     era el único pill del grupo sin ningún acento propio,
                     apagado al lado del que sí brillaba. */}
                 <span
-                  className="animate-fab-halo absolute inset-0 -z-10 rounded-full ring-2 ring-whatsapp"
+                  className="animate-fab-halo absolute inset-0 -z-10 rounded-pill ring-2 ring-whatsapp"
                   aria-hidden="true"
                 />
                 <span
@@ -152,7 +150,7 @@ export function ContactoFab() {
                   aria-hidden="true"
                 />
                 <WhatsAppIcon size={20} />
-                Escríbenos por WhatsApp
+                Escríbanos por WhatsApp
               </WhatsAppLeadButton>
             </div>
           ) : null}
@@ -165,11 +163,11 @@ export function ContactoFab() {
             }}
             aria-label={abierto ? "Cerrar opciones de contacto" : "Contactar a Lotus 360"}
             aria-expanded={abierto}
-            className="group relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-coral text-white shadow-[0_10px_28px_-8px_rgba(168,62,0,0.55)]"
+            className="group relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-pill bg-acento text-sobre-acento shadow-chrome"
           >
             {!abierto ? (
               <span
-                className="animate-fab-halo absolute inset-0 -z-10 rounded-full ring-2 ring-gold"
+                className="animate-fab-halo absolute inset-0 -z-10 rounded-pill ring-2 ring-gold"
                 aria-hidden="true"
               />
             ) : null}
@@ -180,17 +178,9 @@ export function ContactoFab() {
               />
             ) : null}
             {noLeidas > 0 && !abierto ? (
-              <span className="absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-full bg-gold ring-2 ring-coral" aria-hidden="true" />
+              <span className="absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-pill bg-gold ring-2 ring-acento" aria-hidden="true" />
             ) : null}
-            <span className={"relative transition-transform duration-200 " + (abierto ? "rotate-45" : "")}>
-              {abierto ? (
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                  <path d="M6 6l12 12M6 18 18 6" />
-                </svg>
-              ) : (
-                <ChatIcon />
-              )}
-            </span>
+            <span className="relative">{abierto ? <Icono nombre="cerrar" tamano={22} /> : <ChatIcon />}</span>
           </button>
         </div>
       </nav>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { RequiereSesion } from "@/components/cuenta/RequiereSesion";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { SelectorTema } from "@/components/ui/SelectorTema";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
 function ConfiguracionForm() {
@@ -59,7 +59,7 @@ function ConfiguracionForm() {
           <p className="font-semibold text-ink">Apariencia</p>
           <p className="text-sm text-ink-soft">Modo claro u oscuro</p>
         </div>
-        <ThemeToggle />
+        <SelectorTema className="max-w-sm" />
       </section>
 
       <section className="rounded-xl border border-ink/10 bg-card p-4">

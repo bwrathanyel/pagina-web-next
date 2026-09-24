@@ -1,18 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
 import { EditableText } from "@/components/admin/EditableText";
 import { useSiteContent } from "@/components/providers/SiteContentProvider";
-import { Revelar } from "@/components/ui/Revelar";
+import { Boton, clasesBoton } from "@/components/ui/Boton";
+import { Icono } from "@/components/ui/Icono";
+import { TableroSalidas } from "@/components/ui/TableroSalidas";
+import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
+import type { FotoHero } from "@/lib/promociones/fotosHero";
 
 const MS_POR_FOTO = 5000;
 const SEG_CRUCE = 1.2;
-/* La curva del cruce: sale rápido y frena largo al final. Es la misma que usa
-   `revelar-entrada` en globals.css, para que todo el sitio se mueva igual. */
+/* La curva del cruce: sale rápido y frena largo al final. Es --ease-salida de
+   globals.css, para que todo el sitio se mueva igual. */
 const CURVA = [0.22, 1, 0.36, 1] as const;
 
 function barajar<T>(arr: T[]): T[] {
@@ -24,12 +27,11 @@ function barajar<T>(arr: T[]): T[] {
   return a;
 }
 
-export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
+export function Hero({ fotos }: { fotos: FotoHero[] }) {
   const fotoPrincipal = fotos[0];
   const { content } = useSiteContent();
   const hero = content.home.hero;
   const esWhatsapp = hero.secondaryHref === "whatsapp";
-  const secondaryHref = hero.secondaryHref;
 
   // Rotación de fotos de Hot Sales (pedido del dueño, 2026-07-26). El orden se
   // baraja DESPUÉS de montar y el índice arranca en 0: un Math.random() en el
@@ -43,9 +45,14 @@ export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
   // es un hueco de degradado en pantalla completa. Mismo patrón ya probado en
   // CardPhotoGallery -- solo se salta entre índices confirmados por onLoad.
   const [cargadas, setCargadas] = useState<Set<number>>(() => new Set([0]));
-  // Con la pestaña oculta el navegador estrangula los timers y al volver se
-  // acumulan saltos de golpe. Se para y se retoma.
-  const [visible, setVisible] = useState(true);
+  // La rotación, el Ken Burns y la barra de tiempo se paran con la pestaña
+  // oculta (el navegador estrangula los timers y al volver se acumulan saltos)
+  // y con el hero fuera de pantalla (nadie lo está mirando y cada salto baja
+  // una foto a ancho completo).
+  const [pestanaVisible, setPestanaVisible] = useState(true);
+  const [enPantalla, setEnPantalla] = useState(true);
+  const seccion = useRef<HTMLElement>(null);
+  const activo = pestanaVisible && enPantalla;
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -55,16 +62,24 @@ export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
   }, [fotos]);
 
   useEffect(() => {
-    const alCambiar = () => setVisible(document.visibilityState === "visible");
+    const alCambiar = () => setPestanaVisible(document.visibilityState === "visible");
     alCambiar();
     document.addEventListener("visibilitychange", alCambiar);
     return () => document.removeEventListener("visibilitychange", alCambiar);
   }, []);
 
+  useEffect(() => {
+    const el = seccion.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(([e]) => setEnPantalla(e.isIntersecting), { threshold: 0.05 });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const rotando = !hero.image && orden.length > 1;
 
   useEffect(() => {
-    if (!rotando || !visible) return;
+    if (!rotando || !activo) return;
     const t = setInterval(() => {
       setI((v) => {
         for (let paso = 1; paso < orden.length; paso++) {
@@ -75,10 +90,16 @@ export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
       });
     }, MS_POR_FOTO);
     return () => clearInterval(t);
-  }, [rotando, visible, orden.length, cargadas]);
+  }, [rotando, activo, orden.length, cargadas]);
 
   const actual = hero.image ? null : orden[i] ?? fotoPrincipal;
   const heroAlt = actual?.alt ?? fotoPrincipal?.alt ?? "Experiencia de viaje";
+  // El tablero muestra el destino de la foto que está en pantalla; si el
+  // alojamiento no tiene destino cargado, el nombre del hotel. Con imagen fija
+  // del admin no hay destino que anunciar: queda la marca.
+  const destino = actual?.destino?.trim();
+  const tablero = destino || actual?.alt || "Lotus 360";
+  const lugar = destino ? actual?.alt : null;
 
   // Solo se monta la foto actual (más la saliente mientras se desvanece) y un
   // prefetch invisible de la siguiente -- son fotos de Hot Sales a ancho
@@ -92,11 +113,16 @@ export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
   return (
     // Un solo árbol responsive (antes había una tarjeta móvil y una grilla
     // desktop separadas por lg:hidden/hidden lg:grid -- eso fue lo que hizo
-    // que el pase mobile del 14-ago rompiera desktop sin que nadie lo viera.
-    // Ahora es una sola foto a sangre con el contenido anclado abajo,
-    // reescritura editorial redesign desktop 2026-08-22).
-    <section className="relative isolate flex min-h-[62svh] flex-col justify-end overflow-hidden sm:min-h-[68svh] lg:min-h-[70svh] lg:max-h-[720px]">
-      <div className="grano hero-parallax absolute inset-0 overflow-hidden">
+    // que el pase mobile del 14-ago rompiera desktop sin que nadie lo viera).
+    // Foto a sangre con el contenido anclado abajo.
+    <section
+      ref={seccion}
+      className={
+        "sobre-dusk relative isolate flex min-h-[62svh] flex-col justify-end overflow-hidden bg-dusk sm:min-h-[68svh] lg:min-h-[70svh] lg:max-h-[720px]" +
+        (activo ? "" : " en-pausa")
+      }
+    >
+      <div className="hero-parallax absolute inset-0 overflow-hidden">
         {hero.image ? (
           <Image src={hero.image} alt={heroAlt} fill sizes="100vw" className="hero-kenburns object-cover" priority />
         ) : actual ? (
@@ -157,28 +183,18 @@ export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
       <div className="absolute inset-0 bg-gradient-to-t from-dusk via-dusk/70 to-dusk/20" />
       <div className="absolute inset-0 bg-gradient-to-r from-dusk/60 via-dusk/10 to-transparent" />
 
-      {rotando && actual?.alt ? (
-        <AnimatePresence mode="wait">
-          <motion.p
-            key={actual.alt}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.5, ease: CURVA }}
-            className="absolute right-5 top-5 max-w-[55%] truncate rounded-full border border-white/15 bg-black/25 px-3 py-1.5 text-[11px] font-medium text-white/90 backdrop-blur-md sm:right-8 sm:top-8"
-          >
-            {actual.alt}
-          </motion.p>
-        </AnimatePresence>
-      ) : null}
+      {/* Sin Revelar: el texto del hero está en pantalla desde el primer pintado
+          (es candidato a LCP y no debe esperar a hidratar). El único movimiento
+          orquestado de la portada es el tablero. */}
+      <div className="relative mx-auto w-full max-w-[var(--ancho-contenido)] px-5 pb-8 pt-24 sm:pb-12 sm:pt-28 lg:pb-16 lg:pt-32">
+        <div className="mb-6">
+          <TableroSalidas texto={tablero} className="text-lg sm:text-2xl lg:text-3xl" />
+          {lugar ? (
+            <p className="mt-2.5 truncate text-sm font-medium text-dusk-text-soft">{lugar}</p>
+          ) : null}
+        </div>
 
-      <Revelar retraso={120} className="relative mx-auto w-full max-w-[var(--ancho-contenido)] px-5 pb-8 pt-24 sm:pb-12 sm:pt-28 lg:pb-16 lg:pt-32">
-        <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-white/90 backdrop-blur-md">
-          <span className="h-2 w-2 rounded-full bg-coral-bright" aria-hidden="true" />
-          <EditableText path="home.hero.eyebrow" />
-        </p>
-
-        <h1 className="max-w-[14ch] text-balance font-display text-[clamp(2.5rem,5.2vw,4.25rem)] font-semibold leading-[1.0] tracking-[-0.03em] text-white">
+        <h1 className="max-w-[13ch] text-balance font-display text-[clamp(2.75rem,6.4vw,5rem)] font-bold leading-[0.95] tracking-[-0.02em] text-white">
           <EditableText path="home.hero.title" />{" "}
           <EditableText path="home.hero.accent" className="text-coral-bright" />
         </h1>
@@ -187,47 +203,48 @@ export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
           path="home.hero.description"
           as="p"
           multiline
-          className="mt-5 max-w-lg text-balance text-base leading-7 text-white/80 md:text-lg"
+          className="mt-5 max-w-lg text-pretty text-base leading-7 text-dusk-text md:text-lg"
         />
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <Link href={hero.primaryHref} className="inline-flex min-h-12 items-center justify-center rounded-full bg-coral px-7 font-semibold text-white shadow-[0_12px_28px_rgba(0,0,0,.25)] transition-transform hover:-translate-y-0.5">
+          <Boton href={hero.primaryHref} variante="firma" tamano="lg" iconoFin={<Icono nombre="flecha-der" tamano={20} />}>
             {hero.primaryLabel}
-          </Link>
+          </Boton>
           {esWhatsapp ? (
             <WhatsAppLeadButton
               mensajeBase="Hola! Vengo de su página web y quiero planificar mi próximo viaje."
-              triggerClassName="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-7 font-semibold text-white backdrop-blur-md transition-colors hover:bg-white/20"
+              triggerClassName={clasesBoton({ variante: "sobre-foto", tamano: "lg" })}
             >
+              <WhatsAppIcon size={18} />
               {hero.secondaryLabel}
-              <span aria-hidden="true">↗</span>
             </WhatsAppLeadButton>
           ) : (
-            <a
-              href={secondaryHref}
-              target={secondaryHref.startsWith("http") ? "_blank" : undefined}
-              rel={secondaryHref.startsWith("http") ? "noopener noreferrer" : undefined}
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-7 font-semibold text-white backdrop-blur-md transition-colors hover:bg-white/20"
-            >
+            <Boton href={hero.secondaryHref} variante="sobre-foto" tamano="lg" iconoFin={<Icono nombre="externo" tamano={18} />}>
               {hero.secondaryLabel}
-              <span aria-hidden="true">↗</span>
-            </a>
+            </Boton>
           )}
         </div>
 
-        <div className="mt-10 flex max-w-md flex-wrap gap-x-8 gap-y-4 border-t border-white/15 pt-6">
+        {/* Fila de datos del pase: el eyebrow viejo bajó acá, al lado de los
+            dos datos editables, en vez de ir como etiqueta encima del título. */}
+        <div className="mt-10 flex max-w-xl flex-wrap items-end gap-x-8 gap-y-4 border-t border-dashed border-white/20 pt-5">
+          <EditableText
+            path="home.hero.eyebrow"
+            as="p"
+            className="basis-full font-mono text-xs font-bold uppercase tracking-[0.14em] text-dusk-text-soft sm:basis-auto"
+          />
           <div>
-            <EditableText path="home.hero.badgeTopLabel" as="p" className="font-mono text-[10px] uppercase tracking-wider text-white/60" />
+            <EditableText path="home.hero.badgeTopLabel" as="p" className="font-mono text-xs uppercase tracking-wider text-dusk-text-soft" />
             <EditableText path="home.hero.badgeTopValue" as="p" className="mt-1 text-sm font-bold text-white" />
           </div>
           <div>
-            <EditableText path="home.hero.badgeBottomLabel" as="p" className="font-mono text-[10px] uppercase tracking-wider text-white/60" />
+            <EditableText path="home.hero.badgeBottomLabel" as="p" className="font-mono text-xs uppercase tracking-wider text-dusk-text-soft" />
             <EditableText path="home.hero.badgeBottomValue" as="p" className="mt-1 text-sm font-bold text-white" />
           </div>
         </div>
 
         {rotando ? (
-          <div className="mt-8 flex items-center gap-2">
+          <div className="mt-5 flex items-center">
             {orden.map((foto, idx) => (
               <button
                 key={foto.url}
@@ -235,11 +252,11 @@ export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
                 onClick={() => setI(idx)}
                 aria-label={`Ver foto ${idx + 1} de ${orden.length}: ${foto.alt}`}
                 aria-current={idx === i}
-                className="group/punto h-6 py-2.5"
+                className="group/punto flex h-11 items-center px-1"
               >
                 <span
                   className={
-                    "block h-1 rounded-full transition-all duration-500 ease-out " +
+                    "block h-1 rounded-full transition-[width,background-color] duration-500 ease-salida " +
                     (idx === i
                       ? "w-8 bg-coral-bright"
                       : "w-3 bg-white/40 group-hover/punto:w-5 group-hover/punto:bg-white/70")
@@ -249,17 +266,17 @@ export function Hero({ fotos }: { fotos: { url: string; alt: string }[] }) {
             ))}
           </div>
         ) : null}
-      </Revelar>
+      </div>
 
       {/* Barra de tiempo del slide: se reinicia sola en cada foto por el key.
-          Se congela con la pestaña oculta, igual que el timer. */}
+          Se congela junto con el timer. */}
       {rotando ? (
         <div className="absolute inset-x-0 bottom-0 h-[3px] bg-white/10" aria-hidden="true">
           <motion.div
             key={i}
             className="h-full origin-left bg-coral-bright"
             initial={{ scaleX: 0 }}
-            animate={{ scaleX: visible ? 1 : 0 }}
+            animate={{ scaleX: activo ? 1 : 0 }}
             transition={{ duration: MS_POR_FOTO / 1000, ease: "linear" }}
           />
         </div>

@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import { BuscarClient } from "@/components/catalogo/BuscarClient";
+import { BuscarDesdeUrl } from "@/components/catalogo/BuscarDesdeUrl";
 import { getProductosPorCategoria, getPromociones } from "@/lib/supabase/queries";
 import type { Metadata } from "next";
 
@@ -24,7 +26,10 @@ export default async function BuscarPage() {
   return (
     <main className="mx-auto max-w-6xl px-5 py-6 md:py-14">
       <h1 className="mb-4 font-display text-3xl font-semibold text-ink md:text-4xl">Buscar</h1>
-      <BuscarClient productos={[...hoteles, ...paquetes, ...guiasTours]} promociones={promociones} />
+      {/* El fallback es el mismo buscador vacío: el HTML estático ya trae el campo. */}
+      <Suspense fallback={<BuscarClient productos={[]} promociones={[]} />}>
+        <BuscarDesdeUrl productos={[...hoteles, ...paquetes, ...guiasTours]} promociones={promociones} />
+      </Suspense>
     </main>
   );
 }

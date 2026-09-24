@@ -2,13 +2,15 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
 import { HeaderControls } from "@/components/layout/HeaderControls";
+import { HojaMas } from "@/components/layout/HojaMas";
+import { BOTON_ICONO } from "@/components/layout/botonIcono";
 import { BrandMark } from "@/components/layout/BrandMark";
 import { Wordmark } from "@/components/layout/Wordmark";
-import { ThemeSwitch } from "@/components/ui/ThemeSwitch";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { Icono } from "@/components/ui/Icono";
+import { SelectorTema } from "@/components/ui/SelectorTema";
 import { CurrencySwitch } from "@/components/ui/CurrencySwitch";
 import { IconoNav } from "@/components/layout/IconosNav";
 import { useHeaderAutoHide } from "@/lib/layout/useHeaderAutoHide";
@@ -35,9 +37,16 @@ const LABEL_HEADER: Record<string, string> = {
   "ia-negocio": "IA para empresas",
 };
 
+// Rutas con su propia barra sticky arriba (propuesta de cliente con otra
+// paleta, fuera del rediseño): en el móvil la barra del sitio no se pega, para
+// no pelear el mismo `top-0`.
+const RUTAS_CON_BARRA_PROPIA = ["/ia-para-tu-negocio"];
+
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { content } = useSiteContent();
+  const [masAbierta, setMasAbierta] = useState(false);
   const itemsPrincipales = content.navigation.items.filter(
     (item) => item.visible && !IDS_OCULTOS_HEADER.has(item.id),
   );
@@ -88,26 +97,59 @@ export function Navbar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
-  // El pill (logo+wordmark+campana+carrito) solo tiene sentido en Home dentro
-  // del diseño mobile "app-like": el resto de pantallas tiene su propio header.
-  // En desktop (lg+) se mantiene en TODAS las rutas como hasta ahora.
   const esHome = pathname === "/";
+  const barraPropia = RUTAS_CON_BARRA_PROPIA.some((r) => pathname === r || pathname.startsWith(`${r}/`));
+
+  // Sin historial propio (llegó desde una red social a esta página) "atrás"
+  // llevaría fuera del sitio o no haría nada: en ese caso va al inicio.
+  function volver() {
+    if (window.history.length > 1) router.back();
+    else router.push("/");
+  }
 
   return (
     <header
       {...propsContenedor}
       className={
-        "sticky top-0 z-30 px-4 pt-4 transition-[opacity,transform] duration-500 ease-out " +
+        (barraPropia ? "lg:sticky " : "sticky ") +
+        "top-0 z-30 transition-[opacity,transform] duration-500 ease-out lg:px-4 lg:pt-4 " +
         // El auto-hide por inactividad es un patrón móvil (pedido del dueño
         // 2026-07-26); en desktop el header queda siempre sólido y estable --
         // "lg:translate-y-0 lg:opacity-100 lg:pointer-events-auto" pisa el
         // estado oculto a partir de lg sin tocar el hook.
         (visible ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-3 opacity-0") +
-        " lg:pointer-events-auto lg:translate-y-0 lg:opacity-100 " +
-        (esHome ? "" : "hidden lg:block")
+        " lg:pointer-events-auto lg:translate-y-0 lg:opacity-100"
       }
     >
-      <div className="mx-auto flex max-w-[var(--ancho-contenido)] flex-nowrap items-center justify-between gap-2 rounded-full border border-linea bg-card/95 px-3 py-1.5 shadow-chrome backdrop-blur-xl sm:gap-4 sm:px-4 sm:py-2 lg:px-5 lg:py-2 xl:px-6 xl:py-2.5">
+      {/* Móvil: barra compacta en todas las rutas. En Home, marca completa; en
+          el resto, atrás + símbolo. Buscar y carrito a la derecha, y "Más"
+          para lo que no cabe en las pestañas de abajo. */}
+      <div className="flex h-14 items-center gap-1 border-b border-linea bg-card pl-2 pr-1 lg:hidden">
+        {esHome ? null : (
+          <button type="button" onClick={volver} aria-label="Volver" className={BOTON_ICONO}>
+            <Icono nombre="flecha-izq" />
+          </button>
+        )}
+        <Link href="/" className="flex min-w-0 items-center gap-2.5">
+          <BrandMark size="sm" priority={esHome} />
+          {esHome ? <Wordmark /> : null}
+        </Link>
+        <div className="ml-auto flex items-center">
+          <HeaderControls compacto />
+          <button
+            type="button"
+            onClick={() => setMasAbierta(true)}
+            aria-label="Más opciones"
+            aria-haspopup="dialog"
+            className={BOTON_ICONO}
+          >
+            <Icono nombre="menu" />
+          </button>
+        </div>
+      </div>
+      <HojaMas abierta={masAbierta} onCerrar={() => setMasAbierta(false)} />
+
+      <div className="mx-auto hidden max-w-[var(--ancho-contenido)] flex-nowrap items-center justify-between gap-4 rounded-full border border-linea bg-card/95 px-5 py-2 shadow-chrome backdrop-blur-xl lg:flex xl:px-6 xl:py-2.5">
         <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2.5">
           <BrandMark priority />
           <Wordmark />
@@ -160,26 +202,11 @@ export function Navbar() {
           </WhatsAppLeadButton>
           <div className="flex shrink-0 items-center gap-3 border-l border-linea pl-4 ml-1">
             <CurrencySwitch className="hidden xl:block" />
-            <ThemeSwitch />
+            <SelectorTema compacto />
             <HeaderControls />
           </div>
         </nav>
 
-        {/* Mobile: sin menú hamburguesa -- el BottomTabBar ya cubre la
-            navegación principal (Inicio/Promos/Cotizar/Cuenta/Trabaja/IA
-            Negocio), tener los dos duplicaba navegación y no pegaba con el
-            diseño app (hallazgo real, feedback del dueño 2026-07-23). Buscar
-            se sacó del tab bar el 2026-08-11 -- vive inline en Home y Promos.
-            Campana y cuenta se sacaron de acá en el rediseño 2026-08-14: la
-            campana pasó al FAB (ContactoFab, que es de donde salen sus
-            notificaciones) y cuenta ya está en el bottom tab -- el cluster
-            derecho ocupaba ~250px de un viewport de 360px y aplastaba el
-            wordmark. */}
-        <div className="flex items-center gap-1.5 lg:hidden">
-          <CurrencySwitch />
-          <ThemeToggle compacto />
-          <HeaderControls soloCarrito />
-        </div>
       </div>
     </header>
   );
