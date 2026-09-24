@@ -1,19 +1,21 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import Image from "next/image";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
 import { EditableText } from "@/components/admin/EditableText";
 import { useSiteContent } from "@/components/providers/SiteContentProvider";
-import { Boton, clasesBoton } from "@/components/ui/Boton";
+import { Boton } from "@/components/ui/Boton";
 import { Icono } from "@/components/ui/Icono";
 import { TableroSalidas } from "@/components/ui/TableroSalidas";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
+import { CotizadorRapidoBarra, CotizadorRapidoMovil } from "@/components/home/CotizadorRapido";
+import { PaseDestacado } from "@/components/home/PaseDestacado";
 import { useHeroBajoBarra } from "@/lib/layout/barraSobreFoto";
 import type { FotoHero } from "@/lib/promociones/fotosHero";
 
-const MS_POR_FOTO = 5000;
+const MS_POR_FOTO = 6000;
 const SEG_CRUCE = 1.2;
 /* La curva del cruce: sale rápido y frena largo al final. Es --ease-salida de
    globals.css, para que todo el sitio se mueva igual. */
@@ -28,39 +30,60 @@ function barajar<T>(arr: T[]): T[] {
   return a;
 }
 
+// El tablero tiene tantas paletas como el destino más largo del pool (entre 8
+// y 18): no cambia de ancho al rotar y, con destinos cortos, cada paleta crece.
+// Tamaños medidos con Space Mono (~0,97em por paleta con su separación) para
+// que 18 paletas quepan en 280px (teléfono de 320) y en la columna de lg.
+function largoTablero(fotos: FotoHero[]): number {
+  const largos = fotos.map((f) => (f.destino?.trim() || f.alt || "").length);
+  return Math.min(18, Math.max(8, ...largos));
+}
+
+function claseTablero(largo: number): string {
+  if (largo <= 10) return "text-2xl min-[380px]:text-3xl sm:text-4xl lg:text-5xl";
+  if (largo <= 14) return "text-xl min-[380px]:text-2xl sm:text-3xl lg:text-5xl";
+  return "text-base min-[380px]:text-lg sm:text-2xl lg:text-4xl";
+}
+
+const retraso = (ms: number) => ({ "--retraso": `${ms}ms` }) as CSSProperties;
+
 export function Hero({ fotos }: { fotos: FotoHero[] }) {
   const fotoPrincipal = fotos[0];
   const { content } = useSiteContent();
   const hero = content.home.hero;
   const esWhatsapp = hero.secondaryHref === "whatsapp";
+  const reducido = useReducedMotion();
 
   // Rotación de fotos de Hot Sales (pedido del dueño, 2026-07-26). El orden se
   // baraja DESPUÉS de montar y el índice arranca en 0: un Math.random() en el
   // init de useState corre distinto en server y cliente, y React 19 lo marca
-  // como mismatch de hidratación en cada carga (mismo motivo documentado en
-  // HotSalesSection). Si el admin fijó una imagen fija en el contenido
-  // (hero.image), esa manda y no se rota nada.
+  // como mismatch de hidratación en cada carga. Si el admin fijó una imagen
+  // fija en el contenido (hero.image), esa manda y no se rota nada.
   const [orden, setOrden] = useState(fotos);
   const [i, setI] = useState(0);
   // El cruce no puede ir hacia una foto que el navegador todavía no bajó: eso
-  // es un hueco de degradado en pantalla completa. Mismo patrón ya probado en
-  // CardPhotoGallery -- solo se salta entre índices confirmados por onLoad.
-  const [cargadas, setCargadas] = useState<Set<number>>(() => new Set([0]));
-  // La rotación, el Ken Burns y la barra de tiempo se paran con la pestaña
-  // oculta (el navegador estrangula los timers y al volver se acumulan saltos)
-  // y con el hero fuera de pantalla (nadie lo está mirando y cada salto baja
-  // una foto a ancho completo).
+  // es un hueco de degradado en pantalla completa. Solo se salta entre índices
+  // confirmados por onLoad (mismo patrón que CardPhotoGallery).
+  // Ref y no estado: que termine de bajar una foto no debe reiniciar el reloj
+  // (el segmento seguiría corriendo y el salto llegaría tarde).
+  const cargadas = useRef<Set<number>>(new Set([0]));
+  // Si al vencer el reloj la siguiente todavía no bajó, se da otra vuelta a
+  // la misma foto en vez de quedarse parado.
+  const [vuelta, setVuelta] = useState(0);
+  // La rotación, el Ken Burns y el avance de los segmentos se paran con la
+  // pestaña oculta y con el hero fuera de pantalla.
   const [pestanaVisible, setPestanaVisible] = useState(true);
   const [enPantalla, setEnPantalla] = useState(true);
   const seccion = useRef<HTMLElement>(null);
   useHeroBajoBarra(seccion);
   const activo = pestanaVisible && enPantalla;
+  const largo = useMemo(() => largoTablero(fotos), [fotos]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setOrden(barajar(fotos));
     setI(0);
-    setCargadas(new Set([0]));
+    cargadas.current = new Set([0]);
   }, [fotos]);
 
   useEffect(() => {
@@ -80,19 +103,19 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
 
   const rotando = !hero.image && orden.length > 1;
 
+  // `i` en las dependencias: un salto manual (clic en un segmento) reinicia el
+  // reloj, así la foto elegida tiene su tiempo completo igual que su segmento.
   useEffect(() => {
     if (!rotando || !activo) return;
-    const t = setInterval(() => {
-      setI((v) => {
-        for (let paso = 1; paso < orden.length; paso++) {
-          const siguiente = (v + paso) % orden.length;
-          if (cargadas.has(siguiente)) return siguiente;
-        }
-        return v;
-      });
+    const t = setTimeout(() => {
+      for (let paso = 1; paso < orden.length; paso++) {
+        const siguiente = (i + paso) % orden.length;
+        if (cargadas.current.has(siguiente)) return setI(siguiente);
+      }
+      setVuelta((v) => v + 1);
     }, MS_POR_FOTO);
-    return () => clearInterval(t);
-  }, [rotando, activo, orden.length, cargadas]);
+    return () => clearTimeout(t);
+  }, [rotando, activo, orden.length, i, vuelta]);
 
   const actual = hero.image ? null : orden[i] ?? fotoPrincipal;
   const heroAlt = actual?.alt ?? fotoPrincipal?.alt ?? "Experiencia de viaje";
@@ -101,26 +124,40 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
   // del admin no hay destino que anunciar: queda la marca.
   const destino = actual?.destino?.trim();
   const tablero = destino || actual?.alt || "Lotus 360";
-  const lugar = destino ? actual?.alt : null;
+  const pase = actual?.pase;
+  // Sin pase, el nombre del hotel va bajo el tablero; con pase ya lo dice él.
+  const lugar = destino && !pase ? actual?.alt : null;
 
   // Solo se monta la foto actual (más la saliente mientras se desvanece) y un
-  // prefetch invisible de la siguiente -- son fotos de Hot Sales a ancho
-  // completo, montar el pool entero dispararía la descarga de todas.
+  // prefetch invisible de la siguiente: montar el pool entero bajaría todas.
   const indiceSiguiente = orden.length > 1 ? (i + 1) % orden.length : -1;
   const fotoSiguiente = indiceSiguiente >= 0 ? orden[indiceSiguiente] : null;
 
-  const marcarCargada = (idx: number) =>
-    setCargadas((prev) => (prev.has(idx) ? prev : new Set(prev).add(idx)));
+  const marcarCargada = (idx: number) => cargadas.current.add(idx);
+
+  const asesor = esWhatsapp ? (
+    <WhatsAppLeadButton
+      mensajeBase="Hola! Vengo de su página web y quiero planificar mi próximo viaje."
+      triggerClassName="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-white underline decoration-white/40 underline-offset-4 transition-colors duration-150 ease-salida hover:decoration-white"
+    >
+      <WhatsAppIcon size={18} />
+      {hero.secondaryLabel}
+    </WhatsAppLeadButton>
+  ) : (
+    <Boton href={hero.secondaryHref} variante="sobre-foto" tamano="sm" iconoFin={<Icono nombre="externo" tamano={16} />}>
+      {hero.secondaryLabel}
+    </Boton>
+  );
 
   return (
-    // Un solo árbol responsive (antes había una tarjeta móvil y una grilla
-    // desktop separadas por lg:hidden/hidden lg:grid -- eso fue lo que hizo
-    // que el pase mobile del 14-ago rompiera desktop sin que nadie lo viera).
-    // Foto a sangre con el contenido anclado abajo.
+    // Un solo árbol responsive (dos árboles separados por breakpoint fue lo
+    // que hizo que el pase móvil del 14-ago rompiera desktop sin que nadie lo
+    // viera). Foto a sangre bajo la barra transparente; el contenido arriba y
+    // el cotizador anclado al pie.
     <section
       ref={seccion}
       className={
-        "sobre-dusk bajo-barra relative isolate flex min-h-[62svh] flex-col justify-end overflow-hidden bg-dusk sm:min-h-[68svh] lg:min-h-[70svh] lg:max-h-[720px]" +
+        "sobre-dusk bajo-barra relative isolate flex min-h-[calc(100svh-5rem)] flex-col overflow-hidden bg-dusk lg:min-h-[80svh]" +
         (activo ? "" : " en-pausa")
       }
     >
@@ -128,16 +165,11 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
         {hero.image ? (
           <Image src={hero.image} alt={heroAlt} fill sizes="100vw" className="hero-kenburns object-cover" priority />
         ) : actual ? (
-          // Tres nodos, no uno: este contenedor solo hace parallax (arriba);
-          // la capa de motion es la que cruza (opacidad + escala); el <Image>
-          // de adentro solo hace Ken Burns. Mezclar el cruce y el Ken Burns en
-          // el mismo nodo hacía que las dos animaciones de transform se
-          // anularan (hallazgo pasada 3). Y el cruce va con motion, no con
-          // clases: en Tailwind v4 `scale-105` escribe la propiedad `scale:`,
-          // que `transition-[opacity,transform]` NO cubre -- la escala saltaba
-          // de golpe y solo se interpolaba la opacidad.
+          // Tres nodos: este contenedor hace parallax; la capa de motion cruza
+          // (opacidad + escala); el <Image> de adentro hace Ken Burns. Mezclar
+          // el cruce y el Ken Burns en el mismo nodo anulaba los dos transform.
           <AnimatePresence initial={false}>
-            <motion.div
+            <m.div
               key={actual.url}
               className="absolute inset-0"
               initial={{ opacity: 0, scale: 1.06 }}
@@ -154,22 +186,18 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
                 priority={i === 0}
                 onLoad={() => marcarCargada(i)}
               />
-            </motion.div>
+            </m.div>
           </AnimatePresence>
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-seafoam via-dusk-2 to-dusk" />
         )}
       </div>
 
-      {/* Prefetch de la próxima foto: fuera del AnimatePresence y sin pintar,
-          para que cuando le toque entrar ya esté en cache y el cruce no muestre
-          un hueco. El onLoad es lo que la habilita en el salto del timer. */}
+      {/* Prefetch de la próxima foto, sin pintar: fill + sizes idénticos a la
+          capa visible, porque el loader reescribe la URL según el ancho y una
+          miniatura bajaría otro archivo. El onLoad la habilita en el salto. */}
       {rotando && fotoSiguiente ? (
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 opacity-0">
-          {/* fill + sizes idénticos a los de la capa visible: el loader de
-              Supabase/R2 reescribe la URL según el ancho pedido, así que un
-              prefetch en miniatura bajaría un archivo distinto del que después
-              se necesita y no serviría de nada. */}
           <Image
             src={fotoSiguiente.url}
             alt=""
@@ -182,110 +210,103 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
         </div>
       ) : null}
 
-      <div className="absolute inset-0 bg-gradient-to-t from-dusk via-dusk/70 to-dusk/20" />
-      <div className="absolute inset-0 bg-gradient-to-r from-dusk/60 via-dusk/10 to-transparent" />
-      {/* Bajo la barra transparente: sin esto, el texto claro de la barra se
-          pierde sobre un cielo o una playa clara. */}
+      {/* Velos: solo a la izquierda (donde va el texto) y abajo (donde va el
+          cotizador), no un velo plano sobre toda la foto. En el teléfono el
+          texto ocupa todo el ancho y el de abajo sube más. */}
+      <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-4/5 bg-gradient-to-t from-dusk via-dusk/75 to-transparent lg:h-3/5 lg:via-dusk/40" />
+      <div aria-hidden="true" className="absolute inset-y-0 left-0 w-full bg-gradient-to-r from-dusk/70 via-dusk/20 to-transparent lg:w-3/4" />
+      {/* Bajo la barra transparente: sin esto, la tinta clara de la barra se
+          pierde sobre un cielo o una arena clara. */}
       <div aria-hidden="true" className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-dusk/70 to-transparent" />
 
-      {/* Sin Revelar: el texto del hero está en pantalla desde el primer pintado
-          (es candidato a LCP y no debe esperar a hidratar). El único movimiento
-          orquestado de la portada es el tablero. */}
-      <div className="relative mx-auto w-full max-w-[var(--ancho-contenido)] px-5 pb-8 pt-24 sm:pb-12 sm:pt-28 lg:pb-16 lg:pt-32">
-        <div className="mb-6">
-          <TableroSalidas texto={tablero} className="text-lg sm:text-2xl lg:text-3xl" />
-          {lugar ? (
-            <p className="mt-2.5 truncate text-sm font-medium text-dusk-text-soft">{lugar}</p>
+      <div className="relative mx-auto flex w-full max-w-[var(--ancho-contenido)] flex-1 flex-col px-5 pb-6 pt-[calc(var(--alto-barra)+var(--alto-categorias)+2rem)] lg:pb-8 lg:pt-[calc(var(--alto-barra)+var(--alto-categorias)+3.5rem)]">
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,27rem)] lg:items-start lg:gap-12">
+          {/* Sin Revelar: el texto está en pantalla desde el primer pintado
+              (candidato a LCP). El tablero es el único movimiento de carga del
+              bloque de texto. */}
+          <div className="min-w-0">
+            <TableroSalidas texto={tablero} largo={largo} className={claseTablero(largo)} />
+            {lugar ? <p className="mt-2.5 truncate text-sm font-medium text-dusk-text-soft">{lugar}</p> : null}
+
+            <h1 className="mt-6 max-w-[13ch] text-balance font-display text-[clamp(2.75rem,6.4vw,5rem)] font-bold leading-[0.95] tracking-[-0.02em] text-white lg:mt-8">
+              <EditableText path="home.hero.title" />{" "}
+              <EditableText path="home.hero.accent" className="text-coral-bright" />
+            </h1>
+
+            <EditableText
+              path="home.hero.description"
+              as="p"
+              multiline
+              className="mt-5 hidden max-w-lg text-pretty text-lg leading-7 text-dusk-text sm:block"
+            />
+          </div>
+
+          {pase ? (
+            <div className="hero-sube relative mt-6 lg:mt-0" style={retraso(60)}>
+              <AnimatePresence initial={false} mode="popLayout">
+                <m.div
+                  key={pase.promoId}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -16 }}
+                  transition={{ duration: reducido ? 0 : 0.42, ease: CURVA }}
+                >
+                  <PaseDestacado pase={pase} destino={destino} />
+                </m.div>
+              </AnimatePresence>
+            </div>
           ) : null}
         </div>
 
-        <h1 className="max-w-[13ch] text-balance font-display text-[clamp(2.75rem,6.4vw,5rem)] font-bold leading-[0.95] tracking-[-0.02em] text-white">
-          <EditableText path="home.hero.title" />{" "}
-          <EditableText path="home.hero.accent" className="text-coral-bright" />
-        </h1>
+        <div className="mt-auto pt-8 lg:pt-12">
+          <div className="hero-sube hidden lg:block" style={retraso(120)}>
+            <CotizadorRapidoBarra />
+          </div>
 
-        <EditableText
-          path="home.hero.description"
-          as="p"
-          multiline
-          className="mt-5 max-w-lg text-pretty text-base leading-7 text-dusk-text md:text-lg"
-        />
-
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <Boton href={hero.primaryHref} variante="firma" tamano="lg" iconoFin={<Icono nombre="flecha-der" tamano={20} />}>
-            {hero.primaryLabel}
-          </Boton>
-          {esWhatsapp ? (
-            <WhatsAppLeadButton
-              mensajeBase="Hola! Vengo de su página web y quiero planificar mi próximo viaje."
-              triggerClassName={clasesBoton({ variante: "sobre-foto", tamano: "lg" })}
-            >
-              <WhatsAppIcon size={18} />
-              {hero.secondaryLabel}
-            </WhatsAppLeadButton>
-          ) : (
-            <Boton href={hero.secondaryHref} variante="sobre-foto" tamano="lg" iconoFin={<Icono nombre="externo" tamano={18} />}>
-              {hero.secondaryLabel}
+          <div className="hero-sube flex flex-col gap-3 lg:hidden" style={retraso(120)}>
+            <CotizadorRapidoMovil />
+            <Boton href={hero.primaryHref} variante="firma" tamano="lg" ancho iconoFin={<Icono nombre="flecha-der" tamano={20} />}>
+              {hero.primaryLabel}
             </Boton>
-          )}
-        </div>
+          </div>
 
-        {/* Fila de datos del pase: el eyebrow viejo bajó acá, al lado de los
-            dos datos editables, en vez de ir como etiqueta encima del título. */}
-        <div className="mt-10 flex max-w-xl flex-wrap items-end gap-x-8 gap-y-4 border-t border-dashed border-white/20 pt-5">
-          <EditableText
-            path="home.hero.eyebrow"
-            as="p"
-            className="basis-full font-mono text-xs font-bold uppercase tracking-[0.14em] text-dusk-text-soft sm:basis-auto"
-          />
-          <div>
-            <EditableText path="home.hero.badgeTopLabel" as="p" className="font-mono text-xs uppercase tracking-wider text-dusk-text-soft" />
-            <EditableText path="home.hero.badgeTopValue" as="p" className="mt-1 text-sm font-bold text-white" />
-          </div>
-          <div>
-            <EditableText path="home.hero.badgeBottomLabel" as="p" className="font-mono text-xs uppercase tracking-wider text-dusk-text-soft" />
-            <EditableText path="home.hero.badgeBottomValue" as="p" className="mt-1 text-sm font-bold text-white" />
+          <div className="mt-3 flex flex-col-reverse items-center gap-1 lg:mt-4 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:gap-6">
+            <span className="hidden lg:block" />
+            {rotando ? (
+              // Segmentos tipo historias: uno por foto, el activo se llena con
+              // el reloj y los ya vistos quedan llenos. Un clic salta a esa foto.
+              <div className="flex w-full max-w-xs items-center lg:w-72">
+                {orden.map((foto, idx) => (
+                  <button
+                    key={foto.url}
+                    type="button"
+                    onClick={() => setI(idx)}
+                    aria-label={`Ver oferta ${idx + 1} de ${orden.length}: ${foto.alt}`}
+                    aria-current={idx === i}
+                    className="group/seg flex h-11 min-w-0 flex-1 items-center px-1"
+                  >
+                    <span className="relative block h-1 w-full overflow-hidden rounded-pill bg-white/25 transition-colors duration-150 ease-salida group-hover/seg:bg-white/45">
+                      {idx < i ? <span className="absolute inset-0 bg-white/80" /> : null}
+                      {idx === i ? (
+                        <m.span
+                          key={`${i}-${vuelta}-${activo}`}
+                          className="absolute inset-0 origin-left bg-white"
+                          initial={{ scaleX: reducido ? 1 : 0 }}
+                          animate={{ scaleX: activo || reducido ? 1 : 0 }}
+                          transition={{ duration: reducido ? 0 : MS_POR_FOTO / 1000, ease: "linear" }}
+                        />
+                      ) : null}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <span className="hidden lg:block" />
+            )}
+            <div className="lg:justify-self-end">{asesor}</div>
           </div>
         </div>
-
-        {rotando ? (
-          <div className="mt-5 flex items-center">
-            {orden.map((foto, idx) => (
-              <button
-                key={foto.url}
-                type="button"
-                onClick={() => setI(idx)}
-                aria-label={`Ver foto ${idx + 1} de ${orden.length}: ${foto.alt}`}
-                aria-current={idx === i}
-                className="group/punto flex h-11 items-center px-1"
-              >
-                <span
-                  className={
-                    "block h-1 rounded-full transition-[width,background-color] duration-500 ease-salida " +
-                    (idx === i
-                      ? "w-8 bg-coral-bright"
-                      : "w-3 bg-white/40 group-hover/punto:w-5 group-hover/punto:bg-white/70")
-                  }
-                />
-              </button>
-            ))}
-          </div>
-        ) : null}
       </div>
-
-      {/* Barra de tiempo del slide: se reinicia sola en cada foto por el key.
-          Se congela junto con el timer. */}
-      {rotando ? (
-        <div className="absolute inset-x-0 bottom-0 h-[3px] bg-white/10" aria-hidden="true">
-          <motion.div
-            key={i}
-            className="h-full origin-left bg-coral-bright"
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: activo ? 1 : 0 }}
-            transition={{ duration: MS_POR_FOTO / 1000, ease: "linear" }}
-          />
-        </div>
-      ) : null}
     </section>
   );
 }

@@ -1,8 +1,6 @@
 import { Hero } from "@/components/home/Hero";
-import { VitrinaOfertas } from "@/components/home/VitrinaOfertas";
-import { BuscarAfordancia } from "@/components/home/BuscarAfordancia";
 import { HotSalesSection } from "@/components/home/HotSalesSection";
-import { promosHotSales, ofertasVitrina } from "@/lib/promociones/hotSales";
+import { promosHotSales } from "@/lib/promociones/hotSales";
 import { fotosHeroDeHotSales } from "@/lib/promociones/fotosHero";
 import { AcompanamientoSection } from "@/components/home/AcompanamientoSection";
 import { MasDeLotus } from "@/components/home/MasDeLotus";
@@ -20,34 +18,26 @@ export default async function Home() {
   const hotSales = promosHotSales(promociones);
 
   // Fotos del hero: salen de las Hot Sales vigentes y van rotando (pedido del
-  // dueño, 2026-07-26) -- así la portada muestra lo que de verdad se está
-  // vendiendo ahora, en vez de la misma imagen fija siempre. El filtrado
-  // (descartar flyers, referenciales y fotos chicas) vive en fotosHeroDeHotSales.
+  // dueño, 2026-07-26), cada una con su promo como "pase destacado". El
+  // filtrado (descartar flyers, referenciales y fotos chicas) y el armado del
+  // pase viven en fotosHeroDeHotSales.
   const heroFotos = fotosHeroDeHotSales(hotSales);
 
   // Respaldo si todavía no hay Hot Sales con foto propia -- la portada nunca
-  // se queda sin imagen.
+  // se queda sin imagen (sin pase: no hay promo detrás).
   const heroFallback = [hoteles[0], hoteles[1], hoteles[2]]
     .filter((p): p is NonNullable<typeof p> => Boolean(p))
     .map((p) => ({ url: fotosDe(p.producto_fotos)[0], alt: p.nombre, destino: p.destino }))
     .filter((f) => f.url);
 
-  // Las 4 de la vitrina salen del mismo pool que la seccion Hot Sales, asi que
-  // hay que sacarlas de ahi: si no, la misma promo aparece dos veces en la
-  // misma pantalla, separada por 300px.
-  const ofertas = ofertasVitrina(hotSales);
-  const idsVitrina = new Set(ofertas.map((p) => p.id));
-  const hotSalesRestantes = hotSales.filter((p) => !idsVitrina.has(p.id));
-
+  // Orden (comp B aprobado, 2026-09-24): Hot Sales asoma bajo el hero, con el
+  // precio a la vista; la vitrina de 4 ofertas y la afordancia de búsqueda
+  // salieron: el pase destacado y el cotizador rápido hacen ese trabajo.
   return (
     <main>
       <Hero fotos={heroFotos.length > 0 ? heroFotos : heroFallback} />
 
-      <VitrinaOfertas ofertas={ofertas} />
-
-      <BuscarAfordancia />
-
-      <HotSalesSection pool={hotSalesRestantes} />
+      <HotSalesSection pool={hotSales} />
 
       <AcompanamientoSection />
 

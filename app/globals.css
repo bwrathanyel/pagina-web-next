@@ -393,6 +393,11 @@ html {
 .sobre-dusk:focus-visible {
   outline-color: var(--color-gold);
 }
+/* Una superficie card dentro de una banda dusk (cotizador rápido del hero):
+   el dorado sobre crema no llega a 3:1, así que ahí el foco vuelve al acento. */
+.sobre-dusk .sobre-claro :focus-visible {
+  outline-color: var(--color-acento);
+}
 
 /* Barra del sitio transparente sobre la foto del hero: los tokens de texto,
    hover y filete pasan a sus pares de dusk dentro del grupo, así los mismos
@@ -557,6 +562,17 @@ html {
   animation-play-state: paused;
 }
 
+/* Carga del hero, el único momento orquestado: el pase y el cotizador suben
+   escalonados. Corre en CSS desde el primer pintado, sin esperar a hidratar;
+   el titular no la usa (es el LCP y está quieto desde el principio). */
+@keyframes hero-sube {
+  from { opacity: 0; transform: translateY(16px); }
+}
+.hero-sube {
+  animation: hero-sube var(--dur-lenta) var(--ease-salida) backwards;
+  animation-delay: var(--retraso, 0ms);
+}
+
 /* ── Tablero de salidas (TableroSalidas.tsx) ─────────────────────────────
    Firma del rediseño: cada letra es una paleta de tablero de aeropuerto con su
    bisagra al medio. La paleta cae desde arriba al cambiar de letra. */
@@ -673,6 +689,7 @@ html {
   .animate-carrito-rebote,
   .animate-corazon-latido,
   .animate-campana-balanceo,
+  .hero-sube,
   .flap-celda > span {
     animation: none !important;
   }

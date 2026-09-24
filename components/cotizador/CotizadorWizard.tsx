@@ -33,22 +33,34 @@ function defaultsDe(tipo: TipoCotizacion): Respuestas {
   return respuestas;
 }
 
+// Primer paso con un requerido sin responder: quien llega desde el cotizador
+// rápido del hero no vuelve a elegir lo que ya eligió.
+function primerPasoIncompleto(tipo: TipoCotizacion, r: Respuestas): number {
+  const idx = WIZARD_CONFIG[tipo].findIndex((paso) =>
+    paso.campos.some((c) => (!c.condicion || c.condicion(r)) && c.required && !r[c.key] && r[c.key] !== 0),
+  );
+  return idx < 0 ? 0 : idx;
+}
+
 export function CotizadorWizard({
   tipo,
   productoNombre,
+  inicial,
 }: {
   tipo: TipoCotizacion;
   productoNombre?: string;
+  /** Respuestas que ya trae la URL (cotizador rápido del hero). */
+  inicial?: Respuestas;
 }) {
   const router = useRouter();
   const pasos = WIZARD_CONFIG[tipo];
-  const [pasoActual, setPasoActual] = useState(0);
   const [respuestas, setRespuestas] = useState<Respuestas>(() => {
-    const base = defaultsDe(tipo);
+    const base = { ...defaultsDe(tipo), ...inicial };
     if (productoNombre && tipo === "fullday") base.destino = productoNombre;
     if (productoNombre && tipo === "paquete") base.destino = productoNombre;
     return base;
   });
+  const [pasoActual, setPasoActual] = useState(() => (inicial ? primerPasoIncompleto(tipo, respuestas) : 0));
   const [enviando, setEnviando] = useState(false);
   const [waHref, setWaHref] = useState<string | null>(null);
   // Ref, no state: un doble-click antes del próximo render vería el mismo

@@ -8,7 +8,7 @@
 // `origen='flyer'`). Los campos estructurados los escribe la carga maestra;
 // mientras no corra vienen NULL y todo cae a `precio_texto`/`vigencia_texto`.
 import type { Producto, Tarifa, TarifarioBloque, VentanaTarifa } from "@/types/supabase";
-import { formatearPrecioCliente } from "@/lib/utils/formatoPrecio";
+import { formatearPrecioCliente, formatearPrecioDesde } from "@/lib/utils/formatoPrecio";
 
 const ETIQUETA_ORDEN = ["sgl", "dbl", "tpl", "cdp", "qpl", "pax_adic"];
 
@@ -106,6 +106,25 @@ export function precioDobleHero(t: Tarifa | null | undefined): { monto: string; 
     monto: montoConMoneda(Math.round(monto * 100) / 100, t?.moneda),
     nota: "por persona / noche · ocupación doble",
   };
+}
+
+/** La única regla de precio de una oferta (plan 2026-09-24): el doble por
+ * persona y noche si la fila trae grilla; si no, el "desde" calculado; si no,
+ * el texto del tarifario tal cual. `desde` dice si el monto es un piso (y así
+ * se rotula) o la tarifa exacta de la grilla. `corto` = cabe en el talón en
+ * mono grande; el texto libre del tarifario no. */
+export function precioTarjeta(p: {
+  precios?: Record<string, string | number | null> | null;
+  moneda?: string | null;
+  precio_desde_usd?: number | null;
+  precio_texto?: string | null;
+}): { monto: string; unidad: string | null; desde: boolean; corto: boolean } | null {
+  const doble = precioDobleHero({ precios: p.precios, moneda: p.moneda } as Tarifa);
+  if (doble) return { monto: doble.monto, unidad: "por persona y noche, en doble", desde: false, corto: true };
+  const desde = formatearPrecioDesde(p.precio_desde_usd, p.precio_texto);
+  if (desde) return { monto: desde, unidad: null, desde: true, corto: true };
+  const texto = formatearPrecioCliente(p.precio_texto)?.trim();
+  return texto ? { monto: texto, unidad: null, desde: false, corto: texto.length <= 12 } : null;
 }
 
 /** Nombre visible de una promoción = "Hotel · Título". Capa de vista: el
