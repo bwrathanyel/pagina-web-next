@@ -376,9 +376,87 @@ html {
   color: var(--color-sobre-acento);
 }
 
+/* color-scheme hace que las listas nativas de <select> y el calendario de
+   <input type="date"> sigan el tema. Sin él se abrían siempre en blanco con la
+   tinta del tema: en oscuro, opciones crema sobre blanco que no se leían. */
 :root {
   accent-color: var(--color-acento);
   caret-color: var(--color-acento);
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+/* Lista desplegable con los tokens del sitio donde el navegador deja
+   dibujarla (Chromium 135+). Safari y Firefox se quedan con la nativa, que ya
+   respeta el tema por el color-scheme de arriba. Los íconos van por máscara:
+   los de fábrica son glifos (▾ y ✓). */
+@supports (appearance: base-select) {
+  .selector-marca,
+  .selector-marca::picker(select) {
+    appearance: base-select;
+  }
+  .selector-marca {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .selector-marca::picker-icon {
+    content: "";
+    margin-inline-start: auto;
+    inline-size: 1.125rem;
+    block-size: 1.125rem;
+    background: var(--color-ink-soft);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+    transition: rotate 150ms var(--ease-salida);
+  }
+  .selector-marca:open::picker-icon {
+    rotate: 180deg;
+  }
+  .selector-marca::picker(select) {
+    margin-block: 0.75rem;
+    padding: 0.375rem;
+    border: 0;
+    border-radius: var(--radius-card);
+    background: var(--color-card);
+    color: var(--color-ink);
+    box-shadow: var(--shadow-chrome);
+    max-block-size: min(24rem, 60dvh);
+  }
+  .selector-marca option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.75rem;
+    border-radius: 0.625rem;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    outline-offset: -2px;
+  }
+  .selector-marca option:is(:hover, :focus-visible) {
+    background: var(--color-sand-2);
+  }
+  .selector-marca option:checked {
+    background: var(--color-acento-suave);
+    color: var(--color-acento);
+    font-weight: 600;
+  }
+  .selector-marca option::checkmark {
+    order: 1;
+    content: "";
+    margin-inline-start: auto;
+    inline-size: 1.125rem;
+    block-size: 1.125rem;
+    background: currentColor;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .selector-marca::picker-icon {
+      transition: none;
+    }
+  }
 }
 
 :focus-visible {

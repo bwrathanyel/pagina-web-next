@@ -61,6 +61,9 @@ function Tramo({ etiqueta, children }: { etiqueta: string; children: (id: string
 
 const CONTROL_TRAMO =
   "w-full min-w-0 cursor-pointer rounded-control bg-transparent py-1 text-lg font-semibold text-ink outline-offset-4";
+// Solo la barra de escritorio: en el teléfono la lista nativa (rueda o
+// diálogo a pantalla completa) se toca mejor que un menú flotante.
+const SELECTOR_TRAMO = `selector-marca ${CONTROL_TRAMO}`;
 
 /** Escritorio: barra ancha estilo buscador de viajes, con "Cotizar" como CTA. */
 export function CotizadorRapidoBarra() {
@@ -73,14 +76,14 @@ export function CotizadorRapidoBarra() {
       <div className="grid min-w-0 flex-1 grid-cols-[1.1fr_1.4fr_1fr_0.9fr] divide-x divide-linea">
         <Tramo etiqueta="Servicio">
           {(id) => (
-            <select id={id} name="servicio" defaultValue={INICIAL.servicio} className={CONTROL_TRAMO}>
+            <select id={id} name="servicio" defaultValue={INICIAL.servicio} className={SELECTOR_TRAMO}>
               <OpcionesServicio />
             </select>
           )}
         </Tramo>
         <Tramo etiqueta="Destino">
           {(id) => (
-            <select id={id} name="destino" defaultValue={INICIAL.destino} className={CONTROL_TRAMO}>
+            <select id={id} name="destino" defaultValue={INICIAL.destino} className={SELECTOR_TRAMO}>
               <OpcionesDestino />
             </select>
           )}
@@ -90,7 +93,7 @@ export function CotizadorRapidoBarra() {
         </Tramo>
         <Tramo etiqueta="Adultos">
           {(id) => (
-            <select id={id} name="adultos" defaultValue={INICIAL.adultos} className={CONTROL_TRAMO}>
+            <select id={id} name="adultos" defaultValue={INICIAL.adultos} className={SELECTOR_TRAMO}>
               <OpcionesAdultos />
             </select>
           )}
