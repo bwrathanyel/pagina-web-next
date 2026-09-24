@@ -1,22 +1,20 @@
 import { Hero } from "@/components/home/Hero";
 import { HotSalesSection } from "@/components/home/HotSalesSection";
 import { DestinosRail } from "@/components/home/DestinosRail";
-import { destinosConOfertas, ordenDelDia, promosHotSales } from "@/lib/promociones/hotSales";
+import { destinosConOfertas, ordenDelDia, soloDestinosHome } from "@/lib/promociones/hotSales";
 import { fotosHeroDeHotSales } from "@/lib/promociones/fotosHero";
 import { AcompanamientoSection } from "@/components/home/AcompanamientoSection";
 import { MasDeLotus } from "@/components/home/MasDeLotus";
 import { fotosDe } from "@/lib/supabase/fotos";
-import { getProductosPorCategoria, getPromociones } from "@/lib/supabase/queries";
+import { getHotSales, getProductosPorCategoria } from "@/lib/supabase/queries";
 
 export default async function Home() {
   // Si Supabase falla acá, mejor una home con menos fotos que una home
   // rota entera — [] es un fallback seguro para todo lo que sigue.
-  const [hoteles, promociones] = await Promise.all([
+  const [hoteles, hotSales] = await Promise.all([
     getProductosPorCategoria("hoteles").catch(() => []),
-    getPromociones().catch(() => []),
+    getHotSales().catch(() => []),
   ]);
-
-  const hotSales = promosHotSales(promociones);
 
   // Fotos del hero: un destino por cada uno con Hot Sales vigentes, rotando
   // (pedido del dueño, 2026-07-26), con la foto del lugar (2026-09-24) y su
@@ -40,7 +38,7 @@ export default async function Home() {
     <main>
       <Hero fotos={heroFotos.length > 0 ? heroFotos : heroFallback} />
 
-      <HotSalesSection pool={ordenDelDia(hotSales)} />
+      <HotSalesSection pool={ordenDelDia(soloDestinosHome(hotSales))} />
 
       <DestinosRail destinos={destinosConOfertas(hotSales)} />
 

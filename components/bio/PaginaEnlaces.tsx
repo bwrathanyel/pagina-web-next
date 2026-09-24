@@ -5,8 +5,7 @@ import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import { SocialIcon, ICONS } from "@/components/layout/SocialIcon";
 import { FondoRotativoBio } from "@/components/bio/FondoRotativoBio";
 import { REDES } from "@/lib/social";
-import { getPromociones } from "@/lib/supabase/queries";
-import { promosHotSales } from "@/lib/promociones/hotSales";
+import { getHotSales } from "@/lib/supabase/queries";
 import { fotosHeroDeHotSales } from "@/lib/promociones/fotosHero";
 
 type Red = "instagram" | "facebook" | "tiktok";
@@ -84,8 +83,7 @@ export async function PaginaEnlaces({ red }: { red: Red }) {
 
   // Mismas fotos de Hot Sales vigentes que usa el Hero de la home (lib/promociones/fotosHero.ts),
   // acá como fondo desenfocado y oscurecido en vez de protagonista.
-  const promociones = await getPromociones().catch(() => []);
-  const fotosFondo = fotosHeroDeHotSales(promosHotSales(promociones), 6);
+  const fotosFondo = fotosHeroDeHotSales(await getHotSales().catch(() => []), 6);
 
   return (
     <div className="relative -mb-20 flex min-h-[100svh] flex-col items-center overflow-hidden bg-gradient-to-b from-dusk to-dusk-2 px-5 pb-[calc(env(safe-area-inset-bottom)+2rem)] pt-14 lg:mb-0">

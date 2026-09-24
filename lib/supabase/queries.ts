@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { supabaseServer } from "@/lib/supabase/server";
-import type { Categoria, Producto, Promocion, ProductoTipo } from "@/types/supabase";
+import type { Categoria, HotSale, Producto, Promocion, ProductoTipo } from "@/types/supabase";
 import { CATEGORIA_A_TIPO } from "@/types/supabase";
 
 // "Casa Vacacional Playa del Sur" vive así en productos.destino a propósito
@@ -82,6 +82,31 @@ export async function getPromociones(): Promise<Promocion[]> {
   if (error) throw error;
   return ((data ?? []) as unknown as Promocion[]).map(promoConDestinoPublico);
 }
+
+// Hot Sales = exactamente la pestaña del CRM (migración 20260924150000): la
+// rpc decide qué tarifas entran, en qué orden y cuáles son manuales, y la vista
+// aporta el detalle de cada una (la vista ya incluye todos esos ids). Antes la
+// web corría el mismo algoritmo sobre otro pool y mostraba otros hoteles.
+type FilaHotSale = Pick<HotSale, "id" | "posicion" | "manual" | "nino_gratis">;
+export const getHotSales = cache(async (): Promise<HotSale[]> => {
+  const sb = supabaseServer();
+  const { data: filas, error } = await sb.rpc("hot_sales_publicas");
+  if (error) throw error;
+  const lista = (filas ?? []) as FilaHotSale[];
+  if (lista.length === 0) return [];
+  const { data, error: errorDetalle } = await sb
+    .from("web_promociones")
+    .select(PROMOCION_SELECT)
+    .in("id", lista.map((f) => f.id));
+  if (errorDetalle) throw errorDetalle;
+  const detalle = new Map(((data ?? []) as unknown as Promocion[]).map((p) => [p.id, p]));
+  return lista
+    .sort((a, b) => a.posicion - b.posicion)
+    .flatMap((f) => {
+      const p = detalle.get(f.id);
+      return p ? [{ ...promoConDestinoPublico(p), posicion: f.posicion, manual: f.manual, nino_gratis: f.nino_gratis }] : [];
+    });
+});
 
 // `cache()`: generateMetadata y el componente de página piden el mismo producto
 // en el mismo render -> una sola query por request (antes eran dos, y la ruta

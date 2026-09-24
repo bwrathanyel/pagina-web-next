@@ -1,7 +1,7 @@
 import { fotosDe } from "@/lib/supabase/fotos";
 import { agruparPorDestino } from "@/lib/supabase/agruparPorDestino";
 import { formatearPrecioDesde } from "@/lib/utils/formatoPrecio";
-import type { Promocion } from "@/types/supabase";
+import type { HotSale, Promocion } from "@/types/supabase";
 
 // Mismo fallback que PromocionCard: fotos propias, y solo si no tiene
 // ninguna, las del hotel.
@@ -10,52 +10,26 @@ export function fotosDeLaPromo(p: Promocion): string[] {
   return propias.length > 0 ? propias : fotosDe(p.producto?.producto_fotos);
 }
 
-// Vigencia: hasta ahora la web NO la filtraba (ver plan Hot Sales manual) y una
-// promo vencida aparecía hundida con score 0 pero aparecía. Vigente = ninguna de
-// sus dos fechas de fin ya pasó. Fechas 'YYYY-MM-DD' (columnas date de Postgres),
-// comparables como string contra la fecha de hoy en ISO.
-export function promoVigente(p: Promocion): boolean {
-  const hoy = new Date().toISOString().slice(0, 10);
-  if (p.fecha_venta_fin && p.fecha_venta_fin < hoy) return false;
-  if (p.fecha_fin_estimada && p.fecha_fin_estimada < hoy) return false;
-  return true;
-}
+// Qué entra en Hot Sales ya no se decide acá: lo decide hot_sales_publicas()
+// en la base, la misma lista que la pestaña del CRM (ver getHotSales()).
 
-// El pool de Hot Sales sale en dos bloques:
-//  1. Manuales: el dueño las forzó desde el CRM (hot_sale_estado === 'poner').
-//     Van primero, en el orden que él fijó (hot_sale_orden), sin dedup por hotel
-//     y sin mínimo de fotos -- el RPC catalogo_hot_sale_marcar ya garantizó >=1
-//     foto al ponerlas. Solo se exige que sigan vigentes: una promo que vence
-//     estando forzada cae sola del pool.
-//  2. Automáticas: las decide el ranking. Se descartan las excluidas a mano
-//     ('quitar') y las no vigentes, se exigen >=2 fotos, y se dedup-ea por hotel
-//     -- el array ya viene ordenado por score desc (getPromociones()), así que
-//     "la primera de cada hotel" es la de mejor rendimiento. El Set de vistos
-//     arranca sembrado con los hoteles del bloque manual: si no, un hotel
-//     forzado volvería a entrar por la puerta automática.
-export function promosHotSales(promociones: Promocion[]): Promocion[] {
-  const vistos = new Set<number | string>();
-  const resultado: Promocion[] = [];
-  const claveHotel = (p: Promocion) => (p.producto ? p.producto.id : `promo:${p.id}`);
+// La home muestra solo estos 5 destinos (pedido del dueño, 2026-09-24);
+// /catalogo/hot-sales conserva el resto. En la base el mismo lugar aparece con
+// más de un nombre, así que se compara sin acentos ni mayúsculas y se reescribe
+// al nombre canónico: si no, los chips mostrarían "Margarita" dos veces.
+export const DESTINOS_HOME = ["Margarita", "Los Roques", "Canaima", "Chichiriviche", "Mérida"] as const;
+const ALIAS_DESTINO: Record<string, string> = { "isla margarita": "Margarita" };
+const clave = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").trim().toLowerCase();
+const CANONICO = new Map<string, string>([
+  ...DESTINOS_HOME.map((d) => [clave(d), d] as [string, string]),
+  ...Object.entries(ALIAS_DESTINO),
+]);
 
-  const manuales = promociones
-    .filter((p) => p.hot_sale_estado === "poner" && promoVigente(p))
-    .sort((a, b) => (a.hot_sale_orden ?? 1e9) - (b.hot_sale_orden ?? 1e9));
-  for (const p of manuales) {
-    vistos.add(claveHotel(p));
-    resultado.push(p);
-  }
-
-  for (const p of promociones) {
-    if (p.hot_sale_estado === "poner" || p.hot_sale_estado === "quitar") continue;
-    if (!promoVigente(p)) continue;
-    const clave = claveHotel(p);
-    if (vistos.has(clave)) continue;
-    if (fotosDeLaPromo(p).length < 2) continue;
-    vistos.add(clave);
-    resultado.push(p);
-  }
-  return resultado;
+export function soloDestinosHome<T extends Promocion>(pool: T[]): T[] {
+  return pool.flatMap((p) => {
+    const destino = p.producto?.destino && CANONICO.get(clave(p.producto.destino));
+    return destino ? [{ ...p, producto: { ...p.producto!, destino } }] : [];
+  });
 }
 
 export function destinosDelPool(pool: Promocion[]): string[] {
@@ -70,7 +44,7 @@ export function destinosDelPool(pool: Promocion[]): string[] {
 // en el orden que fijó el dueño y el resto rota una vez por día, con la fecha
 // de Caracas como semilla. Se calcula en el servidor: antes el cliente
 // barajaba después de hidratar y la grilla saltaba en cada carga.
-export function ordenDelDia(pool: Promocion[], ahora = new Date()): Promocion[] {
+export function ordenDelDia(pool: HotSale[], ahora = new Date()): HotSale[] {
   const dia = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Caracas" }).format(ahora);
   let semilla = 0;
   for (const c of dia) semilla = (Math.imul(semilla, 31) + c.charCodeAt(0)) | 0;
@@ -81,8 +55,8 @@ export function ordenDelDia(pool: Promocion[], ahora = new Date()): Promocion[] 
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
-  const manuales = pool.filter((p) => p.hot_sale_estado === "poner");
-  const resto = pool.filter((p) => p.hot_sale_estado !== "poner");
+  const manuales = pool.filter((p) => p.manual);
+  const resto = pool.filter((p) => !p.manual);
   for (let i = resto.length - 1; i > 0; i--) {
     const j = Math.floor(azar() * (i + 1));
     [resto[i], resto[j]] = [resto[j], resto[i]];

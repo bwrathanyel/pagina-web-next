@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { HotSalesGrid } from "@/components/catalogo/HotSalesGrid";
 import { BuscarClient } from "@/components/catalogo/BuscarClient";
-import { getPromociones } from "@/lib/supabase/queries";
-import { promosHotSales } from "@/lib/promociones/hotSales";
+import { getHotSales } from "@/lib/supabase/queries";
 import { jsonLdScript, buildBreadcrumbJsonLd, buildItemListJsonLd } from "@/lib/seo/jsonld";
 
 const TITLE = "Hot Sales — Las Mejores Ofertas de Hoteles en Venezuela";
@@ -17,8 +16,7 @@ export const metadata: Metadata = {
 };
 
 export default async function HotSalesPage() {
-  const promociones = await getPromociones().catch(() => []);
-  const pool = promosHotSales(promociones);
+  const pool = await getHotSales().catch(() => []);
 
   const itemList = pool
     .filter((p) => p.producto)

@@ -115,8 +115,8 @@ export interface Promocion {
   moneda?: string | null;
   habitacion?: string | null;
   fecha_fin_estimada: string | null;
-  /** Fecha límite de venta. La web filtra vigencia de Hot Sales por este campo
-   * junto con fecha_fin_estimada (ver lib/promociones/hotSales.ts promoVigente). */
+  /** Fecha límite de venta. La vigencia de Hot Sales la filtra
+   * hot_sales_publicas() en la base (ver getHotSales()). */
   fecha_venta_fin: string | null;
   /** Espejo de SOLO LECTURA del eje manual de Hot Sales (catalogo_boost.hot_sale
    * / orden_manual). Lo escribe recalcular_catalogo_score() en la base; nunca se
@@ -137,6 +137,25 @@ export interface Promocion {
     | { id: number; tipo: ProductoTipo; nombre: string; destino: string | null; producto_fotos: Foto[] }
     | null;
   promocion_fotos: Foto[];
+}
+
+/** Regalo de niño gratis leído del texto del PDF por tarifa_nino_gratis()
+ * (porta tarNinoGratis() del CRM). `hasta` es 'YYYY-MM-DD' o null. */
+export interface NinoGratis {
+  cantidad: number;
+  edades: string | null;
+  hasta: string | null;
+  label: string;
+  detalle: string | null;
+  txt: string;
+}
+
+/** Una fila de hot_sales_publicas(), la misma lista que la pestaña Hot Sales
+ * del CRM, con el detalle de `web_promociones`. */
+export interface HotSale extends Promocion {
+  posicion: number;
+  manual: boolean;
+  nino_gratis: NinoGratis | null;
 }
 
 /** Categorías públicas del catálogo — mapeo confirmado contra datos reales,
