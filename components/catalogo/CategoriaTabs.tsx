@@ -7,11 +7,14 @@ import { CATEGORIAS, type Categoria } from "@/types/supabase";
 // Cada categoría es una página distinta, así que la pestaña se vuelve a montar
 // al navegar; el layoutId anima el indicador cuando React monta la nueva
 // mientras desmonta la vieja, y si no, queda fijo sin romper nada.
-export function CategoriaTabs({ activa }: { activa: Categoria }) {
+export function CategoriaTabs({ activa, className = "" }: { activa: Categoria; className?: string }) {
   return (
     <nav
       aria-label="Categorías del catálogo"
-      className="flex gap-2 overflow-x-auto pb-1 snap-x snap-proximity [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_88%,transparent)]"
+      className={
+        "flex gap-2 overflow-x-auto py-1 snap-x snap-proximity [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_88%,transparent)] " +
+        className
+      }
     >
       {CATEGORIAS.map(({ slug, label }) => {
         const isActive = slug === activa;

@@ -38,6 +38,8 @@ export interface TicketCardProps {
   /** Chip clickeable al hotel dueño de la promoción. Solo se muestra cuando
    * hay href y nombre (una promo suelta o una card de producto no lo pasan). */
   hotel?: { nombre?: string | null; href: string | null } | null;
+  /** Portada con prioridad alta: solo las primeras tarjetas de una lista. */
+  prioridad?: boolean;
 }
 
 // Tarjeta de catálogo como pase de abordar: foto y datos arriba; el talón de
@@ -63,6 +65,7 @@ export function TicketCard({
   pieAdmin,
   oculto = false,
   hotel,
+  prioridad = false,
 }: TicketCardProps) {
   return (
     <Boleto
@@ -95,7 +98,7 @@ export function TicketCard({
             />
           ) : null}
           {fotos.length > 0 ? (
-            <CardPhotoGallery fotos={fotos} alt={nombre} referencial={fotosReferenciales} />
+            <CardPhotoGallery fotos={fotos} alt={nombre} referencial={fotosReferenciales} prioridad={prioridad} />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-seafoam-bg via-sand-2 to-card">
               <div className="rounded-card border border-linea bg-card/65 px-8 py-6 text-center text-ink-soft backdrop-blur-sm">
@@ -157,7 +160,8 @@ export function TicketCard({
               <button
                 type="button"
                 onClick={onToggleCarrito}
-                aria-label={enCarrito ? `Quitar ${nombre} del carrito` : `Añadir ${nombre} al carrito`}
+                // Botón de alternar: el nombre no cambia, el estado lo dice aria-pressed.
+                aria-label={`${nombre} en el carrito`}
                 aria-pressed={enCarrito}
                 className={
                   "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-control border transition-colors duration-150 " +

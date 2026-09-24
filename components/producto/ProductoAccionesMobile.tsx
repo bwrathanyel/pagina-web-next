@@ -46,8 +46,7 @@ export function ProductoAccionesOverlay({
 export function ProductoFooterMobile({ cotizarHref }: { cotizarHref: string }) {
   return (
     <div
-      className="fixed inset-x-0 z-30 border-t border-linea bg-card px-5 py-3 lg:hidden"
-      style={{ bottom: "calc(6rem + env(safe-area-inset-bottom))" }}
+      className="fixed inset-x-0 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-30 border-t border-linea bg-card px-5 py-3 lg:hidden"
     >
       <Boton href={cotizarHref} ancho iconoFin={<Icono nombre="flecha-der" tamano={18} />}>
         Cotizar este plan

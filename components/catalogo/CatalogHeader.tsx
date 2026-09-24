@@ -4,7 +4,7 @@ import { EditableText } from "@/components/admin/EditableText";
 import type { Categoria } from "@/types/supabase";
 
 // Solo se ve en escritorio (la página lo envuelve en `hidden lg:block`); el
-// móvil usa CatalogoMobileHeader. La etiqueta editable va debajo del título.
+// móvil lleva solo el h1 en la página. La etiqueta editable va debajo del título.
 export function CatalogHeader({ categoria, label, count }: { categoria: Categoria; label: string; count: number }) {
   return (
     <header className="mb-7 overflow-hidden rounded-card bg-dusk px-10 py-12 text-dusk-text">

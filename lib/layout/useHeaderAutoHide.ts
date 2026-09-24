@@ -55,12 +55,37 @@ export function useHeaderAutoHide(msParaOcultar = 1600) {
     };
   }, [msParaOcultar]);
 
+  const refContenedor = useRef<HTMLElement | null>(null);
+  const mostrado = visible || retenido;
+
+  // Las filas sticky del catálogo se pegan justo bajo la barra: su alto y si
+  // está oculta viajan a <html> (--alto-barra, data-barra-oculta) y globals.css
+  // arma con eso --offset-sticky, así la fila sube cuando la barra se va.
+  useEffect(() => {
+    const el = refContenedor.current;
+    if (!el) return;
+    const raiz = document.documentElement;
+    const ro = new ResizeObserver(() => raiz.style.setProperty("--alto-barra", `${el.offsetHeight}px`));
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      raiz.style.removeProperty("--alto-barra");
+    };
+  }, []);
+
+  useEffect(() => {
+    const raiz = document.documentElement;
+    raiz.toggleAttribute("data-barra-oculta", !mostrado);
+    return () => raiz.removeAttribute("data-barra-oculta");
+  }, [mostrado]);
+
   const propsContenedor = {
+    ref: refContenedor,
     onMouseEnter: () => setRetenido(true),
     onMouseLeave: () => setRetenido(false),
     onFocusCapture: () => setRetenido(true),
     onBlurCapture: () => setRetenido(false),
   };
 
-  return { visible: visible || retenido, propsContenedor };
+  return { visible: mostrado, propsContenedor };
 }

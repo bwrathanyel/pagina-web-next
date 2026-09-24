@@ -45,7 +45,7 @@ export default async function CatalogoIndexPage() {
         dangerouslySetInnerHTML={jsonLdScript(buildBreadcrumbJsonLd([{ name: "Inicio", url: "/" }, { name: "Catálogo", url: "/catalogo" }]))}
       />
       <header className="mb-4 md:mb-8">
-        <h1 className="font-display text-4xl font-semibold leading-none text-ink md:text-5xl">¿Qué está buscando?</h1>
+        <h1 className="font-display text-4xl font-bold leading-none text-ink md:text-5xl">¿Qué está buscando?</h1>
       </header>
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -53,7 +53,7 @@ export default async function CatalogoIndexPage() {
           const foto = fotosPorCategoria[slug] ?? FOTO_EDITORIAL[slug];
           return (
             <Link key={slug} href={`/catalogo/${slug}`} className="group relative aspect-[3/4] overflow-hidden rounded-card bg-sand-2 transition-[transform,box-shadow] duration-[var(--dur-media)] ease-salida hover:-translate-y-1 hover:shadow-lift motion-reduce:transition-none">
-              <Image src={foto} alt={label} fill sizes="(min-width: 768px) 25vw, 50vw" className="object-cover transition-[transform,scale,filter] duration-700 ease-salida group-hover:scale-[1.06] motion-reduce:transition-none" />
+              <Image src={foto} alt="" fill sizes="(min-width: 768px) 25vw, 50vw" className="object-cover transition-[transform,scale,filter] duration-700 ease-salida group-hover:scale-[1.06] motion-reduce:transition-none" />
               <div className="absolute inset-0 bg-gradient-to-t from-dusk/80 via-dusk/0 to-dusk/0" />
               <div className="absolute inset-x-5 bottom-5 flex items-end justify-between gap-2 text-dusk-text">
                 <span className="font-display text-xl font-bold">{label}</span>

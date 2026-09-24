@@ -227,6 +227,7 @@ Tarjeta con muesca y perforación. El cuerpo lleva foto, destino y detalle; el t
 
 ### Filtros del catálogo
 `DestinoChips` y `CategoriaTabs` marcan la opción activa con un indicador `layoutId` que se desliza entre opciones. Chips sin emoji; objetivo táctil de 44px.
+En listas largas (pestañas de `/catalogo/[categoria]`, chips de `/catalogo/hot-sales`) la fila se pega bajo la barra con `FILA_FIJA` (`components/layout/filaFija.ts`): `top: var(--offset-sticky)`, que `useHeaderAutoHide` baja a 0 cuando la barra del móvil se oculta. La fila sangra hasta el borde, tapa con `sand` y lleva un filete `linea` abajo. En la home los chips no se pegan.
 
 ### Favorito
 `BotonFavorito`: botón de 44px con el corazón de `Icono`. El latido (`corazon-latido`) corre solo cuando la persona toca, nunca al montar, y con `prefers-reduced-motion` no anima.

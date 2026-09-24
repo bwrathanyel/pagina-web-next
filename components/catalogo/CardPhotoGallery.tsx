@@ -10,13 +10,20 @@ export function CardPhotoGallery({
   fotos,
   alt,
   referencial = false,
+  prioridad = false,
 }: {
   fotos: string[];
   alt: string;
   /** Transparencia: esta foto es generada por IA (el lugar no tenía ninguna
    * foto real todavía), no una foto del establecimiento. Nunca se oculta. */
   referencial?: boolean;
+  /** Solo las primeras tarjetas de la lista (las que entran en el primer
+   * pantallazo). Antes cada tarjeta pedía su portada con `priority`: una lista
+   * de 40 bajaba 40 fotos con prioridad alta antes que nada. */
+  prioridad?: boolean;
 }) {
+  const carga = (esPortada: boolean) =>
+    prioridad && esPortada ? ({ loading: "eager", fetchPriority: "high" } as const) : {};
   const [activa, setActiva] = useState(0);
   const [hoverActivo, setHoverActivo] = useState(false);
   // En pantallas táctiles no hay hover: el pase se dispara al entrar la tarjeta
@@ -121,7 +128,7 @@ export function CardPhotoGallery({
             aria-hidden="true"
             fill
             sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-            priority={indice === 0}
+            {...carga(indice === 0)}
             onLoad={() => setCargadas((prev) => (prev.has(indice) ? prev : new Set(prev).add(indice)))}
             className="object-cover opacity-0"
           />
@@ -140,7 +147,7 @@ export function CardPhotoGallery({
               alt={alt}
               fill
               sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-              priority={activa === 0}
+              {...carga(activa === 0)}
               className="object-cover"
             />
           </motion.div>
@@ -165,7 +172,7 @@ export function CardPhotoGallery({
           <span className="absolute right-3 top-14 rounded-control bg-dusk/80 px-2 py-1 font-mono text-xs font-bold text-dusk-text backdrop-blur-sm">
             {activa + 1} / {fotos.length}
           </span>
-          <div className="absolute left-1/2 top-12 z-10 flex -translate-x-1/2 gap-1.5">
+          <div className="absolute left-1/2 top-12 z-10 flex -translate-x-1/2">
             {fotos.map((foto, indice) => (
               <button
                 key={foto}
@@ -173,7 +180,7 @@ export function CardPhotoGallery({
                 onClick={() => { setMontarTodas(true); setActiva(indice); }}
                 aria-label={`Ver foto ${indice + 1} de ${fotos.length} de ${alt}`}
                 aria-current={indice === activa}
-                className="group/punto h-6 py-2.5"
+                className="group/punto flex h-6 min-w-6 items-center justify-center"
               >
                 <span
                   className={

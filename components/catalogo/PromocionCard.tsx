@@ -14,7 +14,7 @@ import { formatearPrecioCliente } from "@/lib/utils/formatoPrecio";
 import { nombrePromo, precioDobleHero } from "@/lib/tarifas";
 import type { Promocion, Tarifa } from "@/types/supabase";
 
-export function PromocionCard({ promocion }: { promocion: Promocion }) {
+export function PromocionCard({ promocion, prioridad = false }: { promocion: Promocion; prioridad?: boolean }) {
   const router = useRouter();
   const { agregar, quitar, tieneItem } = useCarritoStore();
   const { esFavorito, toggle } = useFavoritos();
@@ -53,6 +53,7 @@ export function PromocionCard({ promocion }: { promocion: Promocion }) {
     <>
       <TicketCard
         href={href}
+        prioridad={prioridad}
         badge="Promoción"
         nombre={nombre}
         destino={promocion.producto?.destino ?? null}
@@ -122,7 +123,7 @@ export function PromocionCard({ promocion }: { promocion: Promocion }) {
                 </button>
               </div>
               {errorVisibilidad ? (
-                <p className="mt-2 text-xs text-coral">No se pudo cambiar. Inténtelo de nuevo.</p>
+                <p className="mt-2 text-xs text-peligro">No se pudo cambiar. Inténtelo de nuevo.</p>
               ) : null}
             </div>
           ) : undefined

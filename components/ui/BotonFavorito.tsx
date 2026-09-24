@@ -27,7 +27,8 @@ export function BotonFavorito({
         if (!encendido) setLatido((n) => n + 1);
         void onToggle();
       }}
-      aria-label={encendido ? `Quitar ${nombre} de favoritos` : `Guardar ${nombre} en favoritos`}
+      // Botón de alternar: el nombre no cambia, el estado lo dice aria-pressed.
+      aria-label={`${nombre} en favoritos`}
       aria-pressed={encendido}
       className={
         "flex h-11 w-11 items-center justify-center rounded-pill bg-dusk/85 backdrop-blur-sm transition-colors duration-150 " +

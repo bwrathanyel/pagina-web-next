@@ -146,6 +146,18 @@
   --ancho-medio: 64rem;
   --ritmo-seccion: 3.5rem;
   --ritmo-seccion-md: 6rem;
+  /* Lo que una fila sticky (pestañas y chips del catálogo) deja libre arriba:
+     el alto real de la barra del sitio, que mide useHeaderAutoHide en
+     --alto-barra, o 0 cuando la barra del móvil se oculta (abajo). */
+  --offset-sticky: var(--alto-barra, 3.5rem);
+}
+
+/* La barra se oculta por inactividad solo en el móvil; en desktop queda fija
+   y la fila sigue debajo aunque el hook marque el atributo. */
+@media (max-width: 1023.98px) {
+  :root[data-barra-oculta] {
+    --offset-sticky: 0px;
+  }
 }
 
 @theme inline {

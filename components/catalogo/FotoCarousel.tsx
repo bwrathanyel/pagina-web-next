@@ -20,7 +20,8 @@ export function FotoCarousel({ fotos, alt }: { fotos: string[]; alt: string }) {
             alt={i === activa ? alt : ""}
             fill
             sizes="(min-width: 860px) 50vw, 100vw"
-            priority={i === 0}
+            loading={i === 0 ? "eager" : "lazy"}
+            fetchPriority={i === 0 ? "high" : "auto"}
             className={
               "object-cover transition-[opacity,transform,scale] duration-500 ease-entrada-salida motion-reduce:transition-none " +
               (i === activa ? "scale-100 opacity-100" : "pointer-events-none scale-[1.02] opacity-0")

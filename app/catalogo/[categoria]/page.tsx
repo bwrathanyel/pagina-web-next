@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { CategoriaTabs } from "@/components/catalogo/CategoriaTabs";
 import { CatalogHeader } from "@/components/catalogo/CatalogHeader";
-import { CatalogoMobileHeader } from "@/components/catalogo/CatalogoMobileHeader";
+import { FILA_FIJA } from "@/components/layout/filaFija";
 import { CatalogoGrid } from "@/components/catalogo/CatalogoGrid";
 import { ProductoCard } from "@/components/catalogo/ProductoCard";
 import { PromocionCard } from "@/components/catalogo/PromocionCard";
@@ -108,18 +108,18 @@ export default async function CatalogoPage({
           dangerouslySetInnerHTML={jsonLdScript(buildItemListJsonLd(itemList))}
         />
       ) : null}
-      <CatalogoMobileHeader activa={categoria} />
-
+      <h1 className="mb-4 font-display text-3xl font-bold text-ink lg:hidden">Catálogo</h1>
       <div className="hidden lg:block">
         <CatalogHeader
           categoria={categoria}
           label={SEO_POR_CATEGORIA[categoria].heading}
           count={items.length}
         />
+      </div>
 
-        <div className="mb-10">
-          <CategoriaTabs activa={categoria} />
-        </div>
+      {/* Hija directa de <main>: sticky no sale de su padre. */}
+      <div className={FILA_FIJA + " mb-6 lg:mb-10"}>
+        <CategoriaTabs activa={categoria} className="px-5 scroll-px-5" />
       </div>
 
       {items.length === 0 ? (
@@ -129,7 +129,7 @@ export default async function CatalogoPage({
         </p>
       ) : (
         <div className="flex flex-col gap-10">
-          {grupos.map(({ destino, items: itemsDelGrupo }) => (
+          {grupos.map(({ destino, items: itemsDelGrupo }, g) => (
             <section key={destino}>
               <div className="mb-5 flex items-end justify-between gap-4 border-b border-linea pb-3">
                 <h2 className="font-display text-2xl font-bold text-ink">{destino}</h2>
@@ -141,7 +141,7 @@ export default async function CatalogoPage({
                 {esPromociones
                   ? (itemsDelGrupo as Promocion[]).map((p, i) => (
                       <Revelar key={p.id} retraso={i * 50}>
-                        <PromocionCard promocion={p} />
+                        <PromocionCard promocion={p} prioridad={g === 0 && i < 2} />
                       </Revelar>
                     ))
                   : (itemsDelGrupo as Producto[]).map((p, i) => (
