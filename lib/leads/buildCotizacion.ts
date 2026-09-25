@@ -1,5 +1,6 @@
 import type { Respuestas } from "@/components/cotizador/types";
 import { contarNoches, textoDuracion } from "@/lib/cotizador/cotizacionRapida";
+import { nochesDe, SERVICIOS, textoViajeros, type EstadoViaje } from "@/lib/cotizador/estado";
 import { calcularTotalFullDay } from "@/lib/fullday-pricing";
 
 export interface ResultadoCotizacion {
@@ -227,5 +228,93 @@ export function armarPersonalizado(r: Respuestas): ResultadoCotizacion {
     consulta: `Cotizador personalizado:${servicio}${r.notas ? ` · ${r.notas}` : ""}`,
     mensajeEmoji,
     mensajeTexto,
+  };
+}
+
+// ---- Cotizador v2 "Arme su viaje" (/cotizar) ----
+
+export interface ContactoViaje {
+  nombre: string;
+  telefono: string;
+  correo: string;
+  notas: string;
+}
+
+const FECHA_LARGA = new Intl.DateTimeFormat("es-VE", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+const fechaLarga = (iso: string) => FECHA_LARGA.format(new Date(`${iso}T00:00:00Z`));
+
+// Topes de /api/lead (destino 220, personas 160, consulta 3000).
+const recortar = (texto: string, max: number) => (texto.length > max ? `${texto.slice(0, max - 3).trimEnd()}...` : texto);
+
+/** Un solo lead por cotización, con todo lo estructurado en `consulta` como
+ * texto ordenado (el contrato de /api/lead no cambia). Nunca lleva un precio:
+ * el estimado por hotel llega en E2 y, sin tarifa aplicable, el asesor confirma. */
+export function armarCotizacionViaje(
+  e: EstadoViaje,
+  c: ContactoViaje,
+  hotel: { id: number; nombre: string } | null,
+  leadId?: number,
+): ResultadoCotizacion {
+  const tiene = (s: EstadoViaje["servicios"][number]) => e.servicios.includes(s);
+  const hospedaje = tiene("hospedaje");
+  const vuelo = tiene("vuelo");
+  const tours = tiene("tours");
+  const noches = nochesDe(e);
+  const servicio = e.servicios.map((s) => SERVICIOS.find((x) => x.id === s)?.etiqueta ?? s).join(" + ");
+  const viajeros = textoViajeros(e);
+  const edades = e.ninos > 0 ? e.edades.map((a) => `${a} años`).join(", ") : "";
+  const fechas = e.desde
+    ? e.hasta
+      ? `${fechaLarga(e.desde)} al ${fechaLarga(e.hasta)} (${noches} ${noches === 1 ? "noche" : "noches"})`
+      : `${fechaLarga(e.desde)} (salida por definir)`
+    : "Por definir";
+  const tramoVuelo = `${e.origen} a ${e.destino}, ${e.vuelo === "ida" ? "solo ida" : "ida y vuelta"}`;
+  const hotelTexto = hotel ? `${hotel.nombre} (#${hotel.id})` : "Sin hotel elegido: el asesor propone opciones";
+  const destino = vuelo && !hospedaje && !tours ? `${e.origen} a ${e.destino}` : e.destino;
+
+  const consulta = [
+    "Cotización web: Arme su viaje",
+    `Servicios: ${servicio}${hospedaje && vuelo ? " (hospedaje con vuelo)" : ""}`,
+    `Destino: ${e.destino}`,
+    `Fechas: ${fechas}`,
+    `Viajeros: ${viajeros}`,
+    edades ? `Edades de niños: ${edades}` : "",
+    hospedaje ? `Hotel: ${hotelTexto}` : "",
+    hospedaje && e.tarifa ? `Tarifa de referencia: #${e.tarifa}` : "",
+    vuelo ? `Vuelo: ${tramoVuelo}` : "",
+    tours ? "Full day y tours: sí (grupo mínimo 15 personas)" : "",
+    "Precio: a confirmar por el asesor",
+    c.correo ? `Correo: ${c.correo}` : "",
+    c.notas ? `Notas: ${c.notas}` : "",
+  ]
+    .filter(Boolean)
+    .join(" | ");
+
+  const { emoji, texto } = armarMensajes(
+    "🧭 *COTIZACIÓN DE VIAJE - DESTINO Y EVENTOS LOTUS 360*",
+    [
+      leadId ? ["🔖", `*Cotización:* #${leadId}`] : null,
+      ["👤", `*Nombre:* ${c.nombre}`],
+      ["🧳", `*Servicios:* ${servicio}${hospedaje && vuelo ? " (hospedaje con vuelo)" : ""}`],
+      ["📍", `*Destino:* ${e.destino}`],
+      ["📅", `*Fechas:* ${fechas}`],
+      ["👥", `*Viajeros:* ${viajeros}`],
+      edades ? ["👶", `*Edades niños:* ${edades}`] : null,
+      hospedaje ? ["🏨", `*Hotel:* ${hotelTexto}`] : null,
+      vuelo ? ["✈️", `*Vuelo:* ${tramoVuelo}`] : null,
+      tours ? ["🌴", "*Full day y tours:* sí (grupo mínimo 15 personas)"] : null,
+      c.correo ? ["✉️", `*Correo:* ${c.correo}`] : null,
+      c.notas ? ["📝", `*Notas:* ${c.notas}`] : null,
+    ],
+    "✅ *Enviar opciones con precio confirmado. ¡Gracias!*",
+  );
+
+  return {
+    destino: recortar(destino, 220),
+    servicio,
+    personas: recortar(edades ? `${viajeros} (niños: ${edades})` : viajeros, 160),
+    consulta: recortar(consulta, 3000),
+    mensajeEmoji: emoji,
+    mensajeTexto: texto,
   };
 }

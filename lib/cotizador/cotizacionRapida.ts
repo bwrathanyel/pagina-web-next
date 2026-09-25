@@ -1,4 +1,5 @@
 import { DESTINOS_VENEZUELA } from "@/components/cotizador/wizardConfig";
+import { contarNoches, hoyCaracas, sumarDias, textoDuracion } from "@/lib/cotizador/estado";
 import type { Respuestas } from "@/components/cotizador/types";
 
 // Cotizador rápido del hero -> /cotizador-personalizado. La URL lleva slugs
@@ -34,29 +35,7 @@ export function fechasDelServicio(slug: string): readonly [string, string?] {
 
 const uno = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 
-/** Hoy en Caracas como "AAAA-MM-DD": el mínimo de todo campo de fecha de viaje.
- * Con toISOString, de 20:00 a medianoche el mínimo ya era mañana (UTC). */
-export const hoyCaracas = (ahora = new Date()) =>
-  new Intl.DateTimeFormat("en-CA", { timeZone: "America/Caracas" }).format(ahora);
-
-/** "AAAA-MM-DD" + n días, en UTC para que la zona del navegador no corra un día. */
-export function sumarDias(iso: string, n: number) {
-  if (!iso) return "";
-  const d = new Date(`${iso}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + n);
-  return d.toISOString().slice(0, 10);
-}
-
-export function contarNoches(entrada: string, salida: string) {
-  if (!entrada || !salida || salida <= entrada) return 0;
-  return Math.round((Date.parse(`${salida}T00:00:00Z`) - Date.parse(`${entrada}T00:00:00Z`)) / 86_400_000);
-}
-
-/** 3 noches -> "4 días · 3 noches". */
-export function textoDuracion(noches: number) {
-  const dias = noches + 1;
-  return `${dias} ${dias === 1 ? "día" : "días"} · ${noches} ${noches === 1 ? "noche" : "noches"}`;
-}
+export { contarNoches, hoyCaracas, sumarDias, textoDuracion };
 
 const esFechaViaje = (v: string | undefined): v is string =>
   !!v && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v)) && v >= hoyCaracas();

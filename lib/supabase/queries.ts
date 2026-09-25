@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { fotosDe } from "@/lib/supabase/fotos";
 import { supabaseServer } from "@/lib/supabase/server";
 import type { Categoria, HotSale, Producto, Promocion, ProductoTipo } from "@/types/supabase";
 import { CATEGORIA_A_TIPO } from "@/types/supabase";
@@ -163,3 +164,26 @@ export async function getTodasLasPromocionIds(): Promise<number[]> {
   if (error) throw error;
   return (data ?? []).map((d) => d.id as number);
 }
+
+export interface HotelCotizador {
+  id: number;
+  nombre: string;
+  destino: string | null;
+  foto: string | null;
+}
+
+/** Lo mínimo para mostrar el hotel elegido en /cotizar (sin tarifas: la query
+ * completa de `getProductoPorId` es pesada y /cotizar es dinámica). */
+export const getHotelCotizador = cache(async (id: number): Promise<HotelCotizador | null> => {
+  const sb = supabaseServer();
+  const { data, error } = await sb
+    .from("productos")
+    .select("id,nombre,destino,producto_fotos(id,storage_path,orden,es_principal,activo,width,height,origen)")
+    .eq("activo", true)
+    .eq("tipo", "hotel")
+    .eq("id", id)
+    .maybeSingle();
+  if (error || !data) return null;
+  const p = destinoPublico(data as unknown as Producto);
+  return { id: p.id, nombre: p.nombre, destino: p.destino, foto: fotosDe(p.producto_fotos)[0] ?? null };
+});
