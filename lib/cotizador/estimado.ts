@@ -21,6 +21,9 @@ export interface Estadia {
   /** Edad de cada niño (2 a 11). Los bebés van aparte y no pagan. */
   edades: number[];
   bebes: number;
+  /** Promo de niños gratis: cuántos niños (dentro del rango de la tarifa) no
+   * pagan. Son los primeros de la lista; del siguiente en adelante pagan. */
+  ninosGratis?: number;
 }
 
 export type MotivoSinEstimado = "fechas" | "sin-tarifa" | "ocupacion" | "ninos" | "minimo";
@@ -157,12 +160,16 @@ function precioNoche(t: Tarifa, e: Estadia): Noche {
   const rangos = rangosNinos(t);
   let adultos = e.adultos;
   let ninos = 0;
+  let gratis = e.ninosGratis ?? 0;
   for (const edad of e.edades) {
     if (!rangos.length) {
       return { ok: false, motivo: "ninos", texto: "Esta tarifa no publica precio de niños: el asesor lo confirma." };
     }
     const r = rangos.find((x) => edad >= x.desde && edad <= x.hasta);
-    if (r) ninos += numero(p[r.clave]) as number;
+    if (r) {
+      if (gratis > 0) gratis -= 1;
+      else ninos += numero(p[r.clave]) as number;
+    }
     else if (edad > rangos[rangos.length - 1].hasta) adultos += 1;
     else if (edad >= rangos[0].desde) {
       return { ok: false, motivo: "ninos", texto: `La tarifa no publica precio para un niño de ${edad} años.` };
@@ -275,6 +282,13 @@ export function estimarEstadia(elegida: Tarifa, filas: Tarifa[], e: Estadia): Es
   }
   const igtf = usadas.map((t) => bloqueDe(t)?.impuestos?.igtf_pct).find((x) => x != null);
   if (igtf != null) avisos.push(`Si paga en divisas se suma ${igtf}% de IGTF.`);
+  if ((e.ninosGratis ?? 0) > 0 && e.edades.length) {
+    avisos.push(
+      e.edades.length > e.ninosGratis!
+        ? `Promoción de niño gratis: ${e.ninosGratis === 1 ? "el primer niño no paga" : `los primeros ${e.ninosGratis} niños no pagan`}; el resto sí.`
+        : "Promoción de niño gratis aplicada: el asesor confirma las edades permitidas.",
+    );
+  }
 
   const variasTemporadas = segmentos.length > 1;
   const lineas = segmentos.map((s) => ({

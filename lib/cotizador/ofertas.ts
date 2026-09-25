@@ -20,6 +20,8 @@ export interface OfertaHotel {
   orden: number | null;
   todoIncluido: boolean;
   ninosGratis: boolean;
+  /** Cuántos niños no pagan con la promo (0 si no hay). */
+  ninosGratisCantidad: number;
   prioridad: number;
 }
 
@@ -35,6 +37,9 @@ const ALIAS: Record<string, string[]> = {
 const DESTINO_DE = new Map<string, string>(
   DESTINOS.flatMap((d) => (ALIAS[d] ?? [clave(d)]).map((a) => [a, d] as [string, string])),
 );
+
+const cantidadNinoGratis = (p: Promocion) =>
+  Math.max(0, (p as Promocion & { nino_gratis?: { cantidad: number } | null }).nino_gratis?.cantidad ?? p.ninos_gratis_cantidad ?? 0);
 
 /** Una oferta por hotel (la de mayor prioridad: niños gratis, todo incluido,
  * el resto y al final solo desayuno; a igual prioridad, el ranking del pool),
@@ -66,6 +71,7 @@ export function ofertasHoteles(pool: Promocion[]): OfertaHotel[] {
         orden: montoOrden(p),
         todoIncluido: esTodoIncluido(p),
         ninosGratis: tieneNinoGratis(p),
+        ninosGratisCantidad: cantidadNinoGratis(p),
         prioridad: prioridadOferta(p),
       };
     });

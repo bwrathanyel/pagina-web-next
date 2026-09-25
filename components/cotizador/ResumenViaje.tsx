@@ -63,6 +63,7 @@ export function ResumenViaje({
   enviando,
   conTitulo = true,
   datos,
+  desde,
 }: {
   estado: EstadoViaje;
   hotel: Pick<HotelCotizador, "nombre" | "foto"> | null;
@@ -73,6 +74,8 @@ export function ResumenViaje({
   conTitulo?: boolean;
   /** Nombre y WhatsApp: van en el pase, justo encima del envío. */
   datos?: ReactNode;
+  /** Precio anunciado por la oferta, para mostrar mientras faltan fechas. */
+  desde?: { monto: string; unidad: string | null } | null;
 }) {
   const noches = nochesDe(estado);
   const fechas = textoFechas(estado);
@@ -83,6 +86,8 @@ export function ResumenViaje({
   const otros = estado.servicios.some((s) => s !== "hospedaje");
   // Con un solo servicio el talón ya dice el precio: la línea no lo repite.
   const unico = estado.servicios.length === 1;
+  // Sin fechas no hay estimado: se muestra el precio anunciado de la oferta, con su unidad.
+  const referencia = !monto && hospedaje && desde ? desde : null;
   let n = 0;
 
   return (
@@ -92,12 +97,13 @@ export function ResumenViaje({
       talon={
         <div className="flex h-full flex-col justify-center gap-2 px-5">
           <div className="flex items-baseline justify-between gap-3">
-            <span className="text-sm font-semibold text-ink-soft">Estimado</span>
+            <span className="text-sm font-semibold text-ink-soft">{referencia ? "Desde" : "Estimado"}</span>
             <span className="font-mono text-2xl font-bold tabular-nums text-ink" aria-live="polite">
-              {monto ? <PrecioMostrado texto={monto} /> : "A confirmar"}
+              {monto ? <PrecioMostrado texto={monto} /> : referencia ? <PrecioMostrado texto={referencia.monto} /> : "A confirmar"}
             </span>
           </div>
           <p className="text-xs text-ink-soft">
+            {referencia ? `${referencia.unidad ? `${referencia.unidad[0].toUpperCase()}${referencia.unidad.slice(1)}. ` : ""}Elija fechas para ver su total. ` : ""}
             {monto && otros ? "Solo el hospedaje; vuelo y tours a confirmar. " : ""}
             Sujeto a disponibilidad. El asesor le escribe por WhatsApp con el precio final.
           </p>

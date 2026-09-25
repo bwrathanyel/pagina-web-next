@@ -185,3 +185,16 @@ test("sin fechas o sin adultos", () => {
   const r = estimarEstadia(CARIBE[0], CARIBE, estadia("2026-12-20", "2026-12-24", 0));
   assert.ok(!r.ok && r.motivo === "ocupacion");
 });
+
+test("promo niño gratis: el primero no paga, del segundo en adelante sí", () => {
+  const base = estadia("2026-10-10", "2026-10-13", 2, [5]);
+  const uno = estimarEstadia(VENETUR_HABITACION, VENETUR, { ...base, ninosGratis: 1 });
+  assert.ok(uno.ok);
+  assert.equal(uno.total, 195); // 65 x 3, el niño de 5 no paga
+  const dos = estimarEstadia(VENETUR_HABITACION, VENETUR, { ...base, edades: [5, 5], ninosGratis: 1 });
+  assert.ok(dos.ok);
+  assert.equal(dos.total, 255); // (65 + 20) x 3: paga solo el segundo
+  const sin = estimarEstadia(VENETUR_HABITACION, VENETUR, { ...base, edades: [5, 5] });
+  assert.ok(sin.ok);
+  assert.equal(sin.total, 315); // sin promo pagan los dos
+});

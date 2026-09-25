@@ -249,14 +249,18 @@ export function CotizadorViaje({
     estado.desde && estado.hasta ? textoSinDisponibilidad(mapaBloqueos?.get(id), estado.desde, estado.hasta) : null;
 
   const detalleElegido = hotel ? detalles[hotel.id] : undefined;
+  // Sin habitación elegida se usa la tarifa que anuncia la oferta: el cliente
+  // ve un precio desde que marca fechas y afina después con "Ver habitaciones".
+  const tarifaBase = estado.tarifa ?? ofertaElegida?.tarifaId ?? null;
   const tarifaElegida =
-    detalleElegido && detalleElegido !== "error" ? (detalleElegido.tarifas.find((t) => t.id === estado.tarifa) ?? null) : null;
+    detalleElegido && detalleElegido !== "error" ? (detalleElegido.tarifas.find((t) => t.id === tarifaBase) ?? null) : null;
   const estadia: Estadia = {
     desde: estado.desde,
     hasta: estado.hasta,
     adultos: estado.adultos,
     edades: estado.edades.slice(0, estado.ninos),
     bebes: estado.bebes,
+    ninosGratis: ofertaElegida?.ninosGratisCantidad || undefined,
   };
   const hotelBloqueado = hospedaje && hotel ? sinDisponibilidad(hotel.id) : null;
   const estimado =
@@ -415,6 +419,7 @@ export function CotizadorViaje({
       formId={formId}
       enviando={enviando}
       conTitulo={conTitulo}
+      desde={ofertaElegida?.precio ? { monto: ofertaElegida.precio.monto, unidad: ofertaElegida.precio.unidad } : null}
       datos={<DatosContacto formId={formId} contacto={contacto} errores={errores} onCampo={campo} compacto />}
     />
   );
@@ -468,7 +473,7 @@ export function CotizadorViaje({
                       </p>
                     ) : (
                       <p className="text-sm text-ink-soft">
-                        {estimado && !estimado.ok ? `${estimado.texto} ` : !estado.tarifa ? "Elija la habitación para ver el estimado. " : ""}
+                        {estimado && !estimado.ok ? `${estimado.texto} ` : !tarifaBase ? "Elija la habitación para ver el estimado. " : ""}
                         Precio a confirmar por el asesor.
                       </p>
                     )}
@@ -595,7 +600,15 @@ export function CotizadorViaje({
           {nochesDe(estado) > 0 && hospedaje ? <span className="block text-xs font-normal text-dusk-text-soft">{textoDuracion(nochesDe(estado))}</span> : null}
         </span>
         <span className="flex items-center gap-2 font-mono text-base font-bold tabular-nums">
-          {montoBarra ? <PrecioMostrado texto={montoBarra} /> : "A confirmar"}
+          {montoBarra ? (
+            <PrecioMostrado texto={montoBarra} />
+          ) : hospedaje && ofertaElegida?.precio ? (
+            <>
+              <span className="text-xs font-normal">Desde</span> <PrecioMostrado texto={ofertaElegida.precio.monto} />
+            </>
+          ) : (
+            "A confirmar"
+          )}
           <Icono nombre="chevron-abajo" tamano={18} className="rotate-180" />
         </span>
       </button>
