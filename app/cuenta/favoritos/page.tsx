@@ -9,6 +9,9 @@ import { PRODUCTO_SELECT, PROMOCION_SELECT } from "@/lib/supabase/queries";
 import { CatalogoGrid } from "@/components/catalogo/CatalogoGrid";
 import { ProductoCard } from "@/components/catalogo/ProductoCard";
 import { PromocionCard } from "@/components/catalogo/PromocionCard";
+import { Boton } from "@/components/ui/Boton";
+import { EsqueletoTarjeta } from "@/components/ui/Esqueleto";
+import { Icono } from "@/components/ui/Icono";
 import type { Producto, Promocion } from "@/types/supabase";
 
 function FavoritosLista() {
@@ -17,6 +20,7 @@ function FavoritosLista() {
   const [promociones, setPromociones] = useState<Promocion[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(false);
+  const [intento, setIntento] = useState(0);
 
   useEffect(() => {
     if (!user) return;
@@ -43,44 +47,63 @@ function FavoritosLista() {
     return () => {
       vigente = false;
     };
-  }, [user]);
+  }, [user, intento]);
+
+  const total = productos.length + promociones.length;
 
   return (
-    <main className="mx-auto max-w-6xl px-5 py-6 md:py-10">
-      <div className="mb-5 flex items-center gap-3">
+    <main className="mx-auto max-w-7xl px-5 py-4 md:py-14">
+      <div className="mb-6 flex items-center gap-3 md:mb-8">
         <Link
           href="/cuenta"
           aria-label="Volver a mi cuenta"
-          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border border-ink/10 text-ink"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill border border-linea text-ink transition-colors duration-150 hover:bg-sand-2"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M15 19l-7-7 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <Icono nombre="flecha-izq" tamano={18} />
         </Link>
-        <h1 className="font-display text-3xl font-semibold text-ink">Mis favoritos</h1>
+        <h1 className="font-display text-3xl font-bold leading-none text-ink md:text-4xl">Mis favoritos</h1>
+        {!cargando && !error && total > 0 ? (
+          <p className="ml-auto font-mono text-sm tabular-nums text-ink-soft">
+            {total} {total === 1 ? "guardado" : "guardados"}
+          </p>
+        ) : null}
       </div>
 
       {cargando ? (
-        <p className="text-ink-soft">Cargando…</p>
+        <div role="status">
+          <span className="sr-only">Cargando sus favoritos…</span>
+          <CatalogoGrid>
+            {Array.from({ length: 4 }, (_, i) => (
+              <EsqueletoTarjeta key={i} />
+            ))}
+          </CatalogoGrid>
+        </div>
       ) : error ? (
-        <p className="text-coral">No pudimos cargar tus favoritos. Recarga la página.</p>
-      ) : productos.length === 0 && promociones.length === 0 ? (
-        <div className="flex flex-col items-center gap-4 py-16 text-center">
-          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-coral/10 text-coral" aria-hidden="true">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-              <path d="M12 20.5s-7.5-4.6-10-9.3C0.3 7.7 1.8 4 5.5 4c2.1 0 3.6 1.1 4.5 2.3C10.9 5.1 12.4 4 14.5 4 18.2 4 19.7 7.7 18 11.2c-2.5 4.7-10 9.3-10 9.3z" />
-            </svg>
-          </span>
-          <p className="font-display text-xl font-semibold text-ink">Nada guardado todavía</p>
-          <p className="max-w-xs text-ink-soft">
-            Toca el corazón en cualquier hotel, tour o promoción del catálogo para verlo aquí.
-          </p>
-          <Link
-            href="/catalogo"
-            className="mt-2 inline-flex min-h-11 items-center justify-center rounded-full bg-gradient-to-br from-coral to-gold px-6 font-semibold text-btn-ink"
+        <div role="alert" className="flex flex-col items-start gap-4 py-10">
+          <p className="text-ink">No pudimos cargar sus favoritos. Revise su conexión e intente de nuevo.</p>
+          <Boton
+            variante="secundario"
+            onClick={() => {
+              setError(false);
+              setCargando(true);
+              setIntento((n) => n + 1);
+            }}
           >
-            Explorar catálogo
-          </Link>
+            Reintentar
+          </Boton>
+        </div>
+      ) : total === 0 ? (
+        <div className="flex flex-col items-center gap-4 py-16 text-center">
+          <span className="flex h-16 w-16 items-center justify-center rounded-pill bg-coral/10 text-coral" aria-hidden="true">
+            <Icono nombre="corazon" tamano={28} />
+          </span>
+          <p className="font-display text-2xl font-bold text-ink">Todavía no ha guardado nada</p>
+          <p className="max-w-xs text-ink-soft">
+            Toque el corazón en cualquier hotel, tour o promoción y lo encontrará aquí cuando quiera volver a verlo.
+          </p>
+          <Boton href="/catalogo" className="mt-2" iconoFin={<Icono nombre="flecha-der" tamano={18} />}>
+            Explorar el catálogo
+          </Boton>
         </div>
       ) : (
         <CatalogoGrid>

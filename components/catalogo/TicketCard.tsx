@@ -5,7 +5,7 @@ import { Boton } from "@/components/ui/Boton";
 import { BotonFavorito } from "@/components/ui/BotonFavorito";
 import { Icono } from "@/components/ui/Icono";
 import { Etiqueta } from "@/components/ui/Insignia";
-import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
+import { MontoAjustado, PrecioMostrado } from "@/components/ui/PrecioMostrado";
 import { SelloNinoGratis } from "@/components/catalogo/SelloNinoGratis";
 import { separarMonto, type PrecioTarjeta } from "@/lib/tarifas";
 
@@ -171,18 +171,19 @@ export function TicketCard({
         <div className="flex flex-1 flex-col px-4 pb-4 pt-3.5">
           <p className="flex h-8 min-w-0 items-baseline gap-1.5 whitespace-nowrap font-mono tabular-nums">
             {precio?.desde ? <span className="text-xs font-semibold text-ink-soft">desde</span> : null}
-            <span
-              className={
-                "truncate font-bold " +
-                (!precio
-                  ? "text-base leading-8 text-ink-soft"
-                  : montoGrande
-                    ? "text-2xl leading-8 text-acento"
-                    : "text-base leading-8 text-ink")
-              }
-            >
-              {precio ? <PrecioMostrado texto={monto} /> : "Consultar disponibilidad"}
-            </span>
+            {precio && montoGrande ? (
+              <MontoAjustado
+                texto={monto}
+                tope="1.5rem"
+                unaLinea
+                className="min-w-0 flex-1"
+                claseMonto="truncate leading-8 text-acento"
+              />
+            ) : (
+              <span className={"truncate text-base font-bold leading-8 " + (precio ? "text-ink" : "text-ink-soft")}>
+                {precio ? <PrecioMostrado texto={monto} /> : "Consultar disponibilidad"}
+              </span>
+            )}
           </p>
           <p className="h-4 truncate text-xs leading-4 text-ink-soft">{unidad || " "}</p>
 
