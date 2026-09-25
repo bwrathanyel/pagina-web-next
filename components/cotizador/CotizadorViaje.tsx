@@ -90,6 +90,13 @@ export function CotizadorViaje({ inicial, hotel: hotelInicial }: { inicial: Esta
     window.history.replaceState(null, "", `?${serializarEstado(estado)}`);
   }, [estado]);
 
+  // El botón de envío desaparece al confirmar: el foco pasa a la confirmación,
+  // si no queda en el body y el lector de pantalla no se entera.
+  const confirmacion = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (enviado) confirmacion.current?.focus({ preventScroll: true });
+  }, [enviado]);
+
   function cambiar(nuevo: EstadoViaje) {
     // Un hotel de otro destino no sigue elegido.
     setEstado(nuevo.destino === estado.destino ? nuevo : { ...nuevo, hotel: null, tarifa: null });
@@ -176,26 +183,27 @@ export function CotizadorViaje({ inicial, hotel: hotelInicial }: { inicial: Esta
 
   if (enviado) {
     return (
-      <SolicitudLista
-        nivel="h1"
-        waHref={enviado.waHref}
-        detalle={enviado.leadId ? `Cotización #${enviado.leadId}` : "Arme su viaje"}
-        titulo={enviado.fallo ? "Falta un paso para enviarla" : "Su cotización está lista"}
-      >
-        <div className="flex flex-col gap-3">
-          {enviado.fallo ? (
-            <Aviso>
-              No pudimos registrar su solicitud en nuestro sistema. Envíela ahora por WhatsApp y un asesor la recibe
-              directamente.
-            </Aviso>
-          ) : (
-            <p>Envíela por WhatsApp y un asesor le confirma disponibilidad y precio.</p>
-          )}
-          <p className="text-sm">
-            {estado.destino} · {textoFechas(estado)} · {textoViajeros(estado)}
-          </p>
-        </div>
-      </SolicitudLista>
+      <div ref={confirmacion} tabIndex={-1} className="outline-none">
+        <SolicitudLista
+          waHref={enviado.waHref}
+          detalle={enviado.leadId ? `Cotización #${enviado.leadId}` : "Arme su viaje"}
+          titulo={enviado.fallo ? "Falta un paso para enviarla" : "Su cotización está lista"}
+        >
+          <div className="flex flex-col gap-3">
+            {enviado.fallo ? (
+              <Aviso>
+                No pudimos registrar su solicitud en nuestro sistema. Envíela ahora por WhatsApp y un asesor la
+                recibe directamente.
+              </Aviso>
+            ) : (
+              <p>Envíela por WhatsApp y un asesor le confirma disponibilidad y precio.</p>
+            )}
+            <p className="text-sm">
+              {estado.destino} · {textoFechas(estado)} · {textoViajeros(estado)}
+            </p>
+          </div>
+        </SolicitudLista>
+      </div>
     );
   }
 
@@ -350,6 +358,10 @@ export function CotizadorViaje({ inicial, hotel: hotelInicial }: { inicial: Esta
                   />
                 )}
               </Campo>
+              {/* Móvil: el resumen vive en una hoja, así que el envío también va al pie del formulario. */}
+              <Boton type="submit" tamano="lg" ancho cargando={enviando} className="lg:hidden">
+                Enviar solicitud
+              </Boton>
             </form>
           </Seccion>
         </div>
