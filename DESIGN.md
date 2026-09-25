@@ -216,12 +216,12 @@ Radios de 12 a 16px: `card` 16px, `media` y `control` 12px, `pill` 999px solo pa
 - **Focus:** borde `acento` y anillo `ring-4` al 20 %.
 - **Error / Disabled:** `aria-invalid` pinta borde y anillo de `peligro`; deshabilitado al 60 %.
 - **Opciones:** radios y casillas nativos ocultos (`sr-only`) dentro de una etiqueta que pinta el estado con `has-[:checked]` y el foco con `has-[:focus-visible]`. Tarjetas de opción: borde `acento` y fondo `acento-suave` al elegir, con un círculo de check. Etiquetas cortas: píldora que pasa a `acento`. Los grupos van en `fieldset` + `legend`.
-- **Cantidades:** `− valor +` con botones de 44px y el número en mono (`Cantidad` en `CotizacionOpcionForm`).
+- **Cantidades:** `− valor +` con botones de 44px y el número en mono (`SelectorViajeros`; `Cantidad` local en `WhatsAppLeadButton`).
 - **Adjuntos:** `Archivo`, borde punteado y botón del sistema vestido de secundario.
 - **Avisos:** `Aviso` (`error`, `ok`, `info`) en bloque con icono; los errores se anuncian con `role="alert"`.
 
 ### Cierre de solicitud
-`SolicitudLista`: la confirmación de carrito, cotizador y cotización de una opción es un boleto ya emitido, con el envío por WhatsApp en el talón. El lead ya entró al CRM antes de mostrarlo; el botón solo abre la conversación.
+`SolicitudLista`: la confirmación del carrito y del cotizador es un boleto ya emitido, con el envío por WhatsApp en el talón. El lead ya entró al CRM antes de mostrarlo; el botón solo abre la conversación.
 
 ### Navigation
 Escritorio: barra a lo ancho de dos filas dentro de `--ancho-contenido`. Fila 1 (`h-16`, sticky): logo, campo "¿A dónde quiere viajar?" que abre `BuscadorGlobal`, y a la derecha Cotizar (texto), WhatsApp, favoritos, carrito, campana, cuenta y "Preferencias" (`PreferenciasPopover`: moneda y tema, mismo contenido que la hoja "Más" del móvil vía `PreferenciasControles`). Fila 2 (`h-11`, NO sticky, se va con el scroll): categorías del contenido editable (todo menos Empleo e IA, que viven en el footer y en "Más"), con indicador `layoutId` y `franja-marca`. Nada de anchos fijos: solo el campo de búsqueda se estira (`min-w-0`) y las etiquetas aparecen por breakpoint.
@@ -260,6 +260,14 @@ Orden: hero, Hot Sales, Destinos, Acompañamiento, Más de Lotus, footer. Acompa
 - **Hot Sales:** grilla densa de 2, 3 y 4 columnas (`sm`, `lg`, `xl`) y carrusel con 1,15 tarjetas a la vista en el teléfono, en un solo árbol (`Carrusel` con `desktop`). Muestra 8 (6 en `lg`, para no dejar fila coja) y "Ver las N ofertas". Chips de destino arriba. El orden lo fija el servidor (`ordenDelDia`: manuales primero y el resto rota por día); el cliente no baraja.
 - **`DestinosRail`:** tiras 3:4 con foto a sangre, el destino en Archivo bold y, tras una perforación, "N ofertas" y "desde $X" en mono dorado. Ordenadas por cantidad de ofertas; el piso solo compara montos de la misma moneda. Cada tira abre `/catalogo/hot-sales?destino=X` (HotSalesGrid lee el parámetro al hidratar y lo reescribe con `replaceState`). Con menos de 3 destinos no se monta.
 - **Foco:** el radio del anillo (4px) vive en `@layer base`, así un `rounded-*` conserva su forma al recibir foco. Los carruseles dejan 8px de aire vertical para que el anillo no se recorte.
+
+### Cotizador (`/cotizar`, "Arme su viaje")
+Un solo flujo para toda la web: el hero, `BottomTabBar`, `CajaPrecio`, las tarjetas y las promos abren `/cotizar` (con `hotel=` y `tarifa=` si vienen de un hotel u oferta). Las rutas viejas (`/cotizador-personalizado`, `/cotizar/[tipo]`, `/cotizar/producto/[id]`, `/cotizar/promocion/[id]`) solo redirigen. Todo el estado vive en la URL (`lib/cotizador/estado.ts`).
+- **Estructura:** en `lg+`, dos columnas (`minmax(0,1fr)_23rem`): armado a la izquierda y "Su cotización" pegajosa a la derecha. En móvil, una columna y una barra fija con el estimado que abre el resumen en una `Hoja`.
+- **`BarraViaje`:** destino, fechas, viajeros y chips multiselección de servicios (Hospedaje, Vuelo, Full day y tours; "Paquete completo" marca hospedaje y vuelo). Pasos numerados; al marcar uno, el foco va a su título.
+- **Hospedaje:** `OfertasHospedaje` (tarjetas por `prioridadOferta`; con stop sale en las fechas, "Sin disponibilidad" y no se elige) y `DetalleHotel` (galería, planes, habitaciones con foto). El estimado sale de `estimarEstadia()`; sin tarifa aplicable, "Precio a confirmar por el asesor", nunca un número.
+- **Vuelo y tours:** `SeccionVuelo` copia ruta, fechas y pasajeros del viaje y permite fechas propias; `SeccionTours` lista tours del destino, que no suman al estimado.
+- **Resumen:** `ResumenViaje` en formato boleto, estimado con `aria-live`, contacto junto a Enviar. El borrador se guarda en localStorage (7 días) y se ofrece retomarlo. La confirmación es `SolicitudLista`; si el CRM falla se avisa y se ofrece WhatsApp directo.
 
 ## Do's and Don'ts
 
