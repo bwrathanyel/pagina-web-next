@@ -73,8 +73,9 @@
 /* Dark mode: only the light "sand/card/ink" surfaces invert. Dusk sections
    and accent colors (coral/gold/seafoam/whatsapp) are already dark-safe and
    stay fixed — matches the approved brand direction, not a naive invert.
-   Se aplica SOLO por data-theme="dark" explícito: desde 2026-07-26 el modo
-   por defecto del sitio es claro (pedido del dueño), así que ya no hay un
+   Se aplica SOLO por data-theme="dark" explícito. Desde 2026-09-24 el modo
+   por defecto es oscuro (defaultTheme en ThemeProvider, pedido del dueño) y
+   lo pone el script de next-themes antes de pintar. Tampoco hay un
    override por `prefers-color-scheme` -- con ese media query, un visitante
    con el sistema en oscuro veía el sitio oscuro antes de que corriera el
    script de next-themes, y también con JS desactivado. */
