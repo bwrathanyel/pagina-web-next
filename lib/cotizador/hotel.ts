@@ -126,7 +126,8 @@ export async function bloqueosEnFechas(ids: number[], desde: string, hasta: stri
 }
 
 const CORTA = new Intl.DateTimeFormat("es-VE", { day: "numeric", month: "short", timeZone: "UTC" });
-const corta = (iso: string) => CORTA.format(new Date(`${iso}T00:00:00Z`));
+// Sin el punto de la abreviatura ("oct."): el texto sigue con su propia puntuación.
+const corta = (iso: string) => CORTA.format(new Date(`${iso}T00:00:00Z`)).replace(/\.$/, "");
 
 /** "Sin disponibilidad del 12 al 15 oct" (o "el 12 oct"), con el tramo del
  * stop sale que cae dentro de la estadía. null = se puede cotizar. */
@@ -139,7 +140,10 @@ export function textoSinDisponibilidad(bloqueos: Bloqueo[] | undefined, desde: s
   // `hasta` es la salida: la última noche es el día anterior.
   const ultima = new Date(Date.parse(`${hasta}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
   const b = fin > ultima ? ultima : fin;
-  return a === b ? `Sin disponibilidad el ${corta(a)}` : `Sin disponibilidad del ${corta(a)} al ${corta(b)}`;
+  if (a === b) return `Sin disponibilidad el ${corta(a)}`;
+  // "del 1 al 4 oct" si es el mismo mes.
+  const mismoMes = a.slice(0, 7) === b.slice(0, 7);
+  return `Sin disponibilidad del ${mismoMes ? Number(a.slice(8)) : corta(a)} al ${corta(b)}`;
 }
 
 export const esOnRequest = (bloqueos: Bloqueo[] | undefined) => (bloqueos ?? []).some((b) => b.estado === "on_request");

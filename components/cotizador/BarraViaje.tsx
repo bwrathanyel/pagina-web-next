@@ -90,7 +90,8 @@ export function BarraViaje({ estado, onCambio }: { estado: EstadoViaje; onCambio
         <p className="mt-2 text-sm text-ink-soft">Puede combinar varios. Un asesor arma todo en una sola propuesta.</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* El destino lleva nombres largos ("Isla de Margarita"): columna más ancha. */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(0,1fr))]">
         <div className="flex flex-col gap-1.5">
           <Rotulo htmlFor={`${id}-destino`}>Destino</Rotulo>
           <SelectorDestino
