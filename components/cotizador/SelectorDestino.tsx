@@ -101,7 +101,7 @@ export function SelectorDestino({
                   onCambio(d);
                   cerrar();
                 }}
-                className={`group relative flex aspect-4/3 flex-col justify-end overflow-hidden rounded-card bg-dusk-2 text-left text-dusk-text transition-[box-shadow,scale] duration-150 ease-salida active:scale-[0.985] ${
+                className={`group relative flex aspect-4/3 flex-col justify-end overflow-hidden rounded-card bg-dusk-2 text-left text-dusk-text transition-[box-shadow,scale] duration-150 ease-salida motion-reduce:transition-none motion-reduce:active:scale-100 active:scale-[0.985] ${
                   elegido ? "ring-3 ring-acento ring-offset-2 ring-offset-card" : ""
                 }`}
               >
@@ -112,7 +112,7 @@ export function SelectorDestino({
                       alt=""
                       fill
                       sizes="(min-width: 640px) 11rem, 45vw"
-                      className="object-cover transition-[scale] duration-700 ease-salida group-hover:scale-[1.04]"
+                      className="object-cover transition-[scale] duration-700 ease-salida motion-reduce:transition-none motion-reduce:group-hover:scale-100 group-hover:scale-[1.04]"
                     />
                     <span
                       aria-hidden="true"

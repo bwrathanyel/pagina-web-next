@@ -1,6 +1,6 @@
 import type { Respuestas } from "@/components/cotizador/types";
 import { contarNoches, textoDuracion } from "@/lib/cotizador/cotizacionRapida";
-import { nochesDe, SERVICIOS, textoViajeros, type EstadoViaje } from "@/lib/cotizador/estado";
+import { EQUIPAJES, fechasVuelo, nochesDe, SERVICIOS, textoViajeros, type EstadoViaje } from "@/lib/cotizador/estado";
 import { calcularTotalFullDay } from "@/lib/fullday-pricing";
 
 export interface ResultadoCotizacion {
@@ -263,6 +263,8 @@ export function armarCotizacionViaje(
   hotel: { id: number; nombre: string } | null,
   leadId?: number,
   elegido: HospedajeElegido = {},
+  /** Nombres de los tours que el cliente agregó (el catálogo vive en el cliente). */
+  toursElegidos: string[] = [],
 ): ResultadoCotizacion {
   const tiene = (s: EstadoViaje["servicios"][number]) => e.servicios.includes(s);
   const hospedaje = tiene("hospedaje");
@@ -277,7 +279,19 @@ export function armarCotizacionViaje(
       ? `${fechaLarga(e.desde)} al ${fechaLarga(e.hasta)} (${noches} ${noches === 1 ? "noche" : "noches"})`
       : `${fechaLarga(e.desde)} (salida por definir)`
     : "Por definir";
-  const tramoVuelo = `${e.origen} a ${e.destino}, ${e.vuelo === "ida" ? "solo ida" : "ida y vuelta"}`;
+  const fv = fechasVuelo(e);
+  const fechasDelVuelo = fv.propias
+    ? ` (${fechaLarga(fv.ida)}${fv.vuelta ? ` al ${fechaLarga(fv.vuelta)}` : ""})`
+    : "";
+  const equipaje = EQUIPAJES.find((q) => q.valor === e.equipaje)?.etiqueta.toLowerCase() ?? "";
+  const tramoVuelo = [
+    `${e.origen} a ${e.destino}, ${e.vuelo === "ida" ? "solo ida" : "ida y vuelta"}${fechasDelVuelo}`,
+    equipaje,
+    e.flexible ? "fechas flexibles" : "",
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const toursTexto = toursElegidos.length ? toursElegidos.join("; ") : "";
   const hotelTexto = hotel ? `${hotel.nombre} (#${hotel.id})` : "Sin hotel elegido: el asesor propone opciones";
   const habitacion =
     hospedaje && hotel && elegido.habitacion ? [elegido.habitacion, elegido.plan].filter(Boolean).join(", ") : "";
@@ -298,7 +312,7 @@ export function armarCotizacionViaje(
     habitacion ? `Habitación: ${habitacion}` : "",
     hospedaje && e.tarifa ? `Tarifa de referencia: #${e.tarifa}` : "",
     vuelo ? `Vuelo: ${tramoVuelo}` : "",
-    tours ? "Full day y tours: sí (grupo mínimo 15 personas)" : "",
+    tours ? `Full day y tours: ${toursTexto || "sí"} (grupo mínimo 15 personas)` : "",
     precio,
     c.correo ? `Correo: ${c.correo}` : "",
     c.notas ? `Notas: ${c.notas}` : "",
@@ -320,7 +334,7 @@ export function armarCotizacionViaje(
       habitacion ? ["🛏️", `*Habitación:* ${habitacion}`] : null,
       estimado ? ["💵", `*Estimado web:* ${estimado} (sujeto a disponibilidad)`] : null,
       vuelo ? ["✈️", `*Vuelo:* ${tramoVuelo}`] : null,
-      tours ? ["🌴", "*Full day y tours:* sí (grupo mínimo 15 personas)"] : null,
+      tours ? ["🌴", `*Full day y tours:* ${toursTexto || "sí"} (grupo mínimo 15 personas)`] : null,
       c.correo ? ["✉️", `*Correo:* ${c.correo}`] : null,
       c.notas ? ["📝", `*Notas:* ${c.notas}`] : null,
     ],

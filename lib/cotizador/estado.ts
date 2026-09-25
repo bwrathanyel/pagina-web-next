@@ -35,6 +35,16 @@ export const ORIGENES_VUELO: readonly { valor: string; etiqueta: string }[] = [
 ];
 export const ORIGEN_INICIAL = ORIGENES_VUELO[0].valor;
 
+export type Equipaje = "mano" | "maleta" | "dos";
+export const EQUIPAJES: readonly { valor: Equipaje; etiqueta: string }[] = [
+  { valor: "mano", etiqueta: "Solo equipaje de mano" },
+  { valor: "maleta", etiqueta: "1 maleta por persona" },
+  { valor: "dos", etiqueta: "2 maletas por persona" },
+];
+export const EQUIPAJE_INICIAL: Equipaje = "maleta";
+/** Tours que caben en un viaje: el asesor arma la propuesta, no un catálogo entero. */
+export const TOURS_MAX = 6;
+
 export const ADULTOS_MAX = 20;
 export const NINOS_MAX = 4;
 export const BEBES_MAX = 2;
@@ -57,6 +67,14 @@ export interface EstadoViaje {
   tarifa: number | null;
   origen: string;
   vuelo: TipoVuelo;
+  /** Fechas propias del vuelo; vacías = las mismas del viaje. */
+  vueloDesde: string;
+  vueloHasta: string;
+  equipaje: Equipaje;
+  /** Acepta mover el vuelo unos días para conseguir mejor precio. */
+  flexible: boolean;
+  /** Ids de productos (full day y tours) agregados al viaje. */
+  tours: number[];
 }
 
 export type ParamsBusqueda = Record<string, string | string[] | undefined>;
@@ -144,6 +162,11 @@ export function estadoInicial(): EstadoViaje {
     tarifa: null,
     origen: ORIGEN_INICIAL,
     vuelo: "ida-vuelta",
+    vueloDesde: "",
+    vueloHasta: "",
+    equipaje: EQUIPAJE_INICIAL,
+    flexible: false,
+    tours: [],
   };
 }
 
@@ -161,6 +184,17 @@ export function parsearEstado(sp: ParamsBusqueda, hoy = hoyCaracas()): EstadoVia
     .map((e) => entero(e.trim(), EDAD_NINO_MIN, EDAD_NINO_MAX))
     .map((e) => e ?? EDAD_NINO_INICIAL);
   const origen = ORIGENES_VUELO.find((o) => o.valor === uno(sp.origen));
+  const vueloDesde = uno(sp.vuelo_ida);
+  const vueloDesdeValido = esFechaViaje(vueloDesde, hoy);
+  const vueloHasta = uno(sp.vuelo_vuelta);
+  const tours = [
+    ...new Set(
+      (uno(sp.tour) ?? "")
+        .split(",")
+        .map((t) => idPositivo(t.trim()))
+        .filter((t): t is number => t != null),
+    ),
+  ].slice(0, TOURS_MAX);
 
   return {
     servicios: servicios.length > 0 ? servicios : base.servicios,
@@ -176,6 +210,11 @@ export function parsearEstado(sp: ParamsBusqueda, hoy = hoyCaracas()): EstadoVia
     tarifa: idPositivo(uno(sp.tarifa)),
     origen: origen?.valor ?? base.origen,
     vuelo: uno(sp.vuelo) === "ida" ? "ida" : "ida-vuelta",
+    vueloDesde: vueloDesdeValido ? vueloDesde : "",
+    vueloHasta: vueloDesdeValido && esFechaViaje(vueloHasta, hoy) && vueloHasta > vueloDesde ? vueloHasta : "",
+    equipaje: EQUIPAJES.find((q) => q.valor === uno(sp.equipaje))?.valor ?? EQUIPAJE_INICIAL,
+    flexible: uno(sp.flex) === "1",
+    tours,
   };
 }
 
@@ -199,7 +238,12 @@ export function serializarEstado(e: EstadoViaje): string {
   if (e.servicios.includes("vuelo")) {
     q.set("origen", e.origen);
     q.set("vuelo", e.vuelo);
+    if (e.vueloDesde) q.set("vuelo_ida", e.vueloDesde);
+    if (e.vueloHasta) q.set("vuelo_vuelta", e.vueloHasta);
+    if (e.equipaje !== EQUIPAJE_INICIAL) q.set("equipaje", e.equipaje);
+    if (e.flexible) q.set("flex", "1");
   }
+  if (e.servicios.includes("tours") && e.tours.length) q.set("tour", e.tours.join(","));
   return q.toString();
 }
 
@@ -230,6 +274,20 @@ export function cambiarDesde(e: EstadoViaje, desde: string): EstadoViaje {
 
 export function cambiarViajeros(e: EstadoViaje, v: { adultos: number; ninos: number; bebes: number }): EstadoViaje {
   return { ...e, ...v, edades: ajustarEdades(e.edades, v.ninos) };
+}
+
+export function alternarTour(e: EstadoViaje, id: number): EstadoViaje {
+  if (e.tours.includes(id)) return { ...e, tours: e.tours.filter((t) => t !== id) };
+  return e.tours.length >= TOURS_MAX ? e : { ...e, tours: [...e.tours, id] };
+}
+
+/** Fechas del vuelo: las propias si el cliente las cambió, si no las del viaje.
+ * Solo ida no tiene vuelta. */
+export function fechasVuelo(e: EstadoViaje): { ida: string; vuelta: string; propias: boolean } {
+  const propias = !!e.vueloDesde;
+  const ida = propias ? e.vueloDesde : e.desde;
+  const vuelta = e.vuelo === "ida" ? "" : propias ? e.vueloHasta : e.hasta;
+  return { ida, vuelta, propias };
 }
 
 export const nochesDe = (e: EstadoViaje) => contarNoches(e.desde, e.hasta);

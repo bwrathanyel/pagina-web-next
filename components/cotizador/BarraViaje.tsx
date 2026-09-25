@@ -27,7 +27,7 @@ import {
 /** Chip de selección (servicios, tipo de vuelo): el estado va en aria-pressed. */
 export const CLASE_CHIP =
   "inline-flex min-h-11 items-center justify-center rounded-pill border px-5 text-base font-semibold " +
-  "transition-[background-color,border-color,color] duration-150 ease-salida " +
+  "transition-[background-color,border-color,color] duration-150 ease-salida motion-reduce:transition-none " +
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento";
 export const chip = (activo: boolean) =>
   `${CLASE_CHIP} ${

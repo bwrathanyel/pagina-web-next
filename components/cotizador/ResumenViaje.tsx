@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { Boleto } from "@/components/ui/Boleto";
 import { Boton } from "@/components/ui/Boton";
 import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
-import { nochesDe, textoViajeros, type EstadoViaje } from "@/lib/cotizador/estado";
+import { fechasVuelo, nochesDe, textoViajeros, type EstadoViaje } from "@/lib/cotizador/estado";
 import type { Estimado } from "@/lib/cotizador/estimado";
 import { montoConMoneda } from "@/lib/tarifas";
 import type { HotelCotizador } from "@/lib/supabase/queries";
@@ -64,6 +64,7 @@ export function ResumenViaje({
   conTitulo = true,
   datos,
   desde,
+  tours = [],
 }: {
   estado: EstadoViaje;
   hotel: Pick<HotelCotizador, "nombre" | "foto"> | null;
@@ -76,6 +77,8 @@ export function ResumenViaje({
   datos?: ReactNode;
   /** Precio anunciado por la oferta, para mostrar mientras faltan fechas. */
   desde?: { monto: string; unidad: string | null } | null;
+  /** Nombres de los tours agregados. */
+  tours?: string[];
 }) {
   const noches = nochesDe(estado);
   const fechas = textoFechas(estado);
@@ -88,6 +91,7 @@ export function ResumenViaje({
   const unico = estado.servicios.length === 1;
   // Sin fechas no hay estimado: se muestra el precio anunciado de la oferta, con su unidad.
   const referencia = !monto && hospedaje && desde ? desde : null;
+  const vueloFechas = fechasVuelo(estado);
   let n = 0;
 
   return (
@@ -138,11 +142,17 @@ export function ResumenViaje({
         {estado.servicios.includes("vuelo") ? (
           <Linea numero={++n} precio={unico ? null : undefined} titulo={`Vuelo ${estado.origen} a ${estado.destino}`}>
             <span>{estado.vuelo === "ida" ? "Solo ida" : "Ida y vuelta"}</span>
-            <span>{estado.servicios.includes("hospedaje") ? viajeros : `${detalleFechas} · ${viajeros}`}</span>
+            <span>
+              {vueloFechas.propias || !estado.servicios.includes("hospedaje")
+                ? `${textoFechas({ ...estado, desde: vueloFechas.ida, hasta: vueloFechas.vuelta })} · ${viajeros}`
+                : viajeros}
+            </span>
+            {estado.flexible ? <span>Fechas flexibles</span> : null}
           </Linea>
         ) : null}
         {estado.servicios.includes("tours") ? (
           <Linea numero={++n} precio={unico ? null : undefined} titulo={`Full day y tours en ${estado.destino}`}>
+            {tours.length ? tours.map((t) => <span key={t}>{t}</span>) : <span>Un asesor propone los disponibles</span>}
             <span>Grupo mínimo de 15 personas</span>
           </Linea>
         ) : null}

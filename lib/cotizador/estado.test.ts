@@ -2,10 +2,12 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   alternarServicio,
+  alternarTour,
   cambiarDesde,
   cambiarViajeros,
   correoValido,
   estadoInicial,
+  fechasVuelo,
   parsearEstado,
   serializarEstado,
   telefonoValido,
@@ -93,4 +95,37 @@ test("contacto", () => {
   assert.ok(!telefonoValido("123"));
   assert.ok(correoValido("a@b.co"));
   assert.ok(!correoValido("a@b"));
+});
+
+test("vuelo: fechas propias, equipaje y flexibilidad viajan por URL", () => {
+  const e = parsearEstado(
+    { servicios: "hospedaje,vuelo", fecha: "2026-10-12", hasta: "2026-10-16", vuelo_ida: "2026-10-11", vuelo_vuelta: "2026-10-17", equipaje: "mano", flex: "1" },
+    HOY,
+  );
+  assert.deepEqual(fechasVuelo(e), { ida: "2026-10-11", vuelta: "2026-10-17", propias: true });
+  assert.equal(e.equipaje, "mano");
+  assert.equal(e.flexible, true);
+  assert.deepEqual(parsearEstado(Object.fromEntries(new URLSearchParams(serializarEstado(e))), HOY), e);
+});
+
+test("vuelo sin fechas propias copia las del viaje; solo ida no tiene vuelta", () => {
+  const e = { ...estadoInicial(), servicios: ["hospedaje", "vuelo"] as const, desde: "2026-10-12", hasta: "2026-10-16" };
+  assert.deepEqual(fechasVuelo({ ...e, servicios: [...e.servicios] }), { ida: "2026-10-12", vuelta: "2026-10-16", propias: false });
+  assert.equal(fechasVuelo({ ...e, servicios: [...e.servicios], vuelo: "ida" }).vuelta, "");
+});
+
+test("vuelo: fechas propias invalidas se descartan; vuelta no anterior a la ida", () => {
+  assert.equal(parsearEstado({ vuelo_ida: "2020-01-01", vuelo_vuelta: "2026-10-20" }, HOY).vueloHasta, "");
+  assert.equal(parsearEstado({ vuelo_ida: "2026-10-12", vuelo_vuelta: "2026-10-10" }, HOY).vueloHasta, "");
+  assert.equal(parsearEstado({ equipaje: "cuatro" }, HOY).equipaje, "maleta");
+});
+
+test("tours: se leen sin repetidos ni basura, tope de 6, y se alternan", () => {
+  const e = parsearEstado({ servicios: "tours", tour: "5,5,abc,-2,7,8,9,10,11,12" }, HOY);
+  assert.deepEqual(e.tours, [5, 7, 8, 9, 10, 11]);
+  assert.deepEqual(alternarTour(estadoInicial(), 3).tours, [3]);
+  assert.deepEqual(alternarTour({ ...estadoInicial(), tours: [3] }, 3).tours, []);
+  assert.equal(alternarTour(e, 99), e);
+  // Sin el servicio de tours marcado, los ids no viajan en la URL.
+  assert.ok(!serializarEstado({ ...e, servicios: ["hospedaje"] }).includes("tour="));
 });
