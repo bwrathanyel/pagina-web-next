@@ -11,10 +11,10 @@ export function NumeralPrecio({ texto }: { texto: string }) {
   const mostrado = moneda === "VES" ? (convertirPrecioTexto(texto, tasaUSD, tasaEUR) ?? texto) : texto;
   const tamano =
     mostrado.length <= 5
-      ? "text-[clamp(6.5rem,26vw,11.5rem)]"
+      ? "text-[clamp(4.5rem,18vw,7.5rem)]"
       : mostrado.length <= 8
-        ? "text-[clamp(4rem,16vw,7rem)]"
-        : "text-[clamp(2.75rem,11vw,4.75rem)]";
+        ? "text-[clamp(3.25rem,13vw,5rem)]"
+        : "text-[clamp(2.5rem,10vw,3.75rem)]";
   return (
     <span className={"block font-mono font-bold leading-[0.8] tracking-[-0.04em] text-gold tabular-nums " + tamano}>
       {mostrado}

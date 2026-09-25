@@ -68,7 +68,9 @@ export function PreferenciasPopover({
         aria-label="Preferencias"
         tabIndex={-1}
         onBlur={(e) => {
-          if (e.currentTarget.contains(e.relatedTarget)) return;
+          // El foco que vuelve al botón no cierra: en dev, StrictMode desmonta y
+          // remonta el efecto de foco y su limpieza lo devuelve al ancla.
+          if (e.currentTarget.contains(e.relatedTarget) || e.relatedTarget === anclaRef.current) return;
           // El foco ya se fue a otro lado (Tab o clic): no se lo quita.
           foco.current.devolver = false;
           onCerrar();

@@ -162,7 +162,7 @@ export function Navbar() {
               <button
                 ref={prefRef}
                 type="button"
-                onClick={() => setPrefAbiertas(true)}
+                onClick={() => setPrefAbiertas((v) => !v)}
                 aria-label="Preferencias de moneda y tema"
                 aria-haspopup="dialog"
                 aria-expanded={prefAbiertas}
