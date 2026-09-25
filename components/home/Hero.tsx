@@ -179,14 +179,17 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
           // Tres nodos: este contenedor hace parallax; la capa de motion cruza
           // (opacidad + escala); el <Image> de adentro hace Ken Burns. Mezclar
           // el cruce y el Ken Burns en el mismo nodo anulaba los dos transform.
+          // La entrante nace opaca DEBAJO y solo la saliente se desvanece encima:
+          // con las dos a media opacidad asomaba el bg-dusk y en el teléfono la
+          // foto nueva todavía decodificando dejaba un parpadeo gris (2026-09-24).
           <AnimatePresence initial={false}>
             <m.div
               key={actual.url}
               className="absolute inset-0"
-              initial={{ opacity: 0, scale: 1.06 }}
+              initial={{ opacity: 1, scale: 1.06 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.02 }}
-              transition={{ duration: SEG_CRUCE, ease: CURVA }}
+              exit={{ opacity: 0, scale: 1.02, zIndex: 1 }}
+              transition={{ duration: SEG_CRUCE, ease: CURVA, zIndex: { duration: 0 } }}
             >
               <Image
                 src={actual.url}
