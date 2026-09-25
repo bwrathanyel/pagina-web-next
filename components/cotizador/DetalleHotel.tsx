@@ -7,33 +7,9 @@ import { Boton } from "@/components/ui/Boton";
 import { Esqueleto } from "@/components/ui/Esqueleto";
 import { Etiqueta } from "@/components/ui/Insignia";
 import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
-import { estimarEstadia, type Estadia } from "@/lib/cotizador/estimado";
+import { estimarEstadia, tarjetasPorHabitacion, type Estadia } from "@/lib/cotizador/estimado";
 import { habitacionDeTarifa, type HotelDetalle } from "@/lib/cotizador/hotel";
 import { agruparPorPlan, bloqueDe, montoConMoneda, precioDeTarifa } from "@/lib/tarifas";
-import type { Tarifa } from "@/types/supabase";
-
-const clave = (s: string | null | undefined) =>
-  (s ?? "").normalize("NFD").replace(/\p{M}/gu, "").trim().toLowerCase();
-
-/** Una tarjeta por habitación y plan. De sus filas (una por temporada) se toma
- * la que cubre la entrada; si ninguna, la primera del orden del tarifario.
- * estimarEstadia() igual cruza temporadas con las demás filas. */
-function porHabitacion(tarifas: Tarifa[], desde: string): Tarifa[] {
-  const grupos = new Map<string, Tarifa[]>();
-  for (const t of tarifas) {
-    const k = clave(t.habitacion) || `#${t.id}`;
-    grupos.set(k, [...(grupos.get(k) ?? []), t]);
-  }
-  return [...grupos.values()].map((filas) => {
-    if (!desde) return filas[0];
-    const cubre = filas.find((t) =>
-      (Array.isArray(t.ventanas) ? t.ventanas : []).some(
-        (w) => (!w?.desde || w.desde <= desde) && (!w?.hasta || w.hasta >= desde),
-      ),
-    );
-    return cubre ?? filas[0];
-  });
-}
 
 export function DetalleHotel({
   detalle,
@@ -114,14 +90,14 @@ export function DetalleHotel({
             ) : null}
 
             <ul className="flex flex-col gap-3">
-              {porHabitacion(tarifas, estadia.desde).map((t) => {
+              {tarjetasPorHabitacion(tarifas, estadia.desde).map(({ tarifa: t, filas }) => {
                 const hab = habitacionDeTarifa(detalle.habitaciones, t);
                 const foto = hab?.fotos[0] ?? detalle.fotos[0] ?? null;
                 const precio = precioDeTarifa(t);
                 const est = hayFechas ? estimarEstadia(t, detalle.tarifas, estadia) : null;
                 const minimo = t.minimo_noches;
                 // La elegida puede ser otra temporada de esta misma habitación.
-                const elegida = tarifas.some((x) => x.id === tarifaElegida && clave(x.habitacion) === clave(t.habitacion));
+                const elegida = filas.some((x) => x.id === tarifaElegida);
                 const excede = hab?.capacidad_max != null && personas > hab.capacidad_max;
                 const ficha = [
                   hab?.camas,

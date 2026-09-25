@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { Tarifa, TarifarioBloque } from "@/types/supabase";
-import { estimarEstadia, nochesDeEstadia, type Estadia } from "./estimado.ts";
+import { estimarEstadia, nochesDeEstadia, tarjetasPorHabitacion, type Estadia } from "./estimado.ts";
 
 // Filas calcadas del tarifario real (2026-09-25): Costa Caribe (producto 1),
 // LD Palm Beach (4, en euros) y Venetur (254).
@@ -197,4 +197,23 @@ test("promo niño gratis: el primero no paga, del segundo en adelante sí", () =
   const sin = estimarEstadia(VENETUR_HABITACION, VENETUR, { ...base, edades: [5, 5] });
   assert.ok(sin.ok);
   assert.equal(sin.total, 315); // sin promo pagan los dos
+});
+
+test("tarjetas: las temporadas de una habitación van en una sola tarjeta", () => {
+  const tarjetas = tarjetasPorHabitacion(PALM, "2026-12-23");
+  assert.equal(tarjetas.length, 1);
+  assert.equal(tarjetas[0].tarifa.id, 52330); // la que cubre la entrada
+  assert.equal(tarjetas[0].filas.length, PALM.length);
+  // Entrada que solo cubre la fila abierta: esa, no la primera del orden.
+  assert.equal(tarjetasPorHabitacion(PALM, "2027-01-20")[0].tarifa.id, PALM[PALM.length - 1].id);
+});
+
+test("tarjetas: dos tablas con las mismas fechas son dos tarjetas (Venetur)", () => {
+  const tarjetas = tarjetasPorHabitacion(VENETUR, "2026-10-10");
+  assert.deepEqual(
+    tarjetas.map((x) => x.tarifa.id),
+    [VENETUR_PERSONA.id, VENETUR_HABITACION.id],
+  );
+  assert.ok(tarjetas.every((x) => x.filas.length === 1));
+  assert.equal(tarjetasPorHabitacion(VENETUR, "").length, 2);
 });

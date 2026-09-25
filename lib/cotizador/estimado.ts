@@ -223,6 +223,43 @@ function avisosSuplementos(usadas: Tarifa[], noches: string[]): string[] {
 
 const redondear = (n: number) => Math.round(n * 100) / 100;
 
+const firmaVentanas = (t: Tarifa) =>
+  ventanas(t)
+    .map(([a, b]) => `${a}-${b}`)
+    .join(",");
+
+/**
+ * Una tarjeta por habitación en un plan. Las filas de una habitación con
+ * fechas distintas son temporadas de la misma oferta y van en una sola tarjeta
+ * (se muestra la que cubre la entrada; si ninguna, la primera del orden del
+ * tarifario). Dos filas con las MISMAS fechas son dos tablas distintas del PDF
+ * (Venetur publica dos por habitación) y cada una lleva su tarjeta, igual que
+ * en la carpeta de tarifas de /producto.
+ */
+export function tarjetasPorHabitacion(tarifas: Tarifa[], desde: string): { tarifa: Tarifa; filas: Tarifa[] }[] {
+  const grupos = new Map<string, Tarifa[][]>();
+  for (const t of tarifas) {
+    const k = normalizar(t.habitacion) || `#${t.id}`;
+    const series = grupos.get(k) ?? [];
+    const serie = series.find((s) => !s.some((x) => firmaVentanas(x) === firmaVentanas(t)));
+    if (serie) serie.push(t);
+    else series.push([t]);
+    grupos.set(k, series);
+  }
+  const entrada = desde ? aFecha(desde) : NaN;
+  return [...grupos.values()].flat().map((filas) => {
+    if (Number.isNaN(entrada)) return { tarifa: filas[0], filas };
+    // La más específica que cubre la entrada, como en estimarEstadia().
+    let mejor: Tarifa | null = null;
+    let ancho = Infinity;
+    for (const t of filas) {
+      const a = amplitud(t, entrada);
+      if (a !== null && (mejor === null || a < ancho)) [mejor, ancho] = [t, a];
+    }
+    return { tarifa: mejor ?? filas[0], filas };
+  });
+}
+
 /**
  * @param elegida la fila que eligió el cliente (habitación y plan).
  * @param filas todas las filas del hotel; se usan las de la misma habitación,
