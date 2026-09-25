@@ -15,7 +15,7 @@ import { PaseDestacado } from "@/components/home/PaseDestacado";
 import { useHeroBajoBarra } from "@/lib/layout/barraSobreFoto";
 import type { FondoHero, FotoHero } from "@/lib/promociones/fotosHero";
 
-const MS_POR_FOTO = 6000;
+const MS_POR_FOTO = 8000;
 const SEG_CRUCE = 1.2;
 /* La curva del cruce: sale rápido y frena largo al final. Es --ease-salida de
    globals.css, para que todo el sitio se mueva igual. */
@@ -363,12 +363,10 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
                     <span className="relative block h-1 w-full overflow-hidden rounded-pill bg-white/25 transition-colors duration-150 ease-salida group-hover/seg:bg-white/45">
                       {idx < i ? <span className="absolute inset-0 bg-white/80" /> : null}
                       {idx === i ? (
-                        <m.span
+                        <span
                           key={`${i}-${vuelta}-${activo}`}
-                          className="absolute inset-0 origin-left bg-white"
-                          initial={{ scaleX: reducido ? 1 : 0 }}
-                          animate={{ scaleX: activo || reducido ? 1 : 0 }}
-                          transition={{ duration: reducido ? 0 : MS_POR_FOTO / 1000, ease: "linear" }}
+                          className="segmento-llena absolute inset-0 bg-white"
+                          style={{ "--dur-segmento": `${MS_POR_FOTO}ms` } as CSSProperties}
                         />
                       ) : null}
                     </span>

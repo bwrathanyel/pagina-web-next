@@ -672,8 +672,24 @@ html {
    oculta (Hero.tsx pone .en-pausa): no tiene sentido pagar un zoom continuo
    sobre una foto de 1280px que nadie está mirando. */
 .en-pausa .hero-kenburns,
-.en-pausa .hero-kenburns-inv {
+.en-pausa .hero-kenburns-inv,
+.en-pausa .segmento-llena {
   animation-play-state: paused;
+}
+
+/* Relleno del segmento activo del hero, con la misma duración que el reloj
+   de la rotación (--dur-segmento lo pone Hero.tsx desde MS_POR_FOTO). En CSS
+   y no con motion: MotionConfig reducedMotion="user" congelaba el m.span.
+   Se deja correr también con reduced-motion: es una barra chica que avanza
+   en línea recta y dice cuánto falta para el cambio de foto (el dueño tiene
+   las animaciones de Windows apagadas y la veía siempre quieta). */
+@keyframes segmento-llena {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.segmento-llena {
+  transform-origin: left;
+  animation: segmento-llena var(--dur-segmento, 8000ms) linear forwards;
 }
 
 /* En el teléfono la foto del hero queda quieta (sin Ken Burns ni parallax):
