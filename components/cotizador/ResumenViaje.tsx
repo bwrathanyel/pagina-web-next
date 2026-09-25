@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { Boleto } from "@/components/ui/Boleto";
 import { Boton } from "@/components/ui/Boton";
 import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
-import { nochesDe, textoDuracion, textoViajeros, type EstadoViaje } from "@/lib/cotizador/estado";
+import { nochesDe, textoViajeros, type EstadoViaje } from "@/lib/cotizador/estado";
 import type { Estimado } from "@/lib/cotizador/estimado";
 import { montoConMoneda } from "@/lib/tarifas";
 import type { HotelCotizador } from "@/lib/supabase/queries";
@@ -31,19 +31,21 @@ function Linea({
   children: ReactNode;
 }) {
   return (
-    <li className="flex gap-3 px-5 py-4">
+    <li className="flex gap-3 px-5 py-3">
       <span aria-hidden="true" className="font-mono text-sm font-bold tabular-nums text-ink-soft">
         {numero}
       </span>
       {foto ? (
-        <span className="relative h-16 w-20 shrink-0 overflow-hidden rounded-control bg-sand-2">
-          <Image src={foto} alt="" fill sizes="80px" className="object-cover" />
+        <span className="relative h-12 w-16 shrink-0 overflow-hidden rounded-control bg-sand-2">
+          <Image src={foto} alt="" fill sizes="64px" className="object-cover" />
         </span>
       ) : null}
       <div className="min-w-0 flex-1">
         <p className="font-semibold leading-snug text-ink">{titulo}</p>
-        <div className="mt-0.5 flex flex-col text-sm text-ink-soft">{children}</div>
-        <p className="mt-1 text-sm font-medium text-ink-soft">{precio ?? "Precio a confirmar"}</p>
+        <div className="mt-0.5 flex flex-col text-sm leading-snug text-ink-soft">{children}</div>
+        {precio === null ? null : (
+          <p className="mt-1 text-sm font-medium text-ink-soft">{precio ?? "Precio a confirmar"}</p>
+        )}
       </div>
     </li>
   );
@@ -74,19 +76,21 @@ export function ResumenViaje({
 }) {
   const noches = nochesDe(estado);
   const fechas = textoFechas(estado);
-  const detalleFechas = noches > 0 ? `${fechas} · ${textoDuracion(noches)}` : fechas;
+  const detalleFechas = noches > 0 ? `${fechas} · ${noches} ${noches === 1 ? "noche" : "noches"}` : fechas;
   const viajeros = textoViajeros(estado);
   const hospedaje = estado.servicios.includes("hospedaje");
   const monto = hospedaje && estimado?.ok ? montoConMoneda(estimado.total, estimado.moneda) : null;
   const otros = estado.servicios.some((s) => s !== "hospedaje");
+  // Con un solo servicio el talón ya dice el precio: la línea no lo repite.
+  const unico = estado.servicios.length === 1;
   let n = 0;
 
   return (
     <Boleto
       orientacion="h"
-      tamanoTalon="12.5rem"
+      tamanoTalon="9rem"
       talon={
-        <div className="flex h-full flex-col justify-center gap-3 px-5">
+        <div className="flex h-full flex-col justify-center gap-2 px-5">
           <div className="flex items-baseline justify-between gap-3">
             <span className="text-sm font-semibold text-ink-soft">Estimado</span>
             <span className="font-mono text-2xl font-bold tabular-nums text-ink" aria-live="polite">
@@ -95,7 +99,7 @@ export function ResumenViaje({
           </div>
           <p className="text-xs text-ink-soft">
             {monto && otros ? "Solo el hospedaje; vuelo y tours a confirmar. " : ""}
-            Sujeto a disponibilidad. El asesor confirma el precio final.
+            Sujeto a disponibilidad. El asesor le escribe por WhatsApp con el precio final.
           </p>
           <Boton type="submit" form={formId} tamano="lg" ancho cargando={enviando}>
             Enviar solicitud
@@ -104,7 +108,7 @@ export function ResumenViaje({
         </div>
       }
     >
-      {conTitulo ? <h2 className="px-5 pt-5 font-display text-3xl font-bold leading-none text-ink">Su cotización</h2> : null}
+      {conTitulo ? <h2 className="px-5 pt-4 font-display text-2xl font-bold leading-none text-ink">Su cotización</h2> : null}
       <ul className={(conTitulo ? "mt-2 " : "") + "divide-y divide-dashed divide-linea-fuerte"}>
         {estado.servicios.includes("hospedaje") ? (
           <Linea
@@ -112,7 +116,7 @@ export function ResumenViaje({
             foto={hotel?.foto}
             titulo={hotel?.nombre ?? `Hospedaje en ${estado.destino}`}
             precio={
-              monto ? (
+              unico ? null : monto ? (
                 <>
                   Estimado <PrecioMostrado texto={monto} />
                 </>
@@ -126,20 +130,19 @@ export function ResumenViaje({
           </Linea>
         ) : null}
         {estado.servicios.includes("vuelo") ? (
-          <Linea numero={++n} titulo={`Vuelo ${estado.origen} a ${estado.destino}`}>
+          <Linea numero={++n} precio={unico ? null : undefined} titulo={`Vuelo ${estado.origen} a ${estado.destino}`}>
             <span>{estado.vuelo === "ida" ? "Solo ida" : "Ida y vuelta"}</span>
             <span>{estado.servicios.includes("hospedaje") ? viajeros : `${detalleFechas} · ${viajeros}`}</span>
           </Linea>
         ) : null}
         {estado.servicios.includes("tours") ? (
-          <Linea numero={++n} titulo={`Full day y tours en ${estado.destino}`}>
+          <Linea numero={++n} precio={unico ? null : undefined} titulo={`Full day y tours en ${estado.destino}`}>
             <span>Grupo mínimo de 15 personas</span>
           </Linea>
         ) : null}
       </ul>
       {datos ? (
-        <div className="border-t border-dashed border-linea-fuerte px-5 pb-5 pt-4">
-          <h3 className="mb-3 text-sm font-semibold text-ink">Sus datos</h3>
+        <div className="border-t border-dashed border-linea-fuerte px-5 pb-4 pt-3">
           {datos}
         </div>
       ) : null}

@@ -90,8 +90,11 @@ function DatosContacto({
   contacto,
   errores,
   onCampo,
+  compacto = false,
 }: {
   formId: string;
+  /** En el resumen: menos aire y sin ayuda (el talón ya la dice). */
+  compacto?: boolean;
   contacto: ContactoViaje;
   errores: Errores;
   onCampo: (clave: keyof ContactoViaje, valor: string) => void;
@@ -99,7 +102,7 @@ function DatosContacto({
   const [abierto, setAbierto] = useState(false);
   const extra = abierto || !!errores.correo || !!contacto.correo || !!contacto.notas;
   return (
-    <div className="flex flex-col gap-4">
+    <div className={`flex flex-col ${compacto ? "gap-3" : "gap-4"}`}>
       <Campo etiqueta="Nombre y apellido" requerido error={errores.nombre}>
         {(a11y) => (
           <Entrada
@@ -112,7 +115,7 @@ function DatosContacto({
           />
         )}
       </Campo>
-      <Campo etiqueta="WhatsApp" requerido ayuda="Aquí le escribe el asesor con el precio confirmado." error={errores.telefono}>
+      <Campo etiqueta="WhatsApp" requerido ayuda={compacto ? undefined : "Aquí le escribe el asesor con el precio confirmado."} error={errores.telefono}>
         {(a11y) => (
           <Entrada
             {...a11y}
@@ -412,7 +415,7 @@ export function CotizadorViaje({
       formId={formId}
       enviando={enviando}
       conTitulo={conTitulo}
-      datos={datos}
+      datos={<DatosContacto formId={formId} contacto={contacto} errores={errores} onCampo={campo} compacto />}
     />
   );
   const detalleVisto = verHotel ? detalles[verHotel.id] : undefined;
