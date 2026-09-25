@@ -246,6 +246,12 @@ En listas largas (pestañas de `/catalogo/[categoria]`, chips de `/catalogo/hot-
 ### Esqueletos
 `EsqueletoTarjeta` repite la proporción del boleto para que la carga no salte. Catálogo y producto tienen su `loading.tsx`.
 
+### Catálogo y ficha de producto (etapa 3)
+- **`TicketCard`:** foto 4:3 con filas de alto fijo, sin `backdrop-blur` en móvil; el talón muestra el precio con `precioTarjeta` (una sola regla para Promos, catálogo y Hot Sales) y el monto se ajusta de tamaño para que no desborde. En táctil solo se montan la portada y la foto siguiente.
+- **Listas:** `/catalogo/[categoria]` y `/catalogo/hot-sales` son grilla con chips de destino y orden Recomendadas / Menor precio (cliente, sobre el monto de `precioTarjeta`). Favoritos usa la misma tarjeta, en "usted".
+- **`GaleriaProducto`:** una sola pista para los dos tamaños: en el teléfono se desliza con snap, una foto por pantalla; desde `lg` pasa a grilla, 1 foto grande y 4 chicas. Tocar una foto abre el visor (`Hoja`) con todas. `sizes` según la celda.
+- **`CajaPrecio`:** el boleto de la tarjeta con la tarifa destacada arriba y, en el talón, Cotizar y WhatsApp. Pegada en escritorio junto a la columna de texto; en el teléfono es un bloque más y el CTA fijo es `ProductoFooterMobile`.
+
 ### Home (pase de abordar premium)
 Orden: hero, Hot Sales, Destinos, Acompañamiento, Más de Lotus, footer. Acompañamiento es la única banda `dusk` entre el hero y el footer.
 - **Hero:** banda `dusk` bajo la barra (`bajo-barra` + `useHeroBajoBarra` + velo superior propio), `min-h-[calc(100svh-5rem)]` en móvil y `80svh` desde `lg` para que asome la primera fila de Hot Sales. Collage lugar + hospedaje: de fondo la foto del destino (Pexels, 2560 px, `public/destinos/`) y la del alojamiento dentro del pase; rotan solo los destinos con foto propia y, si ninguno tiene, cae a la foto del hotel. Tablero con el destino de la foto; segmentos tipo historias (uno por foto, con barra de tiempo, clic para saltar, pausa fuera de pantalla). Entrada `.hero-sube` (CSS, 60/120 ms): el h1 no anima porque es el LCP.
