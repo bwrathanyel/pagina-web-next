@@ -8,8 +8,9 @@ const CURVA = [0.22, 1, 0.36, 1] as const;
 
 // Ancho real de la tarjeta: carrusel con 1,15 tarjetas en móvil, 2 columnas
 // desde sm, 3 desde lg y 4 desde xl (el contenedor topa en 78rem, así que
-// pasado xl la tarjeta deja de crecer con el viewport).
-const SIZES_TARJETA = "(min-width: 1280px) 280px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 88vw";
+// pasado xl la tarjeta deja de crecer con el viewport). La caja es 4:3 como la
+// mayoría de las fotos: con object-cover el ancho declarado es el que se pinta.
+const SIZES_TARJETA = "(min-width: 1280px) 300px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 85vw";
 
 export function CardPhotoGallery({
   fotos,
@@ -119,7 +120,7 @@ export function CardPhotoGallery({
           nodo se anulan entre sí (hallazgo pasada 3). `transition-transform` de
           Tailwind v4 sí cubre la propiedad `scale`, por eso acá el zoom puede
           seguir siendo una utilidad. */}
-      <div className="absolute inset-0 transition-[transform,scale,filter] duration-700 ease-salida group-hover/foto:scale-[1.08] group-hover/foto:brightness-[1.04] group-hover/foto:saturate-[1.08]">
+      <div className="absolute inset-0 transition-[transform,scale,filter] duration-700 ease-salida group-hover/foto:scale-[1.08]">
         {/* Las fotos se montan todas (lazy) para no volver a descargar al
             volver atrás, pero solo la activa se pinta: el cruce lo maneja
             motion, que anima `transform`/`opacity` de verdad -- la clase
@@ -167,17 +168,16 @@ export function CardPhotoGallery({
       />
 
       {referencial ? (
-        <span className="absolute left-3 top-14 z-10 rounded-control bg-dusk/80 px-2 py-1 font-mono text-xs font-bold uppercase tracking-wide text-dusk-text backdrop-blur-sm">
+        <span className="absolute bottom-2.5 left-3 z-10 rounded-control bg-dusk/80 px-2 py-1 font-mono text-xs font-bold uppercase tracking-wide text-dusk-text backdrop-blur-sm">
           Imagen referencial
         </span>
       ) : null}
 
       {fotos.length > 1 ? (
         <>
-          <span className="absolute right-3 top-14 rounded-control bg-dusk/80 px-2 py-1 font-mono text-xs font-bold text-dusk-text backdrop-blur-sm">
-            {activa + 1} / {fotos.length}
-          </span>
-          <div className="absolute left-1/2 top-12 z-10 flex -translate-x-1/2">
+          {/* Con "Imagen referencial" abajo a la izquierda, los puntos se corren
+              a la derecha para no pisarlo. */}
+          <div className={"absolute bottom-1 z-10 flex " + (referencial ? "right-2" : "left-1/2 -translate-x-1/2")}>
             {fotos.map((foto, indice) => (
               <button
                 key={foto}

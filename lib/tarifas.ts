@@ -132,6 +132,8 @@ export function precioTarjeta(p: {
   return texto ? { monto: texto, unidad: null, desde: false, corto: texto.length <= 12 } : null;
 }
 
+export type PrecioTarjeta = NonNullable<ReturnType<typeof precioTarjeta>>;
+
 /** Nombre visible de una promoción = "Hotel · Título". Capa de vista: el
  * `titulo` guardado no se toca. Si el título ya nombra al hotel (substring
  * normalizado) no se antepone el prefijo. Espejo de tarNombrePromo() del CRM. */

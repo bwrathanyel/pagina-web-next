@@ -10,9 +10,8 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { EditarPromocionModal } from "@/components/admin/EditarPromocionModal";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { revalidarSitioPublico } from "@/lib/admin/revalidate";
-import { formatearPrecioCliente } from "@/lib/utils/formatoPrecio";
-import { nombrePromo, precioDobleHero } from "@/lib/tarifas";
-import type { HotSale, Promocion, Tarifa } from "@/types/supabase";
+import { nombrePromo, precioTarjeta } from "@/lib/tarifas";
+import type { HotSale, Promocion } from "@/types/supabase";
 
 export function PromocionCard({ promocion, prioridad = false }: { promocion: Promocion; prioridad?: boolean }) {
   const router = useRouter();
@@ -35,16 +34,22 @@ export function PromocionCard({ promocion, prioridad = false }: { promocion: Pro
     fotosPropias.length > 0
       ? esSoloReferencial(promocion.promocion_fotos)
       : esSoloReferencial(promocion.producto?.producto_fotos);
-  // DBL en grande: si la fila trae grilla con `dbl`, el precio titular es el
-  // doble por persona (así se promociona en redes). Sin `dbl` cae al
-  // `precio_texto` de siempre.
   // Nombre "Hotel · Promo" en vivo: `titulo` es un useState que el modal de
-  // edición actualiza, por eso se pasa mezclado (no `promocion` a secas).
+  // edición actualiza, por eso se pasa mezclado (no `promocion` a secas). La
+  // tarjeta titula con el hotel (los títulos de promo suelen ser genéricos:
+  // "Temporada baja") y pone la oferta debajo, sin repetir el hotel si el
+  // título ya empieza con él.
   const nombre = nombrePromo({ ...promocion, titulo });
-  const hero = precioDobleHero({ precios: promocion.precios, moneda: promocion.moneda } as Tarifa);
-  const precioLabel = hero
-    ? `${hero.monto} ${hero.nota}`
-    : (formatearPrecioCliente(promocion.precio_texto) ?? "Consultar disponibilidad");
+  const tituloVisible = titulo || "Promoción";
+  const hotelNombre = promocion.producto?.nombre?.trim() || "";
+  const subtituloPromo =
+    hotelNombre && tituloVisible.toLowerCase().startsWith(hotelNombre.toLowerCase())
+      ? tituloVisible.slice(hotelNombre.length).replace(/^[\s·:\-–—|]+/, "") || null
+      : tituloVisible;
+  const precio = precioTarjeta(promocion);
+  const precioLabel = precio
+    ? [precio.desde ? "Desde" : null, precio.monto, precio.unidad].filter(Boolean).join(" ")
+    : "Consultar disponibilidad";
   const href = promocion.producto ? `/producto/${promocion.producto.id}` : null;
   const key = `promocion-${promocion.id}`;
   const puedeEditar = rol === "admin" && modoEdicion;
@@ -54,20 +59,15 @@ export function PromocionCard({ promocion, prioridad = false }: { promocion: Pro
       <TicketCard
         href={href}
         prioridad={prioridad}
-        badge="Promoción"
         nombre={nombre}
+        titulo={hotelNombre || tituloVisible}
         destino={promocion.producto?.destino ?? null}
         fotos={fotos}
         fotosReferenciales={fotosReferenciales}
         cotizarHref={`/cotizar/promocion/${promocion.id}`}
         resumen={promocion.resumen_ia}
-        precioLabel={precioLabel}
-        precioMuted={!hero && !promocion.precio_texto}
-        hotel={
-          promocion.producto
-            ? { nombre: promocion.producto.nombre, href: `/producto/${promocion.producto.id}` }
-            : null
-        }
+        precio={precio}
+        subtitulo={hotelNombre ? subtituloPromo : null}
         vigenciaLabel={promocion.vigencia_texto}
         ninosGratis={promocion.ninos_gratis_cantidad}
         selloNinoGratis={"nino_gratis" in promocion ? (promocion as HotSale).nino_gratis?.cantidad : null}
