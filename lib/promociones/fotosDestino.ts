@@ -9,8 +9,7 @@
  * Varias por destino (pedido del dueño, 2026-09-25): en cada vuelta de la
  * rotación del hero el destino entra con la siguiente. Canaima tiene una sola
  * porque Pexels no tiene otra del parque, y Los Roques tres por lo mismo: el
- * resto se le pide a marketing en 2500 px o más. Morrocoy, Catatumbo y Colonia
- * Tovar no tienen ninguna todavía. Coche, La Tortuga y Delta Amacuro tuvieron
+ * resto se le pide a marketing en 2500 px o más. Coche, La Tortuga y Delta Amacuro tuvieron
  * una foto del bucket (commit 30351a6) y salieron: medían 1000-1300 px y se
  * veían blandas.
  * Clave: el destino normalizado con `claveDestino`. Sin imports a propósito:
@@ -43,6 +42,24 @@ export const FOTOS_DESTINO: Record<string, { archivo: string; alt: string }[]> =
     { archivo: "caracas-torres", alt: "Torres de Parque Central de noche en Caracas" }, // 39648321
     { archivo: "caracas-panorama", alt: "Valle de Caracas con El Ávila entre nubes" }, // 20733321
     { archivo: "caracas-atardecer", alt: "Caracas al atardecer frente a El Ávila" }, // 14377784
+  ],
+  // Desde aquí, Unsplash (licencia de uso comercial sin atribución) salvo que
+  // el comentario diga Pexels. Agregadas para el selector de /cotizar
+  // (2026-09-25).
+  morrocoy: [
+    { archivo: "morrocoy-playa", alt: "Playa de cocoteros en el Parque Nacional Morrocoy" }, // 2bbd2n4ccjI
+    { archivo: "morrocoy-cayo", alt: "Cocoteros vistos desde el aire en Cayo Sombrero, Morrocoy" }, // qR-tCxLXrno
+  ],
+  // Del lago, no del relámpago: no hay foto libre del fenómeno. Pedir a marketing.
+  catatumbo: [
+    { archivo: "catatumbo", alt: "Lancha junto a un palafito al atardecer en el Lago de Maracaibo" }, // Pexels 36769604
+  ],
+  "colonia tovar": [
+    { archivo: "colonia-tovar", alt: "Arco de entrada a la Colonia Tovar" }, // RgjPNmBOjX0
+  ],
+  // Genérica a propósito: "Viajar al extranjero" no es un lugar.
+  extranjero: [
+    { archivo: "extranjero", alt: "Ala de un avión sobre las nubes al atardecer" }, // Pexels 14482714
   ],
 };
 
