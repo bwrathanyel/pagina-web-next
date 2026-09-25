@@ -79,9 +79,13 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
   const activo = pestanaVisible && enPantalla;
   const largo = useMemo(() => largoTablero(fotos), [fotos]);
 
+  // La primera queda fija y solo se baraja el resto: barajarlas todas cambiaba
+  // la foto que el servidor ya pintó justo al hidratar, y el cruce iba hacia
+  // una que nadie había bajado (fondo oscuro en el teléfono en cada carga,
+  // 2026-09-25).
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setOrden(barajar(fotos));
+    setOrden(fotos.length > 1 ? [fotos[0], ...barajar(fotos.slice(1))] : fotos);
     setI(0);
     cargadas.current = new Set([0]);
   }, [fotos]);
@@ -220,7 +224,13 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
             sizes="100vw"
             loading="eager"
             className="object-cover"
-            onLoad={() => marcarCargada(indiceSiguiente)}
+            // Bajada no es decodificada: con opacity-0 el navegador puede no
+            // decodificarla nunca, y la capa nueva del cruce quedaría vacía los
+            // primeros cuadros. decode() la deja lista antes de habilitar el salto.
+            onLoad={(e) => {
+              const idx = indiceSiguiente;
+              e.currentTarget.decode().then(() => marcarCargada(idx), () => marcarCargada(idx));
+            }}
           />
         </div>
       ) : null}
