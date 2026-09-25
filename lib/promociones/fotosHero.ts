@@ -1,6 +1,7 @@
 import { ordenarFotos, fotoUrl } from "@/lib/supabase/fotos";
 import { precioTarjeta } from "@/lib/tarifas";
 import { DESTINOS_TODO_INCLUIDO, esTodoIncluido, prioridadOferta, tieneNinoGratis } from "@/lib/promociones/hotSales";
+import { claveDestino, FOTOS_DESTINO } from "@/lib/promociones/fotosDestino";
 import type { Foto, Promocion } from "@/types/supabase";
 
 /** La promo que acompaña a la foto: el "pase destacado" del hero. */
@@ -83,50 +84,7 @@ function esFotoDeLugar(f: Foto): boolean {
 }
 
 /** Foto del DESTINO para el hero (pedido del dueño, 2026-09-24: el hero vende
- * el lugar y el pase, el hotel). Son de Pexels: licencia de uso comercial sin
- * atribución, y ninguna con personas reconocibles (regla del dueño). Viven en
- * `public/destinos/<archivo>-<ancho>.jpg` (ver `imageLoader`) porque a
- * pantalla completa piden 2560 px y el Worker de fotos no pasa de 2048.
- * El comentario de cada una es su id de Pexels, para rehacer los derivados;
- * las verticales se recortaron a 4:3 para no mandarle 2560x3840 al escritorio.
- *
- * Varias por destino (pedido del dueño, 2026-09-25): en cada vuelta de la
- * rotación el destino entra con la siguiente, así la home abierta va
- * cambiando. Canaima tiene una sola porque Pexels no tiene otra del parque, y
- * Los Roques tres por lo mismo: el resto se le pide a marketing en 2500 px o
- * más. Coche, La Tortuga y Delta Amacuro tuvieron una foto del bucket (commit
- * 30351a6) y salieron: medían 1000-1300 px y se veían blandas.
- * Clave: el destino del producto normalizado con `claveDestino`. */
-const FOTOS_DESTINO: Record<string, { archivo: string; alt: string }[]> = {
-  canaima: [
-    { archivo: "canaima", alt: "Cascada y tepuy en el Parque Nacional Canaima" }, // 7360544
-  ],
-  "los roques": [
-    { archivo: "los-roques", alt: "Aguas turquesa frente a un cayo de Los Roques" }, // 30587633
-    { archivo: "los-roques-orilla", alt: "Orilla de arena blanca y agua turquesa en Los Roques" }, // 31871910
-    { archivo: "los-roques-gran-roque", alt: "El Gran Roque visto desde el mar" }, // 16230240
-  ],
-  margarita: [
-    { archivo: "margarita", alt: "Bahía de Pampatar, Isla de Margarita" }, // 26241556
-    { archivo: "margarita-laguna", alt: "Laguna y montañas de la Isla de Margarita" }, // 32690921
-    { archivo: "margarita-playa", alt: "Playa larga entre el mar y la laguna en Margarita" }, // 32699741
-    { archivo: "margarita-pescadores", alt: "Peñeros en una bahía de Margarita" }, // 26241551
-    { archivo: "margarita-costa", alt: "Playa de aguas tranquilas en Nueva Esparta" }, // 32699665
-  ],
-  merida: [
-    { archivo: "merida", alt: "Valle entre montañas en Mérida" }, // 19199162
-    { archivo: "merida-valle", alt: "Pueblos en el valle andino de Mérida" }, // 19199169
-    { archivo: "merida-iglesia", alt: "Torre neogótica de una iglesia en Mérida" }, // 14055474
-    { archivo: "merida-campanario", alt: "Campanario colonial en Mérida" }, // 14094180
-  ],
-  caracas: [
-    { archivo: "caracas", alt: "Caracas con El Ávila al fondo" }, // 38556235
-    { archivo: "caracas-noche", alt: "Caracas de noche al pie de El Ávila" }, // 4148187
-    { archivo: "caracas-torres", alt: "Torres de Parque Central de noche en Caracas" }, // 39648321
-    { archivo: "caracas-panorama", alt: "Valle de Caracas con El Ávila entre nubes" }, // 20733321
-    { archivo: "caracas-atardecer", alt: "Caracas al atardecer frente a El Ávila" }, // 14377784
-  ],
-};
+ * el lugar y el pase, el hotel). Las fotos viven en `fotosDestino.ts`. */
 
 /** Las fotos del destino empezando por la n-ésima: cada entrada de un mismo
  * destino (Margarita tiene varias) arranca en otra, así en una misma vuelta
@@ -144,9 +102,6 @@ export function fotoDelAlojamiento(p: Promocion): string | undefined {
   const foto = [...ordenarFotos(p.producto?.producto_fotos), ...ordenarFotos(p.promocion_fotos)].find(esFotoDeLugar);
   return foto ? fotoUrl(foto.storage_path) : undefined;
 }
-
-const claveDestino = (d: string) =>
-  d.trim().toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
 
 /** Cuántas ofertas rotan por destino en el hero. Margarita se vende por sus
  * todo incluido y sus niños gratis (pedido del dueño, 2026-09-25): rota entre

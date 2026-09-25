@@ -4,13 +4,13 @@ import { useId } from "react";
 import { CLASE_CONTROL, Selector } from "@/components/ui/Campo";
 import { SelectorFecha } from "@/components/ui/SelectorFecha";
 import { SelectorViajeros } from "@/components/ui/SelectorViajeros";
+import { SelectorDestino } from "@/components/cotizador/SelectorDestino";
 import {
   ADULTOS_MAX,
   alternarServicio,
   BEBES_MAX,
   cambiarDesde,
   cambiarViajeros,
-  DESTINOS,
   EDAD_NINO_MAX,
   EDAD_NINO_MIN,
   esPaquete,
@@ -93,17 +93,12 @@ export function BarraViaje({ estado, onCambio }: { estado: EstadoViaje; onCambio
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="flex flex-col gap-1.5">
           <Rotulo htmlFor={`${id}-destino`}>Destino</Rotulo>
-          <Selector
+          <SelectorDestino
             id={`${id}-destino`}
-            value={estado.destino}
-            onChange={(ev) => onCambio({ ...estado, destino: ev.target.value })}
-          >
-            {DESTINOS.map((d) => (
-              <option key={d} value={d}>
-                {d === "Extranjero" ? "Viajar al extranjero" : d}
-              </option>
-            ))}
-          </Selector>
+            valor={estado.destino}
+            onCambio={(destino) => onCambio({ ...estado, destino })}
+            className={CONTROL_BOTON}
+          />
         </div>
 
         <div className="flex flex-col gap-1.5">
