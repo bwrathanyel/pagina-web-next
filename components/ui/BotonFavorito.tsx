@@ -31,7 +31,7 @@ export function BotonFavorito({
       aria-label={`${nombre} en favoritos`}
       aria-pressed={encendido}
       className={
-        "flex h-11 w-11 items-center justify-center rounded-pill bg-dusk/85 backdrop-blur-sm transition-colors duration-150 " +
+        "flex h-11 w-11 items-center justify-center rounded-pill bg-dusk/85 lg:backdrop-blur-sm transition-colors duration-150 " +
         (encendido ? "text-coral-bright" : "text-dusk-text hover:text-coral-bright") +
         " " +
         className

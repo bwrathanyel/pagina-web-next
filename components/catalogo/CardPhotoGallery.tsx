@@ -168,7 +168,7 @@ export function CardPhotoGallery({
       />
 
       {referencial ? (
-        <span className="absolute bottom-2.5 left-3 z-10 rounded-control bg-dusk/80 px-2 py-1 font-mono text-xs font-bold uppercase tracking-wide text-dusk-text backdrop-blur-sm">
+        <span className="absolute bottom-2.5 left-3 z-10 rounded-control bg-dusk/80 px-2 py-1 font-mono text-xs font-bold uppercase tracking-wide text-dusk-text lg:backdrop-blur-sm">
           Imagen referencial
         </span>
       ) : null}

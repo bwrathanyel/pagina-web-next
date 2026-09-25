@@ -145,7 +145,7 @@ export function TicketCard({
               {ninosGratis} {ninosGratis === 1 ? "niño gratis" : "niños gratis"}
             </Etiqueta>
           ) : badge ? (
-            <Etiqueta tono="dusk" className="absolute left-3 top-3 z-10 backdrop-blur-sm">
+            <Etiqueta tono="dusk" className="absolute left-3 top-3 z-10 lg:backdrop-blur-sm">
               {badge}
             </Etiqueta>
           ) : null}
@@ -161,7 +161,7 @@ export function TicketCard({
             <CardPhotoGallery fotos={fotos} alt={nombre} referencial={fotosReferenciales} prioridad={prioridad} />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-seafoam-bg via-sand-2 to-card">
-              <div className="rounded-card border border-linea bg-card/65 px-6 py-4 text-center text-ink-soft backdrop-blur-sm">
+              <div className="rounded-card border border-linea bg-card/65 px-6 py-4 text-center text-ink-soft lg:backdrop-blur-sm">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" className="mx-auto mb-2" aria-hidden="true">
                   <rect x="3" y="5" width="18" height="14" rx="2" />
                   <circle cx="8.5" cy="10" r="1.5" />
