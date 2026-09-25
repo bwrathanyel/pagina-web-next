@@ -60,6 +60,7 @@ export function ResumenViaje({
   formId,
   enviando,
   conTitulo = true,
+  datos,
 }: {
   estado: EstadoViaje;
   hotel: Pick<HotelCotizador, "nombre" | "foto"> | null;
@@ -68,6 +69,8 @@ export function ResumenViaje({
   formId: string;
   enviando: boolean;
   conTitulo?: boolean;
+  /** Nombre y WhatsApp: van en el pase, justo encima del envío. */
+  datos?: ReactNode;
 }) {
   const noches = nochesDe(estado);
   const fechas = textoFechas(estado);
@@ -134,6 +137,12 @@ export function ResumenViaje({
           </Linea>
         ) : null}
       </ul>
+      {datos ? (
+        <div className="border-t border-dashed border-linea-fuerte px-5 pb-5 pt-4">
+          <h3 className="mb-3 text-sm font-semibold text-ink">Sus datos</h3>
+          {datos}
+        </div>
+      ) : null}
     </Boleto>
   );
 }

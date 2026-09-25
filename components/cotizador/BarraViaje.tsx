@@ -58,7 +58,7 @@ export function BarraViaje({ estado, onCambio }: { estado: EstadoViaje; onCambio
   const [rotuloDesde, rotuloHasta] = hospedaje ? ["Entrada", "Salida"] : vuelo ? ["Ida", "Vuelta"] : ["Fecha", ""];
 
   return (
-    <section aria-label="Su viaje" className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6">
       <div>
         <p id={`${id}-servicios`} className="mb-2 text-sm font-semibold text-ink">
           ¿Qué necesita cotizar?
@@ -179,6 +179,6 @@ export function BarraViaje({ estado, onCambio }: { estado: EstadoViaje; onCambio
           <p className="text-sm text-ink-soft">La edad define la tarifa: por favor indique la real.</p>
         </fieldset>
       ) : null}
-    </section>
+    </div>
   );
 }

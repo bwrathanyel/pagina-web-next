@@ -60,12 +60,113 @@ function validar(e: EstadoViaje, c: ContactoViaje): Errores {
   return errores;
 }
 
-function Seccion({ titulo, children }: { titulo: string; children: ReactNode }) {
+/** Un paso del armado: tarjeta con número y título. El número es real, el
+ * cliente recorre los pasos en orden. */
+function Paso({ numero, titulo, children }: { numero?: number; titulo: string; children: ReactNode }) {
+  const id = useId();
   return (
-    <section className="flex flex-col gap-4 border-t border-linea pt-6">
-      <h2 className="font-display text-2xl font-bold leading-tight text-ink md:text-3xl">{titulo}</h2>
+    <section aria-labelledby={id} className="flex flex-col gap-5 rounded-card border border-linea bg-card p-5 md:p-7">
+      <h2 id={id} className="flex items-center gap-3 font-display text-2xl font-bold leading-tight text-ink">
+        {numero ? (
+          <span
+            aria-hidden="true"
+            className="inline-flex size-8 shrink-0 items-center justify-center rounded-pill bg-acento font-mono text-sm font-bold tabular-nums text-sobre-acento"
+          >
+            {numero}
+          </span>
+        ) : null}
+        {titulo}
+      </h2>
       {children}
     </section>
+  );
+}
+
+/** Nombre y WhatsApp a la vista; correo y comentarios plegados. Se pinta en el
+ * resumen (escritorio y hoja) y en una tarjeta en móvil: todos los campos van
+ * con `form` al mismo formulario y comparten estado. */
+function DatosContacto({
+  formId,
+  contacto,
+  errores,
+  onCampo,
+}: {
+  formId: string;
+  contacto: ContactoViaje;
+  errores: Errores;
+  onCampo: (clave: keyof ContactoViaje, valor: string) => void;
+}) {
+  const [abierto, setAbierto] = useState(false);
+  const extra = abierto || !!errores.correo || !!contacto.correo || !!contacto.notas;
+  return (
+    <div className="flex flex-col gap-4">
+      <Campo etiqueta="Nombre y apellido" requerido error={errores.nombre}>
+        {(a11y) => (
+          <Entrada
+            {...a11y}
+            form={formId}
+            name="nombre"
+            autoComplete="name"
+            value={contacto.nombre}
+            onChange={(ev) => onCampo("nombre", ev.target.value)}
+          />
+        )}
+      </Campo>
+      <Campo etiqueta="WhatsApp" requerido ayuda="Aquí le escribe el asesor con el precio confirmado." error={errores.telefono}>
+        {(a11y) => (
+          <Entrada
+            {...a11y}
+            form={formId}
+            name="telefono"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder="0412-1234567"
+            value={contacto.telefono}
+            onChange={(ev) => onCampo("telefono", ev.target.value)}
+          />
+        )}
+      </Campo>
+      {extra ? (
+        <>
+          <Campo etiqueta="Correo (opcional)" error={errores.correo}>
+            {(a11y) => (
+              <Entrada
+                {...a11y}
+                form={formId}
+                name="correo"
+                type="email"
+                autoComplete="email"
+                value={contacto.correo}
+                onChange={(ev) => onCampo("correo", ev.target.value)}
+              />
+            )}
+          </Campo>
+          <Campo etiqueta="Comentarios (opcional)">
+            {(a11y) => (
+              <AreaTexto
+                {...a11y}
+                form={formId}
+                name="notas"
+                rows={3}
+                placeholder="Presupuesto, plan, zona, celebración..."
+                maxLength={1000}
+                value={contacto.notas}
+                onChange={(ev) => onCampo("notas", ev.target.value)}
+              />
+            )}
+          </Campo>
+        </>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setAbierto(true)}
+          className="self-start text-sm font-semibold text-acento underline underline-offset-4 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento"
+        >
+          Agregar correo o comentarios
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -88,6 +189,7 @@ export function CotizadorViaje({
   const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState<Enviado | null>(null);
   const [hojaAbierta, setHojaAbierta] = useState(false);
+  const [verOtras, setVerOtras] = useState(false);
   // Ref, no state: un doble clic antes del próximo render vería el mismo
   // `enviando` y mandaría el lead dos veces.
   const enviandoRef = useRef(false);
@@ -98,6 +200,7 @@ export function CotizadorViaje({
   const tours = estado.servicios.includes("tours");
   const ofertasDestino = ofertas.filter((o) => o.destino === estado.destino);
   const ofertaElegida = ofertas.find((o) => o.hotelId === estado.hotel);
+  const otrasOfertas = ofertasDestino.filter((o) => o.hotelId !== estado.hotel);
   const hotel: HotelCotizador | null =
     estado.hotel == null
       ? null
@@ -202,13 +305,17 @@ export function CotizadorViaje({
     const primero = (["fechas", "nombre", "telefono", "correo"] as const).find((k) => nuevos[k]);
     if (primero) {
       setHojaAbierta(false);
-      // Tras cerrar la hoja: el foco va al primer campo con error.
+      // Tras cerrar la hoja: el foco va al primer campo con error. Los campos
+      // se pintan dos veces (resumen y tarjeta móvil): vale el que se ve.
       setTimeout(() => {
-        const campoError =
+        const form = document.getElementById(formId) as HTMLFormElement | null;
+        const destino =
           primero === "fechas"
             ? document.getElementById(`${formId}-fechas`)
-            : (document.getElementById(formId) as HTMLFormElement | null)?.elements.namedItem(primero);
-        const destino = campoError instanceof HTMLElement ? campoError : null;
+            : (Array.from(form?.elements ?? []).find(
+                (el): el is HTMLElement =>
+                  el instanceof HTMLElement && el.getAttribute("name") === primero && el.getClientRects().length > 0,
+              ) ?? null);
         destino?.focus({ preventScroll: true });
         destino?.scrollIntoView({ block: "center", behavior: "smooth" });
       }, 60);
@@ -294,6 +401,8 @@ export function CotizadorViaje({
   }
 
   const cantidad = estado.servicios.length;
+  const datos = <DatosContacto formId={formId} contacto={contacto} errores={errores} onCampo={campo} />;
+  let paso = 1;
   const resumen = (conTitulo: boolean) => (
     <ResumenViaje
       estado={estado}
@@ -303,6 +412,7 @@ export function CotizadorViaje({
       formId={formId}
       enviando={enviando}
       conTitulo={conTitulo}
+      datos={datos}
     />
   );
   const detalleVisto = verHotel ? detalles[verHotel.id] : undefined;
@@ -311,18 +421,26 @@ export function CotizadorViaje({
   return (
     <>
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_23rem] lg:items-start xl:gap-12">
-        <div className="flex min-w-0 flex-col gap-8">
-          <BarraViaje estado={estado} onCambio={cambiar} />
-          {errores.fechas ? (
-            <Aviso>
-              <span id={`${formId}-fechas`} tabIndex={-1}>
-                {errores.fechas}
-              </span>
-            </Aviso>
-          ) : null}
+        <div className="flex min-w-0 flex-col gap-6 md:gap-8">
+          <form id={formId} onSubmit={enviar} noValidate hidden />
+          <Paso numero={paso} titulo="Su viaje">
+            <BarraViaje estado={estado} onCambio={cambiar} />
+            {errores.fechas ? (
+              <Aviso>
+                <span id={`${formId}-fechas`} tabIndex={-1}>
+                  {errores.fechas}
+                </span>
+              </Aviso>
+            ) : null}
+          </Paso>
+
+          {/* Móvil: los datos quedan a la vista enseguida, no al pie. En escritorio viven en el resumen. */}
+          <div className="lg:hidden">
+            <Paso titulo="Sus datos">{datos}</Paso>
+          </div>
 
           {hospedaje ? (
-            <Seccion titulo={`Hospedaje en ${estado.destino}`}>
+            <Paso numero={++paso} titulo={`Hospedaje en ${estado.destino}`}>
               {hotel ? (
                 <div className="flex flex-col gap-3 rounded-card border border-acento bg-card p-3 sm:flex-row sm:items-center">
                   {hotel.foto ? (
@@ -369,28 +487,39 @@ export function CotizadorViaje({
                   </div>
                 </div>
               ) : null}
-              {hotel && ofertasDestino.length ? (
-                <h3 className="pt-2 text-sm font-semibold text-ink">Otras ofertas en {estado.destino}</h3>
+              {hotel && otrasOfertas.length ? (
+                <Boton
+                  variante="secundario"
+                  tamano="sm"
+                  className="self-start"
+                  aria-expanded={verOtras}
+                  onClick={() => setVerOtras((v) => !v)}
+                >
+                  {verOtras ? "Ocultar otras ofertas" : `Ver otras ofertas en ${estado.destino} (${otrasOfertas.length})`}
+                </Boton>
               ) : null}
-              <OfertasHospedaje
-                ofertas={ofertasDestino}
-                destino={estado.destino}
-                elegido={hotel?.id ?? null}
-                bloqueos={mapaBloqueos}
-                desde={estado.desde}
-                hasta={estado.hasta}
-                onVer={(o) => setVerHotel({ id: o.hotelId, nombre: o.nombre })}
-              />
+              {!hotel || verOtras ? (
+                <OfertasHospedaje
+                  ofertas={hotel ? otrasOfertas : ofertasDestino}
+                  destino={estado.destino}
+                  elegido={hotel?.id ?? null}
+                  bloqueos={mapaBloqueos}
+                  desde={estado.desde}
+                  hasta={estado.hasta}
+                  onVer={(o) => setVerHotel({ id: o.hotelId, nombre: o.nombre })}
+                />
+              ) : null}
               {!hotel && ofertasDestino.length ? (
                 <p className="text-sm text-ink-soft">
-                  ¿No encontró lo que busca? Cuéntenos abajo su presupuesto, plan o zona y un asesor le propone opciones.
+                  ¿No encontró lo que busca? Escriba su presupuesto, plan o zona en los comentarios, junto al botón de
+                  envío, y un asesor le propone opciones.
                 </p>
               ) : null}
-            </Seccion>
+            </Paso>
           ) : null}
 
           {vuelo ? (
-            <Seccion titulo="Vuelo">
+            <Paso numero={++paso} titulo="Vuelo">
               <div className="grid gap-4 sm:grid-cols-2">
                 <Campo etiqueta="Desde">
                   {(a11y) => (
@@ -428,83 +557,25 @@ export function CotizadorViaje({
               <p className="text-sm text-ink-soft">
                 Las fechas y los pasajeros son los de su viaje. La cédula la solicita el asesor al confirmar.
               </p>
-            </Seccion>
+            </Paso>
           ) : null}
 
           {tours ? (
-            <Seccion titulo={`Full day y tours en ${estado.destino}`}>
+            <Paso numero={++paso} titulo={`Full day y tours en ${estado.destino}`}>
               <p className="text-ink-soft">
                 Un asesor le propone los tours disponibles para sus fechas. Los full day son por grupo privado, con un
                 mínimo de 15 personas.
               </p>
-            </Seccion>
+            </Paso>
           ) : null}
 
-          <Seccion titulo="Sus datos">
-            <form id={formId} onSubmit={enviar} noValidate className="flex flex-col gap-4">
-              <Campo etiqueta="Nombre y apellido" requerido error={errores.nombre}>
-                {(a11y) => (
-                  <Entrada
-                    {...a11y}
-                    name="nombre"
-                    autoComplete="name"
-                    value={contacto.nombre}
-                    onChange={(ev) => campo("nombre", ev.target.value)}
-                  />
-                )}
-              </Campo>
-              <Campo
-                etiqueta="WhatsApp"
-                requerido
-                ayuda="Un asesor le escribe a este número con el precio confirmado."
-                error={errores.telefono}
-              >
-                {(a11y) => (
-                  <Entrada
-                    {...a11y}
-                    name="telefono"
-                    type="tel"
-                    inputMode="tel"
-                    autoComplete="tel"
-                    placeholder="0412-1234567"
-                    value={contacto.telefono}
-                    onChange={(ev) => campo("telefono", ev.target.value)}
-                  />
-                )}
-              </Campo>
-              <Campo etiqueta="Correo (opcional)" error={errores.correo}>
-                {(a11y) => (
-                  <Entrada
-                    {...a11y}
-                    name="correo"
-                    type="email"
-                    autoComplete="email"
-                    value={contacto.correo}
-                    onChange={(ev) => campo("correo", ev.target.value)}
-                  />
-                )}
-              </Campo>
-              <Campo etiqueta="¿Algo más que debamos saber?">
-                {(a11y) => (
-                  <AreaTexto
-                    {...a11y}
-                    name="notas"
-                    placeholder="Presupuesto, plan, zona, celebración..."
-                    maxLength={1000}
-                    value={contacto.notas}
-                    onChange={(ev) => campo("notas", ev.target.value)}
-                  />
-                )}
-              </Campo>
-              {/* Móvil: el resumen vive en una hoja, así que el envío también va al pie del formulario. */}
-              <Boton type="submit" tamano="lg" ancho cargando={enviando} className="lg:hidden">
-                Enviar solicitud
-              </Boton>
-            </form>
-          </Seccion>
+          {/* Móvil: el resumen vive en una hoja, así que el envío también queda al pie. */}
+          <Boton type="submit" form={formId} tamano="lg" ancho cargando={enviando} className="lg:hidden">
+            Enviar solicitud
+          </Boton>
         </div>
 
-        <aside aria-label="Su cotización" className="hidden lg:sticky lg:top-24 lg:block">
+        <aside aria-label="Su cotización" className="hidden lg:sticky lg:top-24 lg:block lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto lg:overscroll-contain">
           {resumen(true)}
         </aside>
       </div>
@@ -547,6 +618,7 @@ export function CotizadorViaje({
             onElegir={(tarifa) => {
               cambiar({ ...estado, hotel: verHotel.id, tarifa });
               setVerHotel(null);
+              setVerOtras(false);
             }}
           />
         ) : null}
