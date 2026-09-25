@@ -64,7 +64,37 @@ export function ordenDelDia(pool: HotSale[], ahora = new Date()): HotSale[] {
   return [...manuales, ...resto];
 }
 
-export type DestinoConOfertas = { destino: string; ofertas: number; foto: string; desde: string | null };
+export type DestinoConOfertas = {
+  destino: string;
+  ofertas: number;
+  foto: string;
+  desde: string | null;
+  /** Qué plan cubre el piso cuando no es el de cualquier oferta ("todo incluido"). */
+  nota?: string;
+};
+
+type ConNinoGratis = Promocion & { nino_gratis?: { cantidad: number } | null };
+
+const normalizar = (s: string | null | undefined) =>
+  (s ?? "").toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
+
+export const esTodoIncluido = (p: Promocion) =>
+  /todo incluido|all inclusive/.test(normalizar(`${p.plan} ${p.titulo}`));
+
+export const tieneNinoGratis = (p: ConNinoGratis) =>
+  (p.nino_gratis?.cantidad ?? 0) > 0 || (p.ninos_gratis_cantidad ?? 0) > 0;
+
+const esPlanBasico = (p: Promocion) => /desayuno|solo alojamiento/.test(normalizar(p.plan));
+
+/** Qué oferta se muestra primero de un destino (pedido del dueño, 2026-09-25):
+ * niños gratis, después todo incluido, después el resto, y al final los planes
+ * de solo desayuno o solo alojamiento. A igual prioridad manda el ranking. */
+export const prioridadOferta = (p: ConNinoGratis) =>
+  tieneNinoGratis(p) ? 0 : esTodoIncluido(p) ? 1 : esPlanBasico(p) ? 3 : 2;
+
+/** Destinos que se venden por el todo incluido: su piso de precio es el del
+ * todo incluido más barato, no el de una habitación con desayuno. */
+export const DESTINOS_TODO_INCLUIDO = new Set(["margarita"]);
 
 // Tiras de destino de la home: cuántas Hot Sales hay en cada uno, la foto de
 // la mejor rankeada (el pool llega por score) y el piso de precio. El piso
@@ -78,8 +108,10 @@ export function destinosConOfertas(pool: Promocion[]): DestinoConOfertas[] {
   for (const { destino, items } of grupos) {
     const foto = items.map((p) => fotosDeLaPromo(p)[0]).find(Boolean);
     if (!foto) continue;
+    const todoIncluido = DESTINOS_TODO_INCLUIDO.has(normalizar(destino).trim()) ? items.filter(esTodoIncluido) : [];
+    const base = todoIncluido.length > 0 ? todoIncluido : items;
     const pisos = { $: Infinity, "€": Infinity };
-    for (const p of items) {
+    for (const p of base) {
       if (typeof p.precio_desde_usd !== "number" || !Number.isFinite(p.precio_desde_usd)) continue;
       const simbolo = p.precio_texto?.includes("€") ? "€" : "$";
       pisos[simbolo] = Math.min(pisos[simbolo], p.precio_desde_usd);
@@ -89,7 +121,7 @@ export function destinosConOfertas(pool: Promocion[]): DestinoConOfertas[] {
       : Number.isFinite(pisos["€"])
         ? formatearPrecioDesde(pisos["€"], "€")
         : null;
-    resultado.push({ destino, ofertas: items.length, foto, desde });
+    resultado.push({ destino, ofertas: items.length, foto, desde, nota: todoIncluido.length > 0 ? "todo incluido" : undefined });
   }
   // Más ofertas primero; a igual cantidad queda el orden alfabético del grupo.
   return resultado.sort((a, b) => b.ofertas - a.ofertas);

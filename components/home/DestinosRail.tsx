@@ -55,6 +55,7 @@ export function DestinosRail({ destinos }: { destinos: DestinoConOfertas[] }) {
                 {d.desde ? (
                   <span className="text-sm text-gold tabular-nums">
                     desde <PrecioMostrado texto={d.desde} />
+                    {d.nota ? <span className="font-normal text-dusk-text-soft"> {d.nota}</span> : null}
                   </span>
                 ) : null}
               </span>

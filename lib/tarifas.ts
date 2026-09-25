@@ -134,6 +134,32 @@ export function precioTarjeta(p: {
 
 export type PrecioTarjeta = NonNullable<ReturnType<typeof precioTarjeta>>;
 
+/** El precio de un HOTEL (tarjeta y ficha del producto): la tarifa destacada
+ * anunciada por persona si trae grilla; si no, su `precio_texto`. No pasa por
+ * `precio_desde_usd` (suele ser el de CHD, ver badgePrecio): esa es la regla de
+ * las promociones (precioTarjeta), no la del hotel. Tarjeta y ficha llaman a
+ * esta misma función para no mostrar dos precios distintos del mismo hotel. */
+export function precioDeTarifa(t: Tarifa | null | undefined): PrecioTarjeta | null {
+  if (!t) return null;
+  const pp = t.precios ? precioPorPersona(t) : null;
+  if (pp !== null) {
+    return { monto: montoConMoneda(Math.round(pp * 100) / 100, t.moneda), unidad: "por persona", desde: true, corto: true };
+  }
+  const texto = formatearPrecioCliente(t.precio_texto)?.trim();
+  return texto ? { monto: texto, unidad: null, desde: false, corto: texto.length <= 12 } : null;
+}
+
+/** Texto libre del tarifario ("€286 por persona (paquete…)"): si arranca con
+ * un monto, el monto va grande y el resto baja a la línea de unidad. */
+export function separarMonto(precio: PrecioTarjeta | null): { monto: string | undefined; unidad: string | null | undefined; grande: boolean } {
+  const partido = precio && !precio.corto ? /^([$€]\s?[\d.,]+)\s+(.+)$/.exec(precio.monto) : null;
+  return {
+    monto: partido ? partido[1] : precio?.monto,
+    unidad: partido ? partido[2] : precio?.unidad,
+    grande: partido ? true : (precio?.corto ?? false),
+  };
+}
+
 /** El número de precioTarjeta() para ordenar "Menor precio": misma prioridad
  * (doble por persona y noche, después el "desde"); el texto libre no ordena. */
 export function montoOrden(p: Parameters<typeof precioTarjeta>[0]): number | null {

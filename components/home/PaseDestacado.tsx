@@ -1,9 +1,35 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { Boleto } from "@/components/ui/Boleto";
 import { Icono } from "@/components/ui/Icono";
-import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
+import { PrecioMostrado, usePrecioMostrado } from "@/components/ui/PrecioMostrado";
 import type { PaseHero } from "@/lib/promociones/fotosHero";
+import { separarMonto } from "@/lib/tarifas";
+
+// El monto grande del talón se achica hasta que su palabra más larga entre en
+// el ancho del talón: en Bs ("Bs 1.155.160,00") el número triplica el largo
+// del de USD/EUR y a tamaño fijo se cortaba. 0,62em = ancho de un glifo mono;
+// el tope es el tamaño de siempre (text-xl / lg:text-3xl).
+function MontoAjustado({ texto }: { texto: string | undefined }) {
+  const mostrado = usePrecioMostrado(texto) ?? "";
+  const glifos = Math.max(4, ...mostrado.split(/\s+/).map((p) => p.length)) * 0.62;
+  return (
+    <div className="@container">
+      <p
+        style={{ "--glifos": glifos } as React.CSSProperties}
+        className={
+          "font-mono font-bold leading-none tabular-nums text-ink " +
+          "[font-size:max(0.75rem,min(1.25rem,calc(100cqi/var(--glifos))))] " +
+          "lg:[font-size:max(0.75rem,min(1.875rem,calc(100cqi/var(--glifos))))]"
+        }
+      >
+        {mostrado}
+      </p>
+    </div>
+  );
+}
 
 // El "pase destacado" del hero: la promo de la foto que está en pantalla,
 // como un boleto con el precio en el talón. Un solo árbol: en el teléfono es
@@ -13,6 +39,7 @@ export function PaseDestacado({ pase, destino }: { pase: PaseHero; destino?: str
   const lugar = [destino, pase.plan].filter(Boolean).join(" · ");
   const incluye = pase.incluye.length > 0 ? `Incluye ${pase.incluye.join(", ").toLocaleLowerCase("es")}` : null;
   const precio = pase.precio;
+  const { monto, unidad, grande } = separarMonto(precio);
 
   return (
     <Link
@@ -28,15 +55,14 @@ export function PaseDestacado({ pase, destino }: { pase: PaseHero; destino?: str
             {precio ? (
               <>
                 {precio.desde ? <p className="text-xs text-ink-soft">desde</p> : null}
-                <p
-                  className={
-                    "font-mono font-bold leading-none tabular-nums text-ink " +
-                    (precio.corto ? "text-xl lg:text-3xl" : "line-clamp-3 text-sm lg:text-base")
-                  }
-                >
-                  <PrecioMostrado texto={precio.monto} />
-                </p>
-                {precio.unidad ? <p className="hidden text-xs leading-snug text-ink-soft lg:block">{precio.unidad}</p> : null}
+                {grande ? (
+                  <MontoAjustado texto={monto} />
+                ) : (
+                  <p className="line-clamp-3 font-mono text-sm font-bold leading-none tabular-nums text-ink lg:text-base">
+                    <PrecioMostrado texto={monto} />
+                  </p>
+                )}
+                {unidad ? <p className="hidden text-xs leading-snug text-ink-soft lg:line-clamp-2">{unidad}</p> : null}
               </>
             ) : (
               <p className="text-sm font-semibold text-ink-soft">Precio a consultar</p>

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { FotoCarousel } from "@/components/catalogo/FotoCarousel";
+import { GaleriaProducto } from "@/components/producto/GaleriaProducto";
 import { ProductoInfo } from "@/components/producto/ProductoInfo";
 import { ProductoAccionesOverlay, ProductoFooterMobile } from "@/components/producto/ProductoAccionesMobile";
 import { fotosDe, fotosDeAncho } from "@/lib/supabase/fotos";
@@ -61,7 +61,7 @@ export default async function ProductoPage({ params }: { params: Promise<{ id: s
   const fotos = fotosDe(producto.producto_fotos);
 
   return (
-    <main className="mx-auto max-w-5xl px-5 py-6 pb-28 md:py-10 lg:pb-10">
+    <main className="mx-auto max-w-6xl px-5 py-6 pb-28 md:py-10 lg:pb-10">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript(buildProductJsonLd(producto))}
@@ -75,16 +75,14 @@ export default async function ProductoPage({ params }: { params: Promise<{ id: s
           ]),
         )}
       />
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-8">
-        <div className="relative">
-          <ProductoAccionesOverlay tipo="producto" id={producto.id} nombre={producto.nombre} />
-          <FotoCarousel fotos={fotos} alt={producto.nombre} />
-        </div>
-        <ProductoInfo producto={producto} />
+      <div className="relative">
+        <ProductoAccionesOverlay tipo="producto" id={producto.id} nombre={producto.nombre} />
+        <GaleriaProducto fotos={fotos} alt={producto.nombre} />
       </div>
+      <ProductoInfo producto={producto}>
+        <CarpetaTarifas producto={producto} />
+      </ProductoInfo>
       <ProductoFooterMobile cotizarHref={`/cotizar/producto/${producto.id}`} />
-
-      <CarpetaTarifas producto={producto} />
     </main>
   );
 }

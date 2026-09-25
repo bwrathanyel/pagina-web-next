@@ -217,7 +217,7 @@ export function CarpetaTarifas({ producto }: { producto: Producto }) {
   const bloques = bloquesDe(producto);
 
   return (
-    <section className="mt-8 md:mt-12">
+    <section id="tarifas" className="mt-8 scroll-mt-24 md:mt-12">
       <h2 className="mb-4 font-display text-2xl font-bold text-ink">
         {tarifas.length === 1 ? "1 promoción disponible" : `${tarifas.length} promociones disponibles`}
       </h2>
@@ -236,7 +236,7 @@ export function CarpetaTarifas({ producto }: { producto: Producto }) {
             {grupos.length > 1 || grupo.plan !== "Sin plan indicado" ? (
               <h3 className="mb-3 font-mono text-xs uppercase tracking-wide text-ink-soft">{grupo.plan}</h3>
             ) : null}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {grupo.tarifas.map((tarifa) => (
                 <TarjetaPromocion key={tarifa.id} tarifa={tarifa} destacada={tarifa.id === destacadaId} />
               ))}

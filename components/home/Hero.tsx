@@ -13,7 +13,7 @@ import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import { CotizadorRapidoBarra, CotizadorRapidoMovil } from "@/components/home/CotizadorRapido";
 import { PaseDestacado } from "@/components/home/PaseDestacado";
 import { useHeroBajoBarra } from "@/lib/layout/barraSobreFoto";
-import type { FotoHero } from "@/lib/promociones/fotosHero";
+import type { FondoHero, FotoHero } from "@/lib/promociones/fotosHero";
 
 const MS_POR_FOTO = 6000;
 const SEG_CRUCE = 1.2;
@@ -55,6 +55,12 @@ const esEscritorio = () => window.matchMedia(MQ_ESCRITORIO).matches;
 
 const retraso = (ms: number) => ({ "--retraso": `${ms}ms` }) as CSSProperties;
 
+/** El fondo de una entrada en la vuelta `ciclo`: un destino con varias fotos
+ * entra con la siguiente de su lista cada vez que la rotación da la vuelta. */
+function fondoDe(foto: FotoHero, ciclo: number): FondoHero {
+  return foto.fondos?.length ? foto.fondos[ciclo % foto.fondos.length] : foto;
+}
+
 export function Hero({ fotos }: { fotos: FotoHero[] }) {
   const fotoPrincipal = fotos[0];
   const { content } = useSiteContent();
@@ -75,10 +81,14 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
   const [i, setI] = useState(0);
   // El cruce no puede ir hacia una foto que el navegador todavía no bajó: eso
   // es un hueco de degradado en pantalla completa. Solo se salta entre índices
-  // confirmados por onLoad (mismo patrón que CardPhotoGallery).
+  // confirmadas por onLoad (mismo patrón que CardPhotoGallery). Por URL y no
+  // por índice: la misma entrada cambia de foto en cada ciclo.
   // Ref y no estado: que termine de bajar una foto no debe reiniciar el reloj
   // (el segmento seguiría corriendo y el salto llegaría tarde).
-  const cargadas = useRef<Set<number>>(new Set([0]));
+  const cargadas = useRef<Set<string>>(new Set(fotos[0] ? [fotos[0].url] : []));
+  // Cuántas veces la rotación volvió a la primera entrada: elige la foto de
+  // cada destino (fondoDe).
+  const [ciclo, setCiclo] = useState(0);
   // Si al vencer el reloj la siguiente todavía no bajó, se da otra vuelta a
   // la misma foto en vez de quedarse parado.
   const [vuelta, setVuelta] = useState(0);
@@ -99,7 +109,8 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setOrden(fotos.length > 1 ? [fotos[0], ...barajar(fotos.slice(1))] : fotos);
     setI(0);
-    cargadas.current = new Set([0]);
+    setCiclo(0);
+    cargadas.current = new Set(fotos[0] ? [fotos[0].url] : []);
   }, [fotos]);
 
   useEffect(() => {
@@ -126,26 +137,36 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
     const t = setTimeout(() => {
       for (let paso = 1; paso < orden.length; paso++) {
         const siguiente = (i + paso) % orden.length;
-        if (cargadas.current.has(siguiente)) return setI(siguiente);
+        // Pasar por detrás de la actual es empezar otro ciclo.
+        const c = siguiente < i ? ciclo + 1 : ciclo;
+        if (cargadas.current.has(fondoDe(orden[siguiente], c).url)) {
+          setCiclo(c);
+          return setI(siguiente);
+        }
       }
       setVuelta((v) => v + 1);
     }, MS_POR_FOTO);
     return () => clearTimeout(t);
-  }, [rotando, activo, orden.length, i, vuelta]);
+  }, [rotando, activo, orden, i, ciclo, vuelta]);
 
   // Una foto que no baja (red cortada, archivo borrado) sale de la rotación y
   // se salta ya a la próxima que sí bajó: si no, queda el texto alternativo
   // del <img> roto en pantalla completa hasta que venza el reloj.
-  const alFallar = (idx: number) => {
-    cargadas.current.delete(idx);
+  const alFallar = (url: string) => {
+    cargadas.current.delete(url);
     for (let paso = 1; paso < orden.length; paso++) {
-      const siguiente = (idx + paso) % orden.length;
-      if (cargadas.current.has(siguiente)) return setI(siguiente);
+      const siguiente = (i + paso) % orden.length;
+      const c = siguiente < i ? ciclo + 1 : ciclo;
+      if (cargadas.current.has(fondoDe(orden[siguiente], c).url)) {
+        setCiclo(c);
+        return setI(siguiente);
+      }
     }
   };
 
   const actual = hero.image ? null : orden[i] ?? fotoPrincipal;
-  const heroAlt = actual?.alt ?? fotoPrincipal?.alt ?? "Experiencia de viaje";
+  const fondo = actual ? fondoDe(actual, ciclo) : null;
+  const heroAlt = fondo?.alt ?? fotoPrincipal?.alt ?? "Experiencia de viaje";
   // El tablero muestra el destino de la foto que está en pantalla; si el
   // alojamiento no tiene destino cargado, el nombre del hotel. Con imagen fija
   // del admin no hay destino que anunciar: queda la marca.
@@ -158,9 +179,10 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
   // Solo se monta la foto actual (más la saliente mientras se desvanece) y un
   // prefetch invisible de la siguiente: montar el pool entero bajaría todas.
   const indiceSiguiente = orden.length > 1 ? (i + 1) % orden.length : -1;
-  const fotoSiguiente = indiceSiguiente >= 0 ? orden[indiceSiguiente] : null;
+  const fotoSiguiente =
+    indiceSiguiente >= 0 ? fondoDe(orden[indiceSiguiente], indiceSiguiente < i ? ciclo + 1 : ciclo) : null;
 
-  const marcarCargada = (idx: number) => cargadas.current.add(idx);
+  const marcarCargada = (url: string) => cargadas.current.add(url);
 
   const asesor = esWhatsapp ? (
     <WhatsAppLeadButton
@@ -191,16 +213,19 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
       <div className="hero-parallax absolute inset-0 overflow-hidden">
         {hero.image ? (
           <Image src={hero.image} alt={heroAlt} fill sizes="100vw" className="hero-kenburns object-cover" priority />
-        ) : actual ? (
+        ) : fondo ? (
           // Tres nodos: este contenedor hace parallax; la capa de motion cruza
           // (opacidad + escala); el <Image> de adentro hace Ken Burns. Mezclar
           // el cruce y el Ken Burns en el mismo nodo anulaba los dos transform.
           // La entrante nace opaca DEBAJO y solo la saliente se desvanece encima:
           // con las dos a media opacidad asomaba el bg-dusk y en el teléfono la
           // foto nueva todavía decodificando dejaba un parpadeo gris (2026-09-24).
+          // La key lleva el índice: dos entradas seguidas de Margarita pueden
+          // caer en la misma foto al cambiar de ciclo, y sin cruce el Ken Burns
+          // saltaba al cambiar de clase.
           <AnimatePresence initial={false}>
             <m.div
-              key={actual.url}
+              key={`${i}-${fondo.url}`}
               className="absolute inset-0"
               initial={{ opacity: 1, scale: escritorio ? 1.06 : 1 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -208,14 +233,14 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
               transition={{ duration: SEG_CRUCE, ease: CURVA, zIndex: { duration: 0 } }}
             >
               <Image
-                src={actual.url}
+                src={fondo.url}
                 alt={heroAlt}
                 fill
                 sizes="100vw"
                 className={"object-cover text-transparent " + (i % 2 ? "hero-kenburns-inv" : "hero-kenburns")}
-                priority={i === 0}
-                onLoad={() => marcarCargada(i)}
-                onError={() => alFallar(i)}
+                priority={i === 0 && ciclo === 0}
+                onLoad={() => marcarCargada(fondo.url)}
+                onError={() => alFallar(fondo.url)}
               />
             </m.div>
           </AnimatePresence>
@@ -240,8 +265,8 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
             // decodificarla nunca, y la capa nueva del cruce quedaría vacía los
             // primeros cuadros. decode() la deja lista antes de habilitar el salto.
             onLoad={(e) => {
-              const idx = indiceSiguiente;
-              e.currentTarget.decode().then(() => marcarCargada(idx), () => marcarCargada(idx));
+              const url = fotoSiguiente.url;
+              e.currentTarget.decode().then(() => marcarCargada(url), () => marcarCargada(url));
             }}
           />
         </div>
@@ -249,9 +274,12 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
 
       {/* Velos: solo a la izquierda (donde va el texto) y abajo (donde va el
           cotizador), no un velo plano sobre toda la foto. En el teléfono el
-          texto ocupa todo el ancho y el de abajo sube más. */}
-      <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-4/5 bg-gradient-to-t from-dusk via-dusk/75 to-transparent lg:h-3/5 lg:via-dusk/40" />
-      <div aria-hidden="true" className="absolute inset-y-0 left-0 w-full bg-gradient-to-r from-dusk/70 via-dusk/20 to-transparent lg:w-3/4" />
+          texto ocupa todo el ancho: el de la izquierda no va (el texto tiene
+          su propio velo, abajo) y el de abajo cubre solo el enlace y los
+          segmentos, así el medio deja ver la foto (pedido del dueño,
+          2026-09-25: se veía casi negro). */}
+      <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-dusk/85 via-dusk/70 to-transparent lg:h-3/5 lg:from-dusk lg:via-dusk/40" />
+      <div aria-hidden="true" className="absolute inset-y-0 left-0 hidden w-3/4 bg-gradient-to-r from-dusk/70 via-dusk/20 to-transparent lg:block" />
       {/* Bajo la barra transparente: sin esto, la tinta clara de la barra se
           pierde sobre un cielo o una arena clara. */}
       <div aria-hidden="true" className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-dusk/70 to-transparent" />
@@ -265,7 +293,14 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
           {/* Sin Revelar: el texto está en pantalla desde el primer pintado
               (candidato a LCP). El tablero es el único movimiento de carga del
               bloque de texto. */}
-          <div className="min-w-0">
+          <div className="relative min-w-0">
+            {/* Teléfono y tablet: velo solo detrás del tablero y el título, a
+                sangre y con bordes difusos (blur-xl y 3rem de margen: el texto
+                queda donde el velo ya está entero). Medido sobre las 18 fotos
+                recortadas a 390x764 (percentil 95 de luminancia en la zona del
+                texto), en el peor caso: blanco 9,9:1, dusk-text-soft 5,1:1 y
+                el coral 3,6:1, que es texto grande (pide 3:1). */}
+            <div aria-hidden="true" className="absolute -inset-x-10 -inset-y-12 -z-10 bg-dusk/85 blur-xl lg:hidden" />
             <TableroSalidas texto={tablero} largo={largo} className={claseTablero(largo)} />
             {lugar ? <p className="mt-2.5 truncate text-sm font-medium text-dusk-text-soft">{lugar}</p> : null}
 
@@ -318,10 +353,10 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
               <div className="flex w-full max-w-xs items-center self-start pr-16 lg:self-auto lg:w-72 lg:pr-0">
                 {orden.map((foto, idx) => (
                   <button
-                    key={foto.url}
+                    key={`${foto.url}-${foto.pase?.promoId ?? idx}`}
                     type="button"
                     onClick={() => setI(idx)}
-                    aria-label={`Ver oferta ${idx + 1} de ${orden.length}: ${foto.alt}`}
+                    aria-label={`Ver oferta ${idx + 1} de ${orden.length}: ${foto.pase?.hotel ?? foto.alt}`}
                     aria-current={idx === i}
                     className="group/seg flex h-11 min-w-0 flex-1 items-center px-1"
                   >

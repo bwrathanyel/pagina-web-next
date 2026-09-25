@@ -11,7 +11,12 @@ import { convertirPrecioTexto } from "@/lib/utils/convertirPrecio";
  * lado. Si la tasa todavía no cargó, se muestra el texto nativo (USD/EUR)
  * sin bloquear el render. */
 export function PrecioMostrado({ texto }: { texto: string | null | undefined }) {
+  return <>{usePrecioMostrado(texto)}</>;
+}
+
+/** El mismo texto que pinta PrecioMostrado, para quien necesita medirlo. */
+export function usePrecioMostrado(texto: string | null | undefined) {
   const { moneda, tasaUSD, tasaEUR } = useCurrency();
-  if (moneda !== "VES") return <>{texto}</>;
-  return <>{convertirPrecioTexto(texto, tasaUSD, tasaEUR) ?? texto}</>;
+  if (moneda !== "VES") return texto;
+  return convertirPrecioTexto(texto, tasaUSD, tasaEUR) ?? texto;
 }

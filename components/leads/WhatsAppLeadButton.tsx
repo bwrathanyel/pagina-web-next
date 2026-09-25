@@ -21,12 +21,15 @@ import { whatsappHref } from "@/lib/whatsapp";
  * handoff" que ya usa enviarACRM() en el cotizador. */
 export function WhatsAppLeadButton({
   mensajeBase,
+  destinoInicial = "",
   triggerClassName,
   triggerAriaLabel,
   triggerTitle,
   children,
 }: {
   mensajeBase: string;
+  /** Destino ya conocido (ficha de un hotel): llega escrito al formulario. */
+  destinoInicial?: string;
   triggerClassName?: string;
   triggerAriaLabel?: string;
   triggerTitle?: string;
@@ -36,7 +39,7 @@ export function WhatsAppLeadButton({
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [nombre, setNombre] = useState("");
-  const [destino, setDestino] = useState("");
+  const [destino, setDestino] = useState(destinoInicial);
   const [adultos, setAdultos] = useState("");
   const [ninos, setNinos] = useState("");
   const [infantes, setInfantes] = useState("");
@@ -79,7 +82,7 @@ export function WhatsAppLeadButton({
       else window.open(href, "_blank", "noopener");
       setAbierto(false);
       setNombre("");
-      setDestino("");
+      setDestino(destinoInicial);
       setAdultos("");
       setNinos("");
       setInfantes("");

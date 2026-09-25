@@ -10,8 +10,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { EditarProductoModal } from "@/components/admin/EditarProductoModal";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { revalidarSitioPublico } from "@/lib/admin/revalidate";
-import { badgePrecio, montoConMoneda, precioPorPersona, tarifaDestacada, type PrecioTarjeta } from "@/lib/tarifas";
-import { formatearPrecioCliente } from "@/lib/utils/formatoPrecio";
+import { badgePrecio, precioDeTarifa, tarifaDestacada } from "@/lib/tarifas";
 import type { Producto } from "@/types/supabase";
 
 export const BADGE_POR_TIPO: Record<Producto["tipo"], string> = {
@@ -41,15 +40,9 @@ export function ProductoCard({ producto, prioridad = false }: { producto: Produc
   // persona; sin ellos se queda con el `precio_texto` de siempre.
   const destacada = tarifaDestacada(producto);
   const precioLabel = badgePrecio(destacada) ?? "Consultar disponibilidad";
-  // Mismo dato que badgePrecio, separado en monto y unidad para la tarjeta.
-  const pp = destacada?.precios ? precioPorPersona(destacada) : null;
-  const texto = pp === null ? formatearPrecioCliente(destacada?.precio_texto)?.trim() : null;
-  const precio: PrecioTarjeta | null =
-    pp !== null
-      ? { monto: montoConMoneda(Math.round(pp * 100) / 100, destacada?.moneda), unidad: "por persona", desde: true, corto: true }
-      : texto
-        ? { monto: texto, unidad: null, desde: false, corto: texto.length <= 12 }
-        : null;
+  // Mismo dato que badgePrecio, separado en monto y unidad; la ficha del
+  // producto llama a la misma función.
+  const precio = precioDeTarifa(destacada);
   const href = `/producto/${producto.id}`;
   const key = `producto-${producto.id}`;
   const puedeEditar = rol === "admin" && modoEdicion;

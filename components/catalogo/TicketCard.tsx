@@ -7,7 +7,7 @@ import { Icono } from "@/components/ui/Icono";
 import { Etiqueta } from "@/components/ui/Insignia";
 import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
 import { SelloNinoGratis } from "@/components/catalogo/SelloNinoGratis";
-import type { PrecioTarjeta } from "@/lib/tarifas";
+import { separarMonto, type PrecioTarjeta } from "@/lib/tarifas";
 
 export interface TicketCardProps {
   href: string | null;
@@ -80,12 +80,7 @@ export function TicketCard({
   subtitulo,
   prioridad = false,
 }: TicketCardProps) {
-  // Texto libre del tarifario ("€286 por persona (paquete…)"): si arranca con
-  // un monto, el monto va grande y el resto baja a la línea de unidad.
-  const partido = precio && !precio.corto ? /^([$€]\s?[\d.,]+)\s+(.+)$/.exec(precio.monto) : null;
-  const monto = partido ? partido[1] : precio?.monto;
-  const unidad = partido ? partido[2] : precio?.unidad;
-  const montoGrande = partido ? true : (precio?.corto ?? false);
+  const { monto, unidad, grande: montoGrande } = separarMonto(precio);
 
   return (
     <Boleto
