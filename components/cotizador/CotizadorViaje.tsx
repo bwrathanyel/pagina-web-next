@@ -3,7 +3,14 @@
 import Image from "next/image";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { BarraViaje, chip } from "@/components/cotizador/BarraViaje";
+import { DetalleHotel } from "@/components/cotizador/DetalleHotel";
+import { OfertasHospedaje } from "@/components/cotizador/OfertasHospedaje";
 import { ResumenViaje, textoFechas } from "@/components/cotizador/ResumenViaje";
+import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
+import { estimarEstadia, type Estadia } from "@/lib/cotizador/estimado";
+import { bloqueosEnFechas, hotelParaCotizar, textoSinDisponibilidad, type Bloqueo, type HotelDetalle } from "@/lib/cotizador/hotel";
+import type { OfertaHotel } from "@/lib/cotizador/ofertas";
+import { montoConMoneda } from "@/lib/tarifas";
 import { SolicitudLista } from "@/components/leads/SolicitudLista";
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
@@ -21,7 +28,7 @@ import {
   textoViajeros,
   type EstadoViaje,
 } from "@/lib/cotizador/estado";
-import { armarCotizacionViaje, type ContactoViaje } from "@/lib/leads/buildCotizacion";
+import { armarCotizacionViaje, type ContactoViaje, type HospedajeElegido } from "@/lib/leads/buildCotizacion";
 import { crearLeadCRM } from "@/lib/leads/ingestWebLead";
 import { enviarASheetMonkey } from "@/lib/leads/sheetMonkey";
 import type { HotelCotizador } from "@/lib/supabase/queries";
@@ -62,9 +69,20 @@ function Seccion({ titulo, children }: { titulo: string; children: ReactNode }) 
   );
 }
 
-export function CotizadorViaje({ inicial, hotel: hotelInicial }: { inicial: EstadoViaje; hotel: HotelCotizador | null }) {
+export function CotizadorViaje({
+  inicial,
+  hotel: hotelInicial,
+  ofertas,
+}: {
+  inicial: EstadoViaje;
+  hotel: HotelCotizador | null;
+  ofertas: OfertaHotel[];
+}) {
   const formId = useId();
   const [estado, setEstado] = useState(inicial);
+  const [detalles, setDetalles] = useState<Record<number, HotelDetalle | "error">>({});
+  const [verHotel, setVerHotel] = useState<{ id: number; nombre: string } | null>(null);
+  const [bloqueos, setBloqueos] = useState<{ clave: string; mapa: Map<number, Bloqueo[]> } | null>(null);
   const [contacto, setContacto] = useState(CONTACTO_VACIO);
   const [errores, setErrores] = useState<Errores>({});
   const [enviando, setEnviando] = useState(false);
@@ -75,10 +93,76 @@ export function CotizadorViaje({ inicial, hotel: hotelInicial }: { inicial: Esta
   const enviandoRef = useRef(false);
   const primeraVez = useRef(true);
 
-  const hotel = hotelInicial && estado.hotel === hotelInicial.id ? hotelInicial : null;
   const hospedaje = estado.servicios.includes("hospedaje");
   const vuelo = estado.servicios.includes("vuelo");
   const tours = estado.servicios.includes("tours");
+  const ofertasDestino = ofertas.filter((o) => o.destino === estado.destino);
+  const ofertaElegida = ofertas.find((o) => o.hotelId === estado.hotel);
+  const hotel: HotelCotizador | null =
+    estado.hotel == null
+      ? null
+      : hotelInicial?.id === estado.hotel
+        ? hotelInicial
+        : ofertaElegida
+          ? { id: ofertaElegida.hotelId, nombre: ofertaElegida.nombre, destino: estado.destino, foto: ofertaElegida.foto }
+          : null;
+
+  // Detalle (tarifas y habitaciones) del hotel elegido y del que se está mirando.
+  const pendientes = [hotel?.id, verHotel?.id].filter((id): id is number => id != null && !(id in detalles));
+  const clavePendientes = pendientes.join(",");
+  useEffect(() => {
+    if (!clavePendientes) return;
+    let vivo = true;
+    for (const id of clavePendientes.split(",").map(Number)) {
+      hotelParaCotizar(id)
+        .then((d) => vivo && setDetalles((m) => ({ ...m, [id]: d ?? "error" })))
+        .catch(() => vivo && setDetalles((m) => ({ ...m, [id]: "error" })));
+    }
+    return () => {
+      vivo = false;
+    };
+  }, [clavePendientes]);
+
+  // Stop sales de los hoteles a la vista en las fechas elegidas.
+  const idsBloqueo = [...new Set([...ofertasDestino.map((o) => o.hotelId), ...(hotel ? [hotel.id] : [])])];
+  const claveBloqueo = hospedaje && estado.desde && estado.hasta ? `${idsBloqueo.join(",")}|${estado.desde}|${estado.hasta}` : "";
+  useEffect(() => {
+    if (!claveBloqueo) return;
+    let vivo = true;
+    const [ids, desde, hasta] = claveBloqueo.split("|");
+    bloqueosEnFechas(ids.split(",").filter(Boolean).map(Number), desde, hasta)
+      .then((mapa) => vivo && setBloqueos({ clave: claveBloqueo, mapa }))
+      // Si la consulta falla no se bloquea nada: el asesor confirma disponibilidad igual.
+      .catch(() => vivo && setBloqueos({ clave: claveBloqueo, mapa: new Map() }));
+    return () => {
+      vivo = false;
+    };
+  }, [claveBloqueo]);
+  const mapaBloqueos = bloqueos && bloqueos.clave === claveBloqueo ? bloqueos.mapa : null;
+  const sinDisponibilidad = (id: number) =>
+    estado.desde && estado.hasta ? textoSinDisponibilidad(mapaBloqueos?.get(id), estado.desde, estado.hasta) : null;
+
+  const detalleElegido = hotel ? detalles[hotel.id] : undefined;
+  const tarifaElegida =
+    detalleElegido && detalleElegido !== "error" ? (detalleElegido.tarifas.find((t) => t.id === estado.tarifa) ?? null) : null;
+  const estadia: Estadia = {
+    desde: estado.desde,
+    hasta: estado.hasta,
+    adultos: estado.adultos,
+    edades: estado.edades.slice(0, estado.ninos),
+    bebes: estado.bebes,
+  };
+  const hotelBloqueado = hospedaje && hotel ? sinDisponibilidad(hotel.id) : null;
+  const estimado =
+    hospedaje && tarifaElegida && detalleElegido && detalleElegido !== "error" && !hotelBloqueado
+      ? estimarEstadia(tarifaElegida, detalleElegido.tarifas, estadia)
+      : null;
+  const habitacion = tarifaElegida?.habitacion ?? null;
+  const elegido: HospedajeElegido = {
+    habitacion,
+    plan: tarifaElegida?.plan ?? null,
+    estimado: estimado?.ok ? montoConMoneda(estimado.total, estimado.moneda) : null,
+  };
 
   // El estado vive en la URL: se reescribe sin apilar historial. La primera
   // vez no, así una URL limpia sigue limpia hasta que el cliente toca algo.
@@ -112,6 +196,8 @@ export function CotizadorViaje({ inicial, hotel: hotelInicial }: { inicial: Esta
     ev.preventDefault();
     if (enviandoRef.current) return;
     const nuevos = validar(estado, contacto);
+    // Decisión del dueño: no se cotiza un hospedaje en fechas con stop sale.
+    if (!nuevos.fechas && hotelBloqueado) nuevos.fechas = `${hotel?.nombre}: ${hotelBloqueado.toLowerCase()}. Cambie las fechas o elija otro hotel.`;
     setErrores(nuevos);
     const primero = (["fechas", "nombre", "telefono", "correo"] as const).find((k) => nuevos[k]);
     if (primero) {
@@ -140,7 +226,7 @@ export function CotizadorViaje({ inicial, hotel: hotelInicial }: { inicial: Esta
       };
       const solo = vuelo && !hospedaje && !tours;
       const asesorLocal = solo ? ASESOR_BOLETERIA : elegirAsesor();
-      const base = armarCotizacionViaje(estado, datos, hotel);
+      const base = armarCotizacionViaje(estado, datos, hotel, undefined, elegido);
 
       enviarASheetMonkey({
         destino: base.destino,
@@ -170,7 +256,7 @@ export function CotizadorViaje({ inicial, hotel: hotelInicial }: { inicial: Esta
         fallo = true;
       }
 
-      const final = armarCotizacionViaje(estado, datos, hotel, leadId ?? undefined);
+      const final = armarCotizacionViaje(estado, datos, hotel, leadId ?? undefined, elegido);
       const mensaje = esInstagramInApp() ? final.mensajeTexto : final.mensajeEmoji;
       setEnviado({ waHref: `https://wa.me/${asesor.telefono}?text=${encodeURIComponent(mensaje)}`, leadId, fallo });
       setHojaAbierta(false);
@@ -209,8 +295,18 @@ export function CotizadorViaje({ inicial, hotel: hotelInicial }: { inicial: Esta
 
   const cantidad = estado.servicios.length;
   const resumen = (conTitulo: boolean) => (
-    <ResumenViaje estado={estado} hotel={hotel} formId={formId} enviando={enviando} conTitulo={conTitulo} />
+    <ResumenViaje
+      estado={estado}
+      hotel={hotel}
+      habitacion={habitacion}
+      estimado={estimado}
+      formId={formId}
+      enviando={enviando}
+      conTitulo={conTitulo}
+    />
   );
+  const detalleVisto = verHotel ? detalles[verHotel.id] : undefined;
+  const montoBarra = estimado?.ok ? montoConMoneda(estimado.total, estimado.moneda) : null;
 
   return (
     <>
@@ -228,26 +324,68 @@ export function CotizadorViaje({ inicial, hotel: hotelInicial }: { inicial: Esta
           {hospedaje ? (
             <Seccion titulo={`Hospedaje en ${estado.destino}`}>
               {hotel ? (
-                <div className="flex items-center gap-4 rounded-card border border-linea bg-card p-3">
+                <div className="flex flex-col gap-3 rounded-card border border-acento bg-card p-3 sm:flex-row sm:items-center">
                   {hotel.foto ? (
                     <span className="relative h-20 w-28 shrink-0 overflow-hidden rounded-control bg-sand-2">
                       <Image src={hotel.foto} alt="" fill sizes="112px" className="object-cover" />
                     </span>
                   ) : null}
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1" aria-live="polite">
                     <p className="font-semibold text-ink">{hotel.nombre}</p>
-                    <p className="text-sm text-ink-soft">Precio a confirmar por el asesor.</p>
+                    {habitacion ? <p className="text-sm text-ink-soft">{habitacion}</p> : null}
+                    {hotelBloqueado ? (
+                      <p className="text-sm font-semibold text-peligro">{hotelBloqueado}. Cambie las fechas o elija otro hotel.</p>
+                    ) : estimado?.ok ? (
+                      <p className="text-sm text-ink">
+                        Estimado{" "}
+                        <span className="font-mono font-bold tabular-nums">
+                          <PrecioMostrado texto={montoBarra} />
+                        </span>{" "}
+                        <span className="text-ink-soft">
+                          · {textoDuracion(estimado.noches)} · {textoViajeros(estado)}
+                        </span>
+                      </p>
+                    ) : (
+                      <p className="text-sm text-ink-soft">
+                        {estimado && !estimado.ok ? `${estimado.texto} ` : !estado.tarifa ? "Elija la habitación para ver el estimado. " : ""}
+                        Precio a confirmar por el asesor.
+                      </p>
+                    )}
+                    {estimado?.ok
+                      ? estimado.avisos.map((a) => (
+                          <p key={a} className="text-xs text-ink-soft">
+                            {a}
+                          </p>
+                        ))
+                      : null}
                   </div>
-                  <Boton variante="fantasma" tamano="sm" onClick={() => cambiar({ ...estado, hotel: null, tarifa: null })}>
-                    Quitar
-                  </Boton>
+                  <div className="flex gap-2 sm:flex-col">
+                    <Boton variante="secundario" tamano="sm" onClick={() => setVerHotel({ id: hotel.id, nombre: hotel.nombre })}>
+                      {estado.tarifa ? "Cambiar habitación" : "Ver habitaciones"}
+                    </Boton>
+                    <Boton variante="fantasma" tamano="sm" onClick={() => cambiar({ ...estado, hotel: null, tarifa: null })}>
+                      Quitar
+                    </Boton>
+                  </div>
                 </div>
-              ) : (
-                <p className="text-ink-soft">
-                  Aún no eligió un hotel. Cuéntenos abajo qué busca (plan, presupuesto, zona) y un asesor le propone
-                  opciones con disponibilidad para sus fechas.
+              ) : null}
+              {hotel && ofertasDestino.length ? (
+                <h3 className="pt-2 text-sm font-semibold text-ink">Otras ofertas en {estado.destino}</h3>
+              ) : null}
+              <OfertasHospedaje
+                ofertas={ofertasDestino}
+                destino={estado.destino}
+                elegido={hotel?.id ?? null}
+                bloqueos={mapaBloqueos}
+                desde={estado.desde}
+                hasta={estado.hasta}
+                onVer={(o) => setVerHotel({ id: o.hotelId, nombre: o.nombre })}
+              />
+              {!hotel && ofertasDestino.length ? (
+                <p className="text-sm text-ink-soft">
+                  ¿No encontró lo que busca? Cuéntenos abajo su presupuesto, plan o zona y un asesor le propone opciones.
                 </p>
-              )}
+              ) : null}
             </Seccion>
           ) : null}
 
@@ -382,14 +520,36 @@ export function CotizadorViaje({ inicial, hotel: hotelInicial }: { inicial: Esta
           Su cotización · {cantidad} {cantidad === 1 ? "servicio" : "servicios"}
           {nochesDe(estado) > 0 && hospedaje ? <span className="block text-xs font-normal text-dusk-text-soft">{textoDuracion(nochesDe(estado))}</span> : null}
         </span>
-        <span className="flex items-center gap-2 font-mono text-base font-bold">
-          A confirmar
+        <span className="flex items-center gap-2 font-mono text-base font-bold tabular-nums">
+          {montoBarra ? <PrecioMostrado texto={montoBarra} /> : "A confirmar"}
           <Icono nombre="chevron-abajo" tamano={18} className="rotate-180" />
         </span>
       </button>
 
       <Hoja abierta={hojaAbierta} onCerrar={() => setHojaAbierta(false)} titulo="Su cotización">
         <div className="p-4">{resumen(false)}</div>
+      </Hoja>
+
+      <Hoja
+        abierta={!!verHotel}
+        onCerrar={() => setVerHotel(null)}
+        titulo={verHotel?.nombre ?? "Hotel"}
+        anchoClassName="lg:max-w-2xl"
+      >
+        {verHotel ? (
+          <DetalleHotel
+            detalle={detalleVisto && detalleVisto !== "error" ? detalleVisto : null}
+            error={detalleVisto === "error"}
+            estadia={estadia}
+            personas={estado.adultos + estado.ninos + estado.bebes}
+            tarifaElegida={verHotel.id === estado.hotel ? estado.tarifa : null}
+            sinDisponibilidad={sinDisponibilidad(verHotel.id)}
+            onElegir={(tarifa) => {
+              cambiar({ ...estado, hotel: verHotel.id, tarifa });
+              setVerHotel(null);
+            }}
+          />
+        ) : null}
       </Hoja>
     </>
   );

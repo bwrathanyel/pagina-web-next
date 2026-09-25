@@ -12,6 +12,8 @@ export interface Foto {
   // foto real -- muestra el badge "Imagen referencial" en la tarjeta (ver
   // CardPhotoGallery). Nunca reemplaza una foto real existente.
   origen?: string | null;
+  /** Foto de una habitación concreta (`producto_habitaciones`); null = del hotel. */
+  habitacion_id?: number | null;
 }
 
 /** Ventana de disfrute. Una tarifa puede tener varias (MALOKA REGULAR trae 3):

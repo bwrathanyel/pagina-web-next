@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { CotizadorViaje } from "@/components/cotizador/CotizadorViaje";
 import { DESTINOS, parsearEstado } from "@/lib/cotizador/estado";
-import { getHotelCotizador } from "@/lib/supabase/queries";
+import { ofertasHoteles } from "@/lib/cotizador/ofertas";
+import { getHotelCotizador, getPromociones } from "@/lib/supabase/queries";
 
 const DESCRIPCION =
   "Arme su viaje en un solo lugar: hospedaje, vuelo, full day y tours. Indique destino, fechas y viajeros, y un asesor le responde por WhatsApp con el precio confirmado.";
@@ -20,7 +21,15 @@ export default async function CotizarPage({
 }) {
   const sp = await searchParams;
   let estado = parsearEstado(sp);
-  const hotel = estado.hotel ? await getHotelCotizador(estado.hotel).catch(() => null) : null;
+  // Las ofertas de todos los destinos van juntas (una por hotel, ~100 filas
+  // chicas): el destino se cambia en el cliente sin recargar. Si la consulta
+  // falla, /cotizar sigue funcionando sin grilla y el asesor propone.
+  const [hotel, ofertas] = await Promise.all([
+    estado.hotel ? getHotelCotizador(estado.hotel).catch(() => null) : null,
+    getPromociones()
+      .then(ofertasHoteles)
+      .catch(() => []),
+  ]);
   // Un hotel que no existe (o ya no está activo) se descarta; si el enlace no
   // traía destino, el del hotel manda.
   if (estado.hotel && !hotel) estado = { ...estado, hotel: null, tarifa: null };
@@ -35,7 +44,7 @@ export default async function CotizarPage({
       </p>
       {/* El key rearma el cotizador si llega otra URL con la página ya abierta
           (otra búsqueda desde el hero o un enlace nuevo). */}
-      <CotizadorViaje key={JSON.stringify(estado)} inicial={estado} hotel={hotel} />
+      <CotizadorViaje key={JSON.stringify(estado)} inicial={estado} hotel={hotel} ofertas={ofertas} />
     </main>
   );
 }

@@ -247,13 +247,22 @@ const fechaLarga = (iso: string) => FECHA_LARGA.format(new Date(`${iso}T00:00:00
 const recortar = (texto: string, max: number) => (texto.length > max ? `${texto.slice(0, max - 3).trimEnd()}...` : texto);
 
 /** Un solo lead por cotización, con todo lo estructurado en `consulta` como
- * texto ordenado (el contrato de /api/lead no cambia). Nunca lleva un precio:
- * el estimado por hotel llega en E2 y, sin tarifa aplicable, el asesor confirma. */
+ * texto ordenado (el contrato de /api/lead no cambia). El precio solo viaja
+ * como el estimado que vio el cliente (estimarEstadia); sin tarifa aplicable,
+ * "a confirmar por el asesor". */
+export interface HospedajeElegido {
+  habitacion?: string | null;
+  plan?: string | null;
+  /** Estimado ya formateado ("$1118"), o null si no hubo tarifa aplicable. */
+  estimado?: string | null;
+}
+
 export function armarCotizacionViaje(
   e: EstadoViaje,
   c: ContactoViaje,
   hotel: { id: number; nombre: string } | null,
   leadId?: number,
+  elegido: HospedajeElegido = {},
 ): ResultadoCotizacion {
   const tiene = (s: EstadoViaje["servicios"][number]) => e.servicios.includes(s);
   const hospedaje = tiene("hospedaje");
@@ -270,6 +279,12 @@ export function armarCotizacionViaje(
     : "Por definir";
   const tramoVuelo = `${e.origen} a ${e.destino}, ${e.vuelo === "ida" ? "solo ida" : "ida y vuelta"}`;
   const hotelTexto = hotel ? `${hotel.nombre} (#${hotel.id})` : "Sin hotel elegido: el asesor propone opciones";
+  const habitacion =
+    hospedaje && hotel && elegido.habitacion ? [elegido.habitacion, elegido.plan].filter(Boolean).join(", ") : "";
+  const estimado = hospedaje && hotel && elegido.estimado ? elegido.estimado : "";
+  const precio = estimado
+    ? `Estimado web del hospedaje: ${estimado}${vuelo || tours ? " (vuelo y tours aparte)" : ""}, sujeto a disponibilidad`
+    : "Precio: a confirmar por el asesor";
   const destino = vuelo && !hospedaje && !tours ? `${e.origen} a ${e.destino}` : e.destino;
 
   const consulta = [
@@ -280,10 +295,11 @@ export function armarCotizacionViaje(
     `Viajeros: ${viajeros}`,
     edades ? `Edades de niños: ${edades}` : "",
     hospedaje ? `Hotel: ${hotelTexto}` : "",
+    habitacion ? `Habitación: ${habitacion}` : "",
     hospedaje && e.tarifa ? `Tarifa de referencia: #${e.tarifa}` : "",
     vuelo ? `Vuelo: ${tramoVuelo}` : "",
     tours ? "Full day y tours: sí (grupo mínimo 15 personas)" : "",
-    "Precio: a confirmar por el asesor",
+    precio,
     c.correo ? `Correo: ${c.correo}` : "",
     c.notas ? `Notas: ${c.notas}` : "",
   ]
@@ -301,6 +317,8 @@ export function armarCotizacionViaje(
       ["👥", `*Viajeros:* ${viajeros}`],
       edades ? ["👶", `*Edades niños:* ${edades}`] : null,
       hospedaje ? ["🏨", `*Hotel:* ${hotelTexto}`] : null,
+      habitacion ? ["🛏️", `*Habitación:* ${habitacion}`] : null,
+      estimado ? ["💵", `*Estimado web:* ${estimado} (sujeto a disponibilidad)`] : null,
       vuelo ? ["✈️", `*Vuelo:* ${tramoVuelo}`] : null,
       tours ? ["🌴", "*Full day y tours:* sí (grupo mínimo 15 personas)"] : null,
       c.correo ? ["✉️", `*Correo:* ${c.correo}`] : null,

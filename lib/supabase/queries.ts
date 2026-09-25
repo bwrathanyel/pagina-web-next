@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { TARIFA_SELECT } from "@/lib/supabase/selects";
 import { fotosDe } from "@/lib/supabase/fotos";
 import { supabaseServer } from "@/lib/supabase/server";
 import type { Categoria, HotSale, Producto, Promocion, ProductoTipo } from "@/types/supabase";
@@ -27,16 +28,6 @@ function promoConDestinoPublico(promo: Promocion): Promocion {
 
 // Columns are always named explicitly — never `select=*` and never
 // `fuente_archivo` (internal Drive path, not for public consumption).
-
-// Una fila de `tarifas` es UNA promoción del PDF, con sus precios etiquetados y
-// las condiciones del plan colgando (`tarifario_bloques`, el recuadro azul).
-// Los campos estructurados vienen NULL hasta que corra la carga maestra: la
-// carpeta cae sola a `precio_texto`/`vigencia_texto`.
-const TARIFA_SELECT =
-  "id,precio_texto,precio_desde_usd,vigencia_texto,vigente,moneda," +
-  "titulo,plan,habitacion,precios,venta_desde,venta_hasta,disfrute_desde," +
-  "fecha_fin,fecha_venta_fin,minimo_noches,condiciones,ventanas,orden_pdf,origen,resumen_ia," +
-  "tarifario_bloques(id,plan,base_precio,incluye,check_in,check_out,ocupacion,ninos,suplementos,minimo_noches,impuestos,otras)";
 
 export const PRODUCTO_SELECT =
   "id,tipo,nombre,destino,descripcion,requisitos,tarifa_destacada_id," +
