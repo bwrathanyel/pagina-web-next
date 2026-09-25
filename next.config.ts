@@ -21,6 +21,17 @@ const nextConfig: NextConfig = {
       // impresos apuntan ahí. Temporal (307) para poder reactivarla en el próximo
       // evento quitando esta línea: con 308 los navegadores la guardarían.
       { source: "/juega", destination: "/", permanent: false },
+      // Cotizador v2: un solo flujo en /cotizar. Los enlaces viejos conservan sus
+      // parámetros (servicio, destino, fecha, hasta, adultos, ninos, bebes) y
+      // lib/cotizador/estado.ts los traduce. /cotizar/promocion/[id] redirige
+      // desde su página porque necesita saber el hotel de la tarifa.
+      { source: "/cotizador-personalizado", destination: "/cotizar", permanent: true },
+      { source: "/cotizar/producto/:id(\\d+)", destination: "/cotizar?hotel=:id", permanent: true },
+      {
+        source: "/cotizar/:tipo(fullday|hospedaje|boleteria|paquete|personalizado)",
+        destination: "/cotizar?servicio=:tipo",
+        permanent: true,
+      },
     ];
   },
   async headers() {

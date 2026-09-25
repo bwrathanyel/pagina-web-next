@@ -23,10 +23,10 @@ import {
 } from "@/lib/cotizador/cotizacionRapida";
 
 // Cotizador rápido del hero. Es un formulario GET de verdad (next/form): sin
-// JavaScript igual llega a /cotizador-personalizado con los datos en la URL,
-// y con JavaScript navega en el cliente. La página traduce la URL a las
-// respuestas del wizard (lib/cotizador/cotizacionRapida.ts).
-const DESTINO = "/cotizador-personalizado";
+// JavaScript igual llega a /cotizar con los datos en la URL,
+// y con JavaScript navega en el cliente. La página traduce la URL al estado
+// del cotizador (lib/cotizador/estado.ts).
+const DESTINO = "/cotizar";
 
 const MAXIMOS: Viajeros = { adultos: ADULTOS_MAX, ninos: NINOS_MAX, bebes: BEBES_MAX };
 

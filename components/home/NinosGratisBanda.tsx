@@ -13,7 +13,7 @@ import { diaMes, type BloqueNinosGratis, type HotelNinoGratis } from "@/lib/prom
 
 // Cotizador ya armado para la promo: hospedaje en Margarita, dos adultos y un
 // niño (inicialDesdeParams ignora lo que no reconozca).
-const COTIZAR_HREF = "/cotizador-personalizado?servicio=hospedaje&destino=Isla%20de%20Margarita&adultos=2&ninos=1";
+const COTIZAR_HREF = "/cotizar?servicios=hospedaje&destino=Isla%20de%20Margarita&adultos=2&ninos=1";
 
 function Cuenta({ h }: { h: HotelNinoGratis }) {
   if (h.dias === null || !h.hasta) return null;

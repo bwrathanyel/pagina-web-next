@@ -1,3 +1,4 @@
+import { enlaceCotizarProducto } from "@/lib/cotizador/estado";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { GaleriaProducto } from "@/components/producto/GaleriaProducto";
@@ -82,7 +83,7 @@ export default async function ProductoPage({ params }: { params: Promise<{ id: s
       <ProductoInfo producto={producto}>
         <CarpetaTarifas producto={producto} />
       </ProductoInfo>
-      <ProductoFooterMobile cotizarHref={`/cotizar/producto/${producto.id}`} />
+      <ProductoFooterMobile cotizarHref={enlaceCotizarProducto(producto)} />
     </main>
   );
 }

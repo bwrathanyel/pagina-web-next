@@ -25,7 +25,7 @@ export default function NotFound() {
           <Boton href="/catalogo" variante="firma" tamano="lg" iconoFin={<Icono nombre="flecha-der" />}>
             Ver ofertas vigentes
           </Boton>
-          <Boton href="/cotizador-personalizado" variante="sobre-foto" tamano="lg">
+          <Boton href="/cotizar" variante="sobre-foto" tamano="lg">
             Cotizar mi viaje
           </Boton>
         </div>

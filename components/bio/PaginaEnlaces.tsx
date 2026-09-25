@@ -69,7 +69,7 @@ function MaletinIcon() {
 const ENLACES_SECUNDARIOS = [
   { href: "/catalogo", label: "Catálogo y promociones", Icono: TagIcon },
   { href: "/catalogo/hot-sales", label: "Hot Sales", Icono: FuegoIcon },
-  { href: "/cotizador-personalizado", label: "Cotizador personalizado", Icono: CalculadoraIcon },
+  { href: "/cotizar", label: "Arme su viaje", Icono: CalculadoraIcon },
   { href: "/", label: "Ir a la página web", Icono: GloboIcon },
   { href: "/trabaja-con-nosotros", label: "Trabaje con nosotros", Icono: MaletinIcon },
 ];

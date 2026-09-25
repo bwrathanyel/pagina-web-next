@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { TicketCard } from "@/components/catalogo/TicketCard";
 import { fotosDe, esSoloReferencial } from "@/lib/supabase/fotos";
+import { enlaceCotizarPromocion } from "@/lib/cotizador/estado";
 import { useCarritoStore } from "@/lib/carrito/store";
 import { useFavoritos } from "@/lib/favoritos/useFavoritos";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -64,7 +65,7 @@ export function PromocionCard({ promocion, prioridad = false }: { promocion: Pro
         destino={promocion.producto?.destino ?? null}
         fotos={fotos}
         fotosReferenciales={fotosReferenciales}
-        cotizarHref={`/cotizar/promocion/${promocion.id}`}
+        cotizarHref={enlaceCotizarPromocion(promocion)}
         resumen={promocion.resumen_ia}
         precio={precio}
         subtitulo={hotelNombre ? subtituloPromo : null}

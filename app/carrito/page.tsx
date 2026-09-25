@@ -109,7 +109,7 @@ export default function CarritoPage() {
           <Boton href="/catalogo/promociones" iconoFin={<Icono nombre="flecha-der" tamano={18} />}>
             Ver promociones
           </Boton>
-          <Boton href="/cotizador-personalizado" variante="secundario">
+          <Boton href="/cotizar" variante="secundario">
             Cotizar a medida
           </Boton>
         </div>

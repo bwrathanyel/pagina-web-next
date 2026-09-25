@@ -13,6 +13,7 @@ import {
   ventaHasta,
   ventanasDe,
 } from "@/lib/tarifas";
+import { enlaceCotizarProducto } from "@/lib/cotizador/estado";
 import type { Producto } from "@/types/supabase";
 
 /** Caja de precio de la ficha: el boleto de la tarjeta, con la tarifa destacada
@@ -36,7 +37,7 @@ export function CajaPrecio({ producto, className = "" }: { producto: Producto; c
         talon={
           <div className="flex h-full items-center gap-2 px-4">
             <Boton
-              href={`/cotizar/producto/${producto.id}`}
+              href={enlaceCotizarProducto(producto)}
               tamano="sm"
               className="min-w-0 flex-1"
               iconoFin={<Icono nombre="flecha-der" tamano={16} />}

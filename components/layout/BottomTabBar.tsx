@@ -39,12 +39,12 @@ const DERECHA: Pestana[] = [
   },
 ];
 
-const COTIZAR = { href: "/cotizador-personalizado", label: "Cotizar" };
+const COTIZAR = { href: "/cotizar", label: "Cotizar" };
 
 export function BottomTabBar() {
   const pathname = usePathname();
   const esActiva = ({ href, activaEn }: Pestana) => (activaEn ? activaEn(pathname) : empieza(pathname, href));
-  const cotizarActiva = empieza(pathname, COTIZAR.href) || empieza(pathname, "/cotizar");
+  const cotizarActiva = empieza(pathname, COTIZAR.href);
 
   const pestana = (p: Pestana) => {
     const activa = esActiva(p);

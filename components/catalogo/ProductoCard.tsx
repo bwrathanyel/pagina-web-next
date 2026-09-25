@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { TicketCard } from "@/components/catalogo/TicketCard";
 import { fotosDe, esSoloReferencial } from "@/lib/supabase/fotos";
+import { enlaceCotizarProducto } from "@/lib/cotizador/estado";
 import { useCarritoStore } from "@/lib/carrito/store";
 import { useFavoritos } from "@/lib/favoritos/useFavoritos";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -57,7 +58,7 @@ export function ProductoCard({ producto, prioridad = false }: { producto: Produc
         destino={producto.destino}
         fotos={fotos}
         fotosReferenciales={fotosReferenciales}
-        cotizarHref={`/cotizar/producto/${producto.id}`}
+        cotizarHref={enlaceCotizarProducto(producto)}
         precio={precio}
         oculto={!activo}
         enCarrito={tieneItem(key)}
