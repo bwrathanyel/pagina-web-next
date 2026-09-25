@@ -54,7 +54,7 @@ export function HotSalesGrid({ pool }: { pool: Promocion[] }) {
       ) : (
         <CatalogoGrid>
           {filtradas.map((p, i) => (
-            <Revelar key={p.id} retraso={i * 50} className="h-full">
+            <Revelar key={p.id} retraso={i * 50} className="revelar-escritorio h-full">
               <PromocionCard promocion={p} prioridad={i < 2} />
             </Revelar>
           ))}

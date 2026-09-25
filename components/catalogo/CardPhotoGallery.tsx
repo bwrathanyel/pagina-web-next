@@ -56,9 +56,14 @@ export function CardPhotoGallery({
     if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
     if (typeof IntersectionObserver === "undefined") return;
     const observador = new IntersectionObserver(
+      // En el teléfono no se montan todas al entrar: en Hot Sales (~40
+      // tarjetas en una columna) recorrer la lista dejaba ~150 fotos de 1280px
+      // montadas y el navegador pintaba la pantalla con tiles corruptos. Con
+      // el pase automático alcanza con precargar la siguiente; al salir de
+      // pantalla se sueltan.
       ([entrada]) => {
         setEnPantalla(entrada.isIntersecting);
-        if (entrada.isIntersecting) setMontarTodas(true);
+        if (!entrada.isIntersecting) setMontarTodas(false);
       },
       { threshold: 0.55 },
     );
@@ -101,7 +106,6 @@ export function CardPhotoGallery({
         }
       }}
       onTouchStart={(event) => {
-        setMontarTodas(true);
         const punto = event.touches[0];
         toque.current = { x: punto.clientX, y: punto.clientY };
       }}
@@ -111,8 +115,10 @@ export function CardPhotoGallery({
         const dx = punto.clientX - toque.current.x;
         const dy = punto.clientY - toque.current.y;
         toque.current = null;
-        if (Math.abs(dx) > 38 && Math.abs(dx) > Math.abs(dy)) mover(dx < 0 ? 1 : -1);
-        else if (Math.abs(dx) < 10 && Math.abs(dy) < 10) mover(1);
+        // Solo un deslizamiento o un toque sobre la foto montan todas: un
+        // scroll vertical que empieza encima de la tarjeta no cuenta.
+        if (Math.abs(dx) > 38 && Math.abs(dx) > Math.abs(dy)) { setMontarTodas(true); mover(dx < 0 ? 1 : -1); }
+        else if (Math.abs(dx) < 10 && Math.abs(dy) < 10) { setMontarTodas(true); mover(1); }
       }}
     >
       {/* El zoom al hover vive en este wrapper, no en cada <Image>: si el
@@ -126,7 +132,7 @@ export function CardPhotoGallery({
             motion, que anima `transform`/`opacity` de verdad -- la clase
             `scale-[1.02]` de Tailwind v4 escribe `scale:`, que
             `transition-[opacity,transform]` no cubría y saltaba de golpe. */}
-        {(montarTodas ? fotos : fotos.slice(0, 1)).map((foto, indice) => (
+        {fotos.map((foto, indice) => (montarTodas || indice === 0 || (enPantalla && indice === (activa + 1) % fotos.length)) && (
           <Image
             key={foto}
             src={foto}

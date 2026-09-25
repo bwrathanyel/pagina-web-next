@@ -551,6 +551,12 @@ html {
 .revelar-escalonado > :nth-child(5) { --n: 4; }
 .revelar-escalonado > :nth-child(6) { --n: 5; }
 .revelar-escalonado > :nth-child(7) { --n: 6; }
+/* Hot Sales en el teléfono es una columna de ~40 tarjetas: animar cada una al
+   entrar, con retrasos que crecen con el índice, dejaba decenas de capas
+   compuestas a la vez durante un scroll rápido. Ahí entran quietas. */
+@media (max-width: 1023.98px) {
+  .revelar.revelar-escritorio { opacity: 1; transform: none; animation: none; }
+}
 
 
 /* Acciones del FAB unificado (ContactoFab): salen escalonadas desde el botón. */
