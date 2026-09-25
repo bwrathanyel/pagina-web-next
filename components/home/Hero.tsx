@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import Image from "next/image";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
@@ -45,6 +45,14 @@ function claseTablero(largo: number): string {
   return "text-base min-[380px]:text-lg sm:text-2xl lg:text-4xl";
 }
 
+const MQ_ESCRITORIO = "(min-width: 1024px)";
+const suscribirEscritorio = (aviso: () => void) => {
+  const mq = window.matchMedia(MQ_ESCRITORIO);
+  mq.addEventListener("change", aviso);
+  return () => mq.removeEventListener("change", aviso);
+};
+const esEscritorio = () => window.matchMedia(MQ_ESCRITORIO).matches;
+
 const retraso = (ms: number) => ({ "--retraso": `${ms}ms` }) as CSSProperties;
 
 export function Hero({ fotos }: { fotos: FotoHero[] }) {
@@ -53,6 +61,10 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
   const hero = content.home.hero;
   const esWhatsapp = hero.secondaryHref === "whatsapp";
   const reducido = useReducedMotion();
+  // En el teléfono el cruce es solo de opacidad (ver globals.css, "foto del
+  // hero queda quieta"). El servidor pinta como teléfono; en escritorio
+  // cambia al hidratar, antes de que haya ningún cruce.
+  const escritorio = useSyncExternalStore(suscribirEscritorio, esEscritorio, () => false);
 
   // Rotación de fotos de Hot Sales (pedido del dueño, 2026-07-26). El orden se
   // baraja DESPUÉS de montar y el índice arranca en 0: un Math.random() en el
@@ -190,9 +202,9 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
             <m.div
               key={actual.url}
               className="absolute inset-0"
-              initial={{ opacity: 1, scale: 1.06 }}
+              initial={{ opacity: 1, scale: escritorio ? 1.06 : 1 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.02, zIndex: 1 }}
+              exit={{ opacity: 0, scale: escritorio ? 1.02 : 1, zIndex: 1 }}
               transition={{ duration: SEG_CRUCE, ease: CURVA, zIndex: { duration: 0 } }}
             >
               <Image
@@ -244,7 +256,11 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
           pierde sobre un cielo o una arena clara. */}
       <div aria-hidden="true" className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-dusk/70 to-transparent" />
 
-      <div className="relative mx-auto flex w-full max-w-[var(--ancho-contenido)] flex-1 flex-col px-5 pb-6 pt-[calc(var(--alto-barra)+var(--alto-categorias)+2rem)] lg:pb-8 lg:pt-[calc(var(--alto-barra)+var(--alto-categorias)+3.5rem)]">
+      {/* max-lg:will-change-transform: el texto y el cotizador en su propia
+          capa, fija. Sin esto, cada cruce reordena las capas de foto de abajo
+          y el teléfono tenía que volver a rasterizar todo el bloque: se
+          vaciaba de arriba abajo por unos cuadros (video 2026-09-25). */}
+      <div className="relative mx-auto flex w-full max-w-[var(--ancho-contenido)] flex-1 flex-col px-5 pb-6 max-lg:will-change-transform pt-[calc(var(--alto-barra)+var(--alto-categorias)+2rem)] lg:pb-8 lg:pt-[calc(var(--alto-barra)+var(--alto-categorias)+3.5rem)]">
         <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,27rem)] lg:items-start lg:gap-12">
           {/* Sin Revelar: el texto está en pantalla desde el primer pintado
               (candidato a LCP). El tablero es el único movimiento de carga del
@@ -288,11 +304,8 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
             <CotizadorRapidoBarra />
           </div>
 
-          <div className="hero-sube flex flex-col gap-3 lg:hidden" style={retraso(120)}>
+          <div className="hero-sube lg:hidden" style={retraso(120)}>
             <CotizadorRapidoMovil />
-            <Boton href={hero.primaryHref} variante="firma" tamano="lg" ancho iconoFin={<Icono nombre="flecha-der" tamano={20} />}>
-              {hero.primaryLabel}
-            </Boton>
           </div>
 
           <div className="mt-3 flex flex-col-reverse items-center gap-1 lg:mt-4 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:gap-6">

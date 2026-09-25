@@ -235,10 +235,16 @@ export function CotizadorRapidoMovil() {
         type="button"
         onClick={() => setAbierta(true)}
         aria-haspopup="dialog"
-        className="sobre-claro flex min-h-14 w-full items-center gap-3 rounded-control border border-linea bg-card px-4 text-left text-base text-ink-soft transition-colors duration-150 ease-salida hover:text-ink"
+        className="sobre-claro flex min-h-14 w-full items-center gap-3 rounded-control border border-linea bg-card pl-4 pr-2 text-left text-base text-ink-soft transition-colors duration-150 ease-salida hover:text-ink"
       >
         <Icono nombre="buscar" tamano={20} className="shrink-0 text-acento" />
-        ¿A dónde quiere viajar?
+        <span className="min-w-0 flex-1 truncate">¿A dónde quiere viajar?</span>
+        {/* La flecha naranja reemplaza al botón "Cotizar mi viaje" que iba
+            debajo y tapaba la foto del hero (elección del dueño, 2026-09-25):
+            la barra de abajo ya lleva "Cotizar" al centro. */}
+        <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-control bg-coral-bright text-btn-ink">
+          <Icono nombre="flecha-der" tamano={20} />
+        </span>
       </button>
 
       <Hoja

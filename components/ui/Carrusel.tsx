@@ -8,6 +8,8 @@ import { Icono } from "@/components/ui/Icono";
 const comportamiento = (): ScrollBehavior =>
   window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
 
+const MAX_PUNTOS = 12;
+
 const CLASE_FLECHA =
   "absolute top-1/2 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-pill border border-linea-fuerte " +
   "bg-card text-ink transition-colors duration-150 hover:border-ink hover:text-acento pointer-fine:flex";
@@ -128,7 +130,23 @@ export function Carrusel({
           <Icono nombre="flecha-der" tamano={20} />
         </button>
       ) : null}
-      {items.length > 1 ? (
+      {items.length > MAX_PUNTOS ? (
+        // Con muchas tarjetas un punto por tarjeta no cabe: 65 puntos de 24px
+        // medían ~1950px, desbordaban la página a lo ancho y en el teléfono la
+        // pantalla se corría de costado (Promos, 2026-09-25). Una pista de
+        // avance con contador ocupa siempre lo mismo.
+        <div className={"mt-3 flex h-6 items-center justify-center gap-3 " + (desktop ? "sm:hidden" : "")}>
+          <span aria-hidden="true" className="block h-1.5 w-24 overflow-hidden rounded-pill bg-ink/20">
+            <span
+              className="block h-full origin-left rounded-pill bg-acento transition-transform duration-150 ease-salida"
+              style={{ transform: `scaleX(${(activo + 1) / items.length})` }}
+            />
+          </span>
+          <span className="font-mono text-xs tabular-nums text-ink-soft">
+            {activo + 1} / {items.length}
+          </span>
+        </div>
+      ) : items.length > 1 ? (
         <div className={"mt-3 flex justify-center gap-1.5 " + (desktop ? "sm:hidden" : "")}>
           {items.map((_, i) => (
             <button

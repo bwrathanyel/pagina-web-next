@@ -224,8 +224,11 @@ body {
   background: var(--color-sand);
   color: var(--color-ink);
   transition: background-color 0.2s ease, color 0.2s ease;
-  /* SIN overflow-x: acá convierte body en scroll container y mata el
-     `sticky top-0` del Navbar (components/layout/Navbar.tsx:100). */
+  /* SIN overflow-x hidden/auto: convierte body en scroll container y mata el
+     `sticky top-0` del Navbar (components/layout/Navbar.tsx:100). `clip` no
+     crea scroll container: es la red para que un desborde a lo ancho no
+     corra la página de costado en el teléfono (Promos, 2026-09-25). */
+  overflow-x: clip;
 }
 
 html {
@@ -671,6 +674,18 @@ html {
 .en-pausa .hero-kenburns,
 .en-pausa .hero-kenburns-inv {
   animation-play-state: paused;
+}
+
+/* En el teléfono la foto del hero queda quieta (sin Ken Burns ni parallax):
+   con el cruce, el tablero y el pase cambiando a la vez, el teléfono del dueño
+   se quedaba sin tiempo de rasterizar y el hero entero se veía vacío unos
+   cuadros (video 2026-09-25). Menos capas animadas = menos que repintar. */
+@media (max-width: 1023.98px) {
+  .hero-kenburns,
+  .hero-kenburns-inv,
+  .hero-parallax {
+    animation: none;
+  }
 }
 
 /* Carga del hero, el único momento orquestado: el pase y el cotizador suben
