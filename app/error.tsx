@@ -18,9 +18,21 @@ export default function Error({
 }) {
   const ruta = usePathname();
 
+  // Una pestaña abierta desde antes de un deploy pide chunks que ya no existen
+  // (pasó el 2026-09-24 al tocar Cuenta): se recarga UNA vez por ruta y solo
+  // si vuelve a fallar se muestra esta pantalla.
   useEffect(() => {
     console.error(error);
-  }, [error]);
+    if (!/ChunkLoadError|Loading (CSS )?chunk|dynamically imported module/i.test(`${error.name} ${error.message}`)) return;
+    try {
+      const clave = `recarga-chunk:${ruta}`;
+      if (sessionStorage.getItem(clave)) return;
+      sessionStorage.setItem(clave, "1");
+    } catch {
+      return;
+    }
+    window.location.reload();
+  }, [error, ruta]);
 
   const mensaje =
     `Hola, la página ${ruta} de la web me dio un error al cargar.` +
