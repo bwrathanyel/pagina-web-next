@@ -134,6 +134,12 @@ export function precioTarjeta(p: {
 
 export type PrecioTarjeta = NonNullable<ReturnType<typeof precioTarjeta>>;
 
+/** El número de precioTarjeta() para ordenar "Menor precio": misma prioridad
+ * (doble por persona y noche, después el "desde"); el texto libre no ordena. */
+export function montoOrden(p: Parameters<typeof precioTarjeta>[0]): number | null {
+  return montoDoble(p.precios as Tarifa["precios"]) ?? p.precio_desde_usd ?? null;
+}
+
 /** Nombre visible de una promoción = "Hotel · Título". Capa de vista: el
  * `titulo` guardado no se toca. Si el título ya nombra al hotel (substring
  * normalizado) no se antepone el prefijo. Espejo de tarNombrePromo() del CRM. */

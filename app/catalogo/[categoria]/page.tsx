@@ -3,10 +3,10 @@ import type { Metadata } from "next";
 import { CategoriaTabs } from "@/components/catalogo/CategoriaTabs";
 import { CatalogHeader } from "@/components/catalogo/CatalogHeader";
 import { FILA_FIJA } from "@/components/layout/filaFija";
-import { CatalogoGrid } from "@/components/catalogo/CatalogoGrid";
+import { GrillaFiltrable, type EntradaGrilla } from "@/components/catalogo/GrillaFiltrable";
 import { ProductoCard } from "@/components/catalogo/ProductoCard";
 import { PromocionCard } from "@/components/catalogo/PromocionCard";
-import { Revelar } from "@/components/ui/Revelar";
+import { montoOrden, precioPorPersona, tarifaDestacada } from "@/lib/tarifas";
 import { getProductosPorCategoria, getPromociones } from "@/lib/supabase/queries";
 import { agruparPorDestino } from "@/lib/supabase/agruparPorDestino";
 import { jsonLdScript, buildBreadcrumbJsonLd, buildItemListJsonLd } from "@/lib/seo/jsonld";
@@ -85,6 +85,26 @@ export default async function CatalogoPage({
     ? agruparPorDestino(items as Promocion[], (p) => p.producto?.destino ?? null)
     : agruparPorDestino(items as Producto[], (p) => p.destino);
 
+  // "Recomendadas" = el orden de antes (destinos de la A a la Z, "Otros" al
+  // final), ahora en una sola grilla que los chips filtran.
+  const planas = (grupos as { destino: string; items: (Promocion | Producto)[] }[]).flatMap(
+    ({ destino, items: delGrupo }) => delGrupo.map((item) => ({ destino, item })),
+  );
+  const entradas: EntradaGrilla[] = planas.map(({ destino, item }, i) => {
+    if (esPromociones) {
+      const p = item as Promocion;
+      return { id: p.id, destino, monto: montoOrden(p), tarjeta: <PromocionCard promocion={p} prioridad={i < 2} /> };
+    }
+    const p = item as Producto;
+    const destacada = tarifaDestacada(p);
+    return {
+      id: p.id,
+      destino,
+      monto: destacada?.precios ? precioPorPersona(destacada) : null,
+      tarjeta: <ProductoCard producto={p} prioridad={i < 2} />,
+    };
+  });
+
   const itemList = esPromociones
     ? (items as Promocion[])
         .filter((p) => p.producto)
@@ -128,31 +148,11 @@ export default async function CatalogoPage({
           contamos qué opciones podemos preparar.
         </p>
       ) : (
-        <div className="flex flex-col gap-10">
-          {grupos.map(({ destino, items: itemsDelGrupo }, g) => (
-            <section key={destino}>
-              <div className="mb-5 flex items-end justify-between gap-4 border-b border-linea pb-3">
-                <h2 className="font-display text-2xl font-bold text-ink">{destino}</h2>
-                <span className="font-mono text-xs text-ink-soft">
-                  {itemsDelGrupo.length} {itemsDelGrupo.length === 1 ? "opción" : "opciones"}
-                </span>
-              </div>
-              <CatalogoGrid>
-                {esPromociones
-                  ? (itemsDelGrupo as Promocion[]).map((p, i) => (
-                      <Revelar key={p.id} retraso={i * 50}>
-                        <PromocionCard promocion={p} prioridad={g === 0 && i < 2} />
-                      </Revelar>
-                    ))
-                  : (itemsDelGrupo as Producto[]).map((p, i) => (
-                      <Revelar key={p.id} retraso={i * 50}>
-                        <ProductoCard producto={p} />
-                      </Revelar>
-                    ))}
-              </CatalogoGrid>
-            </section>
-          ))}
-        </div>
+        <GrillaFiltrable
+          entradas={entradas}
+          destinos={grupos.map((g) => g.destino)}
+          vacio="No hay opciones en este destino ahora mismo. Escríbanos por WhatsApp y le contamos qué podemos preparar."
+        />
       )}
     </main>
   );

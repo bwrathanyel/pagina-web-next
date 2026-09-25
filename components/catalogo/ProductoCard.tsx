@@ -21,7 +21,7 @@ export const BADGE_POR_TIPO: Record<Producto["tipo"], string> = {
   info: "Info",
 };
 
-export function ProductoCard({ producto }: { producto: Producto }) {
+export function ProductoCard({ producto, prioridad = false }: { producto: Producto; prioridad?: boolean }) {
   const router = useRouter();
   const { agregar, quitar, tieneItem } = useCarritoStore();
   const { esFavorito, toggle } = useFavoritos();
@@ -58,6 +58,7 @@ export function ProductoCard({ producto }: { producto: Producto }) {
     <>
       <TicketCard
         href={href}
+        prioridad={prioridad}
         badge={BADGE_POR_TIPO[producto.tipo]}
         nombre={nombre}
         destino={producto.destino}

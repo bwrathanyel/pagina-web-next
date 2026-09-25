@@ -1,23 +1,11 @@
-"use client";
-
-import { Children } from "react";
-import { Carrusel } from "@/components/ui/Carrusel";
-
-/** Carrusel horizontal en vez de grid (pedido 2026-08-22): antes bajaba a
- * una 2ª fila con más de 4 tarjetas, ahora nunca envuelve -- scroll
- * horizontal con flechas a los costados (mismo patrón que Hot Sales /
- * Más de Lotus 360 en `components/ui/Carrusel.tsx`), pero sin la prop
- * `desktop` porque acá se quiere horizontal en TODOS los tamaños, no solo
- * mobile. TicketCard achica su botón principal a solo ícono por debajo de
- * `sm` para tolerar el ancho angosto de la tarjeta (rediseño 2026-08-14). */
+/** Grilla del catálogo (etapa 3 del plan, 2026-09-25): reemplaza al carrusel
+ * horizontal del 2026-08-22. Dos columnas en el teléfono, el mismo ancho que
+ * tenía cada tarjeta en el carrusel (46%), así TicketCard no cambia de forma;
+ * sus filas de alto fijo dejan las columnas alineadas. */
 export function CatalogoGrid({ children }: { children: React.ReactNode }) {
   return (
-    <Carrusel
-      items={Children.toArray(children)}
-      anchoItem="46%"
-      maxItem="330px"
-      gap="gap-3 sm:gap-6"
-      flechas
-    />
+    <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:gap-x-6 sm:gap-y-8 md:grid-cols-3 xl:grid-cols-4">
+      {children}
+    </div>
   );
 }
