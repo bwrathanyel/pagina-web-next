@@ -4,6 +4,7 @@ import { useId } from "react";
 import { chip } from "@/components/cotizador/BarraViaje";
 import { textoFechas } from "@/components/cotizador/ResumenViaje";
 import { Aviso } from "@/components/ui/Aviso";
+import { Icono } from "@/components/ui/Icono";
 import { CLASE_CONTROL, Campo, Entrada, Selector } from "@/components/ui/Campo";
 import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
 import { SelectorFecha } from "@/components/ui/SelectorFecha";
@@ -20,7 +21,7 @@ import {
   type Equipaje,
   type EstadoViaje,
 } from "@/lib/cotizador/estado";
-import { destinosDeRutas, type RutaVuelo, type VueloViaje } from "@/lib/cotizador/vuelo";
+import { destinosDeRutas, textoBoletos, type RutaVuelo, type VueloViaje } from "@/lib/cotizador/vuelo";
 import { montoConMoneda } from "@/lib/tarifas";
 
 const CONTROL_BOTON = `${CLASE_CONTROL} min-h-12 py-2.5 cursor-pointer`;
@@ -233,14 +234,35 @@ export function SeccionVuelo({
         </div>
       </div>
 
-      <EstimadoVuelo vuelo={vuelo} />
+      <EstimadoVuelo vuelo={vuelo} idaVuelta={idaVuelta} />
 
       <p className="text-sm text-ink-soft">La cédula no se pide ahora: el asesor la solicita al confirmar.</p>
     </>
   );
 }
 
-function EstimadoVuelo({ vuelo }: { vuelo: VueloViaje }) {
+/** Línea de ruta con aviones que la recorren: uno de ida y, si es ida y vuelta, otro de regreso. */
+function RutaAnimada({ origen, destino, idaVuelta }: { origen?: string; destino: string | null; idaVuelta: boolean }) {
+  return (
+    <div aria-hidden="true" className="flex items-center gap-3 font-mono text-xs font-semibold text-ink-soft">
+      <span>{origen}</span>
+      <div className="relative h-9 flex-1 overflow-hidden">
+        <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-linea-fuerte" />
+        <div className={`ruta-avion absolute inset-x-0 ${idaVuelta ? "top-0" : "top-1/2 -translate-y-1/2"} h-4`}>
+          <Icono nombre="avion" tamano={16} className="absolute -left-4 rotate-45 text-acento" />
+        </div>
+        {idaVuelta ? (
+          <div className="ruta-avion ruta-avion-regreso absolute inset-x-0 bottom-0 h-4">
+            <Icono nombre="avion" tamano={16} className="absolute -left-4 -rotate-135 text-acento" />
+          </div>
+        ) : null}
+      </div>
+      <span>{destino}</span>
+    </div>
+  );
+}
+
+function EstimadoVuelo({ vuelo, idaVuelta }: { vuelo: VueloViaje; idaVuelta: boolean }) {
   if (vuelo.porPersona === null) {
     const motivo = vuelo.aConfirmar.includes("fecha")
       ? "La fecha del vuelo ya pasó: elija otra para ver un aproximado."
@@ -250,18 +272,30 @@ function EstimadoVuelo({ vuelo }: { vuelo: VueloViaje }) {
     return <Aviso tono="info">{motivo}</Aviso>;
   }
   const porPersona = montoConMoneda(vuelo.porPersona, "USD");
+  const boletos = vuelo.total !== null ? vuelo.total / vuelo.porPersona : null;
   return (
-    <div className="flex flex-col gap-2 rounded-control bg-sand-2 p-4">
-      <p className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <span className="text-sm font-semibold text-ink">Vuelo aproximado</span>
-        <span className="font-mono text-xl font-bold tabular-nums text-ink">
-          <PrecioMostrado texto={vuelo.total !== null ? montoConMoneda(vuelo.total, "USD") : porPersona} />
-        </span>
+    <div className="flex flex-col gap-3 rounded-control bg-sand-2 p-4">
+      <p className="text-sm font-semibold text-ink">
+        Vuelo aproximado, {idaVuelta ? "ida y vuelta" : "solo ida"}
       </p>
-      <p className="text-sm text-ink-soft">
-        <PrecioMostrado texto={porPersona} /> por persona, {vuelo.origenIata}-{vuelo.destino}
-        {vuelo.bebesSinCosto ? ". Los bebés no suman en este aproximado" : ""}.
-      </p>
+      <RutaAnimada origen={vuelo.origenIata} destino={vuelo.destino} idaVuelta={idaVuelta} />
+      <dl className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-0.5">
+          <dt className="text-xs text-ink-soft">Por boleto</dt>
+          <dd className="font-mono text-lg font-semibold tabular-nums text-ink">
+            <PrecioMostrado texto={porPersona} />
+          </dd>
+        </div>
+        {vuelo.total !== null && boletos !== null ? (
+          <div className="flex flex-col gap-0.5 text-right">
+            <dt className="text-xs text-ink-soft">Total, {textoBoletos(boletos)}</dt>
+            <dd className="font-mono text-xl font-bold tabular-nums text-ink">
+              <PrecioMostrado texto={montoConMoneda(vuelo.total, "USD")} />
+            </dd>
+          </div>
+        ) : null}
+      </dl>
+      {vuelo.bebesSinCosto ? <p className="text-sm text-ink-soft">Los bebés no suman en este aproximado.</p> : null}
       <p className="text-sm text-ink-soft">
         Aproximado. La boletería cambia según la disponibilidad a la fecha del vuelo; puede salir menos.
       </p>

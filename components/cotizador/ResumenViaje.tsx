@@ -5,7 +5,7 @@ import { Boton } from "@/components/ui/Boton";
 import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
 import { fechasVuelo, nochesDe, textoViajeros, type EstadoViaje } from "@/lib/cotizador/estado";
 import type { Estimado } from "@/lib/cotizador/estimado";
-import type { VueloViaje } from "@/lib/cotizador/vuelo";
+import { textoBoletos, type VueloViaje } from "@/lib/cotizador/vuelo";
 import { montoConMoneda } from "@/lib/tarifas";
 import type { HotelCotizador } from "@/lib/supabase/queries";
 
@@ -156,7 +156,7 @@ export function ResumenViaje({
             precio={
               unico ? null : montoVuelo ? (
                 <>
-                  Aprox. <PrecioMostrado texto={montoVuelo} />
+                  Total aprox. <PrecioMostrado texto={montoVuelo} />
                 </>
               ) : undefined
             }
@@ -169,6 +169,12 @@ export function ResumenViaje({
                 : viajeros}
             </span>
             {estado.flexible ? <span>Fechas flexibles</span> : null}
+            {vueloTotal !== null && vuelo?.porPersona ? (
+              <span>
+                <PrecioMostrado texto={montoConMoneda(vuelo.porPersona, "USD")} /> por boleto ·{" "}
+                {textoBoletos(vueloTotal / vuelo.porPersona)}
+              </span>
+            ) : null}
           </Linea>
         ) : null}
         {estado.servicios.includes("tours") ? (

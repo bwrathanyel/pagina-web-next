@@ -66,6 +66,8 @@ export function estimarVuelo(e: EntradaVuelo): EstimadoVuelo {
   return { porPersona, total: asientos > 0 ? porPersona * asientos : null, cercano, dias, aConfirmar, bebesSinCosto };
 }
 
+export const textoBoletos = (n: number) => `${n} ${n === 1 ? "boleto" : "boletos"}`;
+
 // ---- rutas (fila de `web_vuelos_referencia`) ----
 
 export type RutaVuelo = {
