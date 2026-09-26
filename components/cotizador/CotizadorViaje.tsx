@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { BarraViaje } from "@/components/cotizador/BarraViaje";
+import { BarraViaje, ChipsServicios } from "@/components/cotizador/BarraViaje";
 import { DetalleHotel } from "@/components/cotizador/DetalleHotel";
 import { OfertasHospedaje } from "@/components/cotizador/OfertasHospedaje";
 import { ResumenViaje, textoFechas } from "@/components/cotizador/ResumenViaje";
@@ -53,6 +53,90 @@ interface Enviado {
   waHref: string;
   leadId: number | null;
   fallo: boolean;
+}
+
+type Servicio = EstadoViaje["servicios"][number];
+type EstadoPestana = { tono: "listo" | "falta" | "vacio"; texto: string };
+
+const NOMBRE_PESTANA: Record<Servicio, string> = { hospedaje: "Hospedaje", vuelo: "Vuelo", tours: "Tours" };
+const TONO_PESTANA: Record<EstadoPestana["tono"], string> = {
+  listo: "text-seafoam-text",
+  falta: "font-semibold text-ambar",
+  vacio: "text-ink-soft",
+};
+
+/** Una pestaña por servicio marcado, con su estado a la vista. Los paneles
+ * inactivos quedan montados y ocultos: no pierden lo que el cliente tocó. */
+function Pestanas({
+  base,
+  activa,
+  onActivar,
+  items,
+}: {
+  base: string;
+  activa: Servicio;
+  onActivar: (s: Servicio) => void;
+  items: { id: Servicio; estado: EstadoPestana; panel: ReactNode }[];
+}) {
+  function teclado(ev: React.KeyboardEvent) {
+    const i = items.findIndex((it) => it.id === activa);
+    const destino =
+      ev.key === "ArrowRight" ? (i + 1) % items.length
+      : ev.key === "ArrowLeft" ? (i - 1 + items.length) % items.length
+      : ev.key === "Home" ? 0
+      : ev.key === "End" ? items.length - 1
+      : -1;
+    if (destino < 0) return;
+    ev.preventDefault();
+    onActivar(items[destino].id);
+    document.getElementById(`${base}-tab-${items[destino].id}`)?.focus();
+  }
+
+  return (
+    <div className="overflow-hidden rounded-card border border-linea bg-card">
+      <div
+        role="tablist"
+        aria-label="Servicios de su viaje"
+        onKeyDown={teclado}
+        className="grid auto-cols-fr grid-flow-col border-b border-linea bg-sand-2"
+      >
+        {items.map((it) => {
+          const sel = it.id === activa;
+          return (
+            <button
+              key={it.id}
+              id={`${base}-tab-${it.id}`}
+              type="button"
+              role="tab"
+              aria-selected={sel}
+              aria-controls={`${base}-panel-${it.id}`}
+              tabIndex={sel ? 0 : -1}
+              onClick={() => onActivar(it.id)}
+              className={`relative flex min-h-16 min-w-0 flex-col items-start justify-center gap-0.5 px-4 py-3 text-left transition-colors duration-150 ease-salida motion-reduce:transition-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-acento ${
+                sel ? "bg-card" : "hover:bg-sand"
+              }`}
+            >
+              <span className={`font-semibold ${sel ? "text-ink" : "text-ink-soft"}`}>{NOMBRE_PESTANA[it.id]}</span>
+              <span className={`w-full truncate text-xs ${TONO_PESTANA[it.estado.tono]}`}>{it.estado.texto}</span>
+              {sel ? <span aria-hidden="true" className="franja-marca absolute inset-x-0 bottom-0 h-1" /> : null}
+            </button>
+          );
+        })}
+      </div>
+      {items.map((it) => (
+        <div
+          key={it.id}
+          id={`${base}-panel-${it.id}`}
+          role="tabpanel"
+          aria-labelledby={`${base}-tab-${it.id}`}
+          hidden={it.id !== activa}
+          className="flex flex-col gap-5 p-5 md:p-7"
+        >
+          {it.panel}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 /** Con "reducir movimiento" el desplazamiento es instantáneo. */
@@ -208,12 +292,13 @@ export function CotizadorViaje({
   const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState<Enviado | null>(null);
   const [hojaAbierta, setHojaAbierta] = useState(false);
-  const [verOtras, setVerOtras] = useState(false);
+  // Móvil: el viaje se ve en un renglón y se edita en una hoja.
+  const [editarViaje, setEditarViaje] = useState(false);
+  const [pestana, setPestana] = useState<Servicio | null>(null);
   const [catalogoTours, setCatalogoTours] = useState<TourWeb[] | "error" | null>(null);
   // Borrador guardado de una visita anterior: se ofrece retomar, no se aplica solo.
   const [borradorPendiente, setBorradorPendiente] = useState<Borrador | null>(null);
   const borradorResuelto = useRef(false);
-  const pasoPendiente = useRef<string | null>(null);
   // Ref, no state: un doble clic antes del próximo render vería el mismo
   // `enviando` y mandaría el lead dos veces.
   const enviandoRef = useRef(false);
@@ -360,20 +445,10 @@ export function CotizadorViaje({
     if (enviado) confirmacion.current?.focus({ preventScroll: true });
   }, [enviado]);
 
-  // Al marcar un servicio aparece su paso más abajo: el foco pasa a su título, si
-  // no el lector de pantalla no se entera de que hay algo nuevo.
-  useEffect(() => {
-    const clave = pasoPendiente.current;
-    if (!clave) return;
-    pasoPendiente.current = null;
-    const titulo = document.getElementById(`${formId}-paso-${clave}`);
-    titulo?.focus({ preventScroll: true });
-    titulo?.scrollIntoView({ block: "start", behavior: comportamientoScroll() });
-  }, [estado.servicios, formId]);
-
   function cambiar(nuevo: EstadoViaje) {
+    // Un servicio recién marcado abre su pestaña.
     const agregado = nuevo.servicios.find((s) => !estado.servicios.includes(s));
-    if (agregado) pasoPendiente.current = agregado === "hospedaje" ? "hospedaje" : agregado;
+    if (agregado) setPestana(agregado);
     // Un hotel de otro destino no sigue elegido, ni los tours del destino anterior.
     setEstado(nuevo.destino === estado.destino ? nuevo : { ...nuevo, hotel: null, tarifa: null, tours: [] });
     if (errores.fechas) setErrores((e) => ({ ...e, fechas: undefined }));
@@ -389,13 +464,22 @@ export function CotizadorViaje({
     if (enviandoRef.current) return;
     const nuevos = validar(estado, contacto);
     // Decisión del dueño: no se cotiza un hospedaje en fechas con stop sale.
-    if (!nuevos.fechas && hotelBloqueado) nuevos.fechas = `${hotel?.nombre}: ${hotelBloqueado.toLowerCase()}. Cambie las fechas o elija otro hotel.`;
+    const porBloqueo = !nuevos.fechas && !!hotelBloqueado;
+    if (porBloqueo) nuevos.fechas = `${hotel?.nombre}: ${hotelBloqueado?.toLowerCase()}. Cambie las fechas o elija otro hotel.`;
     setErrores(nuevos);
     const primero = (["fechas", "vuelo", "nombre", "telefono", "correo"] as const).find((k) => nuevos[k]);
     if (primero) {
-      setHojaAbierta(false);
-      // Tras cerrar la hoja: el foco va al primer campo con error. Los campos
-      // se pintan dos veces (resumen y tarjeta móvil): vale el que se ve.
+      // El error abre su pestaña. Los datos de contacto, en móvil, viven en la
+      // hoja del resumen: se abre (o se queda abierta); lo demás está en la página.
+      if (primero === "vuelo") setPestana("vuelo");
+      else if (porBloqueo) setPestana("hospedaje");
+      const enHoja =
+        (primero === "nombre" || primero === "telefono" || primero === "correo") &&
+        !window.matchMedia("(min-width: 64rem)").matches;
+      setHojaAbierta(enHoja);
+      // El foco va al primer campo con error, después de que la hoja termine de
+      // abrir o cerrar (ella también mueve el foco). Los campos se pintan dos
+      // veces (resumen y hoja): vale el que se ve.
       setTimeout(() => {
         const form = document.getElementById(formId) as HTMLFormElement | null;
         const destino =
@@ -407,7 +491,7 @@ export function CotizadorViaje({
               ) ?? null);
         destino?.focus({ preventScroll: true });
         destino?.scrollIntoView({ block: "center", behavior: comportamientoScroll() });
-      }, 60);
+      }, enHoja ? 320 : 60);
       return;
     }
 
@@ -493,8 +577,22 @@ export function CotizadorViaje({
   }
 
   const cantidad = estado.servicios.length;
-  const datos = <DatosContacto formId={formId} contacto={contacto} errores={errores} onCampo={campo} />;
-  let paso = 1;
+  const activa = pestana && estado.servicios.includes(pestana) ? pestana : estado.servicios[0];
+  const fv = fechasVuelo(estado);
+  const falta: EstadoPestana = { tono: "falta", texto: "Falta un dato" };
+  const sinElegir: EstadoPestana = { tono: "vacio", texto: "Sin elegir" };
+  const estadoPestana: Record<Servicio, EstadoPestana> = {
+    hospedaje:
+      hotelBloqueado || (hotel && !(estado.desde && estado.hasta)) ? falta
+      : hotel ? { tono: "listo", texto: `Listo · ${hotel.nombre}` }
+      : sinElegir,
+    vuelo:
+      errores.vuelo || !fv.ida || (estado.vuelo === "ida-vuelta" && !fv.vuelta) ? falta
+      : { tono: "listo", texto: `Listo · ${estado.origen} a ${estado.destino}` },
+    tours: estado.tours.length
+      ? { tono: "listo", texto: `Listo · ${estado.tours.length} ${estado.tours.length === 1 ? "tour" : "tours"}` }
+      : sinElegir,
+  };
   const resumen = (conTitulo: boolean) => (
     <ResumenViaje
       estado={estado}
@@ -511,6 +609,99 @@ export function CotizadorViaje({
   );
   const detalleVisto = verHotel ? detalles[verHotel.id] : undefined;
   const montoBarra = estimado?.ok ? montoConMoneda(estimado.total, estimado.moneda) : null;
+  const panelHospedaje = (
+    <>
+      {hotel ? (
+        <div className="flex flex-col gap-3 rounded-card border border-acento bg-card p-3 sm:flex-row sm:items-center">
+          {hotel.foto ? (
+            <span className="relative h-20 w-28 shrink-0 overflow-hidden rounded-control bg-sand-2">
+              <Image src={hotel.foto} alt="" fill sizes="112px" className="object-cover" />
+            </span>
+          ) : null}
+          <div className="min-w-0 flex-1" aria-live="polite" aria-atomic="true">
+            <p className="font-semibold text-ink">{hotel.nombre}</p>
+            {habitacion ? <p className="text-sm text-ink-soft">{habitacion}</p> : null}
+            {hotelBloqueado ? (
+              <p className="text-sm font-semibold text-peligro">{hotelBloqueado}. Cambie las fechas o elija otro hotel.</p>
+            ) : estimado?.ok ? (
+              <p className="text-sm text-ink">
+                Estimado{" "}
+                <span className="font-mono font-bold tabular-nums">
+                  <PrecioMostrado texto={montoBarra} />
+                </span>{" "}
+                <span className="text-ink-soft">
+                  · {textoDuracion(estimado.noches)} · {textoViajeros(estado)}
+                </span>
+              </p>
+            ) : (
+              <p className="text-sm text-ink-soft">
+                {estimado && !estimado.ok ? `${estimado.texto} ` : !tarifaBase ? "Elija la habitación para ver el estimado. " : ""}
+                Precio a confirmar por el asesor.
+              </p>
+            )}
+            {estimado?.ok
+              ? estimado.avisos.map((a) => (
+                  <p key={a} className="text-xs text-ink-soft">
+                    {a}
+                  </p>
+                ))
+              : null}
+          </div>
+          <div className="flex gap-2 sm:flex-col">
+            <Boton variante="secundario" tamano="sm" onClick={() => setVerHotel({ id: hotel.id, nombre: hotel.nombre })}>
+              {estado.tarifa ? "Cambiar habitación" : "Ver habitaciones"}
+            </Boton>
+            <Boton variante="fantasma" tamano="sm" onClick={() => cambiar({ ...estado, hotel: null, tarifa: null })}>
+              Quitar
+            </Boton>
+          </div>
+        </div>
+      ) : null}
+      {hotel && otrasOfertas.length ? (
+        <div className="flex flex-col gap-3">
+          <h3 className="font-semibold text-ink">Otras ofertas en {estado.destino}</h3>
+          <OfertasHospedaje
+            variante="lista"
+            ofertas={otrasOfertas}
+            destino={estado.destino}
+            elegido={hotel.id}
+            bloqueos={mapaBloqueos}
+            desde={estado.desde}
+            hasta={estado.hasta}
+            onVer={(o) => setVerHotel({ id: o.hotelId, nombre: o.nombre })}
+          />
+        </div>
+      ) : null}
+      {!hotel ? (
+        <OfertasHospedaje
+          ofertas={ofertasDestino}
+          destino={estado.destino}
+          elegido={null}
+          bloqueos={mapaBloqueos}
+          desde={estado.desde}
+          hasta={estado.hasta}
+          onVer={(o) => setVerHotel({ id: o.hotelId, nombre: o.nombre })}
+        />
+      ) : null}
+      {!hotel && ofertasDestino.length ? (
+        <p className="text-sm text-ink-soft">
+          ¿No encontró lo que busca? Escriba su presupuesto, plan o zona en los comentarios, junto al botón de
+          envío, y un asesor le propone opciones.
+        </p>
+      ) : null}
+    </>
+  );
+  const panelVuelo = <SeccionVuelo estado={estado} error={errores.vuelo} errorId={`${formId}-vuelo`} onCambio={cambiar} />;
+  const panelTours = (
+    <SeccionTours
+      destino={estado.destino}
+      tours={catalogoTours && catalogoTours !== "error" ? catalogoTours : []}
+      elegidos={estado.tours}
+      cargando={catalogoTours === null}
+      error={catalogoTours === "error"}
+      onAlternar={(id) => cambiar(alternarTour(estado, id))}
+    />
+  );
 
   return (
     <>
@@ -530,124 +721,54 @@ export function CotizadorViaje({
               </div>
             </div>
           ) : null}
-          <Paso id={`${formId}-paso-viaje`} numero={paso} titulo="Su viaje">
-            <BarraViaje estado={estado} onCambio={cambiar} />
-            {errores.fechas ? (
-              <Aviso>
-                <span id={`${formId}-fechas`} tabIndex={-1}>
-                  {errores.fechas}
-                </span>
-              </Aviso>
-            ) : null}
-          </Paso>
-
-          {/* Móvil: los datos quedan a la vista enseguida, no al pie. En escritorio viven en el resumen. */}
-          <div className="lg:hidden">
-            <Paso titulo="Sus datos">{datos}</Paso>
+          <div className="hidden lg:block">
+            <Paso titulo="Su viaje">
+              <BarraViaje estado={estado} onCambio={cambiar} />
+            </Paso>
           </div>
 
-          {hospedaje ? (
-            <Paso id={`${formId}-paso-hospedaje`} numero={++paso} titulo={`Hospedaje en ${estado.destino}`}>
-              {hotel ? (
-                <div className="flex flex-col gap-3 rounded-card border border-acento bg-card p-3 sm:flex-row sm:items-center">
-                  {hotel.foto ? (
-                    <span className="relative h-20 w-28 shrink-0 overflow-hidden rounded-control bg-sand-2">
-                      <Image src={hotel.foto} alt="" fill sizes="112px" className="object-cover" />
-                    </span>
-                  ) : null}
-                  <div className="min-w-0 flex-1" aria-live="polite" aria-atomic="true">
-                    <p className="font-semibold text-ink">{hotel.nombre}</p>
-                    {habitacion ? <p className="text-sm text-ink-soft">{habitacion}</p> : null}
-                    {hotelBloqueado ? (
-                      <p className="text-sm font-semibold text-peligro">{hotelBloqueado}. Cambie las fechas o elija otro hotel.</p>
-                    ) : estimado?.ok ? (
-                      <p className="text-sm text-ink">
-                        Estimado{" "}
-                        <span className="font-mono font-bold tabular-nums">
-                          <PrecioMostrado texto={montoBarra} />
-                        </span>{" "}
-                        <span className="text-ink-soft">
-                          · {textoDuracion(estimado.noches)} · {textoViajeros(estado)}
-                        </span>
-                      </p>
-                    ) : (
-                      <p className="text-sm text-ink-soft">
-                        {estimado && !estimado.ok ? `${estimado.texto} ` : !tarifaBase ? "Elija la habitación para ver el estimado. " : ""}
-                        Precio a confirmar por el asesor.
-                      </p>
-                    )}
-                    {estimado?.ok
-                      ? estimado.avisos.map((a) => (
-                          <p key={a} className="text-xs text-ink-soft">
-                            {a}
-                          </p>
-                        ))
-                      : null}
-                  </div>
-                  <div className="flex gap-2 sm:flex-col">
-                    <Boton variante="secundario" tamano="sm" onClick={() => setVerHotel({ id: hotel.id, nombre: hotel.nombre })}>
-                      {estado.tarifa ? "Cambiar habitación" : "Ver habitaciones"}
-                    </Boton>
-                    <Boton variante="fantasma" tamano="sm" onClick={() => cambiar({ ...estado, hotel: null, tarifa: null })}>
-                      Quitar
-                    </Boton>
-                  </div>
-                </div>
-              ) : null}
-              {hotel && otrasOfertas.length ? (
-                <Boton
-                  variante="secundario"
-                  tamano="sm"
-                  className="self-start"
-                  aria-expanded={verOtras}
-                  onClick={() => setVerOtras((v) => !v)}
-                >
-                  {verOtras ? "Ocultar otras ofertas" : `Ver otras ofertas en ${estado.destino} (${otrasOfertas.length})`}
-                </Boton>
-              ) : null}
-              {!hotel || verOtras ? (
-                <OfertasHospedaje
-                  ofertas={hotel ? otrasOfertas : ofertasDestino}
-                  destino={estado.destino}
-                  elegido={hotel?.id ?? null}
-                  bloqueos={mapaBloqueos}
-                  desde={estado.desde}
-                  hasta={estado.hasta}
-                  onVer={(o) => setVerHotel({ id: o.hotelId, nombre: o.nombre })}
-                />
-              ) : null}
-              {!hotel && ofertasDestino.length ? (
-                <p className="text-sm text-ink-soft">
-                  ¿No encontró lo que busca? Escriba su presupuesto, plan o zona en los comentarios, junto al botón de
-                  envío, y un asesor le propone opciones.
-                </p>
-              ) : null}
-            </Paso>
+          {/* Móvil: el viaje en un renglón (se edita en una hoja) y los servicios debajo. */}
+          <div className="flex flex-col gap-5 lg:hidden">
+            <div className="flex items-center gap-3 rounded-card border border-linea bg-card p-4">
+              <p className="min-w-0 flex-1 text-ink">
+                <span className="font-semibold">{estado.destino}</span>
+                <span className="text-ink-soft">
+                  {" "}
+                  · {textoFechas(estado)} · {textoViajeros(estado)}
+                </span>
+              </p>
+              <Boton variante="secundario" tamano="sm" aria-haspopup="dialog" onClick={() => setEditarViaje(true)}>
+                Editar
+              </Boton>
+            </div>
+            <ChipsServicios estado={estado} onCambio={cambiar} />
+          </div>
+
+          {errores.fechas ? (
+            <Aviso>
+              <span id={`${formId}-fechas`} tabIndex={-1}>
+                {errores.fechas}
+              </span>{" "}
+              <button
+                type="button"
+                onClick={() => setEditarViaje(true)}
+                className="font-semibold underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento lg:hidden"
+              >
+                Cambiar fechas
+              </button>
+            </Aviso>
           ) : null}
 
-          {vuelo ? (
-            <Paso id={`${formId}-paso-vuelo`} numero={++paso} titulo="Vuelo">
-              <SeccionVuelo estado={estado} error={errores.vuelo} errorId={`${formId}-vuelo`} onCambio={cambiar} />
-            </Paso>
-          ) : null}
-
-          {tours ? (
-            <Paso id={`${formId}-paso-tours`} numero={++paso} titulo={`Full day y tours en ${estado.destino}`}>
-              <SeccionTours
-                destino={estado.destino}
-                tours={catalogoTours && catalogoTours !== "error" ? catalogoTours : []}
-                elegidos={estado.tours}
-                cargando={catalogoTours === null}
-                error={catalogoTours === "error"}
-                onAlternar={(id) => cambiar(alternarTour(estado, id))}
-              />
-            </Paso>
-          ) : null}
-
-          {/* Móvil: el resumen vive en una hoja, así que el envío también queda al pie. */}
-          <Boton type="submit" form={formId} tamano="lg" ancho cargando={enviando} className="lg:hidden">
-            Enviar solicitud
-          </Boton>
+          <Pestanas
+            base={formId}
+            activa={activa}
+            onActivar={setPestana}
+            items={estado.servicios.map((s) => ({
+              id: s,
+              estado: estadoPestana[s],
+              panel: s === "hospedaje" ? panelHospedaje : s === "vuelo" ? panelVuelo : panelTours,
+            }))}
+          />
         </div>
 
         <aside aria-label="Su cotización" className="hidden lg:sticky lg:top-24 lg:block lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto lg:overscroll-contain">
@@ -663,8 +784,11 @@ export function CotizadorViaje({
         className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 flex min-h-14 items-center justify-between gap-3 bg-dusk px-5 text-left text-dusk-text lg:hidden"
       >
         <span className="text-sm font-semibold">
-          Su cotización · {cantidad} {cantidad === 1 ? "servicio" : "servicios"}
-          {nochesDe(estado) > 0 && hospedaje ? <span className="block text-xs font-normal text-dusk-text-soft">{textoDuracion(nochesDe(estado))}</span> : null}
+          Revisar y enviar
+          <span className="block text-xs font-normal text-dusk-text-soft">
+            {cantidad} {cantidad === 1 ? "servicio" : "servicios"}
+            {nochesDe(estado) > 0 && hospedaje ? ` · ${textoDuracion(nochesDe(estado))}` : ""}
+          </span>
         </span>
         <span className="flex items-center gap-2 font-mono text-base font-bold tabular-nums">
           {montoBarra ? (
@@ -684,6 +808,15 @@ export function CotizadorViaje({
         <div className="p-4">{resumen(false)}</div>
       </Hoja>
 
+      <Hoja abierta={editarViaje} onCerrar={() => setEditarViaje(false)} titulo="Su viaje">
+        <div className="flex flex-col gap-6 p-4">
+          <BarraViaje estado={estado} onCambio={cambiar} conServicios={false} />
+          <Boton tamano="lg" ancho onClick={() => setEditarViaje(false)}>
+            Listo
+          </Boton>
+        </div>
+      </Hoja>
+
       <Hoja
         abierta={!!verHotel}
         onCerrar={() => setVerHotel(null)}
@@ -701,7 +834,6 @@ export function CotizadorViaje({
             onElegir={(tarifa) => {
               cambiar({ ...estado, hotel: verHotel.id, tarifa });
               setVerHotel(null);
-              setVerOtras(false);
             }}
           />
         ) : null}

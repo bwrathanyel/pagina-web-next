@@ -16,6 +16,69 @@ const FILTROS: { id: Filtro; etiqueta: string }[] = [
   { id: "ninos-gratis", etiqueta: "Niños gratis" },
 ];
 const VISIBLES = 6;
+const VISIBLES_LISTA = 3;
+
+/** Otras ofertas con un hotel ya elegido: renglones cortos (foto, nombre,
+ * plan y Ver), sin filtros. */
+function ListaOfertas({
+  ofertas,
+  bloqueos,
+  desde,
+  hasta,
+  onVer,
+}: {
+  ofertas: OfertaHotel[];
+  bloqueos: Map<number, Bloqueo[]> | null;
+  desde: string;
+  hasta: string;
+  onVer: (o: OfertaHotel) => void;
+}) {
+  const [todas, setTodas] = useState(false);
+  const visibles = todas ? ofertas : ofertas.slice(0, VISIBLES_LISTA);
+  return (
+    <div className="flex flex-col gap-3">
+      <ul className="divide-y divide-linea rounded-card border border-linea">
+        {visibles.map((o) => {
+          const sinDisponibilidad = desde && hasta ? textoSinDisponibilidad(bloqueos?.get(o.hotelId), desde, hasta) : null;
+          return (
+            <li key={o.hotelId} className="flex items-center gap-3 p-3">
+              <span className="relative size-16 shrink-0 overflow-hidden rounded-control bg-sand-2">
+                {o.foto ? (
+                  <Image src={o.foto} alt="" fill sizes="64px" className={`object-cover ${sinDisponibilidad ? "grayscale" : ""}`} />
+                ) : null}
+              </span>
+              <span className="flex min-w-0 flex-1 flex-col gap-1">
+                <span className="font-semibold leading-snug text-ink">{o.nombre}</span>
+                {sinDisponibilidad ? (
+                  <span className="text-sm font-semibold text-peligro">{sinDisponibilidad}</span>
+                ) : o.plan || o.ninosGratis ? (
+                  <span className="flex flex-wrap gap-1.5">
+                    {o.plan ? <Etiqueta>{o.plan.toLowerCase()}</Etiqueta> : null}
+                    {o.ninosGratis ? <Etiqueta tono="seafoam">Niños gratis</Etiqueta> : null}
+                  </span>
+                ) : null}
+              </span>
+              <Boton
+                variante="secundario"
+                tamano="sm"
+                disabled={!!sinDisponibilidad}
+                aria-label={`Ver ${o.nombre}`}
+                onClick={() => onVer(o)}
+              >
+                Ver
+              </Boton>
+            </li>
+          );
+        })}
+      </ul>
+      {ofertas.length > VISIBLES_LISTA ? (
+        <Boton variante="fantasma" tamano="sm" className="self-start" aria-expanded={todas} onClick={() => setTodas((v) => !v)}>
+          {todas ? "Ver menos" : `Ver las ${ofertas.length}`}
+        </Boton>
+      ) : null}
+    </div>
+  );
+}
 
 /** Ofertas de hospedaje del destino, una por hotel, en el orden del dueño
  * (niños gratis, todo incluido, el resto). Un hotel con stop sale en las
@@ -28,6 +91,7 @@ export function OfertasHospedaje({
   desde,
   hasta,
   onVer,
+  variante = "grilla",
 }: {
   ofertas: OfertaHotel[];
   destino: string;
@@ -36,10 +100,15 @@ export function OfertasHospedaje({
   desde: string;
   hasta: string;
   onVer: (o: OfertaHotel) => void;
+  variante?: "grilla" | "lista";
 }) {
   const [filtro, setFiltro] = useState<Filtro>("todas");
   const [menorPrecio, setMenorPrecio] = useState(false);
   const [todas, setTodas] = useState(false);
+
+  if (variante === "lista") {
+    return ofertas.length ? <ListaOfertas ofertas={ofertas} bloqueos={bloqueos} desde={desde} hasta={hasta} onVer={onVer} /> : null;
+  }
 
   if (!ofertas.length) {
     return (

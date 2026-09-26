@@ -46,9 +46,55 @@ function Rotulo({ htmlFor, children }: { htmlFor?: string; children: string }) {
   );
 }
 
-/** Barra de viaje: servicios combinables, destino, fechas y viajeros. Todo lo
- * que cambia aquí baja al estado (y de ahí a la URL). */
-export function BarraViaje({ estado, onCambio }: { estado: EstadoViaje; onCambio: (e: EstadoViaje) => void }) {
+/** Servicios combinables. En móvil van sueltos bajo el renglón del viaje; en
+ * escritorio, dentro de la barra. */
+export function ChipsServicios({ estado, onCambio }: { estado: EstadoViaje; onCambio: (e: EstadoViaje) => void }) {
+  const id = useId();
+  return (
+    <div>
+      <p id={`${id}-servicios`} className="mb-2 text-sm font-semibold text-ink">
+        ¿Qué necesita cotizar?
+      </p>
+      <div role="group" aria-labelledby={`${id}-servicios`} className="flex flex-wrap gap-2">
+        {SERVICIOS.map((s) => {
+          const activo = estado.servicios.includes(s.id);
+          return (
+            <button
+              key={s.id}
+              type="button"
+              aria-pressed={activo}
+              onClick={() => onCambio(alternarServicio(estado, s.id))}
+              className={chip(activo)}
+            >
+              {s.etiqueta}
+            </button>
+          );
+        })}
+        <button
+          type="button"
+          aria-pressed={esPaquete(estado)}
+          onClick={() => onCambio(marcarPaquete(estado))}
+          className={chip(esPaquete(estado))}
+        >
+          Paquete completo
+        </button>
+      </div>
+      <p className="mt-2 text-sm text-ink-soft">Puede combinar varios. Un asesor arma todo en una sola propuesta.</p>
+    </div>
+  );
+}
+
+/** Barra de viaje: destino, fechas y viajeros (y los servicios, salvo que se
+ * pinten aparte). Todo lo que cambia aquí baja al estado (y de ahí a la URL). */
+export function BarraViaje({
+  estado,
+  onCambio,
+  conServicios = true,
+}: {
+  estado: EstadoViaje;
+  onCambio: (e: EstadoViaje) => void;
+  conServicios?: boolean;
+}) {
   const id = useId();
   const noches = nochesDe(estado);
   const hospedaje = estado.servicios.includes("hospedaje");
@@ -59,36 +105,7 @@ export function BarraViaje({ estado, onCambio }: { estado: EstadoViaje; onCambio
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <p id={`${id}-servicios`} className="mb-2 text-sm font-semibold text-ink">
-          ¿Qué necesita cotizar?
-        </p>
-        <div role="group" aria-labelledby={`${id}-servicios`} className="flex flex-wrap gap-2">
-          {SERVICIOS.map((s) => {
-            const activo = estado.servicios.includes(s.id);
-            return (
-              <button
-                key={s.id}
-                type="button"
-                aria-pressed={activo}
-                onClick={() => onCambio(alternarServicio(estado, s.id))}
-                className={chip(activo)}
-              >
-                {s.etiqueta}
-              </button>
-            );
-          })}
-          <button
-            type="button"
-            aria-pressed={esPaquete(estado)}
-            onClick={() => onCambio(marcarPaquete(estado))}
-            className={chip(esPaquete(estado))}
-          >
-            Paquete completo
-          </button>
-        </div>
-        <p className="mt-2 text-sm text-ink-soft">Puede combinar varios. Un asesor arma todo en una sola propuesta.</p>
-      </div>
+      {conServicios ? <ChipsServicios estado={estado} onCambio={onCambio} /> : null}
 
       {/* El destino lleva nombres largos ("Isla de Margarita"): columna más ancha. */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(0,1fr))]">

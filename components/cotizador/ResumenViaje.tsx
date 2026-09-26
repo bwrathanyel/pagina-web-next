@@ -97,20 +97,17 @@ export function ResumenViaje({
   return (
     <Boleto
       orientacion="h"
-      tamanoTalon="9rem"
+      // El talón tiene alto fijo: solo caben el total y el envío. Los avisos van
+      // arriba de la perforación, si no desbordan hacia la lista.
+      tamanoTalon="7.5rem"
       talon={
-        <div className="flex h-full flex-col justify-center gap-2 px-5">
+        <div className="flex h-full flex-col justify-center gap-3 px-5">
           <div className="flex items-baseline justify-between gap-3">
             <span className="text-sm font-semibold text-ink-soft">{referencia ? "Desde" : "Estimado"}</span>
             <span className="font-mono text-2xl font-bold tabular-nums text-ink" aria-live="polite">
               {monto ? <PrecioMostrado texto={monto} /> : referencia ? <PrecioMostrado texto={referencia.monto} /> : "A confirmar"}
             </span>
           </div>
-          <p className="text-xs text-ink-soft">
-            {referencia ? `${referencia.unidad ? `${referencia.unidad[0].toUpperCase()}${referencia.unidad.slice(1)}. ` : ""}Elija fechas para ver su total. ` : ""}
-            {monto && otros ? "Solo el hospedaje; vuelo y tours a confirmar. " : ""}
-            Sujeto a disponibilidad. El asesor le escribe por WhatsApp con el precio final.
-          </p>
           <Boton type="submit" form={formId} tamano="lg" ancho cargando={enviando}>
             Enviar solicitud
           </Boton>
@@ -162,6 +159,11 @@ export function ResumenViaje({
           {datos}
         </div>
       ) : null}
+      <p className="px-5 pb-4 pt-1 text-xs text-ink-soft">
+        {referencia ? `${referencia.unidad ? `${referencia.unidad[0].toUpperCase()}${referencia.unidad.slice(1)}. ` : ""}Elija fechas para ver su total. ` : ""}
+        {monto && otros ? "Solo el hospedaje; vuelo y tours a confirmar. " : ""}
+        Sujeto a disponibilidad. El asesor le escribe por WhatsApp con el precio final.
+      </p>
     </Boleto>
   );
 }
