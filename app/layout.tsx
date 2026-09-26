@@ -23,6 +23,11 @@ import "./globals.css";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://destinoyeventoslotus360.com";
 
+// Al terminar de cargar, si alguna hoja de /_next/static no tiene `sheet`
+// (falló la descarga), recarga. Tope de una recarga cada 10 s para no entrar
+// en bucle si el CSS falla por otro motivo.
+const RECARGA_SI_FALTA_CSS = `(function(){function c(){var l=document.querySelectorAll('link[rel="stylesheet"][href*="/_next/static/"]');for(var i=0;i<l.length;i++){if(!l[i].sheet){try{var t=+sessionStorage.getItem("recarga-css")||0;if(Date.now()-t<10000)return;sessionStorage.setItem("recarga-css",String(Date.now()))}catch(e){return}location.reload();return}}}if(document.readyState==="complete")c();else addEventListener("load",c)})()`;
+
 // Backstop de frescura, no la vía principal de actualización. La ruta normal
 // es la purga on-demand (revalidatePath en app/api/admin/revalidate/route.ts),
 // instantánea vía el tag cache de D1 + la cola de Durable Objects de OpenNext
@@ -129,6 +134,10 @@ export default async function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={jsonLdScript(buildTravelAgencyJsonLd())}
         />
+        {/* Cada deploy borra el CSS del build anterior. Al volver atrás, el
+            navegador puede restaurar de su caché un HTML viejo que apunta a
+            ese CSS (404) y la página queda sin estilos. Recarga una vez. */}
+        <script dangerouslySetInnerHTML={{ __html: RECARGA_SI_FALTA_CSS }} />
         <ThemeProvider>
           <AuthProvider>
             <CurrencyProvider>
