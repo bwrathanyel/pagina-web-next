@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 type Elemento = "div" | "section" | "li" | "ul";
 
@@ -27,16 +27,23 @@ export function Revelar({
   children: React.ReactNode;
 }) {
   const ref = useRef<HTMLElement>(null);
+  const [armado, setArmado] = useState(false);
   const [visible, setVisible] = useState(false);
+
+  // Antes del primer cuadro: lo que ya está en pantalla se queda quieto y
+  // visible (animarlo es hacerlo esperar); solo lo de más abajo se oculta
+  // para entrar al hacer scroll.
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (el.getBoundingClientRect().top < window.innerHeight * 0.92) return;
+    setArmado(true);
+  }, []);
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
-
-    if (typeof IntersectionObserver === "undefined") {
-      const raf = requestAnimationFrame(() => setVisible(true));
-      return () => cancelAnimationFrame(raf);
-    }
+    if (!el || !armado) return;
 
     const observer = new IntersectionObserver(
       ([entrada]) => {
@@ -49,13 +56,13 @@ export function Revelar({
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [armado]);
 
   const Elemento = as as "div";
   return (
     <Elemento
       ref={ref as React.Ref<HTMLDivElement>}
-      className={`${escalonar ? "revelar-escalonado" : "revelar"} ${visible ? "es-visible" : ""} ${className}`}
+      className={`${escalonar ? "revelar-escalonado" : "revelar"} ${armado ? "revelar-armado" : ""} ${visible ? "es-visible" : ""} ${className}`}
       style={{ "--retraso": `${retraso}ms` } as React.CSSProperties}
     >
       {children}

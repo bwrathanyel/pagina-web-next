@@ -530,9 +530,21 @@ html {
   margin-top: calc(-1 * (var(--alto-barra, 3.5rem) + var(--alto-categorias)));
 }
 
-/* Entrada al hacer scroll (Revelar.tsx). El estado inicial vive acá y no en
-   el componente para que no haya flash de contenido antes de hidratar. */
-.revelar { opacity: 0; transform: translateY(16px); }
+/* Fundido de fotos al terminar de cargar (CargaFotos.tsx). Las del hero se
+   dejan afuera: ya tienen su propia animación (Ken Burns) y esta la pisaría. */
+.fotos-suaves img[data-nimg]:not([data-cargada]):not([class*="hero-"]) { opacity: 0; }
+.fotos-suaves img[data-cargada="fundido"]:not([class*="hero-"]) {
+  animation: foto-aparece var(--dur-media) var(--ease-salida);
+}
+@keyframes foto-aparece {
+  from { opacity: 0; }
+}
+
+/* Entrada al hacer scroll (Revelar.tsx). Solo se oculta lo que Revelar "arma"
+   al montar, que es lo que queda fuera de pantalla: antes el HTML llegaba con
+   todo en opacity:0 y, hasta hidratar, el teléfono mostraba secciones vacías
+   sobre el fondo por varios segundos. */
+.revelar.revelar-armado { opacity: 0; transform: translateY(16px); }
 .revelar.es-visible {
   animation: revelar-entrada 0.55s var(--ease-salida) forwards;
   animation-delay: var(--retraso, 0ms);
@@ -542,7 +554,7 @@ html {
 }
 /* Variante escalonada: entran los hijos, 60ms uno detrás de otro, con tope en
    el octavo para que una grilla larga no tarde un segundo en completarse. */
-.revelar-escalonado > * { opacity: 0; transform: translateY(16px); }
+.revelar-escalonado.revelar-armado > * { opacity: 0; transform: translateY(16px); }
 .revelar-escalonado.es-visible > * {
   animation: revelar-entrada 0.55s var(--ease-salida) forwards;
   animation-delay: calc(var(--retraso, 0ms) + var(--n, 7) * 60ms);
@@ -796,19 +808,28 @@ html {
 }
 
 /* Transición entre páginas (<ViewTransition update="pagina"> en app/layout.tsx):
-   un cruce corto, no una coreografía. Lo viejo se va rápido; lo nuevo sube 8px
-   después, para que no compitan. El cromo (nav, footer, barra) queda quieto. */
+   un cruce corto, no una coreografía. Lo nuevo entra ENCIMA de lo viejo, que
+   sigue opaco debajo hasta la mitad: antes lo viejo se iba primero y lo nuevo
+   entraba después, y en el medio se veía el fondo de la página (casi negro en
+   el tema oscuro), dos veces por navegación contando el paso por el esqueleto.
+   mix-blend-mode normal porque el plus-lighter por defecto suma los dos
+   colores mientras se superponen. El cromo (nav, footer, barra) queda quieto. */
 @keyframes pagina-sale {
+  50% { opacity: 1; }
   to { opacity: 0; }
 }
 @keyframes pagina-entra {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
+}
+::view-transition-old(.pagina),
+::view-transition-new(.pagina) {
+  mix-blend-mode: normal;
 }
 ::view-transition-old(.pagina) {
-  animation: pagina-sale var(--dur-rapida) var(--ease-salida) both;
+  animation: pagina-sale var(--dur-media) linear both;
 }
 ::view-transition-new(.pagina) {
-  animation: pagina-entra var(--dur-media) var(--ease-salida) var(--dur-rapida) both;
+  animation: pagina-entra var(--dur-media) var(--ease-salida) both;
 }
 
 /* ── Movimiento reducido ─────────────────────────────────────────────────

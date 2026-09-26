@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { ViewTransition } from "react";
 import { MotionProvider } from "@/components/providers/MotionProvider";
+import { CargaFotos } from "@/components/providers/CargaFotos";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { CromoSitio } from "@/components/layout/CromoSitio";
@@ -152,6 +153,7 @@ export default async function RootLayout({
                   </CromoSitio>
                   <AdminEditToggle />
                   <Analitica />
+                  <CargaFotos />
                 </MotionProvider>
               </SiteContentProvider>
             </CurrencyProvider>
