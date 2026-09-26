@@ -93,7 +93,7 @@ export function armarCotizacionViaje(
   const precioVuelo =
     vueloInfo?.porPersona != null
       ? [
-          `aprox ${vueloInfo.porPersona} por persona${vueloInfo.total != null ? ` (${vueloInfo.total} total)` : ""}`,
+          `aprox $${vueloInfo.porPersona} por persona${vueloInfo.total != null ? ` ($${vueloInfo.total} total)` : ""}`,
           vueloInfo.cercano ? "fecha cercana (20 días o menos)" : "",
           vueloInfo.bebesSinCosto ? "bebés sin costo en el aproximado" : "",
         ]
@@ -113,15 +113,21 @@ export function armarCotizacionViaje(
   const habitacion =
     hospedaje && hotel && elegido.habitacion ? [elegido.habitacion, elegido.plan].filter(Boolean).join(", ") : "";
   const estimado = hospedaje && hotel && elegido.estimado ? elegido.estimado : "";
+  const soloVuelo = vuelo && !hospedaje && !tours;
+  const vueloConMonto = vuelo && vueloInfo?.porPersona != null;
   const precio = estimado
     ? `Estimado web del hospedaje: ${estimado}${vuelo || tours ? " (vuelo y tours aparte)" : ""}, sujeto a disponibilidad`
-    : "Precio: a confirmar por el asesor";
-  const destino = vuelo && !hospedaje && !tours ? `${e.origen} a ${vueloInfo?.destino ? destinoVuelo : e.destino}` : e.destino;
+    : vueloConMonto
+      ? soloVuelo
+        ? "Precio: vuelo aproximado (ver arriba), sujeto a disponibilidad"
+        : "Precio: vuelo aproximado (ver arriba); el resto a confirmar por el asesor"
+      : "Precio: a confirmar por el asesor";
+  const destino = soloVuelo ? `${e.origen} a ${vueloInfo?.destino ? destinoVuelo : e.destino}` : e.destino;
 
   const consulta = [
     "Cotización web: Arme su viaje",
     `Servicios: ${servicio}${hospedaje && vuelo ? " (hospedaje con vuelo)" : ""}`,
-    `Destino: ${e.destino}`,
+    `Destino: ${soloVuelo ? destinoVuelo : e.destino}`,
     `Fechas: ${fechas}`,
     `Viajeros: ${viajeros}`,
     edades ? `Edades de niños: ${edades}` : "",
