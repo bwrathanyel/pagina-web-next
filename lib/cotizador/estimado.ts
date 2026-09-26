@@ -232,16 +232,19 @@ const firmaVentanas = (t: Tarifa) =>
  * Una tarjeta por habitación en un plan. Las filas de una habitación con
  * fechas distintas son temporadas de la misma oferta y van en una sola tarjeta
  * (se muestra la que cubre la entrada; si ninguna, la primera del orden del
- * tarifario). Dos filas con las MISMAS fechas son dos tablas distintas del PDF
- * (Venetur publica dos por habitación) y cada una lleva su tarjeta, igual que
- * en la carpeta de tarifas de /producto.
+ * tarifario). Dos filas con las MISMAS fechas son dos tablas distintas del PDF:
+ * se muestra solo la primera.
  */
 export function tarjetasPorHabitacion(tarifas: Tarifa[], desde: string): { tarifa: Tarifa; filas: Tarifa[] }[] {
   const grupos = new Map<string, Tarifa[][]>();
   for (const t of tarifas) {
     const k = normalizar(t.habitacion) || `#${t.id}`;
     const series = grupos.get(k) ?? [];
-    const serie = series.find((s) => !s.some((x) => firmaVentanas(x) === firmaVentanas(t)));
+    // Misma habitación y mismas fechas = otra tabla del PDF (en Venetur, la de
+    // solo desayuno detrás de la de todo incluido). El dueño pidió una sola
+    // tarjeta por habitación para no confundir: queda la primera del tarifario.
+    if (series.some((s) => s.some((x) => firmaVentanas(x) === firmaVentanas(t)))) continue;
+    const serie = series[0];
     if (serie) serie.push(t);
     else series.push([t]);
     grupos.set(k, series);

@@ -208,12 +208,11 @@ test("tarjetas: las temporadas de una habitación van en una sola tarjeta", () =
   assert.equal(tarjetasPorHabitacion(PALM, "2027-01-20")[0].tarifa.id, PALM[PALM.length - 1].id);
 });
 
-test("tarjetas: dos tablas con las mismas fechas son dos tarjetas (Venetur)", () => {
+test("tarjetas: dos tablas con las mismas fechas muestran solo la primera (Venetur)", () => {
   const tarjetas = tarjetasPorHabitacion(VENETUR, "2026-10-10");
   assert.deepEqual(
     tarjetas.map((x) => x.tarifa.id),
-    [VENETUR_PERSONA.id, VENETUR_HABITACION.id],
+    [VENETUR_PERSONA.id],
   );
-  assert.ok(tarjetas.every((x) => x.filas.length === 1));
-  assert.equal(tarjetasPorHabitacion(VENETUR, "").length, 2);
+  assert.equal(tarjetasPorHabitacion(VENETUR, "").length, 1);
 });
