@@ -46,10 +46,50 @@ function Rotulo({ htmlFor, children }: { htmlFor?: string; children: string }) {
   );
 }
 
-/** Servicios combinables. En móvil van sueltos bajo el renglón del viaje; en
- * escritorio, dentro de la barra. */
-export function ChipsServicios({ estado, onCambio }: { estado: EstadoViaje; onCambio: (e: EstadoViaje) => void }) {
+/** Chip chico de la barra compacta: el marcado lleva un punto de acento. */
+const chipCompacto = (activo: boolean) =>
+  "inline-flex min-h-11 items-center gap-1.5 rounded-pill border px-3 text-sm font-semibold lg:min-h-9 " +
+  "transition-[background-color,border-color,color] duration-150 ease-salida motion-reduce:transition-none " +
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento " +
+  (activo
+    ? "border-acento bg-acento-suave text-ink before:size-2 before:rounded-full before:bg-acento before:content-['']"
+    : "border-linea-fuerte text-ink-soft hover:border-ink/40 hover:text-ink");
+
+const ETIQUETA_CORTA: Record<string, string> = { tours: "Tours" };
+
+/** Servicios combinables. La variante compacta (barra de escritorio y móvil)
+ * no repite la pregunta ni el atajo "Paquete completo": marcar Hospedaje y
+ * Vuelo es lo mismo. */
+export function ChipsServicios({
+  estado,
+  onCambio,
+  compacto = false,
+}: {
+  estado: EstadoViaje;
+  onCambio: (e: EstadoViaje) => void;
+  compacto?: boolean;
+}) {
   const id = useId();
+  if (compacto) {
+    return (
+      <div role="group" aria-label="Servicios a cotizar" className="flex flex-wrap gap-1.5">
+        {SERVICIOS.map((s) => {
+          const activo = estado.servicios.includes(s.id);
+          return (
+            <button
+              key={s.id}
+              type="button"
+              aria-pressed={activo}
+              onClick={() => onCambio(alternarServicio(estado, s.id))}
+              className={chipCompacto(activo)}
+            >
+              {ETIQUETA_CORTA[s.id] ?? s.etiqueta}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
   return (
     <div>
       <p id={`${id}-servicios`} className="mb-2 text-sm font-semibold text-ink">
@@ -168,33 +208,141 @@ export function BarraViaje({
         </p>
       ) : null}
 
-      {estado.ninos > 0 ? (
-        <fieldset className="flex flex-col gap-2">
-          <legend className="mb-1 text-sm font-semibold text-ink">Edad de cada niño</legend>
-          <div className="flex flex-wrap gap-3">
-            {estado.edades.map((edad, i) => (
-              <div key={i} className="flex w-32 flex-col gap-1">
-                <label htmlFor={`${id}-edad-${i}`} className="text-sm text-ink-soft">
-                  Niño {i + 1}
-                </label>
-                <Selector
-                  id={`${id}-edad-${i}`}
-                  value={edad}
-                  onChange={(ev) =>
-                    onCambio({ ...estado, edades: estado.edades.map((e, j) => (j === i ? Number(ev.target.value) : e)) })
-                  }
-                >
-                  {Array.from({ length: EDAD_NINO_MAX - EDAD_NINO_MIN + 1 }, (_, k) => EDAD_NINO_MIN + k).map((a) => (
-                    <option key={a} value={a}>
-                      {a} años
-                    </option>
-                  ))}
-                </Selector>
-              </div>
-            ))}
+      {estado.ninos > 0 ? <EdadesNinos estado={estado} onCambio={onCambio} /> : null}
+    </div>
+  );
+}
+
+function EdadesNinos({ estado, onCambio }: { estado: EstadoViaje; onCambio: (e: EstadoViaje) => void }) {
+  const id = useId();
+  return (
+    <fieldset className="flex flex-col gap-2">
+      <legend className="mb-1 text-sm font-semibold text-ink">Edad de cada niño</legend>
+      <div className="flex flex-wrap gap-3">
+        {estado.edades.map((edad, i) => (
+          <div key={i} className="flex w-32 flex-col gap-1">
+            <label htmlFor={`${id}-edad-${i}`} className="text-sm text-ink-soft">
+              Niño {i + 1}
+            </label>
+            <Selector
+              id={`${id}-edad-${i}`}
+              value={edad}
+              onChange={(ev) =>
+                onCambio({ ...estado, edades: estado.edades.map((e, j) => (j === i ? Number(ev.target.value) : e)) })
+              }
+            >
+              {Array.from({ length: EDAD_NINO_MAX - EDAD_NINO_MIN + 1 }, (_, k) => EDAD_NINO_MIN + k).map((a) => (
+                <option key={a} value={a}>
+                  {a} años
+                </option>
+              ))}
+            </Selector>
           </div>
-          <p className="text-sm text-ink-soft">La edad define la tarifa: por favor indique la real.</p>
-        </fieldset>
+        ))}
+      </div>
+      <p className="text-sm text-ink-soft">La edad define la tarifa: por favor indique la real.</p>
+    </fieldset>
+  );
+}
+
+const ROTULO_CELDA = "font-mono text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-ink-soft";
+const CONTROL_CELDA =
+  "w-full min-h-10 cursor-pointer rounded-control px-2 font-semibold text-ink " +
+  "transition-colors duration-150 ease-salida motion-reduce:transition-none hover:bg-sand-2 " +
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento";
+
+/** Barra de viaje de escritorio (opción A): una tarjeta de una fila con
+ * destino, fechas, viajeros y servicios. Entre lg y xl los servicios bajan a
+ * una segunda fila para que las fechas no se corten. */
+export function BarraViajeCompacta({ estado, onCambio }: { estado: EstadoViaje; onCambio: (e: EstadoViaje) => void }) {
+  const id = useId();
+  const noches = nochesDe(estado);
+  const hospedaje = estado.servicios.includes("hospedaje");
+  const vuelo = estado.servicios.includes("vuelo");
+  const conSegunda = hospedaje || (vuelo && estado.vuelo === "ida-vuelta");
+  const [rotuloDesde, rotuloHasta] = hospedaje ? ["Entrada", "Salida"] : vuelo ? ["Ida", "Vuelta"] : ["Fecha", ""];
+  const celda = "flex min-w-0 flex-col justify-center gap-0.5 px-2 py-2.5";
+
+  return (
+    <div className="rounded-card border border-linea bg-card">
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)_minmax(0,0.9fr)] xl:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)_minmax(0,0.9fr)_auto]">
+        <div className={`${celda} border-r border-linea`}>
+          <label htmlFor={`${id}-destino`} className={`${ROTULO_CELDA} px-2`}>
+            Destino
+          </label>
+          <SelectorDestino
+            id={`${id}-destino`}
+            valor={estado.destino}
+            onCambio={(destino) => onCambio({ ...estado, destino })}
+            className={CONTROL_CELDA}
+          />
+        </div>
+
+        <div className={`${celda} border-r border-linea`}>
+          <p className={`${ROTULO_CELDA} px-2`}>
+            {conSegunda ? "Fechas" : rotuloDesde}
+            {conSegunda && noches > 0 ? (
+              <span className="font-sans font-normal normal-case tracking-normal" aria-live="polite">
+                {" "}
+                · {textoDuracion(noches)}
+              </span>
+            ) : null}
+          </p>
+          <div className="flex items-center">
+            <SelectorFecha
+              id={`${id}-desde`}
+              name="fecha"
+              etiqueta={rotuloDesde}
+              valor={estado.desde}
+              onCambio={(iso) => onCambio(cambiarDesde(estado, iso))}
+              rango={conSegunda ? { desde: estado.desde, hasta: estado.hasta } : undefined}
+              vacio={conSegunda ? rotuloDesde : "Elegir fecha"}
+              className={CONTROL_CELDA}
+            />
+            {conSegunda ? (
+              <>
+                <span className="px-1 text-sm text-ink-soft" aria-hidden="true">
+                  al
+                </span>
+                <SelectorFecha
+                  id={`${id}-hasta`}
+                  name="hasta"
+                  etiqueta={rotuloHasta}
+                  valor={estado.hasta}
+                  min={sumarDias(estado.desde || hoyCaracas(), 1)}
+                  onCambio={(iso) => onCambio({ ...estado, hasta: iso })}
+                  rango={{ desde: estado.desde, hasta: estado.hasta }}
+                  vacio={rotuloHasta}
+                  className={CONTROL_CELDA}
+                />
+              </>
+            ) : null}
+          </div>
+        </div>
+
+        <div className={celda}>
+          <label htmlFor={`${id}-viajeros`} className={`${ROTULO_CELDA} px-2`}>
+            Viajeros
+          </label>
+          <SelectorViajeros
+            id={`${id}-viajeros`}
+            valor={{ adultos: estado.adultos, ninos: estado.ninos, bebes: estado.bebes }}
+            onCambio={(v) => onCambio(cambiarViajeros(estado, v))}
+            maximos={{ adultos: ADULTOS_MAX, ninos: NINOS_MAX, bebes: BEBES_MAX }}
+            className={CONTROL_CELDA}
+          />
+        </div>
+
+        <div className="col-span-3 flex items-center gap-3 border-t border-linea px-4 py-2.5 xl:col-span-1 xl:flex-col xl:items-start xl:justify-center xl:gap-1 xl:border-l xl:border-t-0">
+          <span className={ROTULO_CELDA}>Servicios</span>
+          <ChipsServicios estado={estado} onCambio={onCambio} compacto />
+        </div>
+      </div>
+
+      {estado.ninos > 0 ? (
+        <div className="border-t border-linea px-4 py-3">
+          <EdadesNinos estado={estado} onCambio={onCambio} />
+        </div>
       ) : null}
     </div>
   );

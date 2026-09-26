@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { BarraViaje, ChipsServicios } from "@/components/cotizador/BarraViaje";
+import { BarraViaje, BarraViajeCompacta, ChipsServicios } from "@/components/cotizador/BarraViaje";
 import { DetalleHotel } from "@/components/cotizador/DetalleHotel";
 import { OfertasHospedaje } from "@/components/cotizador/OfertasHospedaje";
 import { ResumenViaje, textoFechas } from "@/components/cotizador/ResumenViaje";
@@ -157,29 +157,6 @@ function validar(e: EstadoViaje, c: ContactoViaje): Errores {
   if (!telefonoValido(c.telefono)) errores.telefono = "Revise el número: de 7 a 15 dígitos, por ejemplo 0412-1234567.";
   if (c.correo.trim() && !correoValido(c.correo)) errores.correo = "Revise el correo, por ejemplo nombre@correo.com.";
   return errores;
-}
-
-/** Un paso del armado: tarjeta con número y título. El número es real, el
- * cliente recorre los pasos en orden. */
-function Paso({ numero, titulo, id, children }: { numero?: number; titulo: string; id?: string; children: ReactNode }) {
-  const auto = useId();
-  const idTitulo = id ?? auto;
-  return (
-    <section aria-labelledby={idTitulo} className="flex flex-col gap-5 rounded-card border border-linea bg-card p-5 md:p-7">
-      <h2 id={idTitulo} tabIndex={-1} className="flex items-center gap-3 font-display text-2xl font-bold leading-tight text-ink outline-none">
-        {numero ? (
-          <span
-            aria-hidden="true"
-            className="inline-flex size-8 shrink-0 items-center justify-center rounded-pill bg-acento font-mono text-sm font-bold tabular-nums text-sobre-acento"
-          >
-            {numero}
-          </span>
-        ) : null}
-        {titulo}
-      </h2>
-      {children}
-    </section>
-  );
 }
 
 /** Nombre y WhatsApp a la vista; correo y comentarios plegados. Se pinta en el
@@ -608,6 +585,12 @@ export function CotizadorViaje({
     />
   );
   const detalleVisto = verHotel ? detalles[verHotel.id] : undefined;
+  // Sin fotos por habitación el detalle no aporta para decidir: la oferta se
+  // elige directo con su tarifa anunciada (el asesor confirma la habitación).
+  const abrirOferta = (o: OfertaHotel) =>
+    o.conFotosHabitacion
+      ? setVerHotel({ id: o.hotelId, nombre: o.nombre })
+      : cambiar({ ...estado, hotel: o.hotelId, tarifa: o.tarifaId });
   const montoBarra = estimado?.ok ? montoConMoneda(estimado.total, estimado.moneda) : null;
   const panelHospedaje = (
     <>
@@ -668,7 +651,7 @@ export function CotizadorViaje({
             bloqueos={mapaBloqueos}
             desde={estado.desde}
             hasta={estado.hasta}
-            onVer={(o) => setVerHotel({ id: o.hotelId, nombre: o.nombre })}
+            onVer={abrirOferta}
           />
         </div>
       ) : null}
@@ -680,7 +663,7 @@ export function CotizadorViaje({
           bloqueos={mapaBloqueos}
           desde={estado.desde}
           hasta={estado.hasta}
-          onVer={(o) => setVerHotel({ id: o.hotelId, nombre: o.nombre })}
+          onVer={abrirOferta}
         />
       ) : null}
       {!hotel && ofertasDestino.length ? (
@@ -705,6 +688,9 @@ export function CotizadorViaje({
 
   return (
     <>
+      <div className="mb-6 hidden lg:block">
+        <BarraViajeCompacta estado={estado} onCambio={cambiar} />
+      </div>
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_23rem] lg:items-start xl:gap-12">
         <div className="flex min-w-0 flex-col gap-6 md:gap-8">
           <form id={formId} onSubmit={enviar} noValidate hidden />
@@ -721,12 +707,6 @@ export function CotizadorViaje({
               </div>
             </div>
           ) : null}
-          <div className="hidden lg:block">
-            <Paso titulo="Su viaje">
-              <BarraViaje estado={estado} onCambio={cambiar} />
-            </Paso>
-          </div>
-
           {/* Móvil: el viaje en un renglón (se edita en una hoja) y los servicios debajo. */}
           <div className="flex flex-col gap-5 lg:hidden">
             <div className="flex items-center gap-3 rounded-card border border-linea bg-card p-4">
@@ -741,7 +721,7 @@ export function CotizadorViaje({
                 Editar
               </Boton>
             </div>
-            <ChipsServicios estado={estado} onCambio={cambiar} />
+            <ChipsServicios estado={estado} onCambio={cambiar} compacto />
           </div>
 
           {errores.fechas ? (

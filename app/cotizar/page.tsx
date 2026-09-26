@@ -37,11 +37,12 @@ export default async function CotizarPage({
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-6 pb-44 md:py-10 lg:pb-10">
-      <h1 className="font-display text-4xl font-bold leading-none text-ink md:text-5xl">Arme su viaje</h1>
-      <p className="mb-8 mt-3 max-w-2xl text-ink-soft">
-        Elija qué necesita, cuándo y cuántos viajan. Un asesor le responde por WhatsApp con disponibilidad y precio
-        confirmado.
-      </p>
+      <div className="mb-5 flex flex-wrap items-baseline gap-x-5 gap-y-2 lg:mb-6">
+        <h1 className="font-display text-4xl font-bold leading-none text-ink">Arme su viaje</h1>
+        <p className="max-w-2xl text-ink-soft max-lg:hidden">
+          Elija qué necesita, cuándo y cuántos viajan. Un asesor le responde por WhatsApp.
+        </p>
+      </div>
       {/* El key rearma el cotizador si llega otra URL con la página ya abierta
           (otra búsqueda desde el hero o un enlace nuevo). */}
       <CotizadorViaje key={JSON.stringify(estado)} inicial={estado} hotel={hotel} ofertas={ofertas} />

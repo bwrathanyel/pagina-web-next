@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { chip } from "@/components/cotizador/BarraViaje";
 import { Boton } from "@/components/ui/Boton";
 import { Etiqueta } from "@/components/ui/Insignia";
@@ -17,6 +17,76 @@ const FILTROS: { id: Filtro; etiqueta: string }[] = [
 ];
 const VISIBLES = 6;
 const VISIBLES_LISTA = 3;
+const PASO_FOTO_MS = 1100;
+
+/** Qué hotel tiene el mouse encima. Solo mouse: en táctil no hay hover. */
+function useEncima() {
+  const [encima, setEncima] = useState<number | null>(null);
+  const props = (id: number) => ({
+    onPointerEnter: (e: React.PointerEvent) => e.pointerType === "mouse" && setEncima(id),
+    onPointerLeave: () => setEncima((v) => (v === id ? null : v)),
+  });
+  return [encima, props] as const;
+}
+
+/** Foto de la oferta que, con el mouse encima, va pasando las del hotel. Solo
+ * con mouse (en táctil no hay hover) y sin reduced-motion. Las fotos se montan
+ * a medida que llegan, una por delante, para no bajarlas todas al cargar. */
+function FotoRotativa({
+  fotos,
+  sizes,
+  apagada,
+  encima,
+}: {
+  fotos: string[];
+  sizes: string;
+  apagada: boolean;
+  /** El mouse está sobre la tarjeta o el renglón (no la foto sola). */
+  encima: boolean;
+}) {
+  const [indice, setIndice] = useState(0);
+  const [montadas, setMontadas] = useState(1);
+  const activo = encima && fotos.length > 1 && !apagada;
+  useEffect(() => {
+    if (!activo || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Cada paso monta una foto más: siempre hay una lista por delante (la
+    // segunda se monta al entrar, ver `visibles`).
+    const reloj = setInterval(() => {
+      setIndice((i) => (i + 1) % fotos.length);
+      setMontadas((m) => Math.min(fotos.length, Math.max(m, 2) + 1));
+    }, PASO_FOTO_MS);
+    return () => {
+      clearInterval(reloj);
+      setIndice(0);
+    };
+  }, [activo, fotos.length]);
+
+  if (!fotos.length) return null;
+  const visibles = Math.max(montadas, activo ? 2 : 1);
+  return (
+    <span className="absolute inset-0">
+      {fotos.slice(0, visibles).map((src, i) => (
+        <Image
+          key={src}
+          src={src}
+          alt=""
+          fill
+          sizes={sizes}
+          className={`object-cover transition-opacity duration-300 ease-salida motion-reduce:transition-none ${
+            i === indice ? "opacity-100" : "opacity-0"
+          } ${apagada ? "grayscale" : ""}`}
+        />
+      ))}
+      {activo && (montadas > 1 || indice > 0) ? (
+        <span className="absolute inset-x-0 bottom-2 flex justify-center gap-1" aria-hidden="true">
+          {fotos.map((src, i) => (
+            <span key={src} className={`size-1.5 rounded-full ${i === indice ? "bg-white" : "bg-white/50"}`} />
+          ))}
+        </span>
+      ) : null}
+    </span>
+  );
+}
 
 /** Otras ofertas con un hotel ya elegido: renglones cortos (foto, nombre,
  * plan y Ver), sin filtros. */
@@ -34,6 +104,7 @@ function ListaOfertas({
   onVer: (o: OfertaHotel) => void;
 }) {
   const [todas, setTodas] = useState(false);
+  const [encima, sobre] = useEncima();
   const visibles = todas ? ofertas : ofertas.slice(0, VISIBLES_LISTA);
   return (
     <div className="flex flex-col gap-3">
@@ -41,11 +112,9 @@ function ListaOfertas({
         {visibles.map((o) => {
           const sinDisponibilidad = desde && hasta ? textoSinDisponibilidad(bloqueos?.get(o.hotelId), desde, hasta) : null;
           return (
-            <li key={o.hotelId} className="flex items-center gap-3 p-3">
+            <li key={o.hotelId} className="flex items-center gap-3 p-3" {...sobre(o.hotelId)}>
               <span className="relative size-16 shrink-0 overflow-hidden rounded-control bg-sand-2">
-                {o.foto ? (
-                  <Image src={o.foto} alt="" fill sizes="64px" className={`object-cover ${sinDisponibilidad ? "grayscale" : ""}`} />
-                ) : null}
+                <FotoRotativa fotos={o.fotos} sizes="64px" apagada={!!sinDisponibilidad} encima={encima === o.hotelId} />
               </span>
               <span className="flex min-w-0 flex-1 flex-col gap-1">
                 <span className="font-semibold leading-snug text-ink">{o.nombre}</span>
@@ -62,10 +131,10 @@ function ListaOfertas({
                 variante="secundario"
                 tamano="sm"
                 disabled={!!sinDisponibilidad}
-                aria-label={`Ver ${o.nombre}`}
+                aria-label={`${o.conFotosHabitacion ? "Ver" : "Elegir"} ${o.nombre}`}
                 onClick={() => onVer(o)}
               >
-                Ver
+                {o.conFotosHabitacion ? "Ver" : "Elegir"}
               </Boton>
             </li>
           );
@@ -105,6 +174,7 @@ export function OfertasHospedaje({
   const [filtro, setFiltro] = useState<Filtro>("todas");
   const [menorPrecio, setMenorPrecio] = useState(false);
   const [todas, setTodas] = useState(false);
+  const [encima, sobre] = useEncima();
 
   if (variante === "lista") {
     return ofertas.length ? <ListaOfertas ofertas={ofertas} bloqueos={bloqueos} desde={desde} hasta={hasta} onVer={onVer} /> : null;
@@ -159,25 +229,29 @@ export function OfertasHospedaje({
               <li key={o.hotelId}>
                 <button
                   type="button"
+                  {...sobre(o.hotelId)}
                   onClick={() => onVer(o)}
                   disabled={!!sinDisponibilidad}
-                  aria-label={`${o.nombre}${sinDisponibilidad ? `. ${sinDisponibilidad}` : ". Ver habitaciones y precio"}`}
+                  aria-label={`${o.nombre}${
+                    sinDisponibilidad
+                      ? `. ${sinDisponibilidad}`
+                      : o.conFotosHabitacion
+                        ? ". Ver habitaciones y precio"
+                        : esElegido
+                          ? ". Elegido"
+                          : ". Elegir este hotel"
+                  }`}
                   className={`group flex h-full w-full flex-col overflow-hidden rounded-card border bg-card text-left transition-[border-color,box-shadow] duration-150 ease-salida focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento disabled:cursor-not-allowed ${
                     esElegido ? "border-acento ring-2 ring-acento" : "border-linea hover:border-linea-fuerte hover:shadow-chrome"
                   }`}
                 >
                   <span className="relative block aspect-4/3 w-full overflow-hidden bg-sand-2">
-                    {o.foto ? (
-                      <Image
-                        src={o.foto}
-                        alt=""
-                        fill
-                        sizes="(min-width: 1280px) 16rem, (min-width: 640px) 45vw, 100vw"
-                        className={`object-cover transition-[scale] duration-700 ease-salida group-enabled:group-hover:scale-[1.03] motion-reduce:transition-none ${
-                          sinDisponibilidad ? "grayscale" : ""
-                        }`}
-                      />
-                    ) : null}
+                    <FotoRotativa
+                      fotos={o.fotos}
+                      sizes="(min-width: 1280px) 16rem, (min-width: 640px) 45vw, 100vw"
+                      apagada={!!sinDisponibilidad}
+                      encima={encima === o.hotelId}
+                    />
                     <span className="absolute left-3 top-3 flex flex-wrap gap-1.5">
                       {o.ninosGratis ? <Etiqueta tono="seafoam">Niños gratis</Etiqueta> : null}
                       {esElegido ? <Etiqueta tono="acento">Elegido</Etiqueta> : null}

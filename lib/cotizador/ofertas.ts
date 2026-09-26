@@ -13,6 +13,11 @@ export interface OfertaHotel {
   /** Destino de /cotizar ("Isla de Margarita"), no el de la base. */
   destino: string;
   foto: string | null;
+  /** Fotos para pasar al posar el mouse (la primera es `foto`). */
+  fotos: string[];
+  /** Hay fotos por habitación: vale la pena abrir el detalle para elegir.
+   * Sin ellas, tocar la oferta elige el hotel con su tarifa anunciada. */
+  conFotosHabitacion: boolean;
   titulo: string | null;
   plan: string | null;
   precio: PrecioTarjeta | null;
@@ -59,12 +64,15 @@ export function ofertasHoteles(pool: Promocion[]): OfertaHotel[] {
     .sort((a, b) => prioridadOferta(a.p) - prioridadOferta(b.p) || a.rank - b.rank)
     .map(({ p, destino }) => {
       const precio = precioTarjeta(p);
+      const fotos = fotosDeLaPromo(p).slice(0, 8);
       return {
         hotelId: p.producto!.id,
         tarifaId: p.id,
         nombre: p.producto!.nombre,
         destino,
-        foto: fotosDeLaPromo(p)[0] ?? null,
+        foto: fotos[0] ?? null,
+        fotos,
+        conFotosHabitacion: (p.producto!.producto_fotos ?? []).some((f) => f.habitacion_id != null && f.activo !== false),
         titulo: p.titulo ?? null,
         plan: p.plan ?? null,
         precio,
