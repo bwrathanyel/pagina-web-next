@@ -12,6 +12,9 @@
 	// Metricas de CPU por invocacion en Workers -> Logs (ver Fase 4 del plan de
 	// migracion: decide gratis vs Workers Paid segun cuanto se pase de 10ms).
 	"observability": { "enabled": true },
+	// Corre el Worker cerca de Supabase cuando conviene (páginas fuera de caché
+	// hacen varias consultas seguidas). Cloudflare decide por tráfico real.
+	"placement": { "mode": "smart" },
 	"assets": {
 		"directory": ".open-next/assets",
 		"binding": "ASSETS"

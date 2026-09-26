@@ -5,6 +5,12 @@ import { type NextRequest, NextResponse } from "next/server";
  * @supabase/ssr pattern. Without this, sessions silently expire mid-visit
  * because Server Components can't write cookies themselves. */
 export async function middleware(request: NextRequest) {
+  // Sin cookie de Supabase no hay sesión que refrescar: la mayoría de las
+  // visitas (y los prefetch RSC) no pagan la consulta a Auth.
+  if (!request.cookies.getAll().some(({ name }) => name.startsWith("sb-"))) {
+    return NextResponse.next({ request });
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
