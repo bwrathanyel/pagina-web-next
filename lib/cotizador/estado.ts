@@ -26,14 +26,17 @@ export const DESTINOS: readonly string[] = [
 ];
 export const DESTINO_INICIAL = DESTINOS[0];
 
-export const ORIGENES_VUELO: readonly { valor: string; etiqueta: string }[] = [
-  { valor: "Valencia", etiqueta: "Valencia (VLN)" },
-  { valor: "Caracas", etiqueta: "Caracas (CCS)" },
-  { valor: "Maracaibo", etiqueta: "Maracaibo (MAR)" },
-  { valor: "Barcelona", etiqueta: "Barcelona (BLA)" },
-  { valor: "Isla de Margarita", etiqueta: "Isla de Margarita (PMV)" },
+export const ORIGENES_VUELO: readonly { valor: string; etiqueta: string; iata: string }[] = [
+  { valor: "Valencia", etiqueta: "Valencia (VLN)", iata: "VLN" },
+  { valor: "Caracas", etiqueta: "Caracas (CCS)", iata: "CCS" },
+  { valor: "Maracaibo", etiqueta: "Maracaibo (MAR)", iata: "MAR" },
+  { valor: "Barcelona", etiqueta: "Barcelona (BLA)", iata: "BLA" },
+  { valor: "Isla de Margarita", etiqueta: "Isla de Margarita (PMV)", iata: "PMV" },
 ];
 export const ORIGEN_INICIAL = ORIGENES_VUELO[0].valor;
+/** Destino del vuelo fuera de las rutas con tarifa. */
+export const VUELO_DESTINO_OTRO = "otro";
+export const VUELO_DESTINO_OTRO_MAX = 60;
 
 export type Equipaje = "mano" | "maleta" | "dos";
 export const EQUIPAJES: readonly { valor: Equipaje; etiqueta: string }[] = [
@@ -70,6 +73,10 @@ export interface EstadoViaje {
   /** Fechas propias del vuelo; vacías = las mismas del viaje. */
   vueloDesde: string;
   vueloHasta: string;
+  /** IATA de la ruta elegida, "otro" o vacío (= se deduce del destino del viaje). */
+  vueloDestino: string;
+  /** Texto libre cuando `vueloDestino` es "otro". */
+  vueloDestinoOtro: string;
   equipaje: Equipaje;
   /** Acepta mover el vuelo unos días para conseguir mejor precio. */
   flexible: boolean;
@@ -107,6 +114,21 @@ const esFechaViaje = (v: string | undefined, hoy: string): v is string =>
   !!v && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v)) && v >= hoy;
 
 // ---- lectura ----
+
+/** IATA de 3 letras o "otro"; cualquier otra cosa se descarta. Si el IATA no
+ * tiene ruta, la pantalla lo trata como "a confirmar", nunca inventa precio. */
+function leerVueloDestino(v: string | undefined): string {
+  if (v === VUELO_DESTINO_OTRO) return v;
+  return v && /^[A-Z]{3}$/.test(v) ? v : "";
+}
+
+/** Texto libre del destino "Otro": sin caracteres de control y con tope. */
+export const limpiarDestinoOtro = (v: string) =>
+  v
+    .replace(/[\u0000-\u001f\u007f]/g, " ")
+    .replace(/\s+/g, " ")
+    .trimStart()
+    .slice(0, VUELO_DESTINO_OTRO_MAX);
 
 const uno = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 
@@ -164,6 +186,8 @@ export function estadoInicial(): EstadoViaje {
     vuelo: "ida-vuelta",
     vueloDesde: "",
     vueloHasta: "",
+    vueloDestino: "",
+    vueloDestinoOtro: "",
     equipaje: EQUIPAJE_INICIAL,
     flexible: false,
     tours: [],
@@ -187,6 +211,7 @@ export function parsearEstado(sp: ParamsBusqueda, hoy = hoyCaracas()): EstadoVia
   const vueloDesde = uno(sp.vuelo_ida);
   const vueloDesdeValido = esFechaViaje(vueloDesde, hoy);
   const vueloHasta = uno(sp.vuelo_vuelta);
+  const vueloDestino = leerVueloDestino(uno(sp.vdestino));
   const tours = [
     ...new Set(
       (uno(sp.tour) ?? "")
@@ -212,6 +237,8 @@ export function parsearEstado(sp: ParamsBusqueda, hoy = hoyCaracas()): EstadoVia
     vuelo: uno(sp.vuelo) === "ida" ? "ida" : "ida-vuelta",
     vueloDesde: vueloDesdeValido ? vueloDesde : "",
     vueloHasta: vueloDesdeValido && esFechaViaje(vueloHasta, hoy) && vueloHasta > vueloDesde ? vueloHasta : "",
+    vueloDestino,
+    vueloDestinoOtro: vueloDestino === VUELO_DESTINO_OTRO ? limpiarDestinoOtro(uno(sp.vdestino_otro) ?? "") : "",
     equipaje: EQUIPAJES.find((q) => q.valor === uno(sp.equipaje))?.valor ?? EQUIPAJE_INICIAL,
     flexible: uno(sp.flex) === "1",
     tours,
@@ -240,6 +267,8 @@ export function serializarEstado(e: EstadoViaje): string {
     q.set("vuelo", e.vuelo);
     if (e.vueloDesde) q.set("vuelo_ida", e.vueloDesde);
     if (e.vueloHasta) q.set("vuelo_vuelta", e.vueloHasta);
+    if (e.vueloDestino) q.set("vdestino", e.vueloDestino);
+    if (e.vueloDestino === VUELO_DESTINO_OTRO && e.vueloDestinoOtro.trim()) q.set("vdestino_otro", e.vueloDestinoOtro.trim());
     if (e.equipaje !== EQUIPAJE_INICIAL) q.set("equipaje", e.equipaje);
     if (e.flexible) q.set("flex", "1");
   }

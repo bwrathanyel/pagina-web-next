@@ -5,6 +5,7 @@ import { Boton } from "@/components/ui/Boton";
 import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
 import { fechasVuelo, nochesDe, textoViajeros, type EstadoViaje } from "@/lib/cotizador/estado";
 import type { Estimado } from "@/lib/cotizador/estimado";
+import type { VueloViaje } from "@/lib/cotizador/vuelo";
 import { montoConMoneda } from "@/lib/tarifas";
 import type { HotelCotizador } from "@/lib/supabase/queries";
 
@@ -52,8 +53,9 @@ function Linea({
 }
 
 /** "Su cotización" con forma de pase: los servicios pedidos arriba y, en el
- * talón, el estimado y el envío. Solo el hospedaje con tarifa aplicable tiene
- * número (estimarEstadia); lo demás es "A confirmar": nunca un número inventado. */
+ * talón, el estimado y el envío. Tienen número el hospedaje con tarifa aplicable
+ * (estimarEstadia) y el vuelo con ruta de referencia (estimarVuelo, aproximado);
+ * lo demás es "A confirmar": nunca un número inventado. */
 export function ResumenViaje({
   estado,
   hotel,
@@ -65,6 +67,7 @@ export function ResumenViaje({
   datos,
   desde,
   tours = [],
+  vuelo = null,
 }: {
   estado: EstadoViaje;
   hotel: Pick<HotelCotizador, "nombre" | "foto"> | null;
@@ -79,6 +82,8 @@ export function ResumenViaje({
   desde?: { monto: string; unidad: string | null } | null;
   /** Nombres de los tours agregados. */
   tours?: string[];
+  /** Ruta y aproximado del vuelo; sin él, el vuelo queda "a confirmar". */
+  vuelo?: VueloViaje | null;
 }) {
   const noches = nochesDe(estado);
   const fechas = textoFechas(estado);
@@ -86,11 +91,20 @@ export function ResumenViaje({
   const viajeros = textoViajeros(estado);
   const hospedaje = estado.servicios.includes("hospedaje");
   const monto = hospedaje && estimado?.ok ? montoConMoneda(estimado.total, estimado.moneda) : null;
-  const otros = estado.servicios.some((s) => s !== "hospedaje");
+  const conVuelo = estado.servicios.includes("vuelo");
+  const vueloTotal = conVuelo && vuelo?.total != null ? vuelo.total : null;
+  const montoVuelo = vueloTotal !== null ? montoConMoneda(vueloTotal, "USD") : null;
+  // El vuelo es en dólares: solo se suma a un hospedaje en dólares.
+  const sumable = monto && montoVuelo && estimado?.ok && (estimado.moneda ?? "USD") === "USD";
+  const montoTalon = sumable && estimado?.ok ? montoConMoneda(estimado.total + (vueloTotal as number), "USD") : monto ?? montoVuelo;
+  const etiquetaTalon = sumable ? "Hospedaje + vuelo aprox." : !monto && montoVuelo ? "Vuelo aprox." : null;
+  const pendientes = [conVuelo && !montoVuelo && "vuelo", estado.servicios.includes("tours") && "tours"].filter(Boolean) as string[];
+  const destinoVuelo =
+    vuelo?.destino === "otro" ? vuelo.destinoNombre || "otro destino" : vuelo?.destinoNombre || estado.destino;
   // Con un solo servicio el talón ya dice el precio: la línea no lo repite.
   const unico = estado.servicios.length === 1;
   // Sin fechas no hay estimado: se muestra el precio anunciado de la oferta, con su unidad.
-  const referencia = !monto && hospedaje && desde ? desde : null;
+  const referencia = !montoTalon && hospedaje && desde ? desde : null;
   const vueloFechas = fechasVuelo(estado);
   let n = 0;
 
@@ -103,9 +117,9 @@ export function ResumenViaje({
       talon={
         <div className="flex h-full flex-col justify-center gap-3 px-5">
           <div className="flex items-baseline justify-between gap-3">
-            <span className="text-sm font-semibold text-ink-soft">{referencia ? "Desde" : "Estimado"}</span>
+            <span className="text-sm font-semibold text-ink-soft">{referencia ? "Desde" : (etiquetaTalon ?? "Estimado")}</span>
             <span className="font-mono text-2xl font-bold tabular-nums text-ink" aria-live="polite">
-              {monto ? <PrecioMostrado texto={monto} /> : referencia ? <PrecioMostrado texto={referencia.monto} /> : "A confirmar"}
+              {montoTalon ? <PrecioMostrado texto={montoTalon} /> : referencia ? <PrecioMostrado texto={referencia.monto} /> : "A confirmar"}
             </span>
           </div>
           <Boton type="submit" form={formId} tamano="lg" ancho cargando={enviando}>
@@ -137,7 +151,17 @@ export function ResumenViaje({
           </Linea>
         ) : null}
         {estado.servicios.includes("vuelo") ? (
-          <Linea numero={++n} precio={unico ? null : undefined} titulo={`Vuelo ${estado.origen} a ${estado.destino}`}>
+          <Linea
+            numero={++n}
+            precio={
+              unico ? null : montoVuelo ? (
+                <>
+                  Aprox. <PrecioMostrado texto={montoVuelo} />
+                </>
+              ) : undefined
+            }
+            titulo={`Vuelo ${estado.origen} a ${destinoVuelo}`}
+          >
             <span>{estado.vuelo === "ida" ? "Solo ida" : "Ida y vuelta"}</span>
             <span>
               {vueloFechas.propias || !estado.servicios.includes("hospedaje")
@@ -161,7 +185,8 @@ export function ResumenViaje({
       ) : null}
       <p className="px-5 pb-4 pt-1 text-xs text-ink-soft">
         {referencia ? `${referencia.unidad ? `${referencia.unidad[0].toUpperCase()}${referencia.unidad.slice(1)}. ` : ""}Elija fechas para ver su total. ` : ""}
-        {monto && otros ? "Solo el hospedaje; vuelo y tours a confirmar. " : ""}
+        {montoTalon && pendientes.length ? `${pendientes.join(" y ").replace(/^./, (c) => c.toUpperCase())} a confirmar. ` : ""}
+        {montoVuelo ? "El vuelo es aproximado: la boletería cambia según la disponibilidad y puede salir menos. " : ""}
         Sujeto a disponibilidad. El asesor le escribe por WhatsApp con el precio final.
       </p>
     </Boleto>

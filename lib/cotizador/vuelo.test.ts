@@ -77,3 +77,65 @@ test("diasHasta ignora fechas inválidas", () => {
   assert.equal(diasHasta("no-es-fecha", HOY), null);
   assert.equal(diasHasta(null, HOY), null);
 });
+
+// ---- rutas y estado del cotizador ----
+
+import { estadoInicial, parsearEstado, serializarEstado, type EstadoViaje } from "./estado.ts";
+import { destinosDeRutas, estimarVueloViaje, type RutaVuelo } from "./vuelo.ts";
+
+const ruta = (o: string, d: string, nombre: string, desde: number, ambito: RutaVuelo["ambito"] = "internacional"): RutaVuelo => ({
+  origen_iata: o,
+  origen_nombre: o,
+  destino_iata: d,
+  destino_nombre: nombre,
+  ambito,
+  desde_usd: desde,
+  ida_vuelta: true,
+});
+const RUTAS = [ruta("CCS", "BOG", "Bogotá", 299), ruta("CCS", "PMV", "Margarita", 109, "nacional"), ruta("VLN", "PMV", "Margarita", 160, "nacional")];
+const viaje = (e: Partial<EstadoViaje>): EstadoViaje => ({ ...estadoInicial(), servicios: ["vuelo"], ...e });
+
+test("verificación del plan: CCS-Bogotá, 2 adultos, a 30 días $359 c/u ($718); a 10 días $413", () => {
+  const lejos = estimarVueloViaje(viaje({ origen: "Caracas", vueloDestino: "BOG", desde: "2026-10-31" }), RUTAS, HOY);
+  assert.equal(lejos.porPersona, 359);
+  assert.equal(lejos.total, 718);
+  const cerca = estimarVueloViaje(viaje({ origen: "Caracas", vueloDestino: "BOG", desde: "2026-10-11" }), RUTAS, HOY);
+  assert.equal(cerca.porPersona, 413);
+  assert.equal(cerca.cercano, true);
+});
+
+test("Otro destino y ruta sin tarifa desde ese origen: a confirmar", () => {
+  const otro = estimarVueloViaje(viaje({ origen: "Caracas", vueloDestino: "otro", vueloDestinoOtro: "Lima" }), RUTAS, HOY);
+  assert.equal(otro.porPersona, null);
+  assert.equal(otro.destinoNombre, "Lima");
+  const sinRuta = estimarVueloViaje(viaje({ origen: "Valencia", vueloDestino: "BOG" }), RUTAS, HOY);
+  assert.equal(sinRuta.destino, "BOG");
+  assert.equal(sinRuta.porPersona, null);
+});
+
+test("el destino del viaje preselecciona la ruta; un IATA sin ruta se ignora", () => {
+  const margarita = estimarVueloViaje(viaje({ origen: "Caracas", destino: "Isla de Margarita" }), RUTAS, HOY);
+  assert.equal(margarita.destino, "PMV");
+  assert.equal(margarita.porPersona, 131);
+  assert.equal(estimarVueloViaje(viaje({ vueloDestino: "XYZ", destino: "Mérida" }), RUTAS, HOY).destino, "");
+  assert.equal(estimarVueloViaje(viaje({ vueloDestino: "BOG" }), [], HOY).destino, "");
+});
+
+test("destinosDeRutas: únicos y ordenados", () => {
+  assert.deepEqual(
+    destinosDeRutas(RUTAS).map((d) => d.iata),
+    ["BOG", "PMV"],
+  );
+});
+
+test("vdestino y vdestino_otro viajan por la URL con topes", () => {
+  const e = parsearEstado({ servicios: "vuelo", vdestino: "otro", vdestino_otro: "  Lima\u0000 Perú " + "x".repeat(80) }, HOY);
+  assert.equal(e.vueloDestino, "otro");
+  assert.equal(e.vueloDestinoOtro.length, 60);
+  assert.ok(e.vueloDestinoOtro.startsWith("Lima Perú"));
+  assert.equal(parsearEstado({ vdestino: "bog" }, HOY).vueloDestino, "");
+  assert.equal(parsearEstado({ vdestino: "BOG", vdestino_otro: "Lima" }, HOY).vueloDestinoOtro, "");
+  const q = new URLSearchParams(serializarEstado({ ...e, vueloDestinoOtro: "Lima" }));
+  assert.equal(q.get("vdestino"), "otro");
+  assert.equal(q.get("vdestino_otro"), "Lima");
+});

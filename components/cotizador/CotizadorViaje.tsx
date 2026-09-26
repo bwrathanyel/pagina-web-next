@@ -24,6 +24,7 @@ import {
   alternarTour,
   correoValido,
   fechasVuelo,
+  hoyCaracas,
   nochesDe,
   parsearEstado,
   serializarEstado,
@@ -34,6 +35,7 @@ import {
 } from "@/lib/cotizador/estado";
 import { almacenLocal, borradorUtil, borrarBorrador, guardarBorrador, leerBorrador, type Borrador } from "@/lib/cotizador/borrador";
 import type { TourWeb } from "@/lib/cotizador/tours";
+import { estimarVueloViaje, type RutaVuelo } from "@/lib/cotizador/vuelo";
 import { toursDelCatalogo } from "@/lib/cotizador/toursWeb";
 import { armarCotizacionViaje, type ContactoViaje, type HospedajeElegido } from "@/lib/leads/buildCotizacion";
 import { crearLeadCRM } from "@/lib/leads/ingestWebLead";
@@ -254,10 +256,12 @@ export function CotizadorViaje({
   inicial,
   hotel: hotelInicial,
   ofertas,
+  rutas,
 }: {
   inicial: EstadoViaje;
   hotel: HotelCotizador | null;
   ofertas: OfertaHotel[];
+  rutas: RutaVuelo[];
 }) {
   const formId = useId();
   const [estado, setEstado] = useState(inicial);
@@ -398,6 +402,7 @@ export function CotizadorViaje({
       ? estimarEstadia(tarifaElegida, detalleElegido.tarifas, estadia)
       : null;
   const toursElegidos = (catalogoTours && catalogoTours !== "error" ? catalogoTours : []).filter((t) => estado.tours.includes(t.id));
+  const vueloViaje = estimarVueloViaje(estado, rutas, hoyCaracas());
   const habitacion = tarifaElegida?.habitacion ?? null;
   const elegido: HospedajeElegido = {
     habitacion,
@@ -484,7 +489,7 @@ export function CotizadorViaje({
       const solo = vuelo && !hospedaje && !tours;
       const asesorLocal = solo ? ASESOR_BOLETERIA : elegirAsesor();
       const nombresTours = toursElegidos.map((t) => t.nombre);
-      const base = armarCotizacionViaje(estado, datos, hotel, undefined, elegido, nombresTours);
+      const base = armarCotizacionViaje(estado, datos, hotel, undefined, elegido, nombresTours, vueloViaje);
 
       enviarASheetMonkey({
         destino: base.destino,
@@ -514,7 +519,7 @@ export function CotizadorViaje({
         fallo = true;
       }
 
-      const final = armarCotizacionViaje(estado, datos, hotel, leadId ?? undefined, elegido, nombresTours);
+      const final = armarCotizacionViaje(estado, datos, hotel, leadId ?? undefined, elegido, nombresTours, vueloViaje);
       // Con el CRM caído el borrador se queda: el cliente puede reintentar.
       if (!fallo) borrarBorrador(almacenLocal());
       const mensaje = esInstagramInApp() ? final.mensajeTexto : final.mensajeEmoji;
@@ -580,6 +585,7 @@ export function CotizadorViaje({
       enviando={enviando}
       conTitulo={conTitulo}
       tours={toursElegidos.map((t) => t.nombre)}
+      vuelo={vueloViaje}
       desde={ofertaElegida?.precio ? { monto: ofertaElegida.precio.monto, unidad: ofertaElegida.precio.unidad } : null}
       datos={<DatosContacto formId={formId} contacto={contacto} errores={errores} onCampo={campo} compacto />}
     />
@@ -674,7 +680,7 @@ export function CotizadorViaje({
       ) : null}
     </>
   );
-  const panelVuelo = <SeccionVuelo estado={estado} error={errores.vuelo} errorId={`${formId}-vuelo`} onCambio={cambiar} />;
+  const panelVuelo = <SeccionVuelo estado={estado} rutas={rutas} vuelo={vueloViaje} error={errores.vuelo} errorId={`${formId}-vuelo`} onCambio={cambiar} />;
   const panelTours = (
     <SeccionTours
       destino={estado.destino}

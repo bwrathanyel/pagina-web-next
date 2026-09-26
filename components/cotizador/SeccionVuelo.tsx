@@ -4,7 +4,8 @@ import { useId } from "react";
 import { chip } from "@/components/cotizador/BarraViaje";
 import { textoFechas } from "@/components/cotizador/ResumenViaje";
 import { Aviso } from "@/components/ui/Aviso";
-import { CLASE_CONTROL, Campo, Selector } from "@/components/ui/Campo";
+import { CLASE_CONTROL, Campo, Entrada, Selector } from "@/components/ui/Campo";
+import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
 import { SelectorFecha } from "@/components/ui/SelectorFecha";
 import {
   EQUIPAJES,
@@ -13,27 +14,44 @@ import {
   ORIGENES_VUELO,
   sumarDias,
   textoViajeros,
+  VUELO_DESTINO_OTRO,
+  VUELO_DESTINO_OTRO_MAX,
+  limpiarDestinoOtro,
   type Equipaje,
   type EstadoViaje,
 } from "@/lib/cotizador/estado";
+import { destinosDeRutas, type RutaVuelo, type VueloViaje } from "@/lib/cotizador/vuelo";
+import { montoConMoneda } from "@/lib/tarifas";
 
 const CONTROL_BOTON = `${CLASE_CONTROL} min-h-12 py-2.5 cursor-pointer`;
 
-/** Vuelo: ruta, fechas y pasajeros salen del viaje (una sola fuente, el estado);
- * el cliente puede darle fechas propias, y agrega equipaje y flexibilidad. Sin
- * precio: el vuelo es una solicitud y el asesor lo cotiza. */
+/** Vuelo: fechas y pasajeros salen del viaje (una sola fuente, el estado); el
+ * cliente elige origen y destino, puede darle fechas propias, y agrega equipaje
+ * y flexibilidad. Con ruta en `vuelos_referencia` muestra un aproximado
+ * (estimarVuelo); sin ruta u "Otro", "a confirmar": nunca un número inventado. */
 export function SeccionVuelo({
   estado,
+  rutas,
+  vuelo,
   error,
   errorId,
   onCambio,
 }: {
   estado: EstadoViaje;
+  rutas: readonly RutaVuelo[];
+  vuelo: VueloViaje;
   error?: string;
   errorId: string;
   onCambio: (e: EstadoViaje) => void;
 }) {
   const id = useId();
+  const destinos = destinosDeRutas(rutas);
+  const grupos = [
+    { etiqueta: "Nacionales", lista: destinos.filter((d) => d.ambito === "nacional") },
+    { etiqueta: "Internacionales", lista: destinos.filter((d) => d.ambito === "internacional") },
+  ].filter((g) => g.lista.length);
+  const otro = vuelo.destino === VUELO_DESTINO_OTRO;
+  const destinoTexto = otro ? vuelo.destinoNombre || "otro destino" : vuelo.destinoNombre || estado.destino;
   const acompana = estado.servicios.includes("hospedaje") || estado.servicios.includes("tours");
   const fv = fechasVuelo(estado);
   const idaVuelta = estado.vuelo === "ida-vuelta";
@@ -59,7 +77,41 @@ export function SeccionVuelo({
             </Selector>
           )}
         </Campo>
-        <div>
+        <Campo etiqueta="Hacia">
+          {(a11y) => (
+            <Selector
+              {...a11y}
+              value={vuelo.destino}
+              onChange={(ev) => onCambio({ ...estado, vueloDestino: ev.target.value, vueloDestinoOtro: "" })}
+            >
+              {vuelo.destino ? null : <option value="">Elegir destino</option>}
+              {grupos.map((g) => (
+                <optgroup key={g.etiqueta} label={g.etiqueta}>
+                  {g.lista.map((d) => (
+                    <option key={d.iata} value={d.iata}>
+                      {d.nombre} ({d.iata})
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+              <option value={VUELO_DESTINO_OTRO}>Otro destino</option>
+            </Selector>
+          )}
+        </Campo>
+        {otro ? (
+          <Campo etiqueta="¿A dónde viaja?" ayuda="Ciudad o aeropuerto. El asesor le confirma el precio.">
+            {(a11y) => (
+              <Entrada
+                {...a11y}
+                value={estado.vueloDestinoOtro}
+                maxLength={VUELO_DESTINO_OTRO_MAX}
+                autoComplete="off"
+                onChange={(ev) => onCambio({ ...estado, vueloDestinoOtro: limpiarDestinoOtro(ev.target.value) })}
+              />
+            )}
+          </Campo>
+        ) : null}
+        <div className={otro ? "" : "sm:col-span-2"}>
           <p id={`${id}-tipo`} className="mb-1.5 text-sm font-semibold text-ink">
             Tipo de viaje
           </p>
@@ -87,7 +139,7 @@ export function SeccionVuelo({
       <dl className="grid gap-x-6 gap-y-1 rounded-control bg-sand-2 p-4 text-sm sm:grid-cols-[auto_1fr]">
         <dt className="font-semibold text-ink">Ruta</dt>
         <dd className="text-ink-soft">
-          {estado.origen} a {estado.destino}
+          {estado.origen} a {destinoTexto}
         </dd>
         <dt className="font-semibold text-ink">Fechas</dt>
         <dd className="text-ink-soft">
@@ -181,9 +233,44 @@ export function SeccionVuelo({
         </div>
       </div>
 
-      <p className="text-sm text-ink-soft">
-        La cédula no se pide ahora: el asesor la solicita al confirmar. El vuelo se cotiza aparte, sin precio en esta pantalla.
-      </p>
+      <EstimadoVuelo vuelo={vuelo} />
+
+      <p className="text-sm text-ink-soft">La cédula no se pide ahora: el asesor la solicita al confirmar.</p>
     </>
+  );
+}
+
+function EstimadoVuelo({ vuelo }: { vuelo: VueloViaje }) {
+  if (vuelo.porPersona === null) {
+    const motivo = vuelo.aConfirmar.includes("fecha")
+      ? "La fecha del vuelo ya pasó: elija otra para ver un aproximado."
+      : vuelo.destino && vuelo.destino !== VUELO_DESTINO_OTRO
+        ? "No tenemos tarifa de referencia para esta ruta: el asesor de boletería le confirma el precio."
+        : "Precio a confirmar por el asesor de boletería.";
+    return <Aviso tono="info">{motivo}</Aviso>;
+  }
+  const porPersona = montoConMoneda(vuelo.porPersona, "USD");
+  return (
+    <div className="flex flex-col gap-2 rounded-control bg-sand-2 p-4">
+      <p className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <span className="text-sm font-semibold text-ink">Vuelo aproximado</span>
+        <span className="font-mono text-xl font-bold tabular-nums text-ink">
+          <PrecioMostrado texto={vuelo.total !== null ? montoConMoneda(vuelo.total, "USD") : porPersona} />
+        </span>
+      </p>
+      <p className="text-sm text-ink-soft">
+        <PrecioMostrado texto={porPersona} /> por persona, {vuelo.origenIata}-{vuelo.destino}
+        {vuelo.bebesSinCosto ? ". Los bebés no suman en este aproximado" : ""}.
+      </p>
+      <p className="text-sm text-ink-soft">
+        Aproximado. La boletería cambia según la disponibilidad a la fecha del vuelo; puede salir menos.
+      </p>
+      {vuelo.cercano && vuelo.dias !== null ? (
+        <Aviso tono="info">
+          {vuelo.dias === 0 ? "Su vuelo sale hoy" : `Su vuelo sale en ${vuelo.dias} ${vuelo.dias === 1 ? "día" : "días"}`}: con tan poca
+          anticipación suele costar más.
+        </Aviso>
+      ) : null}
+    </div>
   );
 }

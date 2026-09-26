@@ -6,6 +6,8 @@
 // x1,15 sobre eso; solo ida = mitad de la tarifa con los mismos recargos; niños
 // pagan asiento completo; bebés no suman. Sin tarifa (ruta "Otro") no hay número.
 
+import { fechasVuelo, ORIGENES_VUELO, type EstadoViaje } from "./estado.ts";
+
 export const RECARGO_BASE = 1.2;
 export const RECARGO_CERCANO = 1.15;
 export const DIAS_CERCANO = 20;
@@ -62,4 +64,70 @@ export function estimarVuelo(e: EntradaVuelo): EstimadoVuelo {
   const porPersona = techo(base * RECARGO_BASE * (cercano ? RECARGO_CERCANO : 1));
   const asientos = Math.max(0, e.adultos) + Math.max(0, e.ninos);
   return { porPersona, total: asientos > 0 ? porPersona * asientos : null, cercano, dias, aConfirmar, bebesSinCosto };
+}
+
+// ---- rutas (fila de `web_vuelos_referencia`) ----
+
+export type RutaVuelo = {
+  origen_iata: string;
+  origen_nombre: string;
+  destino_iata: string;
+  destino_nombre: string;
+  ambito: "nacional" | "internacional";
+  desde_usd: number;
+  ida_vuelta: boolean;
+};
+
+/** Destinos del viaje que tienen aeropuerto con ruta: preseleccionan el vuelo. */
+const IATA_DE_DESTINO: Record<string, string> = { "Isla de Margarita": "PMV" };
+
+/** Destinos únicos de las rutas, para el selector (el primer nombre gana). */
+export function destinosDeRutas(rutas: readonly RutaVuelo[]) {
+  const vistos = new Map<string, { iata: string; nombre: string; ambito: RutaVuelo["ambito"] }>();
+  for (const r of rutas) if (!vistos.has(r.destino_iata)) vistos.set(r.destino_iata, { iata: r.destino_iata, nombre: r.destino_nombre, ambito: r.ambito });
+  return [...vistos.values()].sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+}
+
+export type VueloElegido = {
+  /** IATA elegido (o deducido), "otro" o "" si no hay destino. */
+  destino: string;
+  /** Nombre para mostrar; con "otro" es el texto del cliente. */
+  destinoNombre: string;
+  /** Tarifa de la ruta origen-destino; null si no existe. */
+  ruta: RutaVuelo | null;
+};
+
+/** Ruta del vuelo según el estado: lo elegido, o lo que se deduce del destino del viaje. */
+export function vueloElegido(
+  e: { origen: string; destino: string; vueloDestino: string; vueloDestinoOtro: string },
+  origenIata: string | undefined,
+  rutas: readonly RutaVuelo[],
+): VueloElegido {
+  if (e.vueloDestino === "otro") return { destino: "otro", destinoNombre: e.vueloDestinoOtro.trim(), ruta: null };
+  const destinos = destinosDeRutas(rutas);
+  const deducido = IATA_DE_DESTINO[e.destino] ?? "";
+  const existe = (iata: string | undefined) => !!iata && destinos.some((d) => d.iata === iata);
+  // Un IATA de la URL sin ruta se ignora: el selector no puede mostrar lo que no ofrece.
+  const destino = existe(e.vueloDestino) ? e.vueloDestino : existe(deducido) ? deducido : "";
+  const nombre = destinos.find((d) => d.iata === destino)?.nombre ?? "";
+  const ruta = rutas.find((r) => r.origen_iata === origenIata && r.destino_iata === destino) ?? null;
+  return { destino, destinoNombre: nombre, ruta };
+}
+
+export type VueloViaje = VueloElegido & EstimadoVuelo & { origenIata: string | undefined };
+
+/** Ruta + estimado del vuelo del viaje: lo que muestran la pantalla, el resumen y el lead. */
+export function estimarVueloViaje(e: EstadoViaje, rutas: readonly RutaVuelo[], hoy: string): VueloViaje {
+  const origenIata = ORIGENES_VUELO.find((o) => o.valor === e.origen)?.iata;
+  const elegido = vueloElegido(e, origenIata, rutas);
+  const estimado = estimarVuelo({
+    desdeUsd: elegido.ruta ? Number(elegido.ruta.desde_usd) : null,
+    idaVuelta: e.vuelo === "ida-vuelta",
+    fechaIda: fechasVuelo(e).ida || null,
+    hoy,
+    adultos: e.adultos,
+    ninos: e.ninos,
+    bebes: e.bebes,
+  });
+  return { ...elegido, ...estimado, origenIata };
 }

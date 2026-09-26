@@ -5,6 +5,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 import type { Categoria, HotSale, Producto, Promocion, ProductoTipo } from "@/types/supabase";
 import { CATEGORIA_A_TIPO } from "@/types/supabase";
 import { ninoGratisVigente } from "@/lib/promociones/ninosGratis";
+import type { RutaVuelo } from "@/lib/cotizador/vuelo";
 
 // "Casa Vacacional Playa del Sur" vive así en productos.destino a propósito
 // (pedido real 2026-07-22) -- el bot de ventas de ManyChat lo usa como gate
@@ -177,4 +178,16 @@ export const getHotelCotizador = cache(async (id: number): Promise<HotelCotizado
   if (error || !data) return null;
   const p = destinoPublico(data as unknown as Producto);
   return { id: p.id, nombre: p.nombre, destino: p.destino, foto: fotosDe(p.producto_fotos)[0] ?? null };
+});
+
+// Rutas de vuelo con tarifa "Desde" (vista `web_vuelos_referencia`, migración
+// 20260925160000 del repo CRM). El recargo lo aplica `lib/cotizador/vuelo.ts`.
+export const rutasVuelo = cache(async (): Promise<RutaVuelo[]> => {
+  const sb = supabaseServer();
+  const { data, error } = await sb
+    .from("web_vuelos_referencia")
+    .select("origen_iata,origen_nombre,destino_iata,destino_nombre,ambito,desde_usd,ida_vuelta")
+    .order("destino_nombre");
+  if (error) throw error;
+  return ((data ?? []) as RutaVuelo[]).map((r) => ({ ...r, desde_usd: Number(r.desde_usd) }));
 });

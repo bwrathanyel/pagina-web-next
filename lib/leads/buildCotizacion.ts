@@ -1,4 +1,5 @@
 import { EQUIPAJES, fechasVuelo, nochesDe, SERVICIOS, textoViajeros, type EstadoViaje } from "@/lib/cotizador/estado";
+import type { VueloViaje } from "@/lib/cotizador/vuelo";
 
 export interface ResultadoCotizacion {
   destino: string;
@@ -62,6 +63,8 @@ export function armarCotizacionViaje(
   elegido: HospedajeElegido = {},
   /** Nombres de los tours que el cliente agregó (el catálogo vive en el cliente). */
   toursElegidos: string[] = [],
+  /** Ruta y aproximado del vuelo que vio el cliente (estimarVueloViaje). */
+  vueloInfo: VueloViaje | null = null,
 ): ResultadoCotizacion {
   const tiene = (s: EstadoViaje["servicios"][number]) => e.servicios.includes(s);
   const hospedaje = tiene("hospedaje");
@@ -81,10 +84,27 @@ export function armarCotizacionViaje(
     ? ` (${fechaLarga(fv.ida)}${fv.vuelta ? ` al ${fechaLarga(fv.vuelta)}` : ""})`
     : "";
   const equipaje = EQUIPAJES.find((q) => q.valor === e.equipaje)?.etiqueta.toLowerCase() ?? "";
+  const destinoVuelo = !vueloInfo?.destino
+    ? e.destino
+    : vueloInfo.destino === "otro"
+      ? `otro destino: ${vueloInfo.destinoNombre || "sin indicar"}`
+      : `${vueloInfo.destinoNombre} (${vueloInfo.destino})`;
+  const origenVuelo = vueloInfo?.origenIata ? `${e.origen} (${vueloInfo.origenIata})` : e.origen;
+  const precioVuelo =
+    vueloInfo?.porPersona != null
+      ? [
+          `aprox ${vueloInfo.porPersona} por persona${vueloInfo.total != null ? ` (${vueloInfo.total} total)` : ""}`,
+          vueloInfo.cercano ? "fecha cercana (20 días o menos)" : "",
+          vueloInfo.bebesSinCosto ? "bebés sin costo en el aproximado" : "",
+        ]
+          .filter(Boolean)
+          .join(", ")
+      : "precio a confirmar";
   const tramoVuelo = [
-    `${e.origen} a ${e.destino}, ${e.vuelo === "ida" ? "solo ida" : "ida y vuelta"}${fechasDelVuelo}`,
+    `${origenVuelo} a ${destinoVuelo}, ${e.vuelo === "ida" ? "solo ida" : "ida y vuelta"}${fechasDelVuelo}`,
     equipaje,
     e.flexible ? "fechas flexibles" : "",
+    precioVuelo,
   ]
     .filter(Boolean)
     .join(", ");
@@ -96,7 +116,7 @@ export function armarCotizacionViaje(
   const precio = estimado
     ? `Estimado web del hospedaje: ${estimado}${vuelo || tours ? " (vuelo y tours aparte)" : ""}, sujeto a disponibilidad`
     : "Precio: a confirmar por el asesor";
-  const destino = vuelo && !hospedaje && !tours ? `${e.origen} a ${e.destino}` : e.destino;
+  const destino = vuelo && !hospedaje && !tours ? `${e.origen} a ${vueloInfo?.destino ? destinoVuelo : e.destino}` : e.destino;
 
   const consulta = [
     "Cotización web: Arme su viaje",
