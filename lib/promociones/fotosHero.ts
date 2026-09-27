@@ -1,7 +1,7 @@
 import { ordenarFotos, fotoUrl } from "@/lib/supabase/fotos";
 import { precioTarjeta } from "@/lib/tarifas";
 import { DESTINOS_TODO_INCLUIDO, esTodoIncluido, prioridadOferta, tieneNinoGratis } from "@/lib/promociones/hotSales";
-import { claveDestino, FOTOS_DESTINO } from "@/lib/promociones/fotosDestino";
+import { ATRACTIVO_DESTINO, claveDestino, FOTOS_DESTINO } from "@/lib/promociones/fotosDestino";
 import type { Foto, Promocion } from "@/types/supabase";
 
 /** La promo que acompaña a la foto: el "pase destacado" del hero. */
@@ -35,6 +35,9 @@ export interface FotoHero {
   fondos?: FondoHero[];
   /** Destino del alojamiento: es lo que cae en el tablero de salidas del hero. */
   destino?: string | null;
+  /** Lo más atractivo turístico del destino (ATRACTIVO_DESTINO), para vender
+   * el lugar además de la promo. Solo con foto propia. */
+  atractivo?: string;
   pase?: PaseHero;
 }
 
@@ -159,6 +162,7 @@ export function fotosHeroDeHotSales(
           ...fondos[0],
           fondos,
           destino,
+          atractivo: ATRACTIVO_DESTINO[clave],
           pase: paseDe(p, nombre, fotoDelAlojamiento(p)),
         });
       }

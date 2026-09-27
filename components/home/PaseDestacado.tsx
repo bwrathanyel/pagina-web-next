@@ -90,7 +90,11 @@ export function PaseDestacado({ pase, destino }: { pase: PaseHero; destino?: str
               {pase.hotel}
             </p>
             {lugar ? <p className="mt-1 truncate text-sm text-ink-soft lg:text-base">{lugar}</p> : null}
-            {incluye ? <p className="mt-3 hidden text-sm leading-snug text-ink-soft lg:line-clamp-2">{incluye}</p> : null}
+            {incluye ? (
+              <p className="mt-1.5 line-clamp-1 text-xs leading-snug text-ink-soft lg:mt-3 lg:line-clamp-2 lg:text-sm">
+                {incluye}
+              </p>
+            ) : null}
           </div>
         </div>
       </Boleto>

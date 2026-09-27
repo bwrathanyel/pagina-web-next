@@ -175,6 +175,11 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
   const pase = actual?.pase;
   // Sin pase, el nombre del hotel va bajo el tablero; con pase ya lo dice él.
   const lugar = destino && !pase ? actual?.alt : null;
+  // Lo más atractivo turístico del destino (fijo por destino, ver
+  // ATRACTIVO_DESTINO): vende el lugar, con o sin pase. Cuando no hay
+  // tagline (destino sin foto propia, o "extranjero"), cae al nombre del
+  // hotel de siempre.
+  const atractivo = actual?.atractivo;
 
   // Solo se monta la foto actual (más la saliente mientras se desvanece) y un
   // prefetch invisible de la siguiente: montar el pool entero bajaría todas.
@@ -302,7 +307,11 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
                 el coral 3,6:1, que es texto grande (pide 3:1). */}
             <div aria-hidden="true" className="absolute -inset-x-10 -inset-y-12 -z-10 bg-dusk/85 blur-xl lg:hidden" />
             <TableroSalidas texto={tablero} largo={largo} className={claseTablero(largo)} />
-            {lugar ? <p className="mt-2.5 truncate text-sm font-medium text-dusk-text-soft">{lugar}</p> : null}
+            {atractivo ? (
+              <p className="mt-2.5 max-w-sm truncate text-sm font-medium text-dusk-text-soft">{atractivo}</p>
+            ) : lugar ? (
+              <p className="mt-2.5 truncate text-sm font-medium text-dusk-text-soft">{lugar}</p>
+            ) : null}
 
             <h1 className="mt-6 max-w-[13ch] text-balance font-display text-[clamp(2.75rem,6.4vw,5rem)] font-bold leading-[0.95] tracking-[-0.02em] text-white lg:mt-8">
               <EditableText path="home.hero.title" />{" "}

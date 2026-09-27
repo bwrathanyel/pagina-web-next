@@ -63,6 +63,21 @@ export const FOTOS_DESTINO: Record<string, { archivo: string; alt: string }[]> =
   ],
 };
 
+/** Copy corto de lo más atractivo turístico de cada destino, para el hero de
+ * la home (pedido del dueño, 2026-09-27: además de la promo, vender el
+ * lugar). Una línea, sin punto final: va bajo el tablero de salidas. Mismas
+ * claves que FOTOS_DESTINO; "extranjero" no es un destino real, sin tagline. */
+export const ATRACTIVO_DESTINO: Record<string, string> = {
+  canaima: "Tepuyes y cascadas del Parque Nacional, a una lancha del Salto Ángel",
+  "los roques": "Cayos de arena blanca y agua turquesa, Parque Nacional",
+  margarita: "Playas todo el año y vida nocturna en Nueva Esparta",
+  merida: "El teleférico más alto del mundo entre pueblos andinos",
+  caracas: "La ciudad a los pies del Ávila",
+  morrocoy: "Cayos de coco y arrecifes a minutos de la costa",
+  catatumbo: "El relámpago eterno sobre el Lago de Maracaibo",
+  "colonia tovar": "Pueblo alemán entre montañas, a 1 hora de Caracas",
+};
+
 export const claveDestino = (d: string) =>
   d.trim().toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
 
