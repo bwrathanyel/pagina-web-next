@@ -15,6 +15,10 @@
 	// Corre el Worker cerca de Supabase cuando conviene (páginas fuera de caché
 	// hacen varias consultas seguidas). Cloudflare decide por tráfico real.
 	"placement": { "mode": "smart" },
+	// Techo de CPU por invocacion (Workers Paid). Mediana real ~99ms (Metrics,
+	// deployment activo 2026-09-27); 1000ms da margen 10x y corta loops/bugs
+	// que consuman CPU sin limite antes de que impacten el uso del plan.
+	"limits": { "cpu_ms": 1000 },
 	"assets": {
 		"directory": ".open-next/assets",
 		"binding": "ASSETS"
