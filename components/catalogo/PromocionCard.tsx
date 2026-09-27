@@ -41,7 +41,10 @@ export function PromocionCard({ promocion, prioridad = false }: { promocion: Pro
   // "Temporada baja") y pone la oferta debajo, sin repetir el hotel si el
   // título ya empieza con él.
   const nombre = nombrePromo({ ...promocion, titulo });
-  const tituloVisible = titulo || "Promoción";
+  // Sin título de promo cargado ("Promoción" a secas no dice nada, ver
+  // captura del dueño 2026-09-27): mejor decir qué incluye, si hay tags.
+  const incluye = (promocion.incluye_tags ?? []).filter(Boolean);
+  const tituloVisible = titulo || (incluye.length > 0 ? `Incluye ${incluye.join(", ").toLocaleLowerCase("es")}` : "Promoción");
   const hotelNombre = promocion.producto?.nombre?.trim() || "";
   const subtituloPromo =
     hotelNombre && tituloVisible.toLowerCase().startsWith(hotelNombre.toLowerCase())
