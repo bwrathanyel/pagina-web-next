@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { SiteEditorPanel } from "@/components/admin/SiteEditorPanel";
 import { useSiteContent } from "@/components/providers/SiteContentProvider";
@@ -11,6 +12,8 @@ import { useSiteContent } from "@/components/providers/SiteContentProvider";
 export function AdminEditToggle() {
   const { rol, modoEdicion, setModoEdicion } = useAuth();
   const { setEditorOpen } = useSiteContent();
+  // En /cotizar la barra al pie es más alta y no hay barra de pestañas.
+  const enCotizar = usePathname()?.startsWith("/cotizar") ?? false;
   if (rol !== "admin") return null;
 
   return (
@@ -22,7 +25,8 @@ export function AdminEditToggle() {
         if (!modoEdicion) setEditorOpen(true);
       }}
       className={
-        "fixed bottom-24 left-5 z-40 flex min-h-11 items-center gap-2 rounded-pill px-4 font-mono text-xs font-semibold uppercase tracking-wide shadow-chrome lg:bottom-5 " +
+        (enCotizar ? "bottom-28 " : "bottom-24 ") +
+        "fixed left-5 z-40 flex min-h-11 items-center gap-2 rounded-pill px-4 font-mono text-xs font-semibold uppercase tracking-wide shadow-chrome lg:bottom-5 " +
         (modoEdicion ? "bg-acento text-sobre-acento" : "bg-dusk text-dusk-text")
       }
       style={{ marginLeft: "env(safe-area-inset-left)" }}

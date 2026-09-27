@@ -73,6 +73,10 @@ export function BottomTabBar() {
     );
   };
 
+  // /cotizar tiene su propia barra al pie (total + Revisar): dos barras
+  // apiladas tapaban el contenido y se leían como una sola.
+  if (pathname?.startsWith("/cotizar")) return null;
+
   return (
     <nav
       aria-label="Navegación principal"

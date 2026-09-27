@@ -34,6 +34,7 @@ const MAXIMOS: Viajeros = { adultos: ADULTOS_MAX, ninos: NINOS_MAX, bebes: BEBES
  * las fechas y si hay segunda fecha (el full day es de un solo día). */
 function useCotizacionRapida() {
   const [servicio, setServicio] = useState<string>(INICIAL.servicio);
+  const [destino, setDestino] = useState<string>(INICIAL.destino);
   const [entrada, setEntrada] = useState("");
   const [salida, setSalida] = useState("");
   const [viajeros, setViajeros] = useState<Viajeros>({ adultos: INICIAL.adultos, ninos: 0, bebes: 0 });
@@ -50,6 +51,10 @@ function useCotizacionRapida() {
   return {
     servicio,
     setServicio,
+    destino,
+    setDestino,
+    // Margarita con niños: hay hoteles con el primer niño gratis (ver OfertasHospedaje).
+    promoNinos: /margarita/i.test(destino) && viajeros.ninos > 0,
     entrada,
     cambiarEntrada,
     salida,
@@ -61,6 +66,20 @@ function useCotizacionRapida() {
     etiquetaFin,
     duracion: noches > 0 ? textoDuracion(noches) : "",
   };
+}
+
+/** Margarita + niños: se avisa antes de cotizar. En /cotizar se muestran esos
+ * hoteles primero, con lo que paga el siguiente niño. */
+function AvisoNinosGratis({ ninos }: { ninos: number }) {
+  return (
+    <p role="status" className="sobre-claro flex items-start gap-2.5 rounded-card border border-seafoam bg-seafoam-bg px-4 py-2.5 text-sm text-ink">
+      <span aria-hidden="true">🎁</span>
+      <span>
+        <strong className="font-semibold">En Margarita el primer niño va totalmente gratis</strong> en hoteles seleccionados.
+        {ninos > 1 ? " Al cotizar le mostramos esos hoteles y cuánto paga el segundo niño." : " Al cotizar le mostramos esos hoteles primero."}
+      </span>
+    </p>
+  );
 }
 
 function OpcionesServicio() {
@@ -136,6 +155,7 @@ export function CotizadorRapidoBarra() {
   }
 
   return (
+    <div className="flex flex-col gap-2">
     <Form
       action={DESTINO}
       aria-label="Cotizar un viaje"
@@ -157,7 +177,7 @@ export function CotizadorRapidoBarra() {
         </Tramo>
         <Tramo etiqueta="Destino">
           {(id) => (
-            <select id={id} name="destino" defaultValue={INICIAL.destino} className={SELECTOR_TRAMO}>
+            <select id={id} name="destino" value={c.destino} onChange={(e) => c.setDestino(e.target.value)} className={SELECTOR_TRAMO}>
               <OpcionesDestino />
             </select>
           )}
@@ -218,6 +238,8 @@ export function CotizadorRapidoBarra() {
         Cotizar
       </Boton>
     </Form>
+    {c.promoNinos ? <AvisoNinosGratis ninos={c.viajeros.ninos} /> : null}
+    </div>
   );
 }
 
@@ -269,7 +291,7 @@ export function CotizadorRapidoMovil() {
           </Campo>
           <Campo etiqueta="Destino">
             {(a11y) => (
-              <Selector {...a11y} name="destino" defaultValue={INICIAL.destino}>
+              <Selector {...a11y} name="destino" value={c.destino} onChange={(e) => c.setDestino(e.target.value)}>
                 <OpcionesDestino />
               </Selector>
             )}
@@ -336,6 +358,7 @@ export function CotizadorRapidoMovil() {
               )}
             </Campo>
           </div>
+          {c.promoNinos ? <AvisoNinosGratis ninos={c.viajeros.ninos} /> : null}
         </Form>
       </Hoja>
     </>

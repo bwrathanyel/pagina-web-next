@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CHAT_ACTUALIZADO_EVENTO } from "@/lib/notificaciones/useNotificacionesChat";
-import { BrandMark } from "@/components/layout/BrandMark";
+import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
+import Solcito, { type SolcitoMood } from "@/components/mascota/Solcito";
+import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
+import { AUDIO_MAX_S, aWav16k, comprimirImagen, puedeGrabar } from "@/lib/chat/media";
 import { Icono } from "@/components/ui/Icono";
 
 const SESSION_KEY = "lotus360_chat_session_id";
@@ -20,6 +23,11 @@ interface Mensaje {
   // campo. Sin hora cuando falta -- nunca new Date(undefined), que renderiza
   // "Invalid Date".
   ts?: number;
+  // Lo que mandó el visitante: miniatura de su foto, duración de su nota de
+  // voz y lo que la IA entendió de ella.
+  foto_lead?: string;
+  audio_seg?: number;
+  transcripcion?: string;
 }
 
 function HoraMensaje({ ts }: { ts?: number }) {
@@ -264,12 +272,14 @@ function LightboxFoto({ src, alt, onClose }: { src: string; alt: string; onClose
 
 const MENSAJE_BIENVENIDA: Mensaje = {
   rol: "ia",
-  texto: "¡Hola! Soy Lotus, su asistente virtual. Cuénteme qué viaje tiene en mente y le ayudo a armarlo.",
+  texto:
+    "¡Hola! Soy Lotus 🌞 Cuénteme qué viaje tiene en mente y se lo armo. También puede mandarme una foto (por ejemplo, de una oferta que vio) o una nota de voz.",
 };
 
-// Este panel nunca se renderiza en el server -- ContactoFab solo
-// lo monta client-side tras un click (ver `{abierto && <AsistenteVirtualPanel .../>}`),
-// nunca durante hidratación -- así que leer localStorage en el init de
+const SUGERENCIAS_BASE = ["Quiero una escapada", "Ver promociones", "Viajar con niños", "Hablar con un asesor"];
+
+// Este panel nunca se renderiza en el server -- se monta client-side tras un
+// click, nunca durante hidratación -- así que leer localStorage en el init de
 // useState es seguro acá y evita el setState síncrono dentro de un efecto.
 function historialInicial(): Mensaje[] {
   try {
@@ -287,7 +297,33 @@ function historialInicial(): Mensaje[] {
   return [MENSAJE_BIENVENIDA];
 }
 
-export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
+// Miniatura chica para el historial: la foto completa no entra en localStorage.
+async function miniatura(dataUrl: string): Promise<string> {
+  const img = new Image();
+  img.src = dataUrl;
+  await img.decode().catch(() => undefined);
+  const k = Math.min(1, 320 / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
+  const c = document.createElement("canvas");
+  c.width = Math.max(1, Math.round(img.naturalWidth * k));
+  c.height = Math.max(1, Math.round(img.naturalHeight * k));
+  c.getContext("2d")?.drawImage(img, 0, 0, c.width, c.height);
+  return c.toDataURL("image/jpeg", 0.7);
+}
+
+const mmss = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+
+type Props = {
+  onClose: () => void;
+  /** "embebido": vive dentro de la página (/cotizar), sin fondo fijo ni tirón para cerrar. */
+  modo?: "flotante" | "embebido";
+  /** Lo que la persona está armando, para que la IA no pregunte lo que ya se sabe. */
+  contexto?: string;
+  sugerencias?: string[];
+  className?: string;
+};
+
+export function AsistenteVirtualPanel({ onClose, modo = "flotante", contexto, sugerencias, className = "" }: Props) {
+  const embebido = modo === "embebido";
   const [mensajes, setMensajes] = useState<Mensaje[]>(historialInicial);
   const [texto, setTexto] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -295,12 +331,31 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
   const [fotoZoom, setFotoZoom] = useState<{ src: string; alt: string } | null>(null);
   const [arrastreY, setArrastreY] = useState(0);
   const [cerrando, setCerrando] = useState(false);
+  const [foto, setFoto] = useState<string | null>(null);
+  const [grabando, setGrabando] = useState(false);
+  const [segundos, setSegundos] = useState(0);
+  const [mood, setMood] = useState<SolcitoMood>("wave");
+  const [festejo, setFestejo] = useState(0);
   const sessionIdRef = useRef<string>("");
   const listaRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const archivoRef = useRef<HTMLInputElement>(null);
+  const grabadoraRef = useRef<{ rec: MediaRecorder; partes: Blob[]; cancelar: boolean; t0: number } | null>(null);
   const arrastreRef = useRef(0);
   const inicioYRef = useRef<number | null>(null);
+  const moodTimer = useRef(0);
+
+  function moodPasajero(m: SolcitoMood, ms = 1600) {
+    window.clearTimeout(moodTimer.current);
+    setMood(m);
+    moodTimer.current = window.setTimeout(() => setMood("idle"), ms);
+  }
+
+  useEffect(() => {
+    moodTimer.current = window.setTimeout(() => setMood("idle"), 1800);
+    return () => window.clearTimeout(moodTimer.current);
+  }, []);
 
   useEffect(() => {
     const el = textareaRef.current;
@@ -318,13 +373,12 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
     setTimeout(onClose, 200);
   }
 
-  // Tirón hacia abajo en la barra del encabezado para minimizar/cerrar la
-  // hoja en móvil. Igual que en LightboxFoto (:150-153): onTouchMove de JSX
-  // es pasivo, así que preventDefault no frena el scroll salvo con
-  // addEventListener nativo.
+  // Tirón hacia abajo en la barra del encabezado para cerrar la hoja en móvil.
+  // onTouchMove de JSX es pasivo, así que preventDefault no frena el scroll
+  // salvo con addEventListener nativo.
   useEffect(() => {
     const el = handleRef.current;
-    if (!el) return;
+    if (!el || embebido) return;
     const UMBRAL_CIERRE = 80;
 
     function onTouchStart(e: TouchEvent) {
@@ -356,7 +410,7 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
       el.removeEventListener("touchend", onTouchEnd);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [embebido]);
 
   useEffect(() => {
     sessionIdRef.current = obtenerSessionId();
@@ -367,7 +421,7 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
       try {
         localStorage.setItem(HISTORIAL_KEY, JSON.stringify(mensajes));
       } catch {
-        // localStorage bloqueado -- no persiste el historial pero el chat sigue andando
+        // localStorage lleno o bloqueado -- no persiste el historial pero el chat sigue andando
       }
       window.dispatchEvent(new Event(CHAT_ACTUALIZADO_EVENTO));
     }
@@ -375,85 +429,206 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
   }, [mensajes]);
 
   useEffect(() => {
+    if (embebido) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, embebido]);
 
-  async function enviar(mensajeDirecto?: string) {
-    const mensaje = (mensajeDirecto ?? texto).trim();
-    if (!mensaje || enviando) return;
-    if (!mensajeDirecto) setTexto("");
+  // Cronómetro de la nota de voz; corta sola al llegar al máximo.
+  useEffect(() => {
+    if (!grabando) return;
+    const t = window.setInterval(() => {
+      const g = grabadoraRef.current;
+      if (!g) return;
+      const s = (Date.now() - g.t0) / 1000;
+      setSegundos(s);
+      if (s >= AUDIO_MAX_S) terminarGrabacion(false);
+    }, 250);
+    return () => window.clearInterval(t);
+  }, [grabando]);
+
+  useEffect(
+    () => () => {
+      const g = grabadoraRef.current;
+      if (g) {
+        g.cancelar = true;
+        g.rec.stop();
+      }
+    },
+    [],
+  );
+
+  async function enviar(opts: { directo?: string; adjunto?: { tipo: "imagen" | "audio"; data: string }; audioSeg?: number } = {}) {
+    const mensaje = (opts.directo ?? texto).trim();
+    const adjunto = opts.adjunto ?? (foto ? { tipo: "imagen" as const, data: foto } : undefined);
+    if ((!mensaje && !adjunto) || enviando) return;
+    if (!opts.directo) setTexto("");
+    setFoto(null);
     setError(null);
-    setMensajes((m) => [...m, { rol: "lead", texto: mensaje, ts: Date.now() }]);
+    const burbuja: Mensaje = { rol: "lead", texto: mensaje, ts: Date.now() };
+    if (adjunto?.tipo === "imagen") burbuja.foto_lead = await miniatura(adjunto.data).catch(() => undefined);
+    if (adjunto?.tipo === "audio") burbuja.audio_seg = Math.round(opts.audioSeg ?? 0);
+    setMensajes((m) => [...m, burbuja]);
     setEnviando(true);
+    setMood(adjunto?.tipo === "imagen" ? "look" : "think");
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: sessionIdRef.current, mensaje }),
+        body: JSON.stringify({ session_id: sessionIdRef.current, mensaje, adjunto, contexto }),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
         setError("No pudimos conectar. Intente de nuevo en un momento.");
+        moodPasajero("sad", 2400);
         return;
       }
-      setMensajes((m) => [
-        ...m,
-        {
-          rol: "ia",
-          texto: data.respuesta,
-          foto_1: data.foto_1,
-          foto_2: data.foto_2,
-          opcion_titulo: data.opcion_titulo,
-          opcion_precio: data.opcion_precio,
-          audio_url: data.audio_url,
-          ts: Date.now(),
-        },
-      ]);
+      setMensajes((m) => {
+        const copia = [...m];
+        if (data.transcripcion) {
+          const i = copia.lastIndexOf(burbuja);
+          if (i >= 0) copia[i] = { ...burbuja, transcripcion: data.transcripcion };
+        }
+        return [
+          ...copia,
+          {
+            rol: "ia",
+            texto: data.respuesta,
+            foto_1: data.foto_1,
+            foto_2: data.foto_2,
+            opcion_titulo: data.opcion_titulo,
+            opcion_precio: data.opcion_precio,
+            audio_url: data.audio_url,
+            ts: Date.now(),
+          },
+        ];
+      });
+      if (data.lead_creado) {
+        moodPasajero("love", 2600);
+        setFestejo((n) => n + 1);
+      } else {
+        moodPasajero(data.foto_1 ? "wink" : "happy", 1500);
+      }
     } catch {
       setError("No pudimos conectar. Intente de nuevo en un momento.");
+      moodPasajero("sad", 2400);
     } finally {
       setEnviando(false);
     }
   }
 
+  async function elegirFoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const archivo = e.target.files?.[0];
+    e.target.value = "";
+    if (!archivo) return;
+    if (!archivo.type.startsWith("image/")) {
+      setError("Solo se pueden enviar fotos.");
+      return;
+    }
+    try {
+      setFoto(await comprimirImagen(archivo));
+      moodPasajero("eager", 1200);
+    } catch {
+      setError("No pudimos abrir esa foto. Pruebe con otra.");
+    }
+  }
+
+  async function empezarGrabacion() {
+    setError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const rec = new MediaRecorder(stream);
+      const g = { rec, partes: [] as Blob[], cancelar: false, t0: Date.now() };
+      rec.ondataavailable = (ev) => ev.data.size && g.partes.push(ev.data);
+      rec.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        grabadoraRef.current = null;
+        setGrabando(false);
+        const seg = (Date.now() - g.t0) / 1000;
+        if (g.cancelar) {
+          setMood("idle");
+          return;
+        }
+        if (seg < 1) {
+          setError("La nota de voz fue muy corta.");
+          setMood("idle");
+          return;
+        }
+        try {
+          const wav = await aWav16k(new Blob(g.partes, { type: rec.mimeType }));
+          await enviar({ directo: "", adjunto: { tipo: "audio", data: wav }, audioSeg: seg });
+        } catch {
+          setError("No pudimos procesar el audio. Intente de nuevo o escríbanos.");
+          moodPasajero("sad", 2000);
+        }
+      };
+      grabadoraRef.current = g;
+      rec.start();
+      setSegundos(0);
+      setGrabando(true);
+      setMood("listen");
+    } catch {
+      setError("Necesitamos permiso para usar el micrófono.");
+      moodPasajero("sad", 2000);
+    }
+  }
+
+  function terminarGrabacion(cancelar: boolean) {
+    const g = grabadoraRef.current;
+    if (!g) return;
+    g.cancelar = cancelar;
+    if (g.rec.state !== "inactive") g.rec.stop();
+  }
+
+  const listaSugerencias = sugerencias ?? SUGERENCIAS_BASE;
+  const hayTexto = !!texto.trim() || !!foto;
+
   return (
     <>
       <div
-        role="dialog"
+        role={embebido ? "region" : "dialog"}
         aria-label="Lotus, su asistente virtual"
         className={
-          "fixed inset-x-0 bottom-0 z-50 flex h-[75dvh] w-full flex-col overflow-hidden rounded-t-card bg-card shadow-chrome " +
-          "sm:inset-x-auto sm:bottom-24 sm:right-4 sm:h-[70vh] sm:max-h-[600px] sm:w-[90vw] sm:max-w-[380px] sm:rounded-card sm:mb-[env(safe-area-inset-bottom)] sm:mr-[env(safe-area-inset-right)] " +
-          (cerrando
-            ? "transition-[transform,opacity] duration-200 ease-in translate-y-full sm:translate-y-0 sm:opacity-0"
-            : "animate-panel-abrir")
+          (embebido
+            ? "relative flex h-full min-h-[420px] w-full flex-col overflow-hidden rounded-card border border-linea bg-card "
+            : "fixed inset-x-0 bottom-0 z-50 flex h-[80dvh] w-full flex-col overflow-hidden rounded-t-card bg-card shadow-chrome " +
+              "sm:inset-x-auto sm:bottom-24 sm:right-4 sm:h-[72vh] sm:max-h-[640px] sm:w-[90vw] sm:max-w-[400px] sm:rounded-card sm:mb-[env(safe-area-inset-bottom)] sm:mr-[env(safe-area-inset-right)] " +
+              (cerrando
+                ? "transition-[transform,opacity] duration-200 ease-in translate-y-full sm:translate-y-0 sm:opacity-0"
+                : "animate-panel-abrir")) +
+          " " +
+          className
         }
-        style={
-          !cerrando && arrastreY
-            ? { transform: `translateY(${arrastreY}px)` }
-            : undefined
-        }
+        style={!embebido && !cerrando && arrastreY ? { transform: `translateY(${arrastreY}px)` } : undefined}
       >
-        <div
-          ref={handleRef}
-          className="flex flex-col items-center gap-1.5 bg-dusk pt-2 text-dusk-text sm:pt-0"
-        >
-          <span className="h-1 w-9 rounded-pill bg-dusk-text/30 sm:hidden" aria-hidden="true" />
-          <div className="flex w-full items-center justify-between gap-3 py-1 pl-4 pr-2 sm:py-2">
-            <div className="min-w-0">
-              <p className="font-display text-lg font-bold leading-tight">Lotus, su asistente virtual</p>
-              <p className="text-sm text-dusk-text-soft">Le ayuda a armar su viaje al instante</p>
+        <div ref={handleRef} className="flex flex-col items-center bg-dusk pt-2 text-dusk-text sm:pt-0">
+          {!embebido ? <span className="h-1 w-9 rounded-pill bg-dusk-text/30 sm:hidden" aria-hidden="true" /> : null}
+          <div className="flex w-full items-center gap-2 py-1.5 pl-2 pr-2 sm:py-2">
+            <Solcito mood={mood} size={48} chispas={festejo} />
+            <div className="min-w-0 flex-1">
+              <p className="font-display text-lg font-bold leading-tight">Lotus</p>
+              <p className="truncate text-xs text-dusk-text-soft">
+                {grabando ? "Escuchando…" : enviando ? "Pensando su viaje…" : "Su asistente de viajes · en línea"}
+              </p>
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Cerrar chat"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-dusk-text transition-colors duration-150 hover:bg-dusk-2"
+            <WhatsAppLeadButton
+              mensajeBase="Hola! Vengo del chat de su página web."
+              triggerAriaLabel="Hablar con un asesor por WhatsApp"
+              triggerClassName="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-dusk-text transition-colors duration-150 hover:bg-dusk-2"
             >
-              <Icono nombre="cerrar" />
-            </button>
+              <WhatsAppIcon size={20} />
+            </WhatsAppLeadButton>
+            {!embebido ? (
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Cerrar chat"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-dusk-text transition-colors duration-150 hover:bg-dusk-2"
+              >
+                <Icono nombre="cerrar" />
+              </button>
+            ) : null}
           </div>
         </div>
 
@@ -465,22 +640,32 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
           className="flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 py-4"
         >
           {mensajes.map((m, i) => (
-            <div
-              key={i}
-              className={`flex items-end gap-2 ${m.rol === "lead" ? "justify-end" : "justify-start"}`}
-            >
-              {m.rol === "ia" ? (
-                <div className="mb-0.5 shrink-0 scale-[0.7] origin-bottom-left">
-                  <BrandMark size="sm" />
-                </div>
-              ) : null}
+            <div key={i} className={`flex ${m.rol === "lead" ? "justify-end" : "justify-start"}`}>
               <div
-                className={`max-w-[80%] whitespace-pre-line rounded-card px-3.5 py-2.5 text-sm ${
+                className={`max-w-[85%] whitespace-pre-line rounded-card px-3.5 py-2.5 text-sm ${
                   m.rol === "lead"
-                    ? "animate-msg-in-right bg-acento text-sobre-acento"
-                    : "animate-msg-in-left bg-sand-2 text-ink"
+                    ? "animate-msg-in-right rounded-br-md bg-acento text-sobre-acento"
+                    : "animate-msg-in-left rounded-bl-md bg-sand-2 text-ink"
                 }`}
               >
+                {m.foto_lead ? (
+                  <button
+                    type="button"
+                    onClick={() => setFotoZoom({ src: m.foto_lead!, alt: "Foto enviada" })}
+                    aria-label="Ver foto enviada"
+                    className="mb-1.5 block overflow-hidden rounded-media"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={m.foto_lead} alt="Foto enviada" className="max-h-44 w-full object-cover" />
+                  </button>
+                ) : null}
+                {m.audio_seg != null ? (
+                  <span className="flex items-center gap-2 font-semibold">
+                    <Icono nombre="microfono" tamano={16} />
+                    Nota de voz · {mmss(m.audio_seg)}
+                  </span>
+                ) : null}
+                {m.transcripcion ? <span className="mt-1 block text-xs italic opacity-90">“{m.transcripcion}”</span> : null}
                 {m.rol === "ia" ? <ContenidoMensaje mensaje={m} /> : m.texto}
                 {(m.foto_1 || m.opcion_titulo) && (
                   <div className="mt-2 overflow-hidden rounded-media border border-linea">
@@ -492,7 +677,7 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
                         className="block w-full cursor-zoom-in"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={m.foto_1} alt={m.opcion_titulo ?? ""} className="h-32 w-full object-cover" />
+                        <img src={m.foto_1} alt={m.opcion_titulo ?? ""} className="h-36 w-full object-cover" />
                       </button>
                     )}
                     {(m.opcion_titulo || m.opcion_precio) && (
@@ -508,25 +693,23 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
             </div>
           ))}
           {mensajes.length === 1 && !enviando ? (
-            <div className="flex flex-wrap gap-1.5 pl-9">
-              {["Quiero una escapada", "Ver promociones", "Viajar con niños", "Hablar con un asesor"].map(
-                (sugerencia) => (
-                  <button
-                    key={sugerencia}
-                    type="button"
-                    onClick={() => enviar(sugerencia)}
-                    className="min-h-11 rounded-pill border border-linea-fuerte bg-card px-4 text-sm font-semibold text-ink transition-colors duration-150 hover:border-acento hover:text-acento"
-                  >
-                    {sugerencia}
-                  </button>
-                ),
-              )}
+            <div className="flex flex-wrap gap-1.5">
+              {listaSugerencias.map((sugerencia) => (
+                <button
+                  key={sugerencia}
+                  type="button"
+                  onClick={() => enviar({ directo: sugerencia })}
+                  className="min-h-11 rounded-pill border border-linea-fuerte bg-card px-4 text-sm font-semibold text-ink transition-colors duration-150 hover:border-acento hover:text-acento"
+                >
+                  {sugerencia}
+                </button>
+              ))}
             </div>
           ) : null}
           {enviando ? (
-            <div className="flex items-center gap-2 pl-9" aria-live="polite">
+            <div className="flex items-center gap-2" aria-live="polite">
               <span className="sr-only">Lotus está escribiendo…</span>
-              <div className="flex items-center gap-1 rounded-card bg-sand-2 px-3 py-2.5" aria-hidden="true">
+              <div className="flex items-center gap-1 rounded-card rounded-bl-md bg-sand-2 px-3 py-3" aria-hidden="true">
                 {[0, 1, 2].map((i) => (
                   <span
                     key={i}
@@ -544,28 +727,93 @@ export function AsistenteVirtualPanel({ onClose }: { onClose: () => void }) {
           )}
         </div>
 
-        <div className="flex items-end gap-2 border-t border-linea p-3">
-          <textarea
-            ref={textareaRef}
-            value={texto}
-            onChange={(e) => setTexto(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), enviar())}
-            disabled={enviando}
-            placeholder="Escriba su mensaje…"
-            rows={1}
-            aria-label="Su mensaje"
-            className="max-h-[104px] min-h-11 min-w-0 flex-1 resize-none rounded-control border border-linea-fuerte bg-sand px-4 py-2.5 text-base text-ink placeholder:text-ink-soft transition-[border-color,box-shadow] duration-150 focus:border-acento focus:outline-none focus:ring-4 focus:ring-acento/20 disabled:opacity-60"
-          />
-          <button
-            type="button"
-            onClick={() => enviar()}
-            disabled={enviando || !texto.trim()}
-            aria-label="Enviar mensaje"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill bg-acento text-sobre-acento transition-[filter,transform] duration-150 hover:brightness-110 active:scale-95 disabled:opacity-50"
-          >
-            <Icono nombre="enviar" tamano={18} />
-          </button>
-        </div>
+        {foto ? (
+          <div className="flex items-center gap-3 border-t border-linea px-3 pt-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={foto} alt="Foto por enviar" className="h-14 w-14 rounded-media object-cover" />
+            <p className="min-w-0 flex-1 text-xs text-ink-soft">Agregue un comentario si quiere y toque enviar.</p>
+            <button
+              type="button"
+              onClick={() => setFoto(null)}
+              aria-label="Quitar foto"
+              className="flex h-11 w-11 items-center justify-center rounded-pill text-ink-soft hover:bg-sand-2"
+            >
+              <Icono nombre="cerrar" tamano={18} />
+            </button>
+          </div>
+        ) : null}
+
+        {grabando ? (
+          <div className="flex items-center gap-2 border-t border-linea p-3">
+            <button
+              type="button"
+              onClick={() => terminarGrabacion(true)}
+              aria-label="Descartar nota de voz"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-ink-soft hover:bg-sand-2"
+            >
+              <Icono nombre="papelera" tamano={20} />
+            </button>
+            <div className="flex min-h-11 flex-1 items-center gap-2 rounded-control bg-sand px-4 text-sm text-ink">
+              <span className="h-2.5 w-2.5 animate-pulse rounded-pill bg-peligro" aria-hidden="true" />
+              <span className="font-mono tabular-nums">{mmss(segundos)}</span>
+              <span className="text-ink-soft">/ {mmss(AUDIO_MAX_S)}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => terminarGrabacion(false)}
+              aria-label="Enviar nota de voz"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill bg-acento text-sobre-acento active:scale-95"
+            >
+              <Icono nombre="enviar" tamano={18} />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-end gap-1.5 border-t border-linea p-3" style={{ paddingBottom: embebido ? undefined : "max(0.75rem, env(safe-area-inset-bottom))" }}>
+            <input ref={archivoRef} type="file" accept="image/*" className="hidden" onChange={elegirFoto} />
+            <button
+              type="button"
+              onClick={() => archivoRef.current?.click()}
+              disabled={enviando}
+              aria-label="Enviar una foto"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-ink-soft transition-colors duration-150 hover:bg-sand-2 hover:text-ink disabled:opacity-50"
+            >
+              <Icono nombre="camara" tamano={21} />
+            </button>
+            <textarea
+              ref={textareaRef}
+              value={texto}
+              onChange={(e) => setTexto(e.target.value)}
+              onFocus={() => moodPasajero("eager", 900)}
+              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), enviar())}
+              disabled={enviando}
+              placeholder="Escriba su mensaje…"
+              rows={1}
+              aria-label="Su mensaje"
+              className="max-h-[104px] min-h-11 min-w-0 flex-1 resize-none rounded-control border border-linea-fuerte bg-sand px-4 py-2.5 text-base text-ink placeholder:text-ink-soft transition-[border-color,box-shadow] duration-150 focus:border-acento focus:outline-none focus:ring-4 focus:ring-acento/20 disabled:opacity-60"
+            />
+            {hayTexto || !puedeGrabar() ? (
+              <button
+                type="button"
+                onClick={() => enviar()}
+                disabled={enviando || !hayTexto}
+                aria-label="Enviar mensaje"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill bg-acento text-sobre-acento transition-[filter,transform] duration-150 hover:brightness-110 active:scale-95 disabled:opacity-50"
+              >
+                <Icono nombre="enviar" tamano={18} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={empezarGrabacion}
+                disabled={enviando}
+                aria-label="Grabar una nota de voz"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill bg-acento text-sobre-acento transition-[filter,transform] duration-150 hover:brightness-110 active:scale-95 disabled:opacity-50"
+              >
+                <Icono nombre="microfono" tamano={20} />
+              </button>
+            )}
+          </div>
+        )}
       </div>
       {fotoZoom && <LightboxFoto src={fotoZoom.src} alt={fotoZoom.alt} onClose={() => setFotoZoom(null)} />}
     </>

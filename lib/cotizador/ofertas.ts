@@ -1,7 +1,7 @@
 import { fotosDeLaPromo, esTodoIncluido, prioridadOferta, tieneNinoGratis } from "@/lib/promociones/hotSales";
-import { montoOrden, precioTarjeta, type PrecioTarjeta } from "@/lib/tarifas";
+import { montoConMoneda, montoOrden, precioTarjeta, type PrecioTarjeta } from "@/lib/tarifas";
 import { DESTINOS } from "@/lib/cotizador/estado";
-import type { Promocion } from "@/types/supabase";
+import type { NinoGratis, Promocion } from "@/types/supabase";
 
 /** Un hotel en la grilla de ofertas de /cotizar: lo justo para la tarjeta. El
  * detalle (tarifas, habitaciones) se pide al abrirlo. */
@@ -27,6 +27,11 @@ export interface OfertaHotel {
   ninosGratis: boolean;
   /** Cuántos niños no pagan con la promo (0 si no hay). */
   ninosGratisCantidad: number;
+  /** Edades del regalo ("2 a 11") según el PDF, si las dice. */
+  ninosGratisEdades: string | null;
+  /** Lo que paga el niño que no entra en el regalo (tarifa chd de la grilla),
+   * ya formateado por noche; null si la tarifa no la trae. */
+  precioNino: string | null;
   prioridad: number;
 }
 
@@ -43,15 +48,29 @@ const DESTINO_DE = new Map<string, string>(
   DESTINOS.flatMap((d) => (ALIAS[d] ?? [clave(d)]).map((a) => [a, d] as [string, string])),
 );
 
-const cantidadNinoGratis = (p: Promocion) =>
-  Math.max(0, (p as Promocion & { nino_gratis?: { cantidad: number } | null }).nino_gratis?.cantidad ?? p.ninos_gratis_cantidad ?? 0);
+type ConNino = Promocion & { nino_gratis?: NinoGratis | null };
+
+const cantidadNinoGratis = (p: ConNino) => Math.max(0, p.nino_gratis?.cantidad ?? p.ninos_gratis_cantidad ?? 0);
+
+// La grilla trae el niño como chd, chd_4_10, chd_2_11…: el más barato manda.
+function precioNino(p: Promocion): string | null {
+  const precios = p.precios;
+  if (!precios || typeof precios !== "object") return null;
+  const montos = Object.entries(precios)
+    .filter(([k]) => /^chd/i.test(k))
+    .map(([, v]) => Number(String(v ?? "").replace(/[^d.]/g, "")))
+    .filter((n) => Number.isFinite(n) && n > 0);
+  if (!montos.length) return null;
+  const moneda = String(p.moneda || "USD").toUpperCase() === "EUR" ? "EUR" : "USD";
+  return montoConMoneda(Math.min(...montos), moneda);
+}
 
 /** Una oferta por hotel (la de mayor prioridad: niños gratis, todo incluido,
  * el resto y al final solo desayuno; a igual prioridad, el ranking del pool),
  * de todos los destinos de /cotizar. Solo hoteles: son los que tienen
  * habitaciones y tarifas para estimar. */
-export function ofertasHoteles(pool: Promocion[]): OfertaHotel[] {
-  const porHotel = new Map<number, { p: Promocion; rank: number; destino: string }>();
+export function ofertasHoteles(pool: ConNino[]): OfertaHotel[] {
+  const porHotel = new Map<number, { p: ConNino; rank: number; destino: string }>();
   pool.forEach((p, rank) => {
     const prod = p.producto;
     if (!prod || prod.tipo !== "hotel") return;
@@ -80,6 +99,8 @@ export function ofertasHoteles(pool: Promocion[]): OfertaHotel[] {
         todoIncluido: esTodoIncluido(p),
         ninosGratis: tieneNinoGratis(p),
         ninosGratisCantidad: cantidadNinoGratis(p),
+        ninosGratisEdades: p.nino_gratis?.edades?.trim().replace(/s*-s*/, " a ") || null,
+        precioNino: precioNino(p),
         prioridad: prioridadOferta(p),
       };
     });

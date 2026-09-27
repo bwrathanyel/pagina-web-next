@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { CotizadorViaje } from "@/components/cotizador/CotizadorViaje";
 import { DESTINOS, parsearEstado } from "@/lib/cotizador/estado";
 import { ofertasHoteles } from "@/lib/cotizador/ofertas";
-import { getHotelCotizador, getPromociones, rutasVuelo } from "@/lib/supabase/queries";
+import { getHotSales, getHotelCotizador, getPromociones, rutasVuelo } from "@/lib/supabase/queries";
 
 const DESCRIPCION =
   "Arme su viaje en un solo lugar: hospedaje, vuelo, full day y tours. Indique destino, fechas y viajeros, y un asesor le responde por WhatsApp con el precio confirmado.";
@@ -27,8 +27,13 @@ export default async function CotizarPage({
   // Sin rutas (consulta caída) el vuelo vuelve a ser solo solicitud: "a confirmar".
   const [hotel, ofertas, rutas] = await Promise.all([
     estado.hotel ? getHotelCotizador(estado.hotel).catch(() => null) : null,
-    getPromociones()
-      .then(ofertasHoteles)
+    // Las Hot Sales van delante: traen el regalo de niño gratis que
+    // web_promociones no tiene (lo lee tarifa_nino_gratis() del PDF).
+    Promise.all([getHotSales().catch(() => []), getPromociones()])
+      .then(([hot, promos]) => {
+        const ids = new Set(hot.map((h) => h.id));
+        return ofertasHoteles([...hot, ...promos.filter((p) => !ids.has(p.id))]);
+      })
       .catch(() => []),
     rutasVuelo().catch(() => []),
   ]);
@@ -38,9 +43,9 @@ export default async function CotizarPage({
   else if (hotel?.destino && !sp.destino && DESTINOS.includes(hotel.destino)) estado = { ...estado, destino: hotel.destino };
 
   return (
-    <main className="mx-auto max-w-6xl px-5 py-6 pb-44 md:py-10 lg:pb-10">
-      <div className="mb-5 flex flex-wrap items-baseline gap-x-5 gap-y-2 lg:mb-6">
-        <h1 className="font-display text-4xl font-bold leading-none text-ink">Arme su viaje</h1>
+    <main className="mx-auto max-w-6xl px-4 py-5 pb-32 sm:px-5 md:py-10 lg:pb-10">
+      <div className="mb-4 flex flex-wrap items-baseline gap-x-5 gap-y-2 lg:mb-6">
+        <h1 className="font-display text-3xl font-bold leading-none text-ink sm:text-4xl">Arme su viaje</h1>
         <p className="max-w-2xl text-ink-soft max-lg:hidden">
           Elija qué necesita, cuándo y cuántos viajan. Un asesor le responde por WhatsApp.
         </p>

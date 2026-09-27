@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { BarraViaje, BarraViajeCompacta, ChipsServicios } from "@/components/cotizador/BarraViaje";
+import { AyudanteCotizar } from "@/components/cotizador/AyudanteCotizar";
 import { DetalleHotel } from "@/components/cotizador/DetalleHotel";
 import { OfertasHospedaje } from "@/components/cotizador/OfertasHospedaje";
 import { ResumenViaje, textoFechas } from "@/components/cotizador/ResumenViaje";
@@ -249,6 +250,30 @@ function DatosContacto({
         </button>
       )}
     </div>
+  );
+}
+
+const PASOS = ["Su viaje", "Elija", "Envíe"] as const;
+
+/** Móvil: tres pasos cortos para que se entienda qué hacer primero. */
+function GuiaPasos({ paso }: { paso: 1 | 2 | 3 }) {
+  return (
+    <ol className="flex items-center gap-2" aria-label={`Paso ${paso} de 3`}>
+      {PASOS.map((nombre, i) => {
+        const n = i + 1;
+        const hecho = n < paso;
+        const actual = n === paso;
+        return (
+          <li key={nombre} className="flex flex-1 flex-col gap-1.5" aria-current={actual ? "step" : undefined}>
+            <span className={`h-1.5 rounded-pill ${hecho || actual ? "bg-acento" : "bg-linea"}`} />
+            <span className={`text-xs ${actual ? "font-semibold text-ink" : "text-ink-soft"}`}>
+              {hecho ? "✓ " : `${n}. `}
+              {nombre}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
@@ -598,6 +623,13 @@ export function CotizadorViaje({
       ? setVerHotel({ id: o.hotelId, nombre: o.nombre })
       : cambiar({ ...estado, hotel: o.hotelId, tarifa: o.tarifaId });
   const montoBarra = estimado?.ok ? montoConMoneda(estimado.total, estimado.moneda) : null;
+  const hayRegalo = ofertasDestino.some((o) => o.ninosGratis);
+  // Móvil: en qué paso va (1 viaje, 2 elegir, 3 enviar), solo para orientar.
+  const pasoActual: 1 | 2 | 3 = !(estado.desde && estado.hasta)
+    ? 1
+    : estado.servicios.every((s) => estadoPestana[s].tono === "listo")
+      ? 3
+      : 2;
   const panelHospedaje = (
     <>
       {hotel ? (
@@ -665,6 +697,7 @@ export function CotizadorViaje({
         <OfertasHospedaje
           ofertas={ofertasDestino}
           destino={estado.destino}
+          ninos={estado.ninos}
           elegido={null}
           bloqueos={mapaBloqueos}
           desde={estado.desde}
@@ -701,33 +734,49 @@ export function CotizadorViaje({
         <div className="flex min-w-0 flex-col gap-6 md:gap-8">
           <form id={formId} onSubmit={enviar} noValidate hidden />
           {borradorPendiente ? (
-            <div role="status" className="flex flex-col gap-3 rounded-card border border-acento bg-acento-suave p-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-ink">Tiene una cotización sin enviar de una visita anterior. ¿Desea retomarla?</p>
-              <div className="flex gap-2">
+            <div role="status" className="flex items-center gap-2 rounded-card border border-acento bg-acento-suave py-2 pl-4 pr-2 sm:gap-3 sm:p-4">
+              <p className="min-w-0 flex-1 text-sm text-ink sm:text-base">
+                <span className="sm:hidden">Tiene una cotización sin enviar.</span>
+                <span className="max-sm:hidden">Tiene una cotización sin enviar de una visita anterior. ¿Desea retomarla?</span>
+              </p>
+              <div className="flex shrink-0 gap-1 sm:gap-2">
                 <Boton tamano="sm" onClick={retomarBorrador}>
                   Retomar
                 </Boton>
-                <Boton variante="fantasma" tamano="sm" onClick={() => descartarBorrador()}>
-                  Empezar de nuevo
+                <Boton variante="fantasma" tamano="sm" aria-label="Descartar y empezar de nuevo" onClick={() => descartarBorrador()}>
+                  <span className="sm:hidden">
+                    <Icono nombre="cerrar" tamano={18} />
+                  </span>
+                  <span className="max-sm:hidden">Empezar de nuevo</span>
                 </Boton>
               </div>
             </div>
           ) : null}
           {/* Móvil: el viaje en un renglón (se edita en una hoja) y los servicios debajo. */}
-          <div className="flex flex-col gap-5 lg:hidden">
-            <div className="flex items-center gap-3 rounded-card border border-linea bg-card p-4">
-              <p className="min-w-0 flex-1 text-ink">
-                <span className="font-semibold">{estado.destino}</span>
-                <span className="text-ink-soft">
-                  {" "}
-                  · {textoFechas(estado)} · {textoViajeros(estado)}
+          <div className="flex flex-col gap-4 lg:hidden">
+            <GuiaPasos paso={pasoActual} />
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              onClick={() => setEditarViaje(true)}
+              className="flex items-center gap-3 rounded-card border border-linea bg-card p-3.5 text-left"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block font-semibold text-ink">{estado.destino}</span>
+                <span className={`block text-sm ${estado.desde ? "text-ink-soft" : "font-semibold text-acento"}`}>
+                  {estado.desde ? textoFechas(estado) : "Toque para elegir fechas"} · {textoViajeros(estado)}
                 </span>
-              </p>
-              <Boton variante="secundario" tamano="sm" aria-haspopup="dialog" onClick={() => setEditarViaje(true)}>
-                Editar
-              </Boton>
-            </div>
+              </span>
+              <span className="shrink-0 text-sm font-semibold text-acento underline underline-offset-4">Editar</span>
+            </button>
             <ChipsServicios estado={estado} onCambio={cambiar} compacto />
+            <AyudanteCotizar
+              variante="movil"
+              estado={estado}
+              hotel={hotel?.nombre ?? null}
+              estimado={montoBarra}
+              hayRegalo={hayRegalo}
+            />
           </div>
 
           {errores.fechas ? (
@@ -757,38 +806,46 @@ export function CotizadorViaje({
           />
         </div>
 
-        <aside aria-label="Su cotización" className="hidden lg:sticky lg:top-24 lg:block lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto lg:overscroll-contain">
+        <aside aria-label="Su cotización" className="hidden lg:sticky lg:top-24 lg:flex lg:max-h-[calc(100dvh-7rem)] lg:flex-col lg:gap-4 lg:overflow-y-auto lg:overscroll-contain">
+          <AyudanteCotizar
+            variante="escritorio"
+            estado={estado}
+            hotel={hotel?.nombre ?? null}
+            estimado={montoBarra}
+            hayRegalo={hayRegalo}
+          />
           {resumen(true)}
         </aside>
       </div>
 
-      {/* Móvil: barra fija sobre la barra inferior; abre el resumen en una hoja. */}
-      <button
-        type="button"
-        onClick={() => setHojaAbierta(true)}
-        aria-haspopup="dialog"
-        className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 flex min-h-14 items-center justify-between gap-3 bg-dusk px-5 text-left text-dusk-text lg:hidden"
+      {/* Móvil: una sola barra al pie (en /cotizar no se muestra la barra de
+          pestañas del sitio, ver BottomTabBar): el total y la única acción. */}
+      <div
+        className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t border-linea bg-card/95 px-4 pt-3 shadow-chrome backdrop-blur lg:hidden"
+        style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
       >
-        <span className="text-sm font-semibold">
-          Revisar y enviar
-          <span className="block text-xs font-normal text-dusk-text-soft">
+        <span className="min-w-0 flex-1">
+          <span className="block text-xs text-ink-soft">
             {cantidad} {cantidad === 1 ? "servicio" : "servicios"}
             {nochesDe(estado) > 0 && hospedaje ? ` · ${textoDuracion(nochesDe(estado))}` : ""}
           </span>
+          <span className="block truncate font-mono text-lg font-bold tabular-nums text-ink">
+            {montoBarra ? (
+              <PrecioMostrado texto={montoBarra} />
+            ) : hospedaje && ofertaElegida?.precio ? (
+              <>
+                <span className="font-sans text-xs font-normal text-ink-soft">Desde </span>
+                <PrecioMostrado texto={ofertaElegida.precio.monto} />
+              </>
+            ) : (
+              <span className="font-sans text-sm font-semibold text-ink-soft">Precio lo confirma el asesor</span>
+            )}
+          </span>
         </span>
-        <span className="flex items-center gap-2 font-mono text-base font-bold tabular-nums">
-          {montoBarra ? (
-            <PrecioMostrado texto={montoBarra} />
-          ) : hospedaje && ofertaElegida?.precio ? (
-            <>
-              <span className="text-xs font-normal">Desde</span> <PrecioMostrado texto={ofertaElegida.precio.monto} />
-            </>
-          ) : (
-            "A confirmar"
-          )}
-          <Icono nombre="chevron-abajo" tamano={18} className="rotate-180" />
-        </span>
-      </button>
+        <Boton tamano="lg" aria-haspopup="dialog" onClick={() => setHojaAbierta(true)}>
+          {pasoActual === 3 ? "Enviar" : "Revisar"}
+        </Boton>
+      </div>
 
       <Hoja abierta={hojaAbierta} onCerrar={() => setHojaAbierta(false)} titulo="Su cotización">
         <div className="p-4">{resumen(false)}</div>

@@ -4,186 +4,144 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { AsistenteVirtualPanel } from "@/components/layout/AsistenteVirtualPanel";
 import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
-import { Icono } from "@/components/ui/Icono";
-import { Contador } from "@/components/ui/Insignia";
+import Solcito, { type SolcitoMood } from "@/components/mascota/Solcito";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import { useNotificacionesChat } from "@/lib/notificaciones/useNotificacionesChat";
 import { tieneFooterStickyPropio } from "@/lib/layout/rutasConFooterSticky";
 
-const TOOLTIP_VISTO_KEY = "lotus360_chat_tooltip_visto";
+const SALUDO_VISTO_KEY = "lotus360_solcito_saludo";
 
-function ChatIcon() {
-  return (
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M4 12a8 8 0 1 1 3.2 6.4L4 20l1.2-3.6A7.96 7.96 0 0 1 4 12z" fill="currentColor" />
-      <path d="M17.5 3.5l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7.7-1.6z" fill="currentColor" />
-    </svg>
-  );
-}
-
-/** Botón flotante único que reemplaza a los dos FABs previos (WhatsApp y
- * Lotus IA, ver AsistenteVirtualButton/WhatsAppFloatButton -- ya borrados).
- * Tener dos botones apilados más un globo de 3 líneas tapaba los avatares de
- * categoría en móvil (hallazgo real, rediseño 2026-08-14). Acá hay uno solo
- * que expande sus dos acciones hacia arriba. */
+/** Solcito flotante: la mascota de los juegos del stand hace de botón del
+ * asistente. Un toque abre el chat con la IA directo (el acceso a WhatsApp
+ * vive dentro del panel). En /cotizar no aparece: ahí Solcito va embebido en
+ * la página (ver AyudanteCotizar). */
 export function ContactoFab() {
-  const [abierto, setAbierto] = useState(false);
   const [chatAbierto, setChatAbierto] = useState(false);
-  const [mostrarTip, setMostrarTip] = useState(false);
+  const [mood, setMood] = useState<SolcitoMood>("idle");
+  const [globo, setGlobo] = useState("");
   const pathname = usePathname();
   const conFooterSticky = tieneFooterStickyPropio(pathname);
-  const fabRef = useRef<HTMLDivElement>(null);
   const { noLeidas, marcarTodoLeido } = useNotificacionesChat();
+  const moodTimer = useRef(0);
 
+  const enCotizar = pathname?.startsWith("/cotizar") ?? false;
   // En "Trabaja con nosotros" ya vive la entrevista de RRHH (EntrevistaIA):
-  // dos chats de "Lotus" en la misma pantalla confunden a quien entra
-  // buscando trabajo -- se oculta solo la acción de Lotus IA, WhatsApp sigue
-  // disponible ahí.
-  const ocultarLotusIA = pathname?.startsWith("/trabaja-con-nosotros") ?? false;
+  // dos chats de "Lotus" en la misma pantalla confunden -- ahí queda solo WhatsApp.
+  const soloWhatsApp = pathname?.startsWith("/trabaja-con-nosotros") ?? false;
 
+  function reaccionar(m: SolcitoMood, ms = 1800, texto = "") {
+    window.clearTimeout(moodTimer.current);
+    setMood(m);
+    if (texto) setGlobo(texto);
+    moodTimer.current = window.setTimeout(() => {
+      setMood("idle");
+      setGlobo("");
+    }, ms);
+  }
+
+  // Saluda una vez por sesión tras unos segundos, y vuelve a saludar si la
+  // persona regresa a la pestaña después de un rato.
   useEffect(() => {
-    let yaVisto = false;
+    if (enCotizar || soloWhatsApp) return;
+    let visto = false;
     try {
-      yaVisto = sessionStorage.getItem(TOOLTIP_VISTO_KEY) === "1";
+      visto = sessionStorage.getItem(SALUDO_VISTO_KEY) === "1";
     } catch {
-      // sessionStorage bloqueado -- se muestra igual, no es crítico
+      // sessionStorage bloqueado: saluda igual
     }
-    if (yaVisto) return;
-    const aparece = setTimeout(() => setMostrarTip(true), 2200);
-    const desaparece = setTimeout(() => setMostrarTip(false), 9000);
-    return () => {
-      clearTimeout(aparece);
-      clearTimeout(desaparece);
+    const t = visto
+      ? 0
+      : window.setTimeout(() => {
+          reaccionar("wave", 2600, "¿Le ayudo a cotizar?");
+          try {
+            sessionStorage.setItem(SALUDO_VISTO_KEY, "1");
+          } catch {}
+        }, 6000);
+    let oculto = 0;
+    const onVis = () => {
+      if (document.hidden) oculto = Date.now();
+      else if (oculto && Date.now() - oculto > 30_000) reaccionar("wave", 1800, "¡Volvió!");
     };
-  }, []);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.clearTimeout(t);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [enCotizar, soloWhatsApp]);
 
+  // Mira hacia donde la persona hace scroll; si llega al final de la página, se asoma.
   useEffect(() => {
-    if (!abierto) return;
-    function onClickFuera(e: MouseEvent) {
-      const target = e.target as Element;
-      if (target.closest('[role="dialog"]')) return;
-      if (fabRef.current && !fabRef.current.contains(e.target as Node)) setAbierto(false);
-    }
-    function onEscape(e: KeyboardEvent) {
-      if (e.key === "Escape") setAbierto(false);
-    }
-    document.addEventListener("mousedown", onClickFuera);
-    document.addEventListener("keydown", onEscape);
-    return () => {
-      document.removeEventListener("mousedown", onClickFuera);
-      document.removeEventListener("keydown", onEscape);
+    if (enCotizar || soloWhatsApp) return;
+    let ultimo = 0;
+    const onScroll = () => {
+      const ahora = Date.now();
+      if (ahora - ultimo < 2500) return;
+      const alFinal = window.innerHeight + window.scrollY >= document.body.scrollHeight - 200;
+      ultimo = ahora;
+      reaccionar(alFinal ? "peek" : "look", alFinal ? 1600 : 1400, alFinal ? "¿No encontró lo que buscaba?" : "");
     };
-  }, [abierto]);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [enCotizar, soloWhatsApp]);
 
-  function ocultarTip() {
-    setMostrarTip(false);
-    try {
-      sessionStorage.setItem(TOOLTIP_VISTO_KEY, "1");
-    } catch {
-      // sessionStorage bloqueado -- no pasa nada, solo puede reaparecer
-    }
+  useEffect(() => () => window.clearTimeout(moodTimer.current), []);
+
+  if (enCotizar) return null;
+
+  const posicion =
+    "fixed right-3 z-40 sm:right-5 lg:bottom-6 " + (conFooterSticky ? "bottom-44" : "bottom-24");
+  const margenes = {
+    marginBottom: "env(safe-area-inset-bottom)",
+    marginRight: "env(safe-area-inset-right)",
+  };
+
+  if (soloWhatsApp) {
+    return (
+      <div className={posicion} style={margenes}>
+        <WhatsAppLeadButton
+          mensajeBase="Hola! Vengo de su página web."
+          triggerAriaLabel="Escríbanos por WhatsApp"
+          triggerClassName="flex h-14 w-14 items-center justify-center rounded-pill bg-whatsapp text-white shadow-chrome"
+        >
+          <WhatsAppIcon size={26} />
+        </WhatsAppLeadButton>
+      </div>
+    );
   }
 
   return (
     <>
-      <nav aria-label="Contacto rápido" ref={fabRef} className={chatAbierto ? "hidden" : undefined}>
-        <div
-          className={
-            "fixed right-4 z-40 flex flex-col items-end gap-3 sm:right-5 lg:bottom-6 " +
-            (conFooterSticky ? "bottom-44" : "bottom-24")
-          }
-          style={{
-            marginBottom: "env(safe-area-inset-bottom)",
-            marginRight: "env(safe-area-inset-right)",
-          }}
-        >
-          {mostrarTip && !abierto ? (
-            <div
-              role="status"
-              className="relative flex max-w-64 animate-globo-entrar items-center gap-1 rounded-card bg-card py-1 pl-4 pr-1 text-sm font-medium text-ink shadow-chrome"
-            >
-              <span>Soy Lotus. Cotice su viaje al instante.</span>
-              <button
-                type="button"
-                onClick={ocultarTip}
-                aria-label="Cerrar aviso"
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-ink-soft transition-colors duration-150 hover:bg-sand-2 hover:text-ink"
-              >
-                <Icono nombre="cerrar" tamano={16} />
-              </button>
-            </div>
-          ) : null}
-
-          {abierto ? (
-            <div className="flex flex-col items-end gap-2.5">
-              {!ocultarLotusIA ? (
-                <button
-                  type="button"
-                  style={{ "--retraso": "60ms" } as React.CSSProperties}
-                  onClick={() => {
-                    marcarTodoLeido();
-                    setChatAbierto(true);
-                    setAbierto(false);
-                  }}
-                  className="animate-fab-item relative flex h-12 items-center gap-2.5 rounded-pill bg-acento pl-4 pr-5 text-sm font-semibold text-sobre-acento shadow-chrome"
-                >
-                  <ChatIcon />
-                  Cotice con Lotus IA
-                  <Contador valor={noLeidas} />
-                </button>
-              ) : null}
-              <WhatsAppLeadButton
-                mensajeBase="Hola! Vengo de su página web."
-                triggerAriaLabel="Escríbanos por WhatsApp"
-                triggerClassName="animate-fab-item relative flex h-12 items-center gap-2.5 overflow-hidden rounded-pill bg-whatsapp pl-4 pr-5 text-sm font-semibold text-white shadow-chrome"
-              >
-                {/* Mismo lenguaje visual que el halo/destello del botón coral
-                    principal (`:166-176` más abajo) pero en verde -- antes
-                    era el único pill del grupo sin ningún acento propio,
-                    apagado al lado del que sí brillaba. */}
-                <span
-                  className="animate-fab-halo absolute inset-0 -z-10 rounded-pill ring-2 ring-whatsapp"
-                  aria-hidden="true"
-                />
-                <span
-                  className="animate-fab-shine pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 bg-gradient-to-r from-transparent via-white/50 to-transparent"
-                  aria-hidden="true"
-                />
-                <WhatsAppIcon size={20} />
-                Escríbanos por WhatsApp
-              </WhatsAppLeadButton>
-            </div>
-          ) : null}
-
-          <button
-            type="button"
-            onClick={() => {
-              ocultarTip();
-              setAbierto((v) => !v);
-            }}
-            aria-label={abierto ? "Cerrar opciones de contacto" : "Contactar a Lotus 360"}
-            aria-expanded={abierto}
-            className="group relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-pill bg-acento text-sobre-acento shadow-chrome"
+      <div className={(chatAbierto ? "hidden " : "") + posicion + " flex items-end gap-2"} style={margenes}>
+        {globo ? (
+          <p
+            role="status"
+            className="pointer-events-none mb-9 max-w-48 animate-globo-entrar rounded-card bg-card px-3 py-1.5 text-xs font-semibold text-ink shadow-chrome"
           >
-            {!abierto ? (
-              <span
-                className="animate-fab-halo absolute inset-0 -z-10 rounded-pill ring-2 ring-gold"
-                aria-hidden="true"
-              />
-            ) : null}
-            {!abierto ? (
-              <span
-                className="animate-fab-shine pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 bg-gradient-to-r from-transparent via-gold/70 to-transparent"
-                aria-hidden="true"
-              />
-            ) : null}
-            {noLeidas > 0 && !abierto ? (
-              <span className="absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-pill bg-gold ring-2 ring-acento" aria-hidden="true" />
-            ) : null}
-            <span className="relative">{abierto ? <Icono nombre="cerrar" tamano={22} /> : <ChatIcon />}</span>
-          </button>
-        </div>
-      </nav>
+            {globo}
+          </p>
+        ) : null}
+        <button
+          type="button"
+          onClick={() => {
+            marcarTodoLeido();
+            setGlobo("");
+            setChatAbierto(true);
+          }}
+          onPointerEnter={() => reaccionar("eager", 1400)}
+          aria-label="Abrir el asistente Lotus IA"
+          className="relative flex h-[72px] w-[72px] items-center justify-center rounded-pill transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento"
+        >
+          <Solcito mood={noLeidas > 0 && mood === "idle" ? "wave" : mood} size={72} />
+          {noLeidas > 0 ? (
+            <span
+              className="absolute right-1 top-1 flex h-5 min-w-5 items-center justify-center rounded-pill bg-acento px-1 text-[11px] font-bold text-sobre-acento ring-2 ring-sand"
+              aria-label={`${noLeidas} mensajes sin leer`}
+            >
+              {noLeidas}
+            </span>
+          ) : null}
+        </button>
+      </div>
       {chatAbierto ? <AsistenteVirtualPanel onClose={() => setChatAbierto(false)} /> : null}
     </>
   );

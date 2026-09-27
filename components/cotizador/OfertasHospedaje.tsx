@@ -161,6 +161,7 @@ export function OfertasHospedaje({
   hasta,
   onVer,
   variante = "grilla",
+  ninos = 0,
 }: {
   ofertas: OfertaHotel[];
   destino: string;
@@ -170,8 +171,17 @@ export function OfertasHospedaje({
   hasta: string;
   onVer: (o: OfertaHotel) => void;
   variante?: "grilla" | "lista";
+  /** Niños del viaje: con niños y hoteles con el regalo, se muestran esos primero. */
+  ninos?: number;
 }) {
-  const [filtro, setFiltro] = useState<Filtro>("todas");
+  const conRegalo = ofertas.filter((o) => o.ninosGratis);
+  const [filtro, setFiltro] = useState<Filtro>(ninos > 0 && conRegalo.length ? "ninos-gratis" : "todas");
+  // Si agrega niños con la página abierta, el filtro salta solo al regalo.
+  const [ninosPrevios, setNinosPrevios] = useState(ninos);
+  if (ninos !== ninosPrevios) {
+    setNinosPrevios(ninos);
+    if (ninosPrevios === 0 && ninos > 0 && conRegalo.length) setFiltro("ninos-gratis");
+  }
   const [menorPrecio, setMenorPrecio] = useState(false);
   const [todas, setTodas] = useState(false);
   const [encima, sobre] = useEncima();
@@ -200,9 +210,31 @@ export function OfertasHospedaje({
   const hayFiltro = (id: Filtro) =>
     id === "todas" || ofertas.some((o) => (id === "todo-incluido" ? o.todoIncluido : o.ninosGratis));
 
+  const gratisMin = conRegalo.length ? Math.min(...conRegalo.map((o) => o.ninosGratisCantidad || 1)) : 0;
+  const preciosNino = conRegalo.map((o) => o.precioNino).filter((x): x is string => !!x);
+  const pisoNino = preciosNino.length
+    ? preciosNino.reduce((a, b) => (Number(b.replace(/[^d.]/g, "")) < Number(a.replace(/[^d.]/g, "")) ? b : a))
+    : null;
+
   return (
     <div className="flex flex-col gap-4">
-      <div role="group" aria-label="Filtrar ofertas" className="flex flex-wrap gap-2">
+      {ninos > 0 && conRegalo.length ? (
+        <div role="note" className="flex gap-3 rounded-card border border-seafoam bg-seafoam-bg p-3.5 text-sm text-ink">
+          <span aria-hidden="true" className="text-xl leading-none">🎁</span>
+          <p>
+            <strong className="font-semibold">
+              ¡Viaja con {ninos === 1 ? "un niño" : "niños"}! En {conRegalo.length === 1 ? "este hotel" : `estos ${conRegalo.length} hoteles`}{" "}
+              {gratisMin > 1 ? `los primeros ${gratisMin} niños van` : "el primer niño va"} totalmente gratis.
+            </strong>{" "}
+            {ninos > gratisMin
+              ? pisoNino
+                ? `El ${gratisMin === 1 ? "segundo" : "siguiente"} niño paga desde ${pisoNino} por noche.`
+                : `El ${gratisMin === 1 ? "segundo" : "siguiente"} niño paga tarifa de niño: el asesor le confirma el monto.`
+              : "Aplican edades y fechas de la promoción."}
+          </p>
+        </div>
+      ) : null}
+      <div role="group" aria-label="Filtrar ofertas" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [&>*]:shrink-0 [&>*]:whitespace-nowrap [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
         {FILTROS.filter((f) => hayFiltro(f.id)).map((f) => (
           <button
             key={f.id}
@@ -260,6 +292,13 @@ export function OfertasHospedaje({
                   <span className="flex flex-1 flex-col gap-2 p-4">
                     <span className="font-display text-xl font-bold leading-tight text-ink">{o.nombre}</span>
                     {o.plan ? <span className="text-sm text-ink-soft">{o.plan.toLowerCase()}</span> : null}
+                    {o.ninosGratis && ninos > 0 ? (
+                      <span className="text-xs font-semibold text-seafoam-text">
+                        {o.ninosGratisCantidad > 1 ? `${o.ninosGratisCantidad} niños gratis` : "1er niño gratis"}
+                        {o.ninosGratisEdades ? ` (${o.ninosGratisEdades} años)` : ""}
+                        {ninos > Math.max(1, o.ninosGratisCantidad) && o.precioNino ? ` · siguiente: ${o.precioNino}/noche` : ""}
+                      </span>
+                    ) : null}
                     {sinDisponibilidad ? (
                       <span className="mt-auto text-sm font-semibold text-peligro">{sinDisponibilidad}</span>
                     ) : (
