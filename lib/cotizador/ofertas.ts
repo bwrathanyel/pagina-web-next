@@ -58,7 +58,7 @@ function precioNino(p: Promocion): string | null {
   if (!precios || typeof precios !== "object") return null;
   const montos = Object.entries(precios)
     .filter(([k]) => /^chd/i.test(k))
-    .map(([, v]) => Number(String(v ?? "").replace(/[^d.]/g, "")))
+    .map(([, v]) => Number(String(v ?? "").replace(/[^\d.]/g, "")))
     .filter((n) => Number.isFinite(n) && n > 0);
   if (!montos.length) return null;
   const moneda = String(p.moneda || "USD").toUpperCase() === "EUR" ? "EUR" : "USD";
@@ -99,7 +99,7 @@ export function ofertasHoteles(pool: ConNino[]): OfertaHotel[] {
         todoIncluido: esTodoIncluido(p),
         ninosGratis: tieneNinoGratis(p),
         ninosGratisCantidad: cantidadNinoGratis(p),
-        ninosGratisEdades: p.nino_gratis?.edades?.trim().replace(/s*-s*/, " a ") || null,
+        ninosGratisEdades: p.nino_gratis?.edades?.trim().replace(/\s*-\s*/, " a ") || null,
         precioNino: precioNino(p),
         prioridad: prioridadOferta(p),
       };

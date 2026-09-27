@@ -213,7 +213,7 @@ export function OfertasHospedaje({
   const gratisMin = conRegalo.length ? Math.min(...conRegalo.map((o) => o.ninosGratisCantidad || 1)) : 0;
   const preciosNino = conRegalo.map((o) => o.precioNino).filter((x): x is string => !!x);
   const pisoNino = preciosNino.length
-    ? preciosNino.reduce((a, b) => (Number(b.replace(/[^d.]/g, "")) < Number(a.replace(/[^d.]/g, "")) ? b : a))
+    ? preciosNino.reduce((a, b) => (Number(b.replace(/[^\d.]/g, "")) < Number(a.replace(/[^\d.]/g, "")) ? b : a))
     : null;
 
   return (
