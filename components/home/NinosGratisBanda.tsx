@@ -140,7 +140,7 @@ export function NinosGratisBanda({ bloque }: { bloque: BloqueNinosGratis | null 
             id="ninos-gratis-titulo"
             className="max-w-[11ch] text-balance font-display text-[clamp(2.2rem,4vw,3.4rem)] font-bold leading-[0.95] tracking-[-0.01em] text-white"
           >
-            Niños gratis <span className="text-coral-bright">en Margarita</span>
+            1 niño gratis <span className="text-coral-bright">en Margarita</span>
           </h2>
           {bloque.desde ? (
             <>
@@ -160,7 +160,7 @@ export function NinosGratisBanda({ bloque }: { bloque: BloqueNinosGratis | null 
               Cotizar con niño gratis
             </Boton>
             <WhatsAppLeadButton
-              mensajeBase="Hola! Vengo de su página web y quiero la promo de niños gratis en Margarita."
+              mensajeBase="Hola! Vengo de su página web y quiero la promo de 1 niño gratis en Margarita."
               triggerClassName={clasesBoton({ variante: "whatsapp" })}
             >
               <WhatsAppIcon size={18} />

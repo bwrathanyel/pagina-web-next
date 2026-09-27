@@ -13,7 +13,7 @@ type Filtro = "todas" | "todo-incluido" | "ninos-gratis";
 const FILTROS: { id: Filtro; etiqueta: string }[] = [
   { id: "todas", etiqueta: "Todas" },
   { id: "todo-incluido", etiqueta: "Todo incluido" },
-  { id: "ninos-gratis", etiqueta: "Niños gratis" },
+  { id: "ninos-gratis", etiqueta: "1 niño gratis" },
 ];
 const VISIBLES = 6;
 const VISIBLES_LISTA = 3;
@@ -123,7 +123,7 @@ function ListaOfertas({
                 ) : o.plan || o.ninosGratis ? (
                   <span className="flex flex-wrap gap-1.5">
                     {o.plan ? <Etiqueta>{o.plan.toLowerCase()}</Etiqueta> : null}
-                    {o.ninosGratis ? <Etiqueta tono="seafoam">Niños gratis</Etiqueta> : null}
+                    {o.ninosGratis ? <Etiqueta tono="seafoam">1 niño gratis</Etiqueta> : null}
                   </span>
                 ) : null}
               </span>
@@ -285,7 +285,7 @@ export function OfertasHospedaje({
                       encima={encima === o.hotelId}
                     />
                     <span className="absolute left-3 top-3 flex flex-wrap gap-1.5">
-                      {o.ninosGratis ? <Etiqueta tono="seafoam">Niños gratis</Etiqueta> : null}
+                      {o.ninosGratis ? <Etiqueta tono="seafoam">1 niño gratis</Etiqueta> : null}
                       {esElegido ? <Etiqueta tono="acento">Elegido</Etiqueta> : null}
                     </span>
                   </span>
