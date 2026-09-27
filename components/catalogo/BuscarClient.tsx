@@ -36,7 +36,7 @@ export function BuscarClient({
   const promocionesFiltradas = useMemo(() => {
     if (!query.trim()) return [];
     return promociones.filter(
-      (p) => coincide(p.titulo, query) || coincide(p.producto?.destino ?? "", query),
+      (p) => coincide(p.titulo, query) || coincide(p.producto?.nombre, query) || coincide(p.producto?.destino, query),
     );
   }, [promociones, query]);
 
