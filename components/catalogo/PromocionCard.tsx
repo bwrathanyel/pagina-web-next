@@ -41,15 +41,18 @@ export function PromocionCard({ promocion, prioridad = false }: { promocion: Pro
   // "Temporada baja") y pone la oferta debajo, sin repetir el hotel si el
   // título ya empieza con él.
   const nombre = nombrePromo({ ...promocion, titulo });
-  // Sin título de promo cargado ("Promoción" a secas no dice nada, ver
-  // captura del dueño 2026-09-27): mejor decir qué incluye, si hay tags.
+  // Sin título de promo cargado, mejor decir qué incluye (si hay tags) que
+  // el placeholder "Promoción" (no dice nada, ver captura del dueño
+  // 2026-09-27). Sin ninguno de los dos, en blanco: inventar contenido sería
+  // peor que no mostrar nada.
   const incluye = (promocion.incluye_tags ?? []).filter(Boolean);
-  const tituloVisible = titulo || (incluye.length > 0 ? `Incluye ${incluye.join(", ").toLocaleLowerCase("es")}` : "Promoción");
+  const tituloBase = titulo || (incluye.length > 0 ? `Incluye ${incluye.join(", ").toLocaleLowerCase("es")}` : null);
+  const tituloVisible = tituloBase || "Promoción";
   const hotelNombre = promocion.producto?.nombre?.trim() || "";
   const subtituloPromo =
-    hotelNombre && tituloVisible.toLowerCase().startsWith(hotelNombre.toLowerCase())
-      ? tituloVisible.slice(hotelNombre.length).replace(/^[\s·:\-–—|]+/, "") || null
-      : tituloVisible;
+    tituloBase && hotelNombre && tituloBase.toLowerCase().startsWith(hotelNombre.toLowerCase())
+      ? tituloBase.slice(hotelNombre.length).replace(/^[\s·:\-–—|]+/, "") || null
+      : tituloBase;
   const precio = precioTarjeta(promocion);
   const precioLabel = precio
     ? [precio.desde ? "Desde" : null, precio.monto, precio.unidad].filter(Boolean).join(" ")
