@@ -78,8 +78,10 @@ type ConNinoGratis = Promocion & { nino_gratis?: { cantidad: number } | null };
 const normalizar = (s: string | null | undefined) =>
   (s ?? "").toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
 
-export const esTodoIncluido = (p: Promocion) =>
-  /todo incluido|all inclusive/.test(normalizar(`${p.plan} ${p.titulo}`));
+export const esPlanTodoIncluido = (plan: string | null | undefined, titulo?: string | null) =>
+  /todo incluido|all inclusive/.test(normalizar(`${plan} ${titulo}`));
+
+export const esTodoIncluido = (p: Promocion) => esPlanTodoIncluido(p.plan, p.titulo);
 
 export const tieneNinoGratis = (p: ConNinoGratis) =>
   (p.nino_gratis?.cantidad ?? 0) > 0 || (p.ninos_gratis_cantidad ?? 0) > 0;

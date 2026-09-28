@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { BuscarClient } from "@/components/catalogo/BuscarClient";
 import { BuscarDesdeUrl } from "@/components/catalogo/BuscarDesdeUrl";
-import { getProductosPorCategoria, getPromociones } from "@/lib/supabase/queries";
+import { getHotSales, getProductosPorCategoria, getPromociones } from "@/lib/supabase/queries";
 import type { Metadata } from "next";
 
 // No indexado a propósito: la página es un shell de búsqueda client-side sin
@@ -16,19 +16,20 @@ export const metadata: Metadata = {
 };
 
 export default async function BuscarPage() {
-  const [hoteles, paquetes, guiasTours, promociones] = await Promise.all([
+  const [hoteles, paquetes, guiasTours, promociones, hotSales] = await Promise.all([
     getProductosPorCategoria("hoteles").catch(() => []),
     getProductosPorCategoria("paquetes").catch(() => []),
     getProductosPorCategoria("guias-tours").catch(() => []),
     getPromociones().catch(() => []),
+    getHotSales().catch(() => []),
   ]);
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-6 md:py-14">
       <h1 className="mb-4 font-display text-3xl font-semibold text-ink md:text-4xl">Buscar</h1>
       {/* El fallback es el mismo buscador vacío: el HTML estático ya trae el campo. */}
-      <Suspense fallback={<BuscarClient productos={[]} promociones={[]} />}>
-        <BuscarDesdeUrl productos={[...hoteles, ...paquetes, ...guiasTours]} promociones={promociones} />
+      <Suspense fallback={<BuscarClient productos={[]} promociones={[]} hotSales={[]} />}>
+        <BuscarDesdeUrl productos={[...hoteles, ...paquetes, ...guiasTours]} promociones={promociones} hotSales={hotSales} />
       </Suspense>
     </main>
   );

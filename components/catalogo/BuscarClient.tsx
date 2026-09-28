@@ -5,18 +5,23 @@ import { ProductoCard } from "@/components/catalogo/ProductoCard";
 import { PromocionCard } from "@/components/catalogo/PromocionCard";
 import { CatalogoGrid } from "@/components/catalogo/CatalogoGrid";
 import { Icono } from "@/components/ui/Icono";
-import { coincide, DESTINOS_SUGERIDOS } from "@/lib/catalogo/busqueda";
-import type { Producto, Promocion } from "@/types/supabase";
+import { coincide, DESTINOS_SUGERIDOS, prioridadProducto } from "@/lib/catalogo/busqueda";
+import { prioridadOferta, tieneNinoGratis } from "@/lib/promociones/hotSales";
+import type { HotSale, Producto, Promocion } from "@/types/supabase";
 
 export function BuscarClient({
   productos,
   promociones,
+  hotSales = [],
   autoFocus = true,
   compacto = false,
   consultaInicial = "",
 }: {
   productos: Producto[];
   promociones: Promocion[];
+  /** Trae el dato de niño gratis para hoteles/paquetes sueltos, que `productos`
+   * no tiene (solo lo carga hot_sales_publicas(), ver prioridadProducto()). */
+  hotSales?: HotSale[];
   autoFocus?: boolean;
   /** Consulta con la que arranca el campo (viene del buscador global). */
   consultaInicial?: string;
@@ -39,6 +44,26 @@ export function BuscarClient({
       (p) => coincide(p.titulo, query) || coincide(p.producto?.nombre, query) || coincide(p.producto?.destino, query),
     );
   }, [promociones, query]);
+
+  const hotelesConNinoGratis = useMemo(
+    () => new Set(hotSales.filter((h) => tieneNinoGratis(h) && h.producto?.id != null).map((h) => h.producto!.id)),
+    [hotSales],
+  );
+
+  // Todo incluido y niño gratis primero (pedido del dueño, 2026-09-27): mismo
+  // criterio que ya ordena las ofertas de /cotizar (prioridadOferta), acá
+  // fusionado con los productos sueltos para que el resultado sea un solo
+  // orden. sort() es estable, así que a igual prioridad se conserva el orden
+  // de llegada (promos antes que productos, como antes de este cambio).
+  const resultados = useMemo(() => {
+    const promos = promocionesFiltradas.map((item) => ({ tipo: "promo" as const, item, prioridad: prioridadOferta(item) }));
+    const prods = productosFiltrados.map((item) => ({
+      tipo: "producto" as const,
+      item,
+      prioridad: prioridadProducto(item, hotelesConNinoGratis),
+    }));
+    return [...promos, ...prods].sort((a, b) => a.prioridad - b.prioridad);
+  }, [promocionesFiltradas, productosFiltrados, hotelesConNinoGratis]);
 
   const sinResultados = query.trim() !== "" && productosFiltrados.length === 0 && promocionesFiltradas.length === 0;
 
@@ -78,12 +103,13 @@ export function BuscarClient({
         <p className="py-10 text-center text-ink-soft">No encontramos resultados para &ldquo;{query}&rdquo;.</p>
       ) : (
         <CatalogoGrid>
-          {promocionesFiltradas.map((p) => (
-            <PromocionCard key={`promo-${p.id}`} promocion={p} />
-          ))}
-          {productosFiltrados.map((p) => (
-            <ProductoCard key={`prod-${p.id}`} producto={p} />
-          ))}
+          {resultados.map((r) =>
+            r.tipo === "promo" ? (
+              <PromocionCard key={`promo-${r.item.id}`} promocion={r.item} />
+            ) : (
+              <ProductoCard key={`prod-${r.item.id}`} producto={r.item} />
+            ),
+          )}
         </CatalogoGrid>
       )}
     </div>
