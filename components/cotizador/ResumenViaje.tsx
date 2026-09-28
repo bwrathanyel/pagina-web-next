@@ -117,8 +117,8 @@ export function ResumenViaje({
       talon={
         <div className="flex h-full flex-col justify-center gap-3 px-5">
           <div className="flex items-baseline justify-between gap-3">
-            <span className="text-sm font-semibold text-ink-soft">{referencia ? "Desde" : (etiquetaTalon ?? "Estimado")}</span>
-            <span className="font-mono text-2xl font-bold tabular-nums text-ink" aria-live="polite">
+            <span className="shrink-0 text-sm font-semibold text-ink-soft">{referencia ? "Desde" : (etiquetaTalon ?? "Estimado")}</span>
+            <span className="min-w-0 flex-1 truncate text-right font-mono text-2xl font-bold tabular-nums text-ink" aria-live="polite">
               {montoTalon ? <PrecioMostrado texto={montoTalon} /> : referencia ? <PrecioMostrado texto={referencia.monto} /> : "A confirmar"}
             </span>
           </div>
