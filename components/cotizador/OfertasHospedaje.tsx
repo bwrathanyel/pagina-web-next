@@ -8,6 +8,7 @@ import { Etiqueta } from "@/components/ui/Insignia";
 import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
 import { esOnRequest, textoSinDisponibilidad, type Bloqueo } from "@/lib/cotizador/hotel";
 import type { OfertaHotel } from "@/lib/cotizador/ofertas";
+import { separarMonto } from "@/lib/tarifas";
 
 type Filtro = "todas" | "todo-incluido" | "ninos-gratis";
 const FILTROS: { id: Filtro; etiqueta: string }[] = [
@@ -257,6 +258,7 @@ export function OfertasHospedaje({
             const sinDisponibilidad = desde && hasta ? textoSinDisponibilidad(bloqueos?.get(o.hotelId), desde, hasta) : null;
             const onRequest = !sinDisponibilidad && esOnRequest(bloqueos?.get(o.hotelId));
             const esElegido = o.hotelId === elegido;
+            const { monto, unidad, grande } = separarMonto(o.precio);
             return (
               <li key={o.hotelId}>
                 <button
@@ -291,7 +293,7 @@ export function OfertasHospedaje({
                   </span>
                   <span className="flex flex-1 flex-col gap-2 p-4">
                     <span className="font-display text-xl font-bold leading-tight text-ink">{o.nombre}</span>
-                    {o.plan ? <span className="text-sm text-ink-soft">{o.plan.toLowerCase()}</span> : null}
+                    {o.plan ? <span className="line-clamp-2 text-sm text-ink-soft">{o.plan.toLowerCase()}</span> : null}
                     {o.ninosGratis && ninos > 0 ? (
                       <span className="text-xs font-semibold text-seafoam-text">
                         {o.ninosGratisCantidad > 1 ? `${o.ninosGratisCantidad} niños gratis` : "1er niño gratis"}
@@ -303,14 +305,16 @@ export function OfertasHospedaje({
                       <span className="mt-auto text-sm font-semibold text-peligro">{sinDisponibilidad}</span>
                     ) : (
                       <span className="mt-auto flex flex-col">
-                        {o.precio ? (
+                        {o.precio && grande ? (
                           <>
                             <span className="font-mono text-lg font-bold tabular-nums text-ink">
                               {o.precio.desde ? "Desde " : ""}
-                              <PrecioMostrado texto={o.precio.monto} />
+                              <PrecioMostrado texto={monto} />
                             </span>
-                            {o.precio.unidad ? <span className="text-xs text-ink-soft">{o.precio.unidad}</span> : null}
+                            {unidad ? <span className="line-clamp-2 text-xs text-ink-soft">{unidad}</span> : null}
                           </>
+                        ) : o.precio ? (
+                          <span className="line-clamp-2 text-sm font-semibold text-ink">{monto}</span>
                         ) : (
                           <span className="text-sm text-ink-soft">Precio a confirmar por el asesor</span>
                         )}

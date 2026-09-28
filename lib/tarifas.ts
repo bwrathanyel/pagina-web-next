@@ -127,7 +127,7 @@ export function precioTarjeta(p: {
   const doble = precioDobleHero({ precios: p.precios, moneda: p.moneda } as Tarifa);
   if (doble) return { monto: doble.monto, unidad: "por persona y noche, en doble", desde: false, corto: true };
   const desde = formatearPrecioDesde(p.precio_desde_usd, p.precio_texto);
-  if (desde) return { monto: desde, unidad: null, desde: true, corto: true };
+  if (desde) return { monto: desde, unidad: /por persona/i.test(p.precio_texto ?? "") ? "por persona" : null, desde: true, corto: true };
   const texto = formatearPrecioCliente(p.precio_texto)?.trim();
   return texto ? { monto: texto, unidad: null, desde: false, corto: texto.length <= 12 } : null;
 }
