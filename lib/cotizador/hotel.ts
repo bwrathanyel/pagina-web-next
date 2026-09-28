@@ -1,6 +1,7 @@
 import { fotosDe } from "@/lib/supabase/fotos";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { TARIFA_SELECT } from "@/lib/supabase/selects";
+import { vendibleHoy } from "@/lib/tarifas";
 import type { Foto, Tarifa } from "@/types/supabase";
 
 // Lecturas de /cotizar que dependen de lo que el cliente va eligiendo (destino,
@@ -68,7 +69,11 @@ export async function hotelParaCotizar(id: number): Promise<HotelDetalle | null>
     id: p.id,
     nombre: p.nombre,
     tarifaDestacadaId: p.tarifa_destacada_id,
-    tarifas: p.tarifas ?? [],
+    // p.tarifas puede traer filas no vendibles cuando quien pide es un admin
+    // logueado (tarifas_select_web_admin ve todo, para el panel de revisión) --
+    // la tarjeta de /cotizar es para el cliente, nunca debe mostrar una fila
+    // vencida/no vigente aunque la sesión de quien mira sí pueda verla.
+    tarifas: (p.tarifas ?? []).filter(vendibleHoy),
     fotos: fotosDe(fotos.filter((f) => f.habitacion_id == null)),
     habitaciones,
   };
