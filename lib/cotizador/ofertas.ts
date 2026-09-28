@@ -20,6 +20,9 @@ export interface OfertaHotel {
   conFotosHabitacion: boolean;
   titulo: string | null;
   plan: string | null;
+  /** Descripción corta (resumen_ia): rellena la línea bajo el nombre cuando
+   * no hay `plan` (promos cargadas a mano, sin grilla de habitaciones). */
+  resumen: string | null;
   precio: PrecioTarjeta | null;
   /** Para "Menor precio": el doble por persona y noche; null = no ordena. */
   orden: number | null;
@@ -94,6 +97,7 @@ export function ofertasHoteles(pool: ConNino[]): OfertaHotel[] {
         conFotosHabitacion: (p.producto!.producto_fotos ?? []).some((f) => f.habitacion_id != null && f.activo !== false),
         titulo: p.titulo ?? null,
         plan: p.plan ?? null,
+        resumen: p.resumen_ia ?? null,
         precio,
         orden: montoOrden(p),
         todoIncluido: esTodoIncluido(p),

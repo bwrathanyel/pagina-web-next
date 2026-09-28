@@ -293,7 +293,11 @@ export function OfertasHospedaje({
                   </span>
                   <span className="flex flex-1 flex-col gap-2 p-4">
                     <span className="font-display text-xl font-bold leading-tight text-ink">{o.nombre}</span>
-                    {o.plan ? <span className="line-clamp-2 text-sm text-ink-soft">{o.plan.toLowerCase()}</span> : null}
+                    {o.plan ? (
+                      <span className="line-clamp-2 text-sm text-ink-soft">{o.plan.toLowerCase()}</span>
+                    ) : o.resumen ? (
+                      <span className="line-clamp-2 text-sm text-ink-soft">{o.resumen}</span>
+                    ) : null}
                     {o.ninosGratis && ninos > 0 ? (
                       <span className="text-xs font-semibold text-seafoam-text">
                         {o.ninosGratisCantidad > 1 ? `${o.ninosGratisCantidad} niños gratis` : "1er niño gratis"}
