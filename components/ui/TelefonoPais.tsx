@@ -73,7 +73,7 @@ export function TelefonoPais({
         aria-expanded={abierto}
         aria-controls={abierto ? idLista : undefined}
         aria-label={`País: ${pais.nombre} +${pais.codigo}. Cambiar`}
-        className={`${CLASE_CONTROL} flex min-h-12 w-auto shrink-0 cursor-pointer items-center gap-2 py-2.5 pl-3 pr-2.5`}
+        className={`${CLASE_CONTROL.replace("w-full", "")} flex min-h-12 shrink-0 cursor-pointer items-center gap-2 py-2.5 pl-3 pr-2.5`}
       >
         <Bandera iso={pais.iso} />
         <span className="font-mono text-sm tabular-nums">+{pais.codigo}</span>
