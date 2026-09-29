@@ -23,9 +23,6 @@ const HASTA_LG = 6;
 // reordena nada, así que la grilla no salta al hidratar.
 export function HotSalesSection({ pool }: { pool: Promocion[] }) {
   const [destino, setDestino] = useState<string | null>(null);
-  // Las tarjetas ya visibles al cargar no se animan (Revelar las deja quietas);
-  // solo entran escalonadas cuando la persona cambia de destino.
-  const [cambioDestino, setCambioDestino] = useState(false);
   const destinos = useMemo(() => destinosDelPool(pool), [pool]);
   const filtradas = useMemo(
     () => (destino ? pool.filter((p) => p.producto?.destino === destino) : pool),
@@ -46,14 +43,7 @@ export function HotSalesSection({ pool }: { pool: Promocion[] }) {
         verTodasHref="/catalogo/hot-sales"
       />
 
-      <DestinoChips
-        destinos={destinos}
-        activo={destino}
-        onChange={(d) => {
-          setCambioDestino(true);
-          setDestino(d);
-        }}
-      />
+      <DestinoChips destinos={destinos} activo={destino} onChange={setDestino} />
 
       {/* La key reinicia el scroll del carrusel móvil al cambiar de destino. */}
       <Carrusel
@@ -66,8 +56,8 @@ export function HotSalesSection({ pool }: { pool: Promocion[] }) {
         items={filtradas.slice(0, EN_LA_HOME).map((p, i) => (
           <Revelar key={p.id} retraso={Math.min(i % 4, 3) * 70} className="h-full">
             <div
-              className={"h-full" + (cambioDestino ? " entra-card" : "")}
-              style={cambioDestino ? ({ "--n": i } as React.CSSProperties) : undefined}
+              className="entra-card h-full"
+              style={{ "--n": Math.min(i, 5) } as React.CSSProperties}
             >
               <PromocionCard promocion={p} />
             </div>

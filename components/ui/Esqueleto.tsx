@@ -11,8 +11,8 @@ export function EsqueletoTarjeta() {
     <div aria-hidden="true" className="overflow-hidden rounded-card border border-linea bg-card">
       <Esqueleto className="aspect-[4/3] rounded-none" />
       <div className="px-4 pb-4 pt-3.5">
-        <Esqueleto className="h-8 w-2/5" />
-        <Esqueleto className="mt-1 h-3 w-3/5" />
+        <Esqueleto className="h-9 w-2/5" />
+        <Esqueleto className="mt-1 h-7 w-3/5" />
         <Esqueleto className="mt-2.5 h-11 w-full" />
         <Esqueleto className="mt-1 h-5 w-1/2" />
         <Esqueleto className="mt-2 h-12 w-full" />

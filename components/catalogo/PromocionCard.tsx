@@ -17,6 +17,16 @@ import type { HotSale, Promocion } from "@/types/supabase";
 const DIAS_URGENCIA = 7;
 const sinSuscripcion = () => () => {};
 
+// "3 días / 2 noches", "3 días y 2 noches", "3D/2N" -> "3 días · 2 noches".
+// Solo si el texto de la promo lo dice; nunca se deduce de fechas.
+function duracionDe(...textos: (string | null | undefined)[]): string | null {
+  for (const t of textos) {
+    const m = t?.match(/(\d{1,2})\s*d[ií]as?\s*(?:[/·,-]|y)?\s*(\d{1,2})\s*noches?/i);
+    if (m) return `${m[1]} ${+m[1] === 1 ? "día" : "días"} · ${m[2]} ${+m[2] === 1 ? "noche" : "noches"}`;
+  }
+  return null;
+}
+
 // Días que quedan de venta según la fecha límite real (YYYY-MM-DD), contados
 // desde el día de la persona; null si no hay fecha, ya pasó o falta bastante.
 function avisoDeCierre(fechaFin: string | null): string | null {
@@ -100,6 +110,8 @@ export function PromocionCard({ promocion, prioridad = false }: { promocion: Pro
         subtitulo={hotelNombre ? subtituloPromo : null}
         vigenciaLabel={promocion.vigencia_texto}
         urgencia={urgencia}
+        destacada={"manual" in promocion && (promocion as HotSale).manual}
+        duracion={duracionDe(titulo, promocion.precio_texto, promocion.resumen_ia)}
         ninosGratis={promocion.ninos_gratis_cantidad}
         selloNinoGratis={"nino_gratis" in promocion ? (promocion as HotSale).nino_gratis?.cantidad : null}
         oculto={!visible}

@@ -53,6 +53,10 @@ export interface TicketCardProps {
   /** Aviso de cierre de venta ("Últimos 3 días"), calculado por quien pinta la
    * tarjeta con una fecha real; sin fecha, sin aviso. */
   urgencia?: string | null;
+  /** Promo fijada a mano por el equipo (HotSale.manual). */
+  destacada?: boolean;
+  /** "3 días · 2 noches", leído del texto de la promo. */
+  duracion?: string | null;
 }
 
 // Tarjeta de catálogo como pase de abordar: foto 4:3 (la mayoría de las fotos
@@ -83,6 +87,8 @@ export function TicketCard({
   subtitulo,
   prioridad = false,
   urgencia = null,
+  destacada = false,
+  duracion = null,
 }: TicketCardProps) {
   const { monto, unidad, grande: montoGrande } = separarMonto(precio);
 
@@ -143,17 +149,30 @@ export function TicketCard({
     >
       <div className="flex h-full flex-col">
         <div className="group/foto relative aspect-[4/3] overflow-hidden bg-sand-2">
-          {selloNinoGratis ? (
-            <SelloNinoGratis cantidad={selloNinoGratis} className="absolute left-3 top-3 z-10" />
-          ) : ninosGratis && ninosGratis > 0 ? (
-            <Etiqueta tono="seafoam" className="absolute left-3 top-3 z-10">
-              {ninosGratis} {ninosGratis === 1 ? "niño gratis" : "niños gratis"}
-            </Etiqueta>
-          ) : badge ? (
-            <Etiqueta tono="dusk" className="absolute left-3 top-3 z-10 lg:backdrop-blur-sm">
-              {badge}
-            </Etiqueta>
-          ) : null}
+          {/* Máximo dos sellos apilados: el principal (niño gratis / tipo /
+              destacada) y la duración. Abajo no caben: ahí van los puntos. */}
+          <div className="absolute left-3 top-3 z-10 flex flex-col items-start gap-1.5">
+            {selloNinoGratis ? (
+              <SelloNinoGratis cantidad={selloNinoGratis} />
+            ) : ninosGratis && ninosGratis > 0 ? (
+              <Etiqueta tono="seafoam">
+                {ninosGratis} {ninosGratis === 1 ? "niño gratis" : "niños gratis"}
+              </Etiqueta>
+            ) : badge ? (
+              <Etiqueta tono="dusk" className="lg:backdrop-blur-sm">
+                {badge}
+              </Etiqueta>
+            ) : destacada ? (
+              <Etiqueta tono="acento" icono={<Icono nombre="check" tamano={12} />}>
+                Destacada
+              </Etiqueta>
+            ) : null}
+            {duracion ? (
+              <Etiqueta tono="dusk" className="lg:backdrop-blur-sm">
+                {duracion}
+              </Etiqueta>
+            ) : null}
+          </div>
           {onToggleFavorito ? (
             <BotonFavorito
               activo={favorito}
@@ -179,15 +198,15 @@ export function TicketCard({
         </div>
 
         <div className="flex flex-1 flex-col px-4 pb-4 pt-3.5">
-          <p className="flex h-8 min-w-0 items-baseline gap-1.5 whitespace-nowrap font-mono tabular-nums">
+          <p className="flex h-9 min-w-0 items-baseline gap-1.5 whitespace-nowrap font-mono tabular-nums">
             {precio?.desde ? <span className="text-xs font-semibold text-ink-soft">desde</span> : null}
             {precio && montoGrande ? (
               <MontoAjustado
                 texto={monto}
-                tope="1.5rem"
+                tope="1.875rem"
                 unaLinea
                 className="min-w-0 flex-1"
-                claseMonto="truncate leading-8 text-acento"
+                claseMonto="truncate leading-9 text-acento"
               />
             ) : (
               <span className={"truncate text-base font-bold leading-8 " + (precio ? "text-ink" : "text-ink-soft")}>
@@ -195,7 +214,7 @@ export function TicketCard({
               </span>
             )}
           </p>
-          <p className="h-4 truncate text-xs leading-4 text-ink-soft">{unidad || " "}</p>
+          <p className="line-clamp-2 h-8 text-xs leading-4 text-ink-soft" title={unidad ?? undefined}>{unidad || " "}</p>
 
           <h3 className="mt-2.5 line-clamp-2 h-11 font-body text-base font-bold leading-snug text-ink">
             {href ? (
