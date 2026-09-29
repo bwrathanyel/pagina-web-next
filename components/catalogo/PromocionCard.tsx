@@ -40,6 +40,14 @@ function avisoDeCierre(fechaFin: string | null): string | null {
   return dias === 0 ? "Último día" : dias === 1 ? "Queda 1 día" : `Quedan ${dias} días`;
 }
 
+const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+
+// "2026-10-05" -> "5 oct". Se lee del texto, sin Date: no hay zona horaria que lo corra un día.
+function fechaCorta(fecha: string | null): string | null {
+  const m = fecha?.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${+m[3]} ${MESES[+m[2] - 1]}` : null;
+}
+
 export function PromocionCard({ promocion, prioridad = false }: { promocion: Promocion; prioridad?: boolean }) {
   const router = useRouter();
   const { agregar, quitar, tieneItem } = useCarritoStore();
@@ -112,6 +120,7 @@ export function PromocionCard({ promocion, prioridad = false }: { promocion: Pro
         urgencia={urgencia}
         destacada={"manual" in promocion && (promocion as HotSale).manual}
         incluye={incluye.slice(0, 3)}
+        ventaHasta={fechaCorta(promocion.fecha_venta_fin)}
         duracion={duracionDe(titulo, promocion.precio_texto, promocion.resumen_ia)}
         ninosGratis={promocion.ninos_gratis_cantidad}
         selloNinoGratis={"nino_gratis" in promocion ? (promocion as HotSale).nino_gratis?.cantidad : null}

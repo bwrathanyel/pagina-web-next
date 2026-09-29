@@ -59,6 +59,8 @@ export interface TicketCardProps {
   duracion?: string | null;
   /** Qué incluye (promociones.incluye_tags), máximo 3, una sola línea. */
   incluye?: string[];
+  /** Fecha límite de venta ya formateada ("30 sep"), de fecha_venta_fin. */
+  ventaHasta?: string | null;
 }
 
 // Tarjeta de catálogo como pase de abordar: foto 4:3 (la mayoría de las fotos
@@ -92,6 +94,7 @@ export function TicketCard({
   destacada = false,
   duracion = null,
   incluye = [],
+  ventaHasta = null,
 }: TicketCardProps) {
   const { monto, unidad, grande: montoGrande } = separarMonto(precio);
 
@@ -115,7 +118,6 @@ export function TicketCard({
                 {urgencia}
               </p>
             ) : null}
-            <p className={"truncate text-xs text-ink-soft" + (urgencia ? " hidden" : "")}>{vigenciaLabel ||" "}</p>
           </div>
           {onToggleCarrito ? (
             <button
@@ -237,8 +239,27 @@ export function TicketCard({
             <p className="mt-2 line-clamp-3 h-12 text-xs leading-4 text-ink-soft">{resumen}</p>
           ) : null}
 
+          {vigenciaLabel || ventaHasta ? (
+            <div className="mt-auto flex flex-col gap-1 pt-2 text-xs leading-4 text-ink-soft">
+              {vigenciaLabel ? (
+                <p className="flex items-start gap-1.5" title={vigenciaLabel}>
+                  <span aria-hidden="true" className="mt-px shrink-0 text-acento">
+                    <Icono nombre="calendario" tamano={12} />
+                  </span>
+                  <span className="line-clamp-2">{vigenciaLabel}</span>
+                </p>
+              ) : null}
+              {ventaHasta ? (
+                <p className="flex items-center gap-1.5 font-semibold text-ink">
+                  <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-pill bg-ambar" />
+                  Reserva hasta el {ventaHasta}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
           {incluye.length > 0 ? (
-            <ul aria-label="Incluye" className="mt-auto flex h-6 flex-wrap gap-x-3 gap-y-1 overflow-hidden pt-2 text-xs font-semibold text-ink">
+            <ul aria-label="Incluye" className={(vigenciaLabel || ventaHasta ? "" : "mt-auto ") + "flex h-6 flex-wrap gap-x-3 gap-y-1 overflow-hidden pt-2 text-xs font-semibold text-ink"}>
               {incluye.map((t) => (
                 <li key={t} className="flex min-w-0 max-w-full items-center gap-1">
                   <span aria-hidden="true" className="text-seafoam">
