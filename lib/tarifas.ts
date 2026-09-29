@@ -118,6 +118,18 @@ export function montoDoble(p: Tarifa["precios"] | null | undefined): number | nu
  * el texto del tarifario tal cual. `desde` dice si el monto es un piso (y así
  * se rotula) o la tarifa exacta de la grilla. `corto` = cabe en el talón en
  * mono grande; el texto libre del tarifario no. */
+// A qué se refiere un precio "desde", leído del texto de la tarifa. Sin
+// mención, el llamador dice "según fechas y ocupación": inventar "por
+// persona" o "por habitación" confundiría más que no decir nada.
+function unidadDelTexto(texto: string | null | undefined): string | null {
+  const t = texto ?? "";
+  const quien = /\b(?:por|x)\s+(persona|pax|habitaci[oó]n|pareja|cabaña|apartamento|familia|grupo)\b/i.exec(t)?.[1];
+  const persona = quien ? (/^pax$/i.test(quien) ? "persona" : quien.toLowerCase()) : /\bp\/?p\b/i.test(t) ? "persona" : null;
+  const noche = /\b(?:por|x)\s+noche\b/i.test(t);
+  if (persona) return `por ${persona}${noche ? " y noche" : ""}`;
+  return noche ? "por noche" : null;
+}
+
 export function precioTarjeta(p: {
   precios?: Record<string, string | number | null> | null;
   moneda?: string | null;
@@ -127,7 +139,7 @@ export function precioTarjeta(p: {
   const doble = precioDobleHero({ precios: p.precios, moneda: p.moneda } as Tarifa);
   if (doble) return { monto: doble.monto, unidad: "por persona y noche, en doble", desde: false, corto: true };
   const desde = formatearPrecioDesde(p.precio_desde_usd, p.precio_texto);
-  if (desde) return { monto: desde, unidad: /por persona/i.test(p.precio_texto ?? "") ? "por persona" : null, desde: true, corto: true };
+  if (desde) return { monto: desde, unidad: unidadDelTexto(p.precio_texto) ?? "según fechas y ocupación", desde: true, corto: true };
   const texto = formatearPrecioCliente(p.precio_texto)?.trim();
   return texto ? { monto: texto, unidad: null, desde: false, corto: texto.length <= 12 } : null;
 }
