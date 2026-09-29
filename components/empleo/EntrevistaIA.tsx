@@ -19,6 +19,8 @@ const BIENVENIDA: Mensaje = {
     "¡Hola! Soy Lotus, del equipo de Destino y Eventos Lotus 360. Cuénteme un poco de usted y vemos juntos si encaja con alguna de las vacantes abiertas. ¿Le interesa la modalidad presencial en nuestra oficina de Naguanagua, o freelance desde casa?",
 };
 
+const RESPUESTAS_RAPIDAS = ["Oficina en Naguanagua", "Freelance desde casa"];
+
 const CV_ERROR_TEXTO: Record<string, string> = {
   cv_formato_invalido: "El CV debe ser PDF, JPG o PNG.",
   cv_invalido: "No pudimos leer ese archivo. Pruebe con otro.",
@@ -93,8 +95,8 @@ export function EntrevistaIA() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  async function enviar() {
-    const mensajeEscrito = texto.trim();
+  async function enviar(rapida?: string) {
+    const mensajeEscrito = (rapida ?? texto).trim();
     const hayCvPendiente = cvFile && !cvConfirmado;
     // Se puede mandar solo el CV, sin texto -- pero el chat necesita algo
     // legible en la burbuja del candidato, así que se pone un texto por
@@ -162,7 +164,7 @@ export function EntrevistaIA() {
         role="log"
         aria-live="polite"
         aria-label="Conversación con Lotus"
-        className="flex h-96 flex-col gap-3 overflow-y-auto overscroll-contain px-5 py-5"
+        className="flex h-[55vh] max-h-96 min-h-64 flex-col gap-3 overflow-y-auto overscroll-contain px-5 py-5"
       >
         {mensajes.map((m, i) =>
           m.rol === "sistema" ? (
@@ -180,6 +182,20 @@ export function EntrevistaIA() {
               </div>
             </div>
           ),
+        )}
+        {mensajes.length === 1 && !enviando && (
+          <div className="flex flex-wrap gap-2">
+            {RESPUESTAS_RAPIDAS.map((opcion) => (
+              <button
+                key={opcion}
+                type="button"
+                onClick={() => enviar(opcion)}
+                className="min-h-11 rounded-pill border border-gold px-4 text-sm font-semibold text-gold transition-colors duration-150 hover:bg-gold hover:text-dusk"
+              >
+                {opcion}
+              </button>
+            ))}
+          </div>
         )}
         {enviando && <p className="text-xs text-dusk-text-soft">Lotus está escribiendo…</p>}
         {error && <p role="alert" className="text-sm text-gold">{error}</p>}
@@ -236,7 +252,7 @@ export function EntrevistaIA() {
         />
         <button
           type="button"
-          onClick={enviar}
+          onClick={() => enviar()}
           disabled={enviando || (!texto.trim() && !hayCvPendiente)}
           aria-label="Enviar respuesta"
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill bg-gold text-dusk transition-[filter,transform] duration-150 hover:brightness-105 active:scale-95 disabled:opacity-50"

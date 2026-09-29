@@ -9,6 +9,7 @@ import type { ModalidadEmpleo } from "@/lib/empleo/postularEmpleo";
 import { archivoABase64, enviarPostulacion, validarArchivoCV } from "@/lib/empleo/postularEmpleo";
 
 const ROLES_PRESENCIAL = ["Asesor(a) / Ejecutivo(a) de Ventas", "Asistente Administrativo", "Agente de Boletería Aérea"];
+const TURNOS = ["Diurno (9:00am a 5:00pm)", "Nocturno (6:00pm a 12:00am)", "Indistinto"];
 
 function telefonoPareceValido(valor: string) {
   if (!/^[+\d\s().-]+$/.test(valor.trim())) return false;
@@ -16,22 +17,23 @@ function telefonoPareceValido(valor: string) {
   return digitos.length >= 7 && digitos.length <= 15;
 }
 
-export function PostulacionForm({ modalidadInicial }: { modalidadInicial: ModalidadEmpleo }) {
-  const [modalidad, setModalidad] = useState<ModalidadEmpleo>(modalidadInicial);
+export function PostulacionForm({
+  modalidad,
+  onModalidad,
+}: {
+  modalidad: ModalidadEmpleo;
+  onModalidad: (modalidad: ModalidadEmpleo) => void;
+}) {
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
   const [email, setEmail] = useState("");
-  const [rolInteres, setRolInteres] = useState(modalidadInicial === "presencial" ? ROLES_PRESENCIAL[0] : "Asesor de Ventas Freelance");
+  const [rolPresencial, setRolPresencial] = useState(ROLES_PRESENCIAL[0]);
+  const [turno, setTurno] = useState(TURNOS[0]);
   const [mensaje, setMensaje] = useState("");
   const [cv, setCv] = useState<File | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [enviado, setEnviado] = useState(false);
-
-  function cambiarModalidad(nueva: ModalidadEmpleo) {
-    setModalidad(nueva);
-    setRolInteres(nueva === "presencial" ? ROLES_PRESENCIAL[0] : "Asesor de Ventas Freelance");
-  }
 
   function elegirArchivo(file: File | null) {
     setError(null);
@@ -54,13 +56,16 @@ export function PostulacionForm({ modalidadInicial }: { modalidadInicial: Modali
     setError(null);
     try {
       const cvBase64 = cv ? await archivoABase64(cv) : undefined;
+      // El turno freelance viaja como primera línea del mensaje: así llega al
+      // CRM sin tocar la Edge Function ni la tabla postulaciones_empleo.
+      const textoMensaje = [modalidad === "freelance" ? `Turno preferido: ${turno}` : "", mensaje.trim()].filter(Boolean).join("\n");
       await enviarPostulacion({
         nombre: nombre.trim(),
         telefono: telefono.trim(),
         email: email.trim() || undefined,
         modalidad,
-        rolInteres,
-        mensaje: mensaje.trim() || undefined,
+        rolInteres: modalidad === "presencial" ? rolPresencial : "Asesor de Ventas Freelance",
+        mensaje: textoMensaje || undefined,
         cvBase64,
         cvMime: cv?.type,
       });
@@ -99,13 +104,13 @@ export function PostulacionForm({ modalidadInicial }: { modalidadInicial: Modali
   return (
     <form onSubmit={enviar} className="flex flex-col gap-6 rounded-card border border-linea bg-card p-6 md:p-8">
       <fieldset>
-        <legend className="mb-1.5 text-sm font-semibold text-ink">Modalidad</legend>
+        <legend className="mb-1.5 text-sm font-semibold text-ink">Vacante</legend>
         <div className="grid grid-cols-2 gap-1 rounded-control bg-sand-2 p-1">
           {(["presencial", "freelance"] as const).map((valor) => (
             <label
               key={valor}
               className={
-                "flex min-h-11 cursor-pointer items-center justify-center rounded-control text-sm font-semibold text-ink-soft transition-colors duration-150 hover:text-ink " +
+                "flex min-h-11 cursor-pointer items-center justify-center rounded-control px-2 text-center text-sm font-semibold text-ink-soft transition-colors duration-150 hover:text-ink " +
                 "has-[:checked]:bg-acento has-[:checked]:text-sobre-acento has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-acento/20"
               }
             >
@@ -114,17 +119,17 @@ export function PostulacionForm({ modalidadInicial }: { modalidadInicial: Modali
                 name="modalidad"
                 value={valor}
                 checked={modalidad === valor}
-                onChange={() => cambiarModalidad(valor)}
+                onChange={() => onModalidad(valor)}
                 className="sr-only"
               />
-              {valor === "presencial" ? "Presencial" : "Freelance"}
+              {valor === "presencial" ? "Oficina (presencial)" : "Freelance (remoto)"}
             </label>
           ))}
         </div>
       </fieldset>
 
       <div className="grid gap-5 sm:grid-cols-2">
-        <Campo etiqueta="Nombre y apellido" requerido className="sm:col-span-2">
+        <Campo etiqueta="Nombre y apellido" requerido>
           {(a11y) => <Entrada {...a11y} autoComplete="name" value={nombre} onChange={(e) => setNombre(e.target.value)} />}
         </Campo>
         <Campo etiqueta="Teléfono" requerido>
@@ -143,16 +148,11 @@ export function PostulacionForm({ modalidadInicial }: { modalidadInicial: Modali
             />
           )}
         </Campo>
-        <Campo etiqueta="Correo" ayuda="Opcional.">
-          {(a11y) => (
-            <Entrada {...a11y} type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          )}
-        </Campo>
 
         {modalidad === "presencial" ? (
-          <Campo etiqueta="Vacante de interés" className="sm:col-span-2">
+          <Campo etiqueta="Puesto de interés" className="sm:col-span-2">
             {(a11y) => (
-              <Selector {...a11y} value={rolInteres} onChange={(e) => setRolInteres(e.target.value)}>
+              <Selector {...a11y} value={rolPresencial} onChange={(e) => setRolPresencial(e.target.value)}>
                 {ROLES_PRESENCIAL.map((rol) => (
                   <option key={rol} value={rol}>
                     {rol}
@@ -161,22 +161,32 @@ export function PostulacionForm({ modalidadInicial }: { modalidadInicial: Modali
               </Selector>
             )}
           </Campo>
-        ) : null}
-
-        <Campo
-          etiqueta={modalidad === "presencial" ? "Experiencia comprobable" : "Su experiencia y disponibilidad de turno"}
-          ayuda={
-            modalidad === "presencial"
-              ? "Años de experiencia, empresas anteriores, lo que desee contarnos."
-              : "Por ejemplo: experiencia en ventas, prefiero el turno nocturno."
-          }
-          className="sm:col-span-2"
-        >
-          {(a11y) => <AreaTexto {...a11y} rows={4} value={mensaje} onChange={(e) => setMensaje(e.target.value)} />}
-        </Campo>
+        ) : (
+          <Campo etiqueta="Turno preferido" className="sm:col-span-2">
+            {(a11y) => (
+              <Selector {...a11y} value={turno} onChange={(e) => setTurno(e.target.value)}>
+                {TURNOS.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </Selector>
+            )}
+          </Campo>
+        )}
 
         <Campo etiqueta="CV" ayuda="Opcional. PDF, JPG o PNG, hasta 5 MB." className="sm:col-span-2">
           {(a11y) => <Archivo {...a11y} accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => elegirArchivo(e.target.files?.[0] ?? null)} />}
+        </Campo>
+
+        <Campo etiqueta="¿Algo que quiera contarnos?" ayuda="Opcional. Experiencia, empresas anteriores, disponibilidad." className="sm:col-span-2">
+          {(a11y) => <AreaTexto {...a11y} rows={3} value={mensaje} onChange={(e) => setMensaje(e.target.value)} />}
+        </Campo>
+
+        <Campo etiqueta="Correo" ayuda="Opcional." className="sm:col-span-2">
+          {(a11y) => (
+            <Entrada {...a11y} type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          )}
         </Campo>
       </div>
 
