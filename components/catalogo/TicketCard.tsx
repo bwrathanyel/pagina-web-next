@@ -57,6 +57,8 @@ export interface TicketCardProps {
   destacada?: boolean;
   /** "3 días · 2 noches", leído del texto de la promo. */
   duracion?: string | null;
+  /** Qué incluye (promociones.incluye_tags), máximo 3, una sola línea. */
+  incluye?: string[];
 }
 
 // Tarjeta de catálogo como pase de abordar: foto 4:3 (la mayoría de las fotos
@@ -89,6 +91,7 @@ export function TicketCard({
   urgencia = null,
   destacada = false,
   duracion = null,
+  incluye = [],
 }: TicketCardProps) {
   const { monto, unidad, grande: montoGrande } = separarMonto(precio);
 
@@ -232,6 +235,19 @@ export function TicketCard({
 
           {resumen !== undefined ? (
             <p className="mt-2 line-clamp-3 h-12 text-xs leading-4 text-ink-soft">{resumen}</p>
+          ) : null}
+
+          {incluye.length > 0 ? (
+            <ul aria-label="Incluye" className="mt-auto flex h-6 flex-wrap gap-x-3 gap-y-1 overflow-hidden pt-2 text-xs font-semibold text-ink">
+              {incluye.map((t) => (
+                <li key={t} className="flex min-w-0 max-w-full items-center gap-1">
+                  <span aria-hidden="true" className="text-seafoam">
+                    <Icono nombre="check" tamano={12} />
+                  </span>
+                  <span className="truncate">{t}</span>
+                </li>
+              ))}
+            </ul>
           ) : null}
 
           {pieAdmin}

@@ -111,6 +111,7 @@ export function PromocionCard({ promocion, prioridad = false }: { promocion: Pro
         vigenciaLabel={promocion.vigencia_texto}
         urgencia={urgencia}
         destacada={"manual" in promocion && (promocion as HotSale).manual}
+        incluye={incluye.slice(0, 3)}
         duracion={duracionDe(titulo, promocion.precio_texto, promocion.resumen_ia)}
         ninosGratis={promocion.ninos_gratis_cantidad}
         selloNinoGratis={"nino_gratis" in promocion ? (promocion as HotSale).nino_gratis?.cantidad : null}
