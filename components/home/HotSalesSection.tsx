@@ -36,7 +36,7 @@ export function HotSalesSection({ pool }: { pool: Promocion[] }) {
     : "/catalogo/hot-sales";
 
   return (
-    <Seccion ritmo="intro">
+    <Seccion ritmo="intro" className="fondo-hotsales">
       <EncabezadoSeccion
         titulo={<EditableText path="home.hotSales.title" as="h2" className={CLASE_TITULO_SECCION + " text-ink"} />}
         etiqueta={<EditableText path="home.hotSales.eyebrow" as="p" className={CLASE_ETIQUETA_SECCION + " text-acento"} />}

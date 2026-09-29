@@ -913,3 +913,14 @@ html {
   }
 }
 
+
+/* Fondo de Hot Sales: dos resplandores (naranja arriba-derecha, verde mar
+   abajo-izquierda) y una trama de puntos que se desvanece hacia abajo. Todo
+   sale de los tokens, así que sigue al tema claro/oscuro. */
+.fondo-hotsales {
+  background-image:
+    radial-gradient(60rem 28rem at 88% -6%, color-mix(in oklab, var(--color-acento) 13%, transparent), transparent 70%),
+    radial-gradient(52rem 30rem at 6% 104%, color-mix(in oklab, var(--color-seafoam) 16%, transparent), transparent 70%),
+    radial-gradient(color-mix(in oklab, var(--color-ink) 9%, transparent) 1px, transparent 1.5px);
+  background-size: auto, auto, 22px 22px;
+}
