@@ -588,6 +588,19 @@ html {
   .revelar.revelar-escritorio { opacity: 1; transform: none; animation: none; }
 }
 
+/* Hot Sales de la home: al cambiar de destino las tarjetas nuevas entran
+   escalonadas (HotSalesSection pone --n = posición); el aviso de cierre de
+   venta entra solo y su punto late para llamar la mirada sin mover nada. */
+.entra-card,
+.animate-entra-card {
+  animation: surge 0.45s var(--ease-salida) both;
+  animation-delay: calc(var(--n, 0) * 55ms);
+}
+.punto-vivo { animation: pulso-suave 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .entra-card, .animate-entra-card, .punto-vivo { animation: none; }
+}
+
 
 /* Acciones del FAB unificado (ContactoFab): salen escalonadas desde el botón. */
 @keyframes fab-item {

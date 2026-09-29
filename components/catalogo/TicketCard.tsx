@@ -50,6 +50,9 @@ export interface TicketCardProps {
   subtitulo?: string | null;
   /** Portada con prioridad alta: solo las primeras tarjetas de una lista. */
   prioridad?: boolean;
+  /** Aviso de cierre de venta ("Últimos 3 días"), calculado por quien pinta la
+   * tarjeta con una fecha real; sin fecha, sin aviso. */
+  urgencia?: string | null;
 }
 
 // Tarjeta de catálogo como pase de abordar: foto 4:3 (la mayoría de las fotos
@@ -79,6 +82,7 @@ export function TicketCard({
   oculto = false,
   subtitulo,
   prioridad = false,
+  urgencia = null,
 }: TicketCardProps) {
   const { monto, unidad, grande: montoGrande } = separarMonto(precio);
 
@@ -87,7 +91,7 @@ export function TicketCard({
       tamanoTalon="4.5rem"
       className={
         "h-full transition-[transform,border-color] duration-[var(--dur-media)] ease-salida " +
-        "hover:-translate-y-1 hover:border-linea-fuerte motion-reduce:transition-none " +
+        "hover:-translate-y-1 hover:border-acento/60 motion-reduce:transition-none " +
         (oculto ? "opacity-50" : "")
       }
       talon={
@@ -96,7 +100,13 @@ export function TicketCard({
             <p className="truncate font-mono text-xs font-bold uppercase tracking-widest text-ink">
               {destino || " "}
             </p>
-            <p className="truncate text-xs text-ink-soft">{vigenciaLabel || " "}</p>
+            {urgencia ? (
+              <p className="animate-entra-card flex items-center gap-1.5 truncate text-xs font-bold text-ambar">
+                <span aria-hidden="true" className="punto-vivo h-1.5 w-1.5 shrink-0 rounded-pill bg-current" />
+                {urgencia}
+              </p>
+            ) : null}
+            <p className={"truncate text-xs text-ink-soft" + (urgencia ? " hidden" : "")}>{vigenciaLabel ||" "}</p>
           </div>
           {onToggleCarrito ? (
             <button

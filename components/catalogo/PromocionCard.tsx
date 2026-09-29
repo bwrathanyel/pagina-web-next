@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { TicketCard } from "@/components/catalogo/TicketCard";
 import { fotosDe, esSoloReferencial } from "@/lib/supabase/fotos";
@@ -14,6 +14,22 @@ import { revalidarSitioPublico } from "@/lib/admin/revalidate";
 import { nombrePromo, precioTarjeta } from "@/lib/tarifas";
 import type { HotSale, Promocion } from "@/types/supabase";
 
+const DIAS_URGENCIA = 7;
+const sinSuscripcion = () => () => {};
+
+// Días que quedan de venta según la fecha límite real (YYYY-MM-DD), contados
+// desde el día de la persona; null si no hay fecha, ya pasó o falta bastante.
+function avisoDeCierre(fechaFin: string | null): string | null {
+  const m = fechaFin?.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  const hoy = new Date();
+  const dias = Math.round(
+    (Date.UTC(+m[1], +m[2] - 1, +m[3]) - Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())) / 86_400_000,
+  );
+  if (dias < 0 || dias > DIAS_URGENCIA) return null;
+  return dias === 0 ? "Último día" : dias === 1 ? "Queda 1 día" : `Quedan ${dias} días`;
+}
+
 export function PromocionCard({ promocion, prioridad = false }: { promocion: Promocion; prioridad?: boolean }) {
   const router = useRouter();
   const { agregar, quitar, tieneItem } = useCarritoStore();
@@ -24,6 +40,13 @@ export function PromocionCard({ promocion, prioridad = false }: { promocion: Pro
   const [visible, setVisible] = useState(true);
   const [editando, setEditando] = useState(false);
   const [errorVisibilidad, setErrorVisibilidad] = useState(false);
+  // Después de hidratar: la página puede venir cacheada de otro día, y el
+  // aviso depende de "hoy" en el navegador.
+  const urgencia = useSyncExternalStore(
+    sinSuscripcion,
+    () => avisoDeCierre(promocion.fecha_venta_fin),
+    () => null,
+  );
 
   // Own photos first, hotel's photos as fallback, never invented — same
   // rule as the current site's fotosDe() priority.
@@ -76,6 +99,7 @@ export function PromocionCard({ promocion, prioridad = false }: { promocion: Pro
         precio={precio}
         subtitulo={hotelNombre ? subtituloPromo : null}
         vigenciaLabel={promocion.vigencia_texto}
+        urgencia={urgencia}
         ninosGratis={promocion.ninos_gratis_cantidad}
         selloNinoGratis={"nino_gratis" in promocion ? (promocion as HotSale).nino_gratis?.cantidad : null}
         oculto={!visible}

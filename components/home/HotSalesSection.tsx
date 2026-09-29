@@ -6,6 +6,7 @@ import { PromocionCard } from "@/components/catalogo/PromocionCard";
 import { DestinoChips } from "@/components/catalogo/DestinoChips";
 import { destinosDelPool } from "@/lib/promociones/hotSales";
 import { Seccion } from "@/components/ui/Seccion";
+import { Revelar } from "@/components/ui/Revelar";
 import { Carrusel } from "@/components/ui/Carrusel";
 import { CLASE_ETIQUETA_SECCION, CLASE_TITULO_SECCION, EncabezadoSeccion } from "@/components/ui/EncabezadoSeccion";
 import { Boton } from "@/components/ui/Boton";
@@ -22,6 +23,9 @@ const HASTA_LG = 6;
 // reordena nada, así que la grilla no salta al hidratar.
 export function HotSalesSection({ pool }: { pool: Promocion[] }) {
   const [destino, setDestino] = useState<string | null>(null);
+  // Las tarjetas ya visibles al cargar no se animan (Revelar las deja quietas);
+  // solo entran escalonadas cuando la persona cambia de destino.
+  const [cambioDestino, setCambioDestino] = useState(false);
   const destinos = useMemo(() => destinosDelPool(pool), [pool]);
   const filtradas = useMemo(
     () => (destino ? pool.filter((p) => p.producto?.destino === destino) : pool),
@@ -42,7 +46,14 @@ export function HotSalesSection({ pool }: { pool: Promocion[] }) {
         verTodasHref="/catalogo/hot-sales"
       />
 
-      <DestinoChips destinos={destinos} activo={destino} onChange={setDestino} />
+      <DestinoChips
+        destinos={destinos}
+        activo={destino}
+        onChange={(d) => {
+          setCambioDestino(true);
+          setDestino(d);
+        }}
+      />
 
       {/* La key reinicia el scroll del carrusel móvil al cambiar de destino. */}
       <Carrusel
@@ -52,8 +63,15 @@ export function HotSalesSection({ pool }: { pool: Promocion[] }) {
         gap="gap-4 sm:gap-6"
         desktop="sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3 xl:grid-cols-4"
         claseItem={(i) => (i >= HASTA_LG ? "lg:max-xl:hidden" : "")}
-        items={filtradas.slice(0, EN_LA_HOME).map((p) => (
-          <PromocionCard key={p.id} promocion={p} />
+        items={filtradas.slice(0, EN_LA_HOME).map((p, i) => (
+          <Revelar key={p.id} retraso={Math.min(i % 4, 3) * 70} className="h-full">
+            <div
+              className={"h-full" + (cambioDestino ? " entra-card" : "")}
+              style={cambioDestino ? ({ "--n": i } as React.CSSProperties) : undefined}
+            >
+              <PromocionCard promocion={p} />
+            </div>
+          </Revelar>
         ))}
       />
 
