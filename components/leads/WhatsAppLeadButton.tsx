@@ -5,7 +5,9 @@ import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
 import { Campo, Entrada } from "@/components/ui/Campo";
 import { Modal } from "@/components/ui/Modal";
+import { TelefonoPais } from "@/components/ui/TelefonoPais";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
+import { PAIS_POR_DEFECTO, buscarPais, telefonoInternacional } from "@/lib/paises";
 import { crearLeadCRM } from "@/lib/leads/ingestWebLead";
 import { whatsappHref } from "@/lib/whatsapp";
 
@@ -39,6 +41,8 @@ export function WhatsAppLeadButton({
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [nombre, setNombre] = useState("");
+  const [iso, setIso] = useState(PAIS_POR_DEFECTO);
+  const [telefono, setTelefono] = useState("");
   const [destino, setDestino] = useState(destinoInicial);
   const [adultos, setAdultos] = useState("");
   const [ninos, setNinos] = useState("");
@@ -59,6 +63,11 @@ export function WhatsAppLeadButton({
       setError("Complete su nombre y el destino para continuar.");
       return;
     }
+    const telefonoCompleto = telefonoInternacional(buscarPais(iso), telefono);
+    if (!telefonoCompleto) {
+      setError("Revise su número de teléfono: escríbalo sin el código de país, por ejemplo 0412 1234567.");
+      return;
+    }
     setEnviando(true);
     setError(null);
     const mensajeWhatsapp = `${mensajeBase} Me interesa ${destino}.`;
@@ -70,6 +79,7 @@ export function WhatsAppLeadButton({
     try {
       const resultado = await crearLeadCRM({
         nombre: nombre.trim(),
+        telefono: telefonoCompleto,
         destino: destino.trim(),
         personas: textoPersonas(),
         consulta: mensajeWhatsapp,
@@ -82,6 +92,7 @@ export function WhatsAppLeadButton({
       else window.open(href, "_blank", "noopener");
       setAbierto(false);
       setNombre("");
+      setTelefono("");
       setDestino(destinoInicial);
       setAdultos("");
       setNinos("");
@@ -123,6 +134,11 @@ export function WhatsAppLeadButton({
             <Campo etiqueta="Su nombre" requerido>
               {(a11y) => (
                 <Entrada {...a11y} autoComplete="name" value={nombre} onChange={(e) => setNombre(e.target.value)} />
+              )}
+            </Campo>
+            <Campo etiqueta="Su número de WhatsApp" requerido>
+              {(a11y) => (
+                <TelefonoPais {...a11y} iso={iso} onIso={setIso} valor={telefono} onValor={setTelefono} />
               )}
             </Campo>
             <Campo etiqueta="Destino que le interesa" requerido>
