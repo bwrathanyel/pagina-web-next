@@ -50,3 +50,6 @@ next-env.d.ts
 !.dev.vars.example
 .last_changelog_sha
 .last_changelog_sha_web
+
+# Capturas de mocks de diseno (regenerables, pesan ~40MB)
+.impeccable/mocks/**/*.png

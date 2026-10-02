@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hot Sales comp</title>
+<style>
+@font-face { font-family: "Archivo"; src: url("../../../app/fonts/archivo-cond-latin.woff2") format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; }
+@font-face { font-family: "Figtree"; src: url("../../../app/fonts/figtree-latin.woff2") format("woff2"); font-weight: 300 900; }
+@font-face { font-family: "Space Mono"; src: url("../../../app/fonts/space-mono-400-latin.woff2") format("woff2"); font-weight: 400; }
+@font-face { font-family: "Space Mono"; src: url("../../../app/fonts/space-mono-700-latin.woff2") format("woff2"); font-weight: 700; }
+
+:root {
+  --sand: #ede5d8; --sand-2: #e1d8c7; --card: #f7f1e6; --ink: #2c2620; --ink-soft: #6b5e50;
+  --acento: #A83E00; --acento-suave: #fbe6d5; --ambar: #8a5a00; --ambar-suave: #f8ecd0;
+  --sobre-acento: #fff; --linea: rgba(36,31,26,.14); --linea-fuerte: rgba(36,31,26,.24);
+  --dusk: #12262b; --dusk-2: #1c3238; --dusk-text: #eaf1ef; --dusk-text-soft: #a9bfbc;
+  --coral-bright: #FC7300; --gold: #FBC000; --btn-ink: #3a1505; --whatsapp: #0f7a40;
+  --seafoam-bg: #e4eeec; --seafoam-text: #255954;
+  --r-card: 1rem; --r-media: .75rem; --r-pill: 999px;
+  --shadow-card: 0 18px 50px -30px rgba(10,14,13,.45);
+  --shadow-lift: 0 24px 60px -24px rgba(10,14,13,.35);
+  --ease: cubic-bezier(.22,1,.36,1);
+  --ancho: 78rem;
+}
+[data-tema="oscuro"] {
+  --sand: #0d1a1e; --sand-2: #142428; --card: #17292e; --ink: #eef3f1; --ink-soft: #9db3b0;
+  --acento: #FF8A3D; --acento-suave: #3a2113; --ambar: #FBC000; --ambar-suave: #3a2f10;
+  --sobre-acento: #1a1206; --linea: rgba(238,243,241,.12); --linea-fuerte: rgba(238,243,241,.22);
+  --seafoam-bg: #1c332f; --seafoam-text: #8fd4c9;
+}
+* { box-sizing: border-box; margin: 0; }
+html { font-size: 90%; }
+body { background: var(--sand); color: var(--ink); font-family: "Figtree", system-ui, sans-serif; font-size: 1rem; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+::selection { background: var(--acento-suave); color: var(--ink); }
+a { color: inherit; text-decoration: none; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--acento); outline-offset: 3px; border-radius: .5rem; }
+.display { font-family: "Archivo", sans-serif; font-stretch: 82%; font-weight: 700; letter-spacing: -.02em; line-height: .98; }
+.mono { font-family: "Space Mono", monospace; }
+.envoltura { max-width: var(--ancho); margin: 0 auto; padding: 0 1rem; }
+@media (min-width: 640px) { .envoltura { padding: 0 2rem; } }
+section { padding: 3.5rem 0; }
+@media (min-width: 1024px) { section { padding: 6rem 0; } }
+svg.ico { width: 1.1rem; height: 1.1rem; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* Botones */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-height: 44px; padding: 0 1.25rem; border-radius: var(--r-pill); font-weight: 700; font-size: 1rem; border: 0; cursor: pointer; transition: transform 160ms var(--ease), background 160ms var(--ease); }
+.btn:active { transform: scale(.985); }
+.btn-firma { background: var(--coral-bright); color: var(--btn-ink); }
+.btn-firma:hover { background: var(--gold); }
+.btn-wa { background: var(--whatsapp); color: #fff; }
+.btn-sec { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1px var(--linea-fuerte); }
+.btn-sec:hover { background: var(--sand-2); }
+
+/* Sello de niño gratis: dorado del logo, el único lugar donde se usa lleno */
+.sello { display: inline-flex; align-items: center; gap: .375rem; background: var(--gold); color: var(--btn-ink); border-radius: var(--r-pill); padding: .25rem .75rem; font-family: "Space Mono", monospace; font-weight: 700; font-size: .8rem; letter-spacing: .02em; text-transform: uppercase; }
+.sello-suave { background: var(--ambar-suave); color: var(--ambar); }
+
+/* ---------- OPCIÓN A: pase familiar ---------- */
+.pase { display: grid; gap: 2rem; }
+@media (min-width: 1024px) { .pase { grid-template-columns: 1.15fr 1fr; gap: 3.5rem; align-items: center; } }
+.pase-foto { position: relative; aspect-ratio: 4/3; border-radius: var(--r-card); overflow: hidden; }
+@media (min-width: 1024px) { .pase-foto { aspect-ratio: 5/6; } }
+.pase-foto .sello { position: absolute; top: 1rem; left: 1rem; font-size: .9rem; padding: .375rem .9rem; }
+.pase-foto figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: 3rem 1.25rem 1.1rem; background: linear-gradient(to top, rgba(18,38,43,.82), rgba(18,38,43,0)); color: var(--dusk-text); font-size: .9rem; }
+.pase-foto figcaption b { font-family: "Archivo", sans-serif; font-stretch: 82%; font-size: 1.35rem; display: block; line-height: 1.1; }
+.pase h2 { font-size: clamp(2.6rem, 6vw, 4.6rem); }
+.pase h2 em { font-style: normal; color: var(--acento); }
+.pase .bajada { margin-top: 1rem; color: var(--ink-soft); font-size: 1.1rem; max-width: 34ch; }
+.cuenta { margin-top: 1.25rem; display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap; }
+.cuenta .num { font-family: "Space Mono", monospace; font-weight: 700; font-size: 2rem; color: var(--acento); line-height: 1; }
+.cuenta .txt { color: var(--ink-soft); font-size: .95rem; }
+.filas { margin-top: 1.75rem; border-top: 1px solid var(--linea); }
+.fila { display: grid; grid-template-columns: 4.5rem 1fr auto; gap: 1rem; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--linea); transition: background 160ms var(--ease); }
+.fila:hover { background: color-mix(in srgb, var(--sand-2) 55%, transparent); }
+.fila .mini { width: 4.5rem; aspect-ratio: 1; border-radius: .75rem; overflow: hidden; }
+.fila .nom { font-family: "Archivo", sans-serif; font-stretch: 82%; font-weight: 700; font-size: 1.3rem; line-height: 1.1; }
+.fila .det { font-size: .9rem; color: var(--ink-soft); }
+.fila .cond { margin-top: .3rem; font-family: "Space Mono", monospace; font-size: .78rem; color: var(--ambar); }
+.fila .precio { text-align: right; }
+.fila .precio .m { font-family: "Space Mono", monospace; font-weight: 700; font-size: 1.35rem; }
+.fila .precio .u { font-size: .78rem; color: var(--ink-soft); display: block; line-height: 1.2; }
+.acciones { margin-top: 1.75rem; display: flex; gap: .75rem; flex-wrap: wrap; }
+.nota { margin-top: 1rem; font-size: .85rem; color: var(--ink-soft); }
+
+/* ---------- OPCIÓN B: tres boletos ---------- */
+.cab-b { display: grid; gap: 1rem; margin-bottom: 2rem; }
+@media (min-width: 1024px) { .cab-b { grid-template-columns: 1fr auto; align-items: end; margin-bottom: 2.5rem; } }
+.cab-b h2 { font-size: clamp(2.6rem, 6vw, 4.6rem); }
+.cab-b h2 em { font-style: normal; color: var(--acento); }
+.cab-b p { color: var(--ink-soft); font-size: 1.1rem; max-width: 46ch; margin-top: .75rem; }
+.boletos { display: flex; gap: 1rem; overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 -1rem; padding: 0 1rem 1rem; scrollbar-width: none; }
+.boletos > * { flex: 0 0 85%; max-width: 360px; scroll-snap-align: start; }
+@media (min-width: 640px) { .boletos { display: grid; grid-template-columns: repeat(3, 1fr); overflow: visible; margin: 0; padding: 0; gap: 1.5rem; } .boletos > * { max-width: none; } }
+.boleto { background: var(--card); border-radius: var(--r-card); box-shadow: var(--shadow-card); display: flex; flex-direction: column; transition: box-shadow 280ms var(--ease); }
+.boleto:hover { box-shadow: var(--shadow-lift); }
+.boleto .foto { position: relative; aspect-ratio: 4/3; border-radius: var(--r-card) var(--r-card) 0 0; overflow: hidden; }
+.boleto .foto img { transition: transform 600ms var(--ease); }
+.boleto:hover .foto img { transform: scale(1.04); }
+.boleto .foto .sello { position: absolute; top: .75rem; left: .75rem; }
+.boleto .cuerpo { padding: 1.1rem 1.25rem 1.25rem; flex: 1; }
+.boleto .nom { font-family: "Archivo", sans-serif; font-stretch: 82%; font-weight: 700; font-size: 1.5rem; line-height: 1.05; }
+.boleto .det { color: var(--ink-soft); font-size: .92rem; margin-top: .2rem; }
+.boleto .cond { margin-top: .75rem; font-size: .9rem; }
+.boleto .cond b { color: var(--ambar); font-family: "Space Mono", monospace; font-size: .8rem; display: block; }
+.talon { position: relative; padding: 1rem 1.25rem 1.1rem; border-top: 2px dashed var(--linea-fuerte); display: flex; align-items: end; justify-content: space-between; gap: .75rem; }
+.talon::before, .talon::after { content: ""; position: absolute; top: -.75rem; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--sand); }
+.talon::before { left: -.75rem; } .talon::after { right: -.75rem; }
+.talon .m { font-family: "Space Mono", monospace; font-weight: 700; font-size: 1.6rem; line-height: 1; }
+.talon .u { font-size: .8rem; color: var(--ink-soft); }
+.talon .ahorro { font-family: "Space Mono", monospace; font-size: .78rem; color: var(--acento); margin-top: .35rem; }
+.talon .ir { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--coral-bright); color: var(--btn-ink); flex: none; }
+
+/* ---------- Grilla de 5 destinos (común) ---------- */
+.hs-cab { display: flex; align-items: end; justify-content: space-between; gap: 1rem; }
+.hs-cab h2 { font-size: clamp(2.2rem, 4.5vw, 3.4rem); }
+.hs-cab .sub { color: var(--ink-soft); margin-top: .5rem; }
+.ver { display: none; align-items: center; gap: .4rem; font-weight: 700; color: var(--acento); min-height: 44px; }
+@media (min-width: 640px) { .ver { display: inline-flex; } }
+.chips { display: flex; gap: .5rem; margin: 1.5rem -1rem 1.75rem; padding: 0 1rem; overflow-x: auto; scrollbar-width: none; }
+@media (min-width: 640px) { .chips { margin: 1.75rem 0 2rem; padding: 0; flex-wrap: wrap; } }
+.chip { flex: none; min-height: 44px; padding: 0 1.1rem; border-radius: var(--r-pill); display: inline-flex; align-items: center; gap: .5rem; font-weight: 600; box-shadow: inset 0 0 0 1px var(--linea-fuerte); background: transparent; color: var(--ink); font-size: .95rem; cursor: pointer; font-family: inherit; }
+.chip .c { font-family: "Space Mono", monospace; font-size: .78rem; color: var(--ink-soft); }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--sand); box-shadow: none; }
+.chip[aria-pressed="true"] .c { color: var(--sand-2); }
+.grilla { display: flex; gap: 1rem; overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 -1rem; padding: 0 1rem; scrollbar-width: none; }
+.grilla > * { flex: 0 0 85%; max-width: 360px; scroll-snap-align: start; }
+@media (min-width: 640px) { .grilla { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem 1.5rem; overflow: visible; margin: 0; padding: 0; } .grilla > * { max-width: none; } }
+@media (min-width: 1024px) { .grilla { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1280px) { .grilla { grid-template-columns: repeat(4, 1fr); } }
+.tarjeta .foto { position: relative; aspect-ratio: 4/3; border-radius: var(--r-media); overflow: hidden; }
+.tarjeta .foto img { transition: transform 600ms var(--ease); }
+.tarjeta:hover .foto img { transform: scale(1.04); }
+.tarjeta .foto .sello { position: absolute; top: .6rem; left: .6rem; font-size: .72rem; }
+.tarjeta .nom { margin-top: .75rem; font-family: "Archivo", sans-serif; font-stretch: 82%; font-weight: 700; font-size: 1.3rem; line-height: 1.1; }
+.tarjeta .det { color: var(--ink-soft); font-size: .9rem; }
+.tarjeta .pie { margin-top: .6rem; padding-top: .6rem; border-top: 2px dashed var(--linea); display: flex; align-items: baseline; gap: .4rem; }
+.tarjeta .pie .m { font-family: "Space Mono", monospace; font-weight: 700; font-size: 1.2rem; }
+.tarjeta .pie .u { font-size: .8rem; color: var(--ink-soft); }
+.mas { margin-top: 2rem; display: flex; justify-content: center; }
+/* ---------- v2: hero de contexto (simplificado) ---------- */
+.hero { position: relative; min-height: 640px; background: var(--dusk); color: var(--dusk-text); display: flex; overflow: hidden; }
+@media (min-width: 1024px) { .hero { min-height: 780px; } }
+.hero > img { position: absolute; inset: 0; }
+.hero .velo-i { position: absolute; inset: 0; background: linear-gradient(to right, rgba(18,38,43,.72), rgba(18,38,43,.2) 60%, transparent); }
+.hero .velo-b { position: absolute; inset: auto 0 0; height: 70%; background: linear-gradient(to top, var(--dusk), rgba(18,38,43,.5) 50%, transparent); }
+.hero .envoltura { position: relative; width: 100%; display: flex; flex-direction: column; padding-top: 7rem; padding-bottom: 1.5rem; }
+.hero-grid { display: grid; gap: 1.5rem; }
+@media (min-width: 1024px) { .hero-grid { grid-template-columns: minmax(0,1fr) 27rem; gap: 3rem; align-items: start; } }
+.tablero { display: flex; gap: .25rem; }
+.tablero span { width: 2.4rem; height: 3.1rem; display: grid; place-items: center; background: var(--dusk-2); border-radius: .375rem; font: 700 1.7rem "Space Mono", monospace; color: var(--gold); }
+@media (max-width: 639px) { .tablero span { width: 1.9rem; height: 2.5rem; font-size: 1.3rem; } }
+.hero h1 { margin-top: 1.75rem; max-width: 13ch; font-size: clamp(2.75rem, 6.4vw, 5rem); color: #fff; }
+.hero h1 em { font-style: normal; color: var(--coral-bright); }
+.hero .desc { margin-top: 1.25rem; max-width: 32rem; font-size: 1.15rem; color: var(--dusk-text); }
+.pase-h { display: none; background: var(--card); color: var(--ink); border-radius: var(--r-card); overflow: hidden; }
+@media (min-width: 1024px) { .pase-h { display: block; } }
+.pase-h .f { aspect-ratio: 16/10; }
+.pase-h .c { padding: 1rem 1.25rem; }
+.pase-h .t { padding: .9rem 1.25rem 1.1rem; border-top: 2px dashed var(--linea-fuerte); display: flex; justify-content: space-between; align-items: center; }
+.cotiz { margin-top: auto; padding-top: 2.5rem; }
+.cotiz-barra { display: none; }
+@media (min-width: 1024px) { .cotiz-barra { display: grid; grid-template-columns: repeat(4, 1fr) auto; align-items: center; background: var(--card); color: var(--ink); border-radius: var(--r-pill); padding: .5rem .5rem .5rem 1.75rem; gap: 1rem; } }
+.cotiz-barra small { display: block; font-size: .8rem; color: var(--ink-soft); }
+.cotiz-barra b { font-weight: 600; }
+.cotiz-movil { display: flex; align-items: center; gap: .75rem; min-height: 52px; padding: 0 1.25rem; border-radius: var(--r-pill); background: var(--card); color: var(--ink-soft); font-weight: 600; }
+@media (min-width: 1024px) { .cotiz-movil { display: none; } }
+
+/* ---------- v2: banda niños gratis (fija en dusk en los dos temas) ---------- */
+.banda { position: relative; background: var(--dusk); color: var(--dusk-text); overflow: hidden; padding: 0 0 3.5rem; }
+@media (min-width: 1024px) { .banda { padding: 6rem 0; } }
+.banda h2 { font-size: clamp(2.6rem, 5.4vw, 4.4rem); color: #fff; max-width: 11ch; }
+.banda h2 em { font-style: normal; color: var(--coral-bright); }
+.cero { font-family: "Space Mono", monospace; font-weight: 700; color: var(--gold); line-height: .78; letter-spacing: -.04em; font-size: clamp(7rem, 26vw, 11.5rem); }
+.cero-txt { margin-top: 1rem; font-size: 1.15rem; line-height: 1.45; color: var(--dusk-text); max-width: 26ch; }
+.cero .desde { display: block; font-family: "Figtree", sans-serif; font-weight: 600; font-size: 1.1rem; letter-spacing: 0; line-height: 1.2; color: var(--dusk-text); margin-bottom: .75rem; }
+.gratis { margin-top: 1.25rem; display: inline-flex; align-items: center; gap: .6rem; padding: .6rem 1.1rem; border-radius: var(--r-pill); background: var(--gold); color: var(--btn-ink); font-weight: 700; font-size: 1.15rem; }
+.gratis svg.ico { width: 1.35rem; height: 1.35rem; }
+.precios .sello { align-self: center; }
+.cond-banda { margin-top: 1rem; font-size: .95rem; color: var(--dusk-text-soft); max-width: 40ch; }
+.banda .acciones { margin-top: 2rem; }
+.cuenta-chip { display: inline-flex; align-items: center; gap: .5rem; min-height: 36px; padding: 0 .9rem; border-radius: var(--r-pill); background: var(--dusk); color: var(--dusk-text); font-weight: 600; font-size: .92rem; }
+.cuenta-chip b { font-family: "Space Mono", monospace; color: var(--gold); }
+/* Tarjetas dentro de la banda: en claro se separan por contraste; en oscuro, borde (sin sombra). */
+.bc { background: var(--card); color: var(--ink); border-radius: var(--r-card); overflow: hidden; display: flex; flex-direction: column; }
+[data-tema="oscuro"] .bc { box-shadow: inset 0 0 0 1px var(--linea-fuerte); }
+.bc .foto { position: relative; overflow: hidden; }
+.bc .foto img { transition: transform 600ms var(--ease); }
+.bc:hover .foto img { transform: scale(1.04); }
+.bc .foto .cuenta-chip { position: absolute; left: .9rem; top: .9rem; }
+.bc .nom { font-family: "Archivo", sans-serif; font-stretch: 82%; font-weight: 700; line-height: 1.05; }
+.bc .det { color: var(--ink-soft); font-size: .95rem; margin-top: .2rem; }
+.bc .cond { margin-top: .6rem; font-size: .95rem; color: var(--ink); }
+.precios { display: flex; align-items: end; gap: 1.5rem; }
+.precios .lbl { display: block; font-size: .8rem; color: var(--ink-soft); }
+.precios .m { font-family: "Space Mono", monospace; font-weight: 700; font-size: 1.6rem; line-height: 1.1; }
+.precios .nino .m { color: var(--acento); }
+.precios s { font-family: "Space Mono", monospace; font-size: .85rem; color: var(--ink-soft); margin-left: .35rem; }
+.bc .talon { align-items: center; }
+.bc .talon::before, .bc .talon::after { background: var(--dusk); }
+
+/* Destacado grande */
+.dest .foto { aspect-ratio: 16/10; }
+.dest .cuerpo { padding: 1.25rem 1.5rem .75rem; }
+.dest .nom { font-size: clamp(1.8rem, 3vw, 2.4rem); }
+.dest .talon { padding: 1.1rem 1.5rem 1.25rem; }
+/* Secundarios: horizontales y compactos */
+.sec { flex-direction: row; }
+.sec .foto { width: 36%; flex: none; min-height: 100%; }
+.sec .cuerpo { padding: 1rem 1.1rem; flex: 1; min-width: 0; }
+.sec .nom { font-size: 1.35rem; }
+.sec .precios { margin-top: .75rem; gap: 1rem; }
+.sec .precios .m { font-size: 1.2rem; }
+
+/* C: texto a la izquierda sobre foto a sangre, destacado + dos secundarios a la derecha */
+.bandaC > img { position: absolute; inset: 0 0 auto; height: 21rem; }
+.bandaC .velo { position: absolute; inset: 0 0 auto; height: 21rem; background: linear-gradient(to top, var(--dusk) 5%, rgba(18,38,43,.35) 70%, rgba(18,38,43,.55)); }
+@media (min-width: 1024px) {
+  .bandaC > img, .bandaC .velo { height: 100%; }
+  .bandaC > img { left: 0; width: 62%; }
+  .bandaC .velo { background: linear-gradient(to right, rgba(18,38,43,.55), rgba(18,38,43,.35) 35%, var(--dusk) 62%); }
+}
+.bandaC .envoltura { position: relative; display: grid; gap: 2.5rem; padding-top: 12rem; }
+@media (min-width: 1024px) { .bandaC .envoltura { padding-top: 0; grid-template-columns: minmax(0,5fr) minmax(0,7fr); gap: 4rem; align-items: center; } }
+.bandaC .cero { margin-top: 2rem; }
+.colC { display: grid; gap: 1rem; }
+@media (min-width: 640px) { .colC .secs { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; } }
+.colC .secs { display: grid; gap: 1rem; }
+
+/* D: foto panorámica arriba con el $0 encima; debajo, destacado ancho + secundarios apilados */
+.bandaD { padding-top: 0; }
+@media (min-width: 1024px) { .bandaD { padding-top: 0; } }
+.bandaD .panor { position: relative; min-height: 30rem; display: flex; align-items: end; }
+@media (min-width: 1024px) { .bandaD .panor { min-height: 38rem; } }
+.bandaD .panor > img { position: absolute; inset: 0; }
+.bandaD .panor .velo { position: absolute; inset: 0; background: linear-gradient(to top, var(--dusk) 4%, rgba(18,38,43,.45) 55%, rgba(18,38,43,.2)); }
+.bandaD .panor .envoltura { position: relative; width: 100%; padding-bottom: 2.5rem; display: grid; gap: 1.5rem; }
+@media (min-width: 1024px) { .bandaD .panor .envoltura { grid-template-columns: auto minmax(0,1fr); align-items: end; gap: 3.5rem; } }
+.bandaD .cero { font-size: clamp(7rem, 30vw, 14rem); }
+.bandaD .lado .cero-txt { margin-top: 1.25rem; }
+.filaD { display: grid; gap: 1rem; margin-top: 1rem; }
+@media (min-width: 1024px) { .filaD { grid-template-columns: minmax(0,2fr) minmax(0,1fr); gap: 1.5rem; } }
+@media (min-width: 1024px) { .dest.anchoD { flex-direction: row; } .dest.anchoD .foto { width: 48%; flex: none; aspect-ratio: auto; } .dest.anchoD .der { flex: 1; display: flex; flex-direction: column; } .dest.anchoD .cuerpo { flex: 1; padding-top: 1.75rem; } }
+.pilaD { display: grid; gap: 1rem; }
+
+.ejemplo { position: fixed; right: .5rem; bottom: .5rem; font: 700 .7rem "Space Mono", monospace; background: var(--ink); color: var(--sand); padding: .2rem .5rem; border-radius: .4rem; opacity: .7; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="flecha" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="nino" viewBox="0 0 24 24"><circle cx="12" cy="6" r="2.5"/><path d="M12 9v6M8 12h8M10 21l2-6 2 6"/></symbol>
+  <symbol id="reloj" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="lupa" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol>
+  <symbol id="wa"viewBox="0 0 24 24"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 18.7z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1-1.5-2-1-1 1a4 4 0 0 1-2-2l1-1-1-2z"/></symbol>
+</svg>
+
+<main id="raiz"></main>
+<span class="ejemplo">COMP · datos reales 24/09</span>
+
+<script>
+// Datos reales de hot_sales_publicas() en prod, 2026-09-24 (solo lectura).
+const W = "https://fotos.destinoyeventoslotus360.com/_d/1280/";
+const foto = (p) => W + p + ".jpg?v=2";
+const NG = [
+  { hotel: "Hesperia Playa El Agua", plan: "Todo incluido", precio: 50, chd: 25, edades: "5 a 10", hasta: "2026-10-15",
+    cond: "Reservando y viajando hasta el 15/10", foto: "hoteles/3/05-hesperia-playa-el-agua-foto9.jpg" },
+  { hotel: "Hesperia Isla Margarita", plan: "Todo incluido", precio: 55, chd: 27.5, edades: "5 a 10", hasta: "2026-10-15",
+    cond: "Reservando y viajando hasta el 15/10", foto: "hoteles/2/05-vista-panoramica-desde.jpg" },
+  { hotel: "Margarita Village", plan: "Habitación estándar", precio: 65, chd: 33, edades: "5 a 10", hasta: "2026-12-20",
+    cond: "Vigente hasta el 20/12", foto: "hoteles/1026/01-caption-2.jpg" },
+];
+const DESTINOS = [["Margarita", 17], ["Los Roques", 8], ["Canaima", 4], ["Chichiriviche", 3], ["Mérida", 1]];
+const OFERTAS = [
+  { hotel: "Casa Vacacional Playa del Sur", dest: "Chichiriviche", plan: "Habitación doble", m: "$50", u: "por noche, la habitación", foto: "hoteles/1064/02-fachada.png" },
+  { hotel: "Posada Gremary", dest: "Los Roques", plan: "3 días / 2 noches", m: "€286", u: "por persona, paquete", foto: "hoteles/283/00-caption.jpg" },
+  { hotel: "Refugio Turístico Mifafi", dest: "Mérida", plan: "Desayuno incluido", m: "$60", u: "por noche, triple", foto: "hoteles/319/manual-1784352668763-merida.jpg" },
+  { hotel: "Campamento Morichal", dest: "Canaima", plan: "5 días / 4 noches con vuelo", m: "$1.350", u: "por persona", foto: "hoteles/1021/04-canaima-posada-indigena-3.jpg" },
+  { hotel: "Cala Margarita Hotel Boutique", dest: "Margarita", plan: "Solo desayuno", m: "$290", u: "por noche, doble", foto: "hoteles/259/deluxe-piscina-privada-01.webp" },
+  { hotel: "Hesperia Playa El Agua", dest: "Margarita", plan: "Todo incluido", m: "$50", u: "por persona, noche", foto: "hoteles/3/05-hesperia-playa-el-agua-foto9.jpg", ng: true },
+  { hotel: "Venetur", dest: "Margarita", plan: "Studio", m: "$55", u: "por persona, noche", foto: "hoteles/254/02-images-2.jpg" },
+  { hotel: "Kokua Hotel Boutique", dest: "Margarita", plan: "Suite piscina", m: "$50", u: "por persona, noche", foto: "hoteles/1034/03-night.jpg" },
+];
+
+const q = new URLSearchParams(location.search);
+document.documentElement.dataset.tema = q.get("tema") || "claro";
+const op = q.get("op") || "a";
+const dias = Math.max(0, Math.ceil((new Date("2026-10-15T23:59:00-04:00") - new Date()) / 864e5));
+const ico = (id) => `<svg class="ico" aria-hidden="true"><use href="#${id}"/></svg>`;
+const img = (p, alt) => `<img src="${foto(p)}" alt="${alt}" loading="lazy">`;
+
+const opcionA = () => `
+<section><div class="envoltura pase">
+  <figure class="pase-foto">
+    ${img(NG[0].foto, "Piscina del Hesperia Playa El Agua")}
+    <span class="sello">${ico("nino")} Niño gratis</span>
+    <figcaption><b>${NG[0].hotel}</b>Playa El Agua · ${NG[0].plan}</figcaption>
+  </figure>
+  <div>
+    <h2 class="display">Niños gratis<br><em>en Margarita</em></h2>
+    <p class="bajada">En estos tres hoteles, un niño de 5 a 10 años por habitación no paga la estadía.</p>
+    <div class="cuenta"><span class="num">${dias} días</span><span class="txt">para reservar en los Hesperia</span></div>
+    <div class="filas">
+      ${NG.map((h) => `
+      <a class="fila" href="#">
+        <div class="mini">${img(h.foto, "")}</div>
+        <div><div class="nom">${h.hotel}</div><div class="det">${h.plan}</div><div class="cond">${h.cond}</div></div>
+        <div class="precio"><span class="m">$${h.precio}</span><span class="u">por adulto, noche</span></div>
+      </a>`).join("")}
+    </div>
+    <div class="acciones">
+      <a class="btn btn-firma" href="#">Cotizar con niño gratis ${ico("flecha")}</a>
+      <a class="btn btn-wa" href="#">${ico("wa")} Preguntar por WhatsApp</a>
+    </div>
+    <p class="nota">Un niño por habitación. Precios en habitación doble, sujetos a disponibilidad.</p>
+  </div>
+</div></section>`;
+
+const opcionB = () => `
+<section><div class="envoltura">
+  <div class="cab-b">
+    <div>
+      <h2 class="display">Niños gratis <em>en Margarita</em></h2>
+      <p>Un niño de 5 a 10 años por habitación no paga la estadía. Quedan <b class="mono">${dias} días</b> para reservar en los Hesperia.</p>
+    </div>
+    <a class="btn btn-sec" href="#">${ico("wa")} Preguntar por WhatsApp</a>
+  </div>
+  <div class="boletos">
+    ${NG.map((h) => `
+    <a class="boleto" href="#">
+      <div class="foto">${img(h.foto, h.hotel)}<span class="sello">${ico("nino")} Niño ${h.edades} gratis</span></div>
+      <div class="cuerpo">
+        <div class="nom">${h.hotel}</div>
+        <div class="det">Margarita · ${h.plan}</div>
+        <div class="cond"><b>${h.cond.toUpperCase()}</b></div>
+      </div>
+      <div class="talon">
+        <div>
+          <div><span class="m">$${h.precio}</span> <span class="u">por adulto, noche</span></div>
+          <div class="ahorro">El niño: $0 en vez de $${String(h.chd).replace(".", ",")} por noche</div>
+        </div>
+        <span class="ir">${ico("flecha")}</span>
+      </div>
+    </a>`).join("")}
+  </div>
+</div></section>`;
+
+const grilla = () => `
+<section style="padding-top:0"><div class="envoltura">
+  <div class="hs-cab">
+    <div><h2 class="display">Hot Sales</h2><p class="sub">Las ofertas que nuestros asesores venden hoy.</p></div>
+    <a class="ver" href="#">Ver todas ${ico("flecha")}</a>
+  </div>
+  <div class="chips" role="group" aria-label="Destino">
+    <button class="chip" aria-pressed="true">Todos <span class="c">33</span></button>
+    ${DESTINOS.map(([d, n]) => `<button class="chip" aria-pressed="false">${d} <span class="c">${n}</span></button>`).join("")}
+  </div>
+  <div class="grilla">
+    ${OFERTAS.map((o) => `
+    <a class="tarjeta" href="#">
+      <div class="foto">${img(o.foto, o.hotel)}${o.ng ? `<span class="sello">${ico("nino")} Niño gratis</span>` : ""}</div>
+      <div class="nom">${o.hotel}</div>
+      <div class="det">${o.dest} · ${o.plan}</div>
+      <div class="pie"><span class="m">${o.m}</span><span class="u">${o.u}</span></div>
+    </a>`).join("")}
+  </div>
+  <div class="mas"><a class="btn btn-sec" href="#">Ver las 33 ofertas ${ico("flecha")}</a></div>
+</div></section>`;
+
+// ---------- v2 ----------
+// ?fecha=2026-10-16 simula el día en que vencen los Hesperia: el bloque degrada solo.
+const hoy = q.get("fecha") ? new Date(q.get("fecha") + "T12:00:00-04:00") : new Date();
+const finDe = (h) => new Date(h.hasta + "T23:59:00-04:00");
+const vigentes = NG.filter((h) => finDe(h) >= hoy).sort((x, y) => finDe(x) - finDe(y));
+const diasA = (h) => Math.max(0, Math.ceil((finDe(h) - hoy) / 864e5));
+const dm = (iso) => iso.slice(8, 10) + "/" + iso.slice(5, 7);
+const coma = (n) => String(n).replace(".", ",");
+
+const chip = (h) => `<span class="cuenta-chip">${ico("reloj")} Quedan <b>${diasA(h)} días</b> · hasta el ${dm(h.hasta)}</span>`;
+const precios = (h) => `
+  <div class="precios">
+    <div><span class="lbl">Adulto, por noche</span><span class="m">$${h.precio}</span></div>
+    <span class="sello">${ico("nino")} 1 niño gratis</span>
+  </div>`;
+const cardDest = (h, extra = "") => `
+  <a class="bc dest ${extra}" href="#">
+    <div class="foto">${img(h.foto, h.hotel)}${chip(h)}</div>
+    <div class="der">
+      <div class="cuerpo">
+        <div class="nom">${h.hotel}</div>
+        <div class="det">Margarita · ${h.plan}</div>
+        <p class="cond">${h.cond}.</p>
+      </div>
+      <div class="talon">${precios(h)}<span class="ir">${ico("flecha")}</span></div>
+    </div>
+  </a>`;
+const cardSec = (h) => `
+  <a class="bc sec" href="#">
+    <div class="foto">${img(h.foto, h.hotel)}</div>
+    <div class="cuerpo">
+      <div class="nom">${h.hotel}</div>
+      <div class="det">${h.plan} · ${h.cond.replace("Reservando y viajando", "Viajando")}</div>
+      ${precios(h)}
+    </div>
+  </a>`;
+const acciones = () => `
+  <div class="acciones">
+    <a class="btn btn-firma" href="#">Cotizar con niño gratis ${ico("flecha")}</a>
+    <a class="btn btn-wa" href="#">${ico("wa")} WhatsApp</a>
+  </div>`;
+const minimo = () => Math.min(...vigentes.map((h) => h.precio));
+const numeral = () => `<div class="cero"><span class="desde">desde</span>$${minimo()}</div>`;
+const cero = () => `
+  ${numeral()}
+  <p class="cero-txt">por adulto, por noche, en habitación doble.</p>
+  <p class="gratis">${ico("nino")} Y 1 niño de 5 a 10 años gratis</p>`;
+
+const hero = () => `
+<section class="hero" style="padding:0">
+  ${img("hoteles/283/00-caption.jpg", "")}
+  <div class="velo-i"></div><div class="velo-b"></div>
+  <div class="envoltura">
+    <div class="hero-grid">
+      <div>
+        <div class="tablero" aria-label="Los Roques">${"LOS ROQUES".split("").map((l) => `<span>${l === " " ? "" : l}</span>`).join("")}</div>
+        <h1 class="display">Su próximo viaje, <em>a su medida.</em></h1>
+        <p class="desc">Hoteles, paquetes y full days con asesores reales detrás de cada cotización.</p>
+      </div>
+      <div class="pase-h">
+        <div class="f">${img("hoteles/283/00-caption.jpg", "")}</div>
+        <div class="c"><div class="display" style="font-size:1.6rem">Posada Gremary</div><div style="color:var(--ink-soft)">Los Roques · 3 días / 2 noches</div></div>
+        <div class="t"><div><span class="mono" style="font-weight:700;font-size:1.5rem">€286</span> <span style="font-size:.85rem;color:var(--ink-soft)">por persona</span></div><span class="btn btn-firma" style="min-height:40px">Ver oferta</span></div>
+      </div>
+    </div>
+    <div class="cotiz">
+      <div class="cotiz-barra">
+        <div><small>Servicio</small><b>Hospedaje</b></div><div><small>Destino</small><b>Margarita</b></div>
+        <div><small>Fecha</small><b>Elegir fecha</b></div><div><small>Adultos</small><b>2</b></div>
+        <span class="btn btn-firma">Cotizar</span>
+      </div>
+      <div class="cotiz-movil">${ico("lupa")} ¿A dónde quiere viajar?</div>
+    </div>
+  </div>
+</section>`;
+
+const [d0, ...resto] = vigentes;
+const secs = resto.slice(0, 2);
+
+const opcionC = () => !d0 ? "" : `
+<section class="banda bandaC">
+  ${img("hoteles/2/05-vista-panoramica-desde.jpg", "")}<div class="velo"></div>
+  <div class="envoltura">
+    <div>
+      <h2 class="display">Niños gratis <em>en Margarita</em></h2>
+      ${cero()}
+      ${acciones()}
+      <p class="cond-banda">Precios por adulto en habitación doble, sujetos a disponibilidad.</p>
+    </div>
+    <div class="colC">
+      ${cardDest(d0)}
+      ${secs.length ? `<div class="secs">${secs.map(cardSec).join("")}</div>` : ""}
+    </div>
+  </div>
+</section>`;
+
+const opcionD = () => !d0 ? "" : `
+<section class="banda bandaD">
+  <div class="panor">
+    ${img("hoteles/2/05-vista-panoramica-desde.jpg", "")}<div class="velo"></div>
+    <div class="envoltura">
+      <div>${numeral()}<p class="cero-txt">por adulto, por noche, en habitación doble.</p></div>
+      <div class="lado">
+        <h2 class="display">Niños gratis <em>en Margarita</em></h2>
+        <p class="gratis">${ico("nino")} Y 1 niño de 5 a 10 años gratis${vigentes.length > 1 ? `, en estos ${vigentes.length} hoteles` : ""}</p>
+        ${acciones()}
+      </div>
+    </div>
+  </div>
+  <div class="envoltura">
+    <div class="filaD">
+      ${cardDest(d0, "anchoD")}
+      ${secs.length ? `<div class="pilaD">${secs.map(cardSec).join("")}</div>` : ""}
+    </div>
+    <p class="cond-banda">Precios por adulto en habitación doble, sujetos a disponibilidad.</p>
+  </div>
+</section>`;
+
+const vistas = { a: () => opcionA() + grilla(), b: () => opcionB() + grilla(), c: () => hero() + opcionC() + grillaV2(), d: () => hero() + opcionD() + grillaV2() };
+function grillaV2() { return grilla().replace(' style="padding-top:0"', ""); }
+document.getElementById("raiz").innerHTML = (vistas[op] || vistas.c)();
+</script>
+</body>
+</html>

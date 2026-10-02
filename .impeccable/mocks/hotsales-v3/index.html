@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hot Sales tarjeta v3</title>
+<style>
+@font-face { font-family: "Archivo"; src: url("../../../app/fonts/archivo-cond-latin.woff2") format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; }
+@font-face { font-family: "Figtree"; src: url("../../../app/fonts/figtree-latin.woff2") format("woff2"); font-weight: 300 900; }
+@font-face { font-family: "Space Mono"; src: url("../../../app/fonts/space-mono-400-latin.woff2") format("woff2"); font-weight: 400; }
+@font-face { font-family: "Space Mono"; src: url("../../../app/fonts/space-mono-700-latin.woff2") format("woff2"); font-weight: 700; }
+
+:root {
+  --sand: #ede5d8; --sand-2: #e1d8c7; --card: #f7f1e6; --ink: #2c2620; --ink-soft: #6b5e50;
+  --acento: #A83E00; --acento-suave: #fbe6d5; --sobre-acento: #fff;
+  --linea: rgba(36,31,26,.14); --linea-fuerte: rgba(36,31,26,.24);
+  --dusk: #12262b; --dusk-text: #eaf1ef; --gold: #FBC000; --btn-ink: #3a1505;
+  --seafoam-bg: #e4eeec; --seafoam-text: #255954;
+  --degradado-marca: linear-gradient(90deg, #FC7300, #FBC000);
+  --r-card: 1rem; --r-control: .75rem; --r-pill: 999px;
+  --ease: cubic-bezier(.22,1,.36,1); --dur-media: 280ms;
+  --ancho: 78rem;
+}
+[data-tema="oscuro"] {
+  --sand: #0d1a1e; --sand-2: #142428; --card: #17292e; --ink: #eef3f1; --ink-soft: #9db3b0;
+  --acento: #FF8A3D; --acento-suave: #3a2113; --sobre-acento: #1a1206;
+  --linea: rgba(238,243,241,.12); --linea-fuerte: rgba(238,243,241,.22);
+  --seafoam-bg: #1c332f; --seafoam-text: #8fd4c9;
+}
+* { box-sizing: border-box; margin: 0; }
+html { font-size: 90%; }
+body { background: var(--sand); color: var(--ink); font-family: "Figtree", system-ui, sans-serif; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; border-radius: .5rem; }
+.mono { font-family: "Space Mono", monospace; }
+.display { font-family: "Archivo", sans-serif; font-stretch: 82%; font-weight: 700; letter-spacing: -.02em; line-height: 1; }
+svg.ico { width: 1.1rem; height: 1.1rem; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.envoltura { max-width: var(--ancho); margin: 0 auto; padding: 0 1.25rem; }
+@media (min-width: 640px) { .envoltura { padding: 0 2rem; } }
+
+/* Cabecera de la maqueta (no es parte del diseño) */
+.barra { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; justify-content: space-between; padding: 1.5rem 0 1rem; }
+.barra h1 { font-size: 2rem; }
+.controles { display: flex; gap: .5rem; flex-wrap: wrap; }
+.controles button { min-height: 44px; padding: 0 1rem; border: 1px solid var(--linea-fuerte); border-radius: var(--r-control); font-size: .875rem; font-weight: 600; }
+.controles button[aria-pressed="true"] { border-color: var(--acento); background: var(--acento-suave); color: var(--acento); }
+.nota { font-size: .875rem; color: var(--ink-soft); max-width: 60rem; }
+.nota b { color: var(--ink); }
+h2.fila-titulo { font-size: 1.5rem; margin: 2rem 0 .25rem; }
+.fila-sub { font-size: .875rem; color: var(--ink-soft); margin-bottom: 1rem; }
+
+/* Carril: carrusel 85% (máx 360px) en el teléfono, grilla 2/3/4 desde sm, igual que HotSalesSection */
+.carril { display: flex; gap: 1rem; overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 -1.25rem; padding: .5rem 1.25rem 1rem; }
+.carril > * { width: 85%; max-width: 360px; flex: none; scroll-snap-align: start; }
+@media (min-width: 640px) {
+  .carril { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; overflow: visible; margin: 0; padding: .5rem 0 1rem; }
+  .carril > * { width: auto; max-width: none; }
+}
+@media (min-width: 1024px) { .carril { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1280px) { .carril { grid-template-columns: repeat(4, 1fr); } }
+
+/* Boleto (copia de boleto-h / perforacion-h / franja-marca de globals.css) */
+.boleto { --muesca: .6rem; position: relative; display: flex; flex-direction: column; overflow: hidden; height: 100%;
+  border: 1px solid var(--linea); border-radius: var(--r-card); background: var(--card);
+  -webkit-mask: radial-gradient(circle var(--muesca) at 0 var(--corte), #0000 98%, #000) left / 51% 100% no-repeat, radial-gradient(circle var(--muesca) at 100% var(--corte), #0000 98%, #000) right / 51% 100% no-repeat;
+  mask: radial-gradient(circle var(--muesca) at 0 var(--corte), #0000 98%, #000) left / 51% 100% no-repeat, radial-gradient(circle var(--muesca) at 100% var(--corte), #0000 98%, #000) right / 51% 100% no-repeat;
+  transition: transform var(--dur-media) var(--ease), border-color var(--dur-media) var(--ease); }
+.boleto:hover { transform: translateY(-.25rem); border-color: var(--linea-fuerte); }
+.talon { position: relative; flex: none; border-top: 2px dashed var(--linea-fuerte); }
+.franja { position: absolute; inset: auto 0 0 0; height: .25rem; background-image: var(--degradado-marca); }
+.foto { position: relative; overflow: hidden; background: var(--sand-2); }
+.foto img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.etiqueta { display: inline-flex; align-items: center; gap: .25rem; border-radius: var(--r-pill); padding: .125rem .625rem; font-size: .75rem; font-weight: 700; }
+.corazon { position: absolute; top: .5rem; right: .5rem; z-index: 2; width: 44px; height: 44px; display: grid; place-items: center; border-radius: var(--r-pill); background: color-mix(in srgb, var(--card) 80%, transparent); backdrop-filter: blur(4px); }
+.puntos { position: absolute; left: 0; right: 0; bottom: .625rem; display: flex; justify-content: center; gap: .3rem; z-index: 2; }
+.puntos i { width: .375rem; height: .375rem; border-radius: var(--r-pill); background: rgba(255,255,255,.6); }
+.puntos i:first-child { background: #fff; width: 1rem; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: .375rem; min-height: 44px; padding: 0 1rem; border-radius: var(--r-control); font-weight: 700; font-size: .875rem; }
+.btn-primario { background: var(--acento); color: var(--sobre-acento); }
+.btn-icono { width: 44px; height: 44px; flex: none; display: grid; place-items: center; border: 1px solid var(--linea-fuerte); border-radius: var(--r-control); }
+
+/* ── ACTUAL (reproducción aproximada de TicketCard hoy) ── */
+.v2 { --corte: calc(100% - 5.25rem); }
+.v2 .foto { aspect-ratio: 3 / 4; }
+.v2 .badge { position: absolute; left: .75rem; top: .75rem; z-index: 2; background: var(--dusk); color: var(--dusk-text); }
+.v2 .contador { position: absolute; right: .75rem; bottom: .625rem; z-index: 2; font-size: .75rem; font-weight: 700; padding: .125rem .5rem; border-radius: var(--r-control); background: rgba(18,38,43,.7); color: var(--dusk-text); }
+.v2 .cuerpo { flex: 1; display: flex; flex-direction: column; padding: .875rem 1rem 1rem; }
+.v2 .chip { display: inline-flex; align-items: center; gap: .375rem; max-width: 100%; align-self: flex-start; margin-bottom: .375rem; padding: .25rem .625rem; border: 1px solid var(--linea-fuerte); border-radius: var(--r-pill); background: var(--sand-2); font-size: .75rem; font-weight: 600; }
+.v2 .chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.v2 h3 { font-size: 1rem; font-weight: 700; line-height: 1.375; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.v2 .resumen { margin-top: .375rem; font-size: .75rem; line-height: 1.375; color: var(--ink-soft); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.v2 .acciones { margin-top: auto; padding-top: .75rem; display: flex; gap: .5rem; }
+.v2 .acciones .btn-primario { flex: 1; }
+.v2 .talon { height: 5.25rem; display: flex; align-items: center; padding: 0 1rem; }
+.v2 .talon > div { min-width: 0; flex: 1; }
+.v2 .codigo { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.v2 .precio { font-size: 1rem; font-weight: 700; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.v2 .vig { font-size: .75rem; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── PROPUESTA v3 ──
+   Alturas fijas por fila: foto 4:3, precio 2 líneas, título 2 líneas reservadas,
+   hotel 1 línea, resumen 2 líneas reservadas, talón 4.5rem. Ninguna depende del texto. */
+.v3 { --corte: calc(100% - 4.5rem); }
+.v3 .foto { aspect-ratio: 4 / 3; }
+.v3 .sello { position: absolute; left: .75rem; top: .75rem; z-index: 2; background: var(--gold); color: var(--btn-ink); }
+.v3 .referencial { position: absolute; left: .75rem; bottom: .625rem; z-index: 2; font-size: .75rem; font-weight: 700; text-transform: uppercase; padding: .125rem .5rem; border-radius: var(--r-control); background: rgba(18,38,43,.8); color: var(--dusk-text); }
+.v3 .cuerpo { flex: 1; display: flex; flex-direction: column; padding: .875rem 1rem 1rem; }
+.v3 .precio { display: flex; align-items: baseline; gap: .375rem; white-space: nowrap; }
+.v3 .precio .desde { font-size: .75rem; font-weight: 600; color: var(--ink-soft); }
+.v3 .precio .monto { font-size: 1.5rem; font-weight: 700; line-height: 2rem; font-variant-numeric: tabular-nums; color: var(--acento); }
+.v3 .precio.apagado .monto { font-size: 1rem; color: var(--ink-soft); }
+.v3 .unidad { font-size: .75rem; line-height: 1rem; height: 1rem; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.v3 h3 { margin-top: .625rem; font-size: 1rem; font-weight: 700; line-height: 1.375rem; height: 2.75rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.v3 .hotel { margin-top: .25rem; display: flex; align-items: center; gap: .375rem; height: 1.25rem; font-size: .875rem; font-weight: 600; color: var(--ink-soft); }
+.v3 .hotel span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.v3 a.hotel:hover { color: var(--acento); }
+.v3 .resumen { margin-top: .5rem; font-size: .75rem; line-height: 1rem; height: 2rem; color: var(--ink-soft); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.v3 .talon { height: 4.5rem; display: flex; align-items: center; gap: .5rem; padding: 0 1rem; }
+.v3 .talon .dato { min-width: 0; flex: 1; }
+.v3 .codigo { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.v3 .vig { font-size: .75rem; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Medición de nitidez (herramienta de la maqueta) */
+.medida { position: absolute; left: 0; right: 0; top: 0; z-index: 3; padding: .25rem .5rem; font: 700 .75rem/1.3 "Space Mono", monospace; color: #fff; background: rgba(0,0,0,.72); display: none; }
+.medida.mal { background: rgba(179,38,30,.88); }
+.medida.ok { background: rgba(15,122,64,.88); }
+body.midiendo .medida { display: block; }
+</style>
+</head>
+<body>
+<div class="envoltura">
+  <div class="barra">
+    <div>
+      <h1 class="display">Hot Sales — tarjeta v3</h1>
+      <p class="nota">Maqueta para revisión. <b>Fotos reales del catálogo</b> (servidas por el Worker igual que en la web); textos y precios <b>de ejemplo</b>.</p>
+    </div>
+    <div class="controles">
+      <button type="button" id="btn-medir" aria-pressed="false">Medir nitidez</button>
+      <button type="button" id="btn-tema" aria-pressed="false">Modo oscuro</button>
+    </div>
+  </div>
+  <p class="nota">"Medir nitidez" muestra, en <b>esta</b> pantalla, cuántas veces se amplía cada foto: rojo = el navegador estira píxeles (se ve borroso), verde = nítida. Las dos filas usan la misma lógica de carga que la web; solo cambia la forma de la foto y el <code>sizes</code>.</p>
+
+  <h2 class="display fila-titulo">Hoy</h2>
+  <p class="fila-sub">Foto 3:4 vertical · insignia + corazón + puntos + contador · hotel en chip y otra vez en el título · precio y nota apretados en el talón.</p>
+  <div class="carril" id="fila-v2"></div>
+
+  <h2 class="display fila-titulo">Propuesta</h2>
+  <p class="fila-sub">Foto 4:3 · precio arriba en grande · título sin el hotel repetido · sobre la foto solo corazón y puntos (y el sello de niño gratis cuando aplica) · filas de alto fijo · talón con destino, vigencia y botones.</p>
+  <div class="carril" id="fila-v3"></div>
+  <div style="height:3rem"></div>
+</div>
+
+<script>
+const CDN = "https://fotos.destinoyeventoslotus360.com/_d/";
+// Mismo mapeo que lib/supabase/imageLoader.ts
+const derivado = (w) => (w <= 256 ? 256 : w <= 384 ? 384 : w <= 640 ? 640 : w <= 1280 ? 1280 : 2048);
+// Candidatos que arma next/image con los tamaños por defecto (allSizes >= 640 * 0.33)
+const CANDIDATOS = [256, 384, 640, 750, 828, 1080, 1200, 1920, 2048, 3840];
+const srcset = (ruta) => CANDIDATOS.map((w) => `${CDN}${derivado(w)}/${ruta}?v=2 ${w}w`).join(", ");
+const SIZES_HOY = "(min-width: 1280px) 280px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 88vw";
+const SIZES_V3 = "(min-width: 1280px) 300px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 85vw";
+
+const OFERTAS = [
+  { ruta: "hoteles/3/05-hesperia-playa-el-agua-foto9.jpg.jpg", hotel: "Hotel Costa Azul Playa", titulo: "Todo incluido 3 días / 2 noches", destino: "Margarita", monto: "$85", unidad: "por persona / noche · ocupación doble", desde: false, vig: "Hasta el 30 nov", resumen: "Frente al mar, comidas y bebidas incluidas, piscina y animación.", fotos: 5 },
+  { ruta: "hoteles/1034/03-night.jpg.jpg", hotel: "Posada Brisa Andina", titulo: "Escapada romántica con cena", destino: "Mérida", monto: "Bs 3.412,50", unidad: "por persona / noche · ocupación doble", desde: false, vig: "Viajes hasta el 15 dic", resumen: "Habitación con vista, cena para dos y desayuno.", fotos: 3, nino: 1 },
+  { ruta: "hoteles/2/05-vista-panoramica-desde.jpg.jpg", hotel: "Hotel Vista Caribe", titulo: "Hotel Vista Caribe · Plan familiar verano", destino: "Puerto La Cruz", monto: "$120", unidad: "por persona · plan todo incluido", desde: true, vig: "Hasta el 31 oct", resumen: "Dos niños gratis compartiendo con dos adultos.", fotos: 4 },
+  { ruta: "hoteles/254/02-images-2.jpg.jpg", hotel: "Posada Los Médanos", titulo: "Full day con traslado", destino: "Falcón", monto: null, unidad: "", desde: false, vig: "", resumen: "Traslado ida y vuelta, almuerzo típico.", fotos: 1, referencial: true },
+];
+
+const ico = {
+  corazon: '<svg class="ico" viewBox="0 0 24 24"><path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z"/></svg>',
+  carrito: '<svg class="ico" viewBox="0 0 24 24"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2 2h3l2.7 12.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>',
+  flecha: '<svg class="ico" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  hotel: '<svg class="ico" viewBox="0 0 24 24" style="width:.95rem;height:.95rem"><path d="M3 21V7l9-4 9 4v14M9 21v-4h6v4M8 10h.01M12 10h.01M16 10h.01M8 14h.01M16 14h.01"/></svg>',
+};
+const puntos = (n) => (n > 1 ? `<div class="puntos" aria-hidden="true">${"<i></i>".repeat(Math.min(n, 5))}</div>` : "");
+const img = (o, sizes) => `<img alt="" loading="lazy" srcset="${srcset(o.ruta)}" sizes="${sizes}" src="${CDN}640/${o.ruta}?v=2"><span class="medida"></span>`;
+
+function tarjetaHoy(o) {
+  const precio = o.monto ? `${o.desde ? "Desde " : ""}${o.monto} ${o.unidad}` : "Consultar disponibilidad";
+  const nombre = o.titulo.toLowerCase().includes(o.hotel.toLowerCase()) ? o.titulo : `${o.hotel} · ${o.titulo}`;
+  return `<article class="boleto v2">
+    <div class="foto">${img(o, SIZES_HOY)}
+      <span class="etiqueta badge">Promoción</span>
+      <button class="corazon" aria-label="Guardar">${ico.corazon}</button>
+      ${puntos(o.fotos)}${o.fotos > 1 ? `<span class="contador mono">1/${o.fotos}</span>` : ""}
+    </div>
+    <div class="cuerpo">
+      <a class="chip" href="#">${ico.hotel}<span>${o.hotel}</span></a>
+      <h3>${nombre}</h3>
+      <p class="resumen">${o.resumen}</p>
+      ${o.nino ? `<p style="margin-top:.5rem"><span class="etiqueta" style="background:var(--seafoam-bg);color:var(--seafoam-text)">${o.nino} niño gratis</span></p>` : ""}
+      <div class="acciones"><a class="btn btn-primario" href="#">${ico.flecha}</a><button class="btn-icono" aria-label="Carrito">${ico.carrito}</button></div>
+    </div>
+    <div class="talon"><div>
+      <p class="codigo mono">${o.destino}</p>
+      <p class="precio mono" style="${o.monto ? "" : "color:var(--ink-soft)"}">${precio}</p>
+      ${o.vig ? `<p class="vig">${o.vig}</p>` : ""}
+    </div><span class="franja"></span></div>
+  </article>`;
+}
+
+function tarjetaV3(o) {
+  // Sin nombre duplicado: si el título ya trae el hotel, la línea de hotel muestra el destino.
+  const tituloTraeHotel = o.titulo.toLowerCase().includes(o.hotel.toLowerCase());
+  const titulo = tituloTraeHotel ? o.titulo.replace(new RegExp(`^${o.hotel}\\s*·\\s*`, "i"), "") : o.titulo;
+  return `<article class="boleto v3">
+    <div class="foto">${img(o, SIZES_V3)}
+      ${o.nino ? `<span class="etiqueta sello">Regalo: ${o.nino} niño gratis</span>` : ""}
+      <button class="corazon" aria-label="Guardar ${titulo}">${ico.corazon}</button>
+      ${puntos(o.fotos)}
+      ${o.referencial ? `<span class="referencial">Imagen referencial</span>` : ""}
+    </div>
+    <div class="cuerpo">
+      <div class="precio mono ${o.monto ? "" : "apagado"}">
+        ${o.monto ? `${o.desde ? `<span class="desde">desde</span>` : ""}<span class="monto">${o.monto}</span>` : `<span class="monto">Consultar disponibilidad</span>`}
+      </div>
+      <p class="unidad">${o.unidad || "&nbsp;"}</p>
+      <h3><a href="#">${titulo}</a></h3>
+      <a class="hotel" href="#">${ico.hotel}<span>${o.hotel}</span></a>
+      <p class="resumen">${o.resumen}</p>
+    </div>
+    <div class="talon">
+      <div class="dato"><p class="codigo mono">${o.destino}</p><p class="vig">${o.vig || "&nbsp;"}</p></div>
+      <button class="btn-icono" aria-label="Agregar al carrito">${ico.carrito}</button>
+      <a class="btn btn-primario" href="#">Cotizar ${ico.flecha}</a>
+      <span class="franja"></span>
+    </div>
+  </article>`;
+}
+
+document.getElementById("fila-v2").innerHTML = OFERTAS.map(tarjetaHoy).join("");
+document.getElementById("fila-v3").innerHTML = OFERTAS.map(tarjetaV3).join("");
+
+// Ampliación real con object-fit: cover = máx(ancho_caja·dpr / ancho_fuente, alto_caja·dpr / alto_fuente)
+function medir() {
+  const dpr = window.devicePixelRatio || 1;
+  document.querySelectorAll(".foto img").forEach((im) => {
+    const out = im.nextElementSibling;
+    if (!im.naturalWidth) { out.textContent = "cargando…"; return; }
+    const r = im.getBoundingClientRect();
+    const escala = Math.max((r.width * dpr) / im.naturalWidth, (r.height * dpr) / im.naturalHeight);
+    const archivo = (im.currentSrc.match(/_d\/(\d+)\//) || [])[1];
+    out.className = "medida " + (escala > 1.15 ? "mal" : "ok");
+    out.textContent = `_d/${archivo} → ${im.naturalWidth}×${im.naturalHeight} · ampliada ${escala.toFixed(2).replace(".", ",")}× (dpr ${dpr})`;
+  });
+}
+document.querySelectorAll(".foto img").forEach((im) => im.addEventListener("load", medir));
+window.addEventListener("resize", medir);
+
+const btnMedir = document.getElementById("btn-medir");
+btnMedir.onclick = () => {
+  const on = document.body.classList.toggle("midiendo");
+  btnMedir.setAttribute("aria-pressed", on);
+  medir();
+};
+const btnTema = document.getElementById("btn-tema");
+btnTema.onclick = () => {
+  const oscuro = document.documentElement.dataset.tema !== "oscuro";
+  document.documentElement.dataset.tema = oscuro ? "oscuro" : "";
+  btnTema.setAttribute("aria-pressed", oscuro);
+};
+</script>
+</body>
+</html>

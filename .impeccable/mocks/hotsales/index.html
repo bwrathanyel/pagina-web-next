@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Comps Hot Sales</title>
+<style>
+body { margin: 0; background: #2a2622; color: #eee; font: 15px/1.4 system-ui, sans-serif; }
+header { position: sticky; top: 0; z-index: 2; display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; padding: .75rem 1rem; background: #1b1916; }
+header b { margin-right: 1rem; }
+button { font: inherit; min-height: 40px; padding: 0 1rem; border-radius: 999px; border: 1px solid #555; background: transparent; color: #eee; cursor: pointer; }
+button[aria-pressed="true"] { background: #FC7300; border-color: #FC7300; color: #3a1505; font-weight: 700; }
+.sep { width: 1rem; }
+.lienzo { display: flex; gap: 2rem; align-items: flex-start; padding: 1.5rem; }
+.marco { flex: none; }
+.marco p { margin: 0 0 .5rem; color: #aaa; }
+.esc { width: 1440px; height: 2100px; transform: scale(.62); transform-origin: 0 0; border: 0; background: #fff; }
+.esc-caja { width: 893px; height: 1302px; overflow: hidden; border-radius: 8px; }
+.mov { width: 390px; height: 1302px; border: 0; border-radius: 8px; background: #fff; }
+</style>
+</head>
+<body>
+<header>
+  <b>Hot Sales + niños gratis</b>
+  <button data-op="c" aria-pressed="true">C · Banda con destacado (v2)</button>
+  <button data-op="d" aria-pressed="false">D · Panorámica con $0 (v2)</button>
+  <button data-op="a" aria-pressed="false">A (v1)</button>
+  <button data-op="b" aria-pressed="false">B (v1)</button>
+  <span class="sep"></span>
+  <button data-tema="claro" aria-pressed="true">Claro</button>
+  <button data-tema="oscuro" aria-pressed="false">Oscuro</button>
+  <span class="sep"></span>
+  <button data-fecha="" aria-pressed="true">Hoy</button>
+  <button data-fecha="2026-10-16" aria-pressed="false">16/10 (vencen los Hesperia)</button>
+</header>
+<div class="lienzo">
+  <div class="marco"><p>Escritorio 1440 (se desplaza dentro del marco)</p><div class="esc-caja"><iframe class="esc" id="esc" title="Escritorio"></iframe></div></div>
+  <div class="marco"><p>Teléfono 390</p><iframe class="mov" id="mov" title="Teléfono"></iframe></div>
+</div>
+<script>
+let op = "c", tema = "claro", fecha = "";
+const pintar = () => {
+  const src = `comp.html?op=${op}&tema=${tema}${fecha ? `&fecha=${fecha}` : ""}`;
+  document.getElementById("esc").src = src;
+  document.getElementById("mov").src = src;
+  document.querySelectorAll("[data-op]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.op === op));
+  document.querySelectorAll("[data-tema]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.tema === tema));
+  document.querySelectorAll("[data-fecha]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.fecha === fecha));
+};
+document.querySelectorAll("[data-op]").forEach((b) => b.onclick = () => { op = b.dataset.op; pintar(); });
+document.querySelectorAll("[data-tema]").forEach((b) => b.onclick = () => { tema = b.dataset.tema; pintar(); });
+document.querySelectorAll("[data-fecha]").forEach((b) => b.onclick = () => { fecha = b.dataset.fecha; pintar(); });
+pintar();
+</script>
+</body>
+</html>
