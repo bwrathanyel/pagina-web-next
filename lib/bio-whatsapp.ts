@@ -4,50 +4,68 @@ import { whatsappHref } from "@/lib/whatsapp";
 // Link fijo de WhatsApp en bio de redes (/wa/<canal>): a diferencia de
 // /whatsapp/[codigo] y /ir/[token] (contacto directo por-conversación, con
 // fila pendiente y TTL 48h), acá no hay identificador previo que resolver —
-// cada visita real rota un asesor y crea un lead en el momento, vía la Edge
-// Function bio-whatsapp-click (server-side, con secreto compartido).
+// cada visita real (dentro de la ventana de 24h de abajo) rota un asesor y
+// crea un lead en el momento, vía la Edge Function bio-whatsapp-click
+// (server-side, con secreto compartido).
 //
-// Para que un doble-tap / refresh / reabrir el link no cree un lead nuevo y
-// rote otro asesor cada vez, la primera visita real deja una cookie de 24h
-// con la URL de WhatsApp ya resuelta (mismo asesor). Mientras dure, se
-// redirige directo desde la cookie sin tocar la Edge Function ni la base.
+// v2 (reparto inteligente, 2026-09-28): una sola cookie `wa_bio`, Path=/, 180
+// días, con {asesor,url,ts} -- antes eran 3 cookies por canal con Path
+// scopeado a su propia ruta, lo que hacía que un cliente que volvía por OTRA
+// red nunca se reconociera (el problema real que motivó este cambio). Con
+// Path=/ la misma cookie se lee sin importar por cuál de los 4 links entre.
+//   - <24h desde el último clic: redirige directo con la URL ya resuelta
+//     (mismo asesor), sin tocar la Edge Function ni la base -- evita que un
+//     doble-tap/refresh cree un lead nuevo y rote otro asesor.
+//   - 24h-180 días: SÍ crea un lead nuevo (persona real, nueva conversación),
+//     pero manda el asesor de la cookie como "preferido" -- si ese asesor
+//     sigue activo y en turno en ese momento, el reparto (elegir_asesor_bio)
+//     se lo vuelve a asignar a él en vez de rotar a otro.
+//   - >180 días o sin cookie: en blanco, rota como cualquier visitante nuevo.
 
-const CANALES = ["instagram", "facebook", "tiktok"] as const;
+const CANALES = ["instagram", "facebook", "tiktok", "whatsapp"] as const;
 export type CanalBio = (typeof CANALES)[number];
 
 export function esCanalBio(v: string): v is CanalBio {
   return (CANALES as readonly string[]).includes(v);
 }
 
-// Ruta pública por canal (/ig/whatsapp, /fb/whatsapp, /tiktok/whatsapp) --
-// más legible en una bio que /wa/<canal>. El Path de la cookie debe calzar
-// exacto con la ruta real o el navegador nunca la manda de vuelta.
-const RUTA_BIO: Record<CanalBio, string> = {
-  instagram: "/ig/whatsapp",
-  facebook: "/fb/whatsapp",
-  tiktok: "/tiktok/whatsapp",
-};
+const ORIGENES = ["post", "story", "reel", "live", "bio", "jefa"] as const;
+type OrigenBio = (typeof ORIGENES)[number];
 
-const COOKIE_MAX_AGE = 60 * 60 * 24; // 24h, mismo criterio de "replay" que reclamar_contacto_directo
-
-function nombreCookie(canal: CanalBio): string {
-  return `wa_bio_${canal}`;
+function origenDesdeQuery(request: Request, canal: CanalBio): OrigenBio {
+  if (canal === "whatsapp") return "jefa"; // /asesor: desvío del WhatsApp de la jefa, no una bio
+  const o = new URL(request.url).searchParams.get("o");
+  return (ORIGENES as readonly string[]).includes(o ?? "") ? (o as OrigenBio) : "bio";
 }
 
-function leerCookie(request: Request, nombre: string): string | null {
+const COOKIE_NOMBRE = "wa_bio";
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 180; // 180 días -- ventana de "cliente que vuelve"
+const REPLAY_MS = 24 * 60 * 60 * 1000; // <24h desde el último clic = mismo click, no nuevo lead
+
+type CookieBio = { asesor: string | null; url: string; ts: number };
+
+function leerCookieBio(request: Request): CookieBio | null {
   const raw = request.headers.get("cookie") ?? "";
   for (const parte of raw.split(";")) {
     const i = parte.indexOf("=");
     if (i === -1) continue;
-    if (parte.slice(0, i).trim() === nombre) {
-      try {
-        return decodeURIComponent(parte.slice(i + 1).trim());
-      } catch {
-        return null;
+    if (parte.slice(0, i).trim() !== COOKIE_NOMBRE) continue;
+    try {
+      const data = JSON.parse(decodeURIComponent(parte.slice(i + 1).trim()));
+      if (typeof data?.url === "string" && typeof data?.ts === "number") {
+        return { asesor: typeof data.asesor === "string" ? data.asesor : null, url: data.url, ts: data.ts };
       }
+    } catch {
+      return null;
     }
+    return null;
   }
   return null;
+}
+
+function setCookieBio(valor: CookieBio): string {
+  const json = encodeURIComponent(JSON.stringify(valor));
+  return `${COOKIE_NOMBRE}=${json}; Max-Age=${COOKIE_MAX_AGE}; Path=/; HttpOnly; Secure; SameSite=Lax`;
 }
 
 function redirect(location: string, setCookie?: string): Response {
@@ -88,15 +106,17 @@ export async function resolverBioWhatsapp(
 ): Promise<Response> {
   if (!esCanalBio(canal)) return paginaHumana();
 
-  const cookieNombre = nombreCookie(canal);
-  const cacheado = leerCookie(request, cookieNombre);
-  if (cacheado) return redirect(sinTexto(cacheado));
+  const cookie = leerCookieBio(request);
+  if (cookie && Date.now() - cookie.ts < REPLAY_MS) {
+    return redirect(sinTexto(cookie.url));
+  }
 
   const url = process.env.BIO_WHATSAPP_CLICK_URL;
   const key = process.env.CONTACTO_DIRECTO_API_KEY;
   if (!url || !key) return paginaHumana();
 
   const h = request.headers;
+  const origen = origenDesdeQuery(request, canal);
   let data: Record<string, unknown> | null = null;
   try {
     const upstream = await fetch(url, {
@@ -104,6 +124,8 @@ export async function resolverBioWhatsapp(
       headers: { "Content-Type": "application/json", "x-contacto-directo-key": key },
       body: JSON.stringify({
         canal,
+        origen,
+        asesor_previo: cookie?.asesor ?? null,
         user_agent: h.get("user-agent") ?? "",
         purpose: h.get("purpose") ?? "",
         sec_purpose: h.get("sec-purpose") ?? "",
@@ -127,7 +149,7 @@ export async function resolverBioWhatsapp(
   }
 
   const destino = sinTexto(data.whatsapp_url);
-  const cookie = `${cookieNombre}=${encodeURIComponent(destino)}; ` +
-    `Max-Age=${COOKIE_MAX_AGE}; Path=${RUTA_BIO[canal]}; HttpOnly; Secure; SameSite=Lax`;
-  return redirect(destino, cookie);
+  const asesor = typeof data.asesor === "string" && data.asesor ? data.asesor : null;
+  const setCookie = setCookieBio({ asesor, url: destino, ts: Date.now() });
+  return redirect(destino, setCookie);
 }
