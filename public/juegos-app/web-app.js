@@ -18,6 +18,7 @@
     token_invalido: 'La partida venció. Empieza una nueva.',
     sin_giro: 'Primero hay que ganar el minijuego.',
     tiempo_imposible: 'No pudimos validar la partida. Intenta de nuevo.',
+    nivel_invalido: 'La partida se desincronizó. Empieza una nueva.',
     datos_invalidos: 'Revisa tu nombre y tu número de WhatsApp.',
     turnstile: 'No pudimos verificar que eres una persona. Intenta de nuevo.',
     seguridad: 'No cargó la verificación de seguridad. Recarga la página.',
@@ -123,8 +124,28 @@
     L.el('h2', { class: 'title' }, title),
     lead ? L.el('p', { class: 'lead' }, lead) : null,
   ];
-  const paramsDe = (id) => ({ ...CFG[id].level, lives: CFG[id].lives });
-  const reglaDe = (id) => { try { return L.games[id].describeLevel(paramsDe(id)); } catch { return ''; } };
+  // Intentos del nivel n (aterriza y corte): los fallos de los niveles anteriores se descuentan y el
+  // nivel 3 completa hasta `minLevel3`, igual que en el stand (src/ladder.js).
+  function vidasDe(id, n, fallos) {
+    const v = CFG[id].lives;
+    if (!v) return null;
+    const left = v.start - fallos;
+    return n === 3 && left < v.minLevel3 ? { lives: v.minLevel3, bonus: true } : { lives: left, bonus: false };
+  }
+  const paramsDe = (id, n = 1, fallos = 0) => {
+    const vidas = vidasDe(id, n, fallos);
+    return { ...CFG[id].levels[n - 1], lives: vidas ? vidas.lives : null };
+  };
+  const reglaDe = (id, n = 1, fallos = 0) => { try { return L.games[id].describeLevel(paramsDe(id, n, fallos)); } catch { return ''; } };
+
+  // Con un premio ya reclamado, las partidas del mismo dispositivo son solo por diversión (sin servidor,
+  // sin giro). Dura lo que el cupón (30 días); el servidor igual limita un descuento por teléfono.
+  const RECLAMADO = 'juegos_reclamado';
+  const recreativo = () => {
+    const t = L.store.get(RECLAMADO);
+    return Number.isFinite(t) && Date.now() - t < 30 * 864e5;
+  };
+  const AVISO_RECREATIVO = 'Ya reclamaste tu premio: desde ahora los juegos son solo por diversión y ya no suman giros ni premios.';
 
   function menu() {
     L.store.del(SESION);
@@ -137,33 +158,42 @@
       return card;
     });
     show('menu',
-      ...head('Juega y viaja', 'Gana un minijuego y gira la ruleta', 'Descuentos y premios para tu próximo viaje. Elige un juego:'),
+      ...(recreativo()
+        ? head('Modo recreativo', 'Sigue jugando por diversión', 'Elige un juego:')
+        : head('Juega y viaja', 'Gana un minijuego y gira la ruleta', 'Supera los 3 niveles de un juego para ganar un giro. Elige uno:')),
+      recreativo() ? L.el('p', { class: 'jw-aviso' }, AVISO_RECREATIVO) : null,
       L.el('div', { class: 'jw-grid' }, cards));
   }
 
   function intro(id) {
     const g = L.games[id];
+    const recrea = recreativo();
     show('intro',
       L.el('div', { class: 'jw-hero' }, L.svg(g.icon)),
       ...head('Minijuego', g.title, g.tagline),
-      L.el('p', { class: 'jw-rule' }, reglaDe(id)),
-      btn('Jugar', 'btn-primary', async (b) => {
+      L.el('p', { class: 'jw-rule' }, `Nivel 1: ${reglaDe(id)}`),
+      L.el('p', { class: 'jw-aviso' }, recrea ? AVISO_RECREATIVO : 'Supera los 3 niveles seguidos para ganar un giro de la ruleta.'),
+      btn(recrea ? 'Jugar por diversión' : 'Jugar', 'btn-primary', async (b) => {
         b.disabled = true;
         try {
           // La sesión se pide mientras corre la cuenta atrás; jugar() espera el token antes de arrancar.
-          const sesion = api('iniciar', { juego: id });
-          sesion.catch(() => {});
+          const sesion = recrea ? null : api('iniciar', { juego: id });
+          if (sesion) sesion.catch(() => {});
           await jugar(id, sesion);
         } catch (e) { L.toast(e.message); b.disabled = false; }
       }));
     backBtn.onclick = menu;
   }
 
-  function cuentaAtras(stage, texto) {
+  // 3-2-1 de cada nivel, con el número de nivel, los intentos (si el juego los usa) y el aviso que toque.
+  function cuentaAtras(stage, { n, texto, vidas, aviso }) {
     return new Promise((resolve) => {
       const num = L.el('div', { class: 'ladder-count-num' }, '3');
+      const intentos = vidas && `${vidas.bonus ? '¡Intento extra! Tienes' : n === 1 ? 'Tienes' : 'Te quedan'} ${vidas.lives} ${vidas.lives === 1 ? 'intento' : 'intentos'}${n === 1 ? ' en total' : ''}`;
       stage.append(L.el('div', { class: 'ladder-count' }, L.el('div', { class: 'ladder-count-card' },
-        L.el('div', { class: 'eyebrow' }, 'Prepárate'), L.el('h2', { class: 'title' }, texto), num)));
+        L.el('div', { class: 'eyebrow' }, `Nivel ${n} de 3`), L.el('h2', { class: 'title' }, texto),
+        intentos ? L.el('p', { class: 'ladder-count-lives' }, intentos) : null,
+        aviso ? L.el('p', { class: 'lead' }, aviso) : null, num)));
       let left = 3;
       const timer = setInterval(() => {
         left -= 1;
@@ -181,40 +211,77 @@
     });
   }
 
+  const errorPantalla = (e) => show('error', ...head('Ups', e.message), btn('Volver a los juegos', 'btn-primary', menu));
+
+  // Los 3 niveles seguidos; fallar uno termina la partida. El resultado de cada nivel se registra en el
+  // servidor mientras corre la cuenta atrás del siguiente, así que nunca hay una espera visible.
+  // `sesion` es la promesa de `iniciar`; null = modo recreativo (sin servidor).
   async function jugar(id, sesion) {
     const g = L.games[id];
-    const stage = L.el('div', { class: 'game-stage' });
-    show('juego', stage);
-    const params = paramsDe(id);
-    let go;
-    const ready = new Promise((r) => { go = r; });
-    const playing = g.playLevel(stage, 1, params, ready);
-    await cuentaAtras(stage, reglaDe(id));
-    let token;
-    try {
-      ({ token } = await sesion);
-    } catch (e) {
-      return show('error', ...head('Ups', e.message), btn('Volver a los juegos', 'btn-primary', menu));
-    }
-    L.store.set(SESION, { token, juego: id });
-    const t0 = performance.now();
-    go();
-    const outcome = await playing;
-    // Aterriza no informa `ms`; el reloj propio incluye la animación de fin, que puede pasarse del límite.
-    const ms = Math.min(Math.round(outcome.ms ?? (performance.now() - t0)), params.limitS * 1000);
-    try {
-      const res = await api('nivel', { token, ms, paso: Boolean(outcome.passed) });
-      if (res.paso) return ganaste(token, '¡Lo lograste!', 'Ganaste un giro');
-      L.store.del(SESION);
-      perdiste(id);
-    } catch (e) {
-      show('error', ...head('Ups', e.message), btn('Volver a los juegos', 'btn-primary', menu));
+    const recrea = !sesion;
+    let pendiente = sesion;
+    let token = null;
+    let fallos = 0;
+    for (let n = 1; n <= 3; n++) {
+      const stage = L.el('div', { class: 'game-stage' });
+      show('juego', stage);
+      const vidas = vidasDe(id, n, fallos);
+      const params = paramsDe(id, n, fallos);
+      let go;
+      const ready = new Promise((r) => { go = r; });
+      const playing = g.playLevel(stage, n, params, ready);
+      await cuentaAtras(stage, {
+        n,
+        texto: reglaDe(id, n, fallos),
+        vidas,
+        aviso: n > 1 ? `¡Nivel ${n - 1} superado!${recrea ? '' : n === 3 ? ' Uno más y ganas un giro.' : ''}`
+          : recrea ? 'Modo recreativo: no suma giros ni premios.' : 'Supera los 3 niveles seguidos para ganar un giro.',
+      });
+      if (pendiente) {
+        try {
+          const r = await pendiente;
+          if (n === 1) {
+            token = r.token;
+            L.store.set(SESION, { token, juego: id });
+          }
+        } catch (e) { return errorPantalla(e); }
+      }
+      const t0 = performance.now();
+      go();
+      const outcome = await playing;
+      fallos += outcome.misses || 0;
+      const paso = Boolean(outcome.passed);
+      if (!recrea) {
+        // Aterriza no informa `ms`; el reloj propio incluye la animación de fin, que puede pasarse del límite.
+        const ms = Math.min(Math.round(outcome.ms ?? (performance.now() - t0)), params.limitS * 1000);
+        pendiente = api('nivel', { token, nivel: n, ms, paso });
+        pendiente.catch(() => {});
+      }
+      if (!paso) {
+        L.store.del(SESION);
+        return perdiste(id, n);
+      }
+      if (n === 3) {
+        if (recrea) return recreativoFin(id);
+        try {
+          const res = await pendiente;
+          return res.completo ? ganaste(token, '¡Superaste los 3 niveles!', 'Ganaste un giro') : errorPantalla(new Error(MENSAJES.default));
+        } catch (e) { return errorPantalla(e); }
+      }
     }
   }
 
-  function perdiste(id) {
+  function recreativoFin(id) {
+    show('recreativo',
+      ...head('Modo recreativo', '¡Completaste los 3 niveles!', 'Esta vez fue solo por diversión: no suma giros ni premios.'),
+      L.el('div', { class: 'jw-actions' },
+        btn('Jugar otra vez', 'btn-primary', () => intro(id)),
+        btn('Otro juego', 'btn-secondary', menu)));
+  }
+
+  function perdiste(id, n) {
     show('perdiste',
-      ...head('Casi', 'No lo lograste esta vez', 'Inténtalo otra vez o prueba con otro juego.'),
+      ...head('Casi', 'No lo lograste esta vez', `Llegaste al nivel ${n} de 3. Inténtalo otra vez o prueba con otro juego.`),
       L.el('div', { class: 'jw-actions' },
         btn('Intentar de nuevo', 'btn-primary', () => intro(id)),
         btn('Otro juego', 'btn-secondary', menu)));
@@ -296,6 +363,7 @@
           token, nombre: nombre.value.trim(), telefono: telefono.value.trim(), acepta_promos: promos.checked, turnstile: await ts.obtener(),
         });
         L.store.set(CONTACTO, { nombre: nombre.value.trim(), telefono: telefono.value.trim() });
+        L.store.set(RECLAMADO, Date.now());
         final(res);
       } catch (err) {
         L.toast(err.message);
@@ -315,10 +383,11 @@
       ...head('Premio guardado', res.etiqueta, 'Este es tu código. Escríbenos por WhatsApp para canjearlo.'),
       L.el('div', { class: 'jw-code', 'aria-label': 'Tu código' }, res.codigo),
       vence ? L.el('p', { class: 'jw-vence' }, `Válido hasta el ${vence}`) : null,
+      L.el('p', { class: 'jw-aviso' }, `${AVISO_RECREATIVO} Puedes seguir jugando todo lo que quieras.`),
       L.el('div', { class: 'jw-actions' },
         L.el('a', { class: 'btn btn-primary btn-xl', href: res.whatsapp_url, target: '_blank', rel: 'noopener' }, 'Canjear por WhatsApp'),
         copiar,
-        btn('Jugar otra vez', 'btn-secondary', menu)));
+        btn('Seguir jugando por diversión', 'btn-secondary', menu)));
   }
 
   // Recarga del navegador integrado (Instagram/TikTok): retoma donde iba, sin repetir el juego.

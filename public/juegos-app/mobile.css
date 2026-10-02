@@ -36,6 +36,8 @@ body.web input { user-select: text; -webkit-user-select: text; font: inherit; }
 .jw-hero { width: 6rem; height: 6rem; color: var(--gold); margin-bottom: 1rem; }
 .jw-rule { margin: 1.2rem 0 0; padding: 0.8rem 1.1rem; border-radius: var(--radius-media); background: rgba(11, 24, 28, 0.45); border: 1px solid var(--line); color: var(--text); font-size: 1.1rem; }
 .jw-rule:empty { display: none; }
+.jw-aviso { margin: 1rem 0 0; padding: 0.8rem 1.1rem; border-radius: var(--radius-media); background: rgba(251, 192, 0, 0.1); border: 1px solid var(--gold-line); color: var(--gold-soft); font-size: 1.05rem; line-height: 1.35; }
+.jw-aviso:empty { display: none; }
 
 .jw-form { display: flex; flex-direction: column; gap: 1.1rem; width: 100%; }
 .jw-form label { display: flex; flex-direction: column; gap: 0.4rem; font-size: 1rem; color: var(--text-soft); }
