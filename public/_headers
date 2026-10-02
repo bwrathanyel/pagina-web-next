@@ -1,0 +1,6 @@
+# Cabeceras de Workers Static Assets (OpenNext copia public/ a .open-next/assets).
+# /juegos-app/ lo genera ruleta-evento/web/build.mjs: el JS y el CSS llevan hash en el nombre y el HTML de /juegos
+# (route handler) no se cachea, así que un deploy nuevo nunca sirve un paquete viejo. Logo y fuentes no llevan hash:
+# un día de cache y una semana de stale-while-revalidate.
+/juegos-app/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
