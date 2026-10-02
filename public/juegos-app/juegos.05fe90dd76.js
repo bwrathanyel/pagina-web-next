@@ -5072,22 +5072,44 @@ window.JUEGOS_WEB = {
   };
   const AVISO_RECREATIVO = 'Ya reclamaste tu premio: desde ahora los juegos son solo por diversión y ya no suman giros ni premios.';
 
+  // Premios posibles (los de juegos_premios, sin el premio mayor del stand) y color de cada juego (tokens de styles.css).
+  const PREMIOS = ['Descuento 5 %', 'Descuento 2 %', 'Gira otra vez', 'Cotización prioritaria', 'Guía digital'];
+  const PASOS = ['Supera los 3 niveles de un juego', 'Gira la ruleta', 'Canjea tu premio por WhatsApp'];
+  const ACENTO = { memoria: '--lagoon', maleta: '--andes', rompecabezas: '--berry', aterriza: '--sky', torre: '--tepui', corte: '--jungle' };
+  // Tiempo máximo de la partida: suma del límite de sus niveles (config.json), dicho como "hasta".
+  const hastaDe = (id) => {
+    const s = CFG[id].levels.reduce((t, l) => t + (l.limitS || 0), 0);
+    const m = Math.floor(s / 60);
+    return m ? `${m} min${s % 60 ? ` ${s % 60} s` : ''}` : `${s} s`;
+  };
+
   function menu() {
     L.store.del(SESION);
     const cards = ORDEN.filter((id) => L.games[id] && CFG[id]).map((id, i) => {
       const g = L.games[id];
-      const card = L.el('button', { class: 'jw-card', type: 'button', style: `--i:${i}` },
+      const card = L.el('button', { class: 'jw-card', type: 'button', style: `--i:${i};--acento:var(${ACENTO[id] || '--gold'})` },
         L.el('span', { class: 'jw-card-icon' }, L.svg(g.icon)),
-        L.el('span', { class: 'jw-card-text' }, L.el('b', {}, g.title), L.el('small', {}, g.tagline)));
+        L.el('span', { class: 'jw-card-text' },
+          L.el('b', {}, g.title),
+          L.el('small', {}, g.tagline),
+          L.el('span', { class: 'jw-chip' }, `3 niveles · hasta ${hastaDe(id)}`)),
+        L.el('span', { class: 'jw-card-go', 'aria-hidden': 'true' }, 'Jugar'));
       card.addEventListener('click', () => intro(id));
       return card;
     });
-    show('menu',
-      ...(recreativo()
+    const rec = recreativo();
+    show('menu', L.el('div', { class: 'jw-menu' },
+      ...(rec
         ? head('Modo recreativo', 'Sigue jugando por diversión', 'Elige un juego:')
-        : head('Juega y viaja', 'Gana un minijuego y gira la ruleta', 'Supera los 3 niveles de un juego para ganar un giro. Elige uno:')),
-      recreativo() ? L.el('p', { class: 'jw-aviso' }, AVISO_RECREATIVO) : null,
-      L.el('div', { class: 'jw-grid' }, cards));
+        : head('Juega y viaja', 'Gana un minijuego y gira la ruleta', null)),
+      rec ? L.el('p', { class: 'jw-aviso' }, AVISO_RECREATIVO) : L.el('section', { class: 'jw-premios' },
+        L.el('ol', { class: 'jw-pasos' }, PASOS.map((t, i) => L.el('li', {}, L.el('b', {}, String(i + 1)), L.el('span', {}, t)))),
+        L.el('div', { class: 'jw-premios-lista' },
+          L.el('span', { class: 'jw-sub' }, 'Premios posibles'),
+          L.el('ul', { class: 'jw-chips' }, PREMIOS.map((t) => L.el('li', {}, t)))),
+        L.el('p', { class: 'jw-nota' }, 'Sujetos a disponibilidad diaria. Un descuento por teléfono cada 30 días.')),
+      rec ? null : L.el('h3', { class: 'jw-sub jw-sub-juegos' }, 'Elige un juego'),
+      L.el('div', { class: 'jw-grid' }, cards)));
   }
 
   function intro(id) {
