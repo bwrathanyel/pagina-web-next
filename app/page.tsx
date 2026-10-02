@@ -7,6 +7,7 @@ import { ninosGratisEn } from "@/lib/promociones/ninosGratis";
 import { NinosGratisBanda } from "@/components/home/NinosGratisBanda";
 import { AcompanamientoSection } from "@/components/home/AcompanamientoSection";
 import { MasDeLotus } from "@/components/home/MasDeLotus";
+import { JuegosBanda } from "@/components/home/JuegosBanda";
 import { fotosDe } from "@/lib/supabase/fotos";
 import { getHotSales, getProductosPorCategoria } from "@/lib/supabase/queries";
 
@@ -50,6 +51,8 @@ export default async function Home() {
       <HotSalesSection pool={ordenDelDia(deLaHome)} />
 
       <DestinosRail destinos={destinosConOfertas(deLaHome)} />
+
+      <JuegosBanda />
 
       <AcompanamientoSection />
 
