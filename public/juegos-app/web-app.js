@@ -58,20 +58,52 @@
     return scriptTs;
   }
 
+  let cfgTs = null;
+  function configTurnstile() {
+    cfgTs = cfgTs || fetch('/api/turnstile-config').then((r) => r.json()).catch(() => null);
+    return cfgTs;
+  }
+  // Script y site key se piden al abrir la página, no al tocar "Girar".
+  function precargarTurnstile() {
+    configTurnstile();
+    cargarTurnstile().catch(() => {});
+  }
+
   // Token de un solo uso; el widget solo se ve si Cloudflare pide interacción.
   async function verificar(host) {
-    const cfg = await fetch('/api/turnstile-config').then((r) => r.json()).catch(() => null);
-    if (!cfg || !cfg.ok || !cfg.site_key) throw fail('seguridad');
+    const cfg = await configTurnstile();
+    if (!cfg || !cfg.ok || !cfg.site_key) { cfgTs = null; throw fail('seguridad'); }
     await cargarTurnstile();
     return new Promise((resolve, reject) => {
       const id = window.turnstile.render(host, {
         sitekey: cfg.site_key,
         appearance: 'interaction-only',
         callback: (t) => { try { window.turnstile.remove(id); } catch { /* ya removido */ } resolve(t); },
-        'error-callback': () => reject(fail('seguridad')),
-        'timeout-callback': () => reject(fail('seguridad')),
+        'error-callback': () => { try { window.turnstile.remove(id); } catch { /* ya removido */ } reject(fail('seguridad')); },
+        'timeout-callback': () => { try { window.turnstile.remove(id); } catch { /* ya removido */ } reject(fail('seguridad')); },
       });
     });
+  }
+
+  // Pide el token en cuanto aparece la pantalla: al tocar el botón ya está listo (vale 300 s).
+  function tokenAnticipado(host) {
+    let p;
+    let t0;
+    let listo = false;
+    const pedir = () => {
+      listo = false;
+      t0 = Date.now();
+      p = verificar(host).then((t) => { listo = true; return t; });
+      p.catch(() => {});
+    };
+    pedir();
+    return {
+      get listo() { return listo; },
+      async obtener() {
+        if (Date.now() - t0 > 240000) pedir();
+        try { return await p; } catch { pedir(); return await p; }
+      },
+    };
   }
 
   function show(name, ...nodes) {
@@ -118,9 +150,10 @@
       btn('Jugar', 'btn-primary', async (b) => {
         b.disabled = true;
         try {
-          const { token } = await api('iniciar', { juego: id });
-          L.store.set(SESION, { token, juego: id });
-          await jugar(id, token);
+          // La sesión se pide mientras corre la cuenta atrás; jugar() espera el token antes de arrancar.
+          const sesion = api('iniciar', { juego: id });
+          sesion.catch(() => {});
+          await jugar(id, sesion);
         } catch (e) { L.toast(e.message); b.disabled = false; }
       }));
     backBtn.onclick = menu;
@@ -148,7 +181,7 @@
     });
   }
 
-  async function jugar(id, token) {
+  async function jugar(id, sesion) {
     const g = L.games[id];
     const stage = L.el('div', { class: 'game-stage' });
     show('juego', stage);
@@ -157,6 +190,13 @@
     const ready = new Promise((r) => { go = r; });
     const playing = g.playLevel(stage, 1, params, ready);
     await cuentaAtras(stage, reglaDe(id));
+    let token;
+    try {
+      ({ token } = await sesion);
+    } catch (e) {
+      return show('error', ...head('Ups', e.message), btn('Volver a los juegos', 'btn-primary', menu));
+    }
+    L.store.set(SESION, { token, juego: id });
     const t0 = performance.now();
     go();
     const outcome = await playing;
@@ -183,14 +223,15 @@
   // Pantalla previa al giro: la verificación (Turnstile) y el sorteo ocurren al tocar, antes de animar.
   function ganaste(token, eyebrow, titulo) {
     const host = L.el('div', { class: 'jw-turnstile' });
+    const ts = tokenAnticipado(host);
     show('ganaste',
       ...head(eyebrow, titulo, 'Gira la ruleta y descubre tu premio.'),
       host,
       btn('Girar la ruleta', 'btn-primary', async (b) => {
         b.disabled = true;
-        b.textContent = 'Verificando…';
+        if (!ts.listo) b.textContent = 'Verificando…';
         try {
-          const r = await api('girar', { token, turnstile: await verificar(host) });
+          const r = await api('girar', { token, turnstile: await ts.obtener() });
           await ruleta(r);
           await resultado(token, r);
         } catch (e) {
@@ -238,6 +279,7 @@
     const telefono = L.el('input', { class: 'jw-input', name: 'telefono', type: 'tel', inputmode: 'tel', autocomplete: 'tel', maxlength: '20', placeholder: '0412 1234567', required: true, value: guardado.telefono || '' });
     const promos = L.el('input', { type: 'checkbox', name: 'acepta_promos' });
     const host = L.el('div', { class: 'jw-turnstile' });
+    const ts = tokenAnticipado(host);
     const enviar = L.el('button', { class: 'btn btn-primary btn-xl', type: 'submit' }, 'Guardar mi premio');
     const form = L.el('form', { class: 'jw-form', novalidate: true },
       L.el('label', {}, L.el('span', {}, 'Tu nombre'), nombre),
@@ -251,7 +293,7 @@
       enviar.textContent = 'Guardando…';
       try {
         const res = await api('reclamar', {
-          token, nombre: nombre.value.trim(), telefono: telefono.value.trim(), acepta_promos: promos.checked, turnstile: await verificar(host),
+          token, nombre: nombre.value.trim(), telefono: telefono.value.trim(), acepta_promos: promos.checked, turnstile: await ts.obtener(),
         });
         L.store.set(CONTACTO, { nombre: nombre.value.trim(), telefono: telefono.value.trim() });
         final(res);
@@ -292,5 +334,6 @@
     return menu();
   }
 
+  precargarTurnstile();
   arrancar();
 })();
