@@ -9,21 +9,33 @@
   <link rel="icon" href="media/logo.png">
   <link rel="preload" href="fonts/fraunces-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fonts/figtree-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="juegos.4a9b999416.css">
+  <link rel="stylesheet" href="juegos.6d87440825.css">
 </head>
 <body data-screen="menu" class="web">
   <div class="backdrop" aria-hidden="true"><i class="glow g1"></i><i class="glow g2"></i><i class="glow g3"></i><i class="grain"></i></div>
   <div id="app">
     <header class="topbar">
-      <img src="media/logo.png" alt="" class="topbar-logo">
-      <div class="topbar-brand"><span>Destino y Eventos</span><strong>Lotus 360</strong></div>
+      <a class="topbar-home" href="/" aria-label="Destino y Eventos Lotus 360, ir al inicio">
+        <img src="media/logo.png" alt="" class="topbar-logo">
+        <span class="topbar-brand"><span>Destino y Eventos</span><strong>Lotus 360</strong></span>
+      </a>
+      <nav class="topbar-nav" aria-label="Sitio">
+        <a href="/">Inicio</a>
+        <a href="/catalogo/promociones">Promociones</a>
+        <a href="/catalogo/hot-sales">Hot Sales</a>
+        <a href="/catalogo/hoteles">Hoteles</a>
+        <a href="/catalogo/paquetes">Paquetes</a>
+        <a href="/juegos" aria-current="page">Juegos</a>
+      </nav>
       <div class="topbar-right">
         <button id="back-btn" class="mode-badge back" type="button" hidden>← JUEGOS</button>
+        <a class="mode-badge back topbar-site" href="/">← SITIO</a>
+        <a class="topbar-cta" href="/cotizar">Cotizar</a>
       </div>
     </header>
     <main id="screen" class="screen"></main>
   </div>
   <div id="toast" class="toast" role="alert" hidden></div>
-  <script src="juegos.05fe90dd76.js"></script>
+  <script src="juegos.ad7edb9138.js"></script>
 </body>
 </html>

@@ -1493,10 +1493,31 @@ html { font-size: min(calc(100vh / 60), calc(100vw / 27.5)); }
 body.web { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
 body.web input { user-select: text; -webkit-user-select: text; font: inherit; }
 
-.web .topbar { height: 4.4rem; padding: 0.8rem 1.4rem 0; }
-.web .topbar-logo { width: 2.6rem; height: 2.6rem; }
-.web .topbar-brand strong { font-size: 1.3rem; }
-.web .mode-badge.back { padding: 0.6rem 1rem; font-size: 0.8rem; }
+/* Header del sitio, con enlaces reales a pagina-web-next (href absolutos: el <base> apunta a /juegos-app/).
+   Medidas en px: el rem de esta página escala con el alto de la ventana. */
+.web .topbar { gap: 12px; height: 56px; padding: 0 max(12px, calc((100% - 1248px) / 2)); background: var(--dusk); border-bottom: 1px solid var(--line); }
+.topbar-home { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 44px; color: inherit; text-decoration: none; border-radius: 12px; }
+.topbar-home:focus-visible, .topbar-nav a:focus-visible, .topbar-cta:focus-visible, .web .mode-badge:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.web .topbar-logo { flex: none; width: 36px; height: 36px; }
+.web .topbar-brand span { font-size: 10px; letter-spacing: 0.16em; white-space: nowrap; }
+.web .topbar-brand strong { font-size: 18px; line-height: 1.1; white-space: nowrap; }
+.topbar-nav { display: none; }
+.topbar-nav a { position: relative; display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 12px; color: var(--text-soft); font-size: 16px; font-weight: 600; text-decoration: none; transition: color 160ms ease; }
+.topbar-nav a:hover, .topbar-nav a[aria-current] { color: var(--text); }
+.topbar-nav a[aria-current]::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 2px; height: 2px; border-radius: 999px; background: linear-gradient(90deg, #fc7300, #fbc000); }
+.web .topbar-right { gap: 8px; }
+.web .mode-badge { display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; font-size: 12px; letter-spacing: 0.14em; text-decoration: none; }
+.topbar-cta { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: 12px; background: #fc7300; color: #3a1505; font-size: 16px; font-weight: 700; text-decoration: none; transition: transform 150ms var(--ease-out), filter 150ms ease; }
+.topbar-cta:hover { filter: brightness(1.08); }
+.topbar-cta:active { transform: scale(0.97); }
+body[data-screen="intro"] .topbar-site { display: none; }
+@media (max-width: 380px) { .web .topbar-brand span { display: none; } }
+@media (min-width: 960px) {
+  .topbar-nav { display: flex; gap: 2px; margin-left: 12px; }
+  .web .topbar-site { display: none; }
+  .web .topbar-brand strong { font-size: 20px; }
+  .topbar-cta { padding: 0 18px; }
+}
 
 /* Pantallas propias: columna con scroll interno (html/body están en overflow hidden). */
 .jw-screen { height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 1.6rem 1.6rem 3rem; display: flex; flex-direction: column; align-items: flex-start; }
@@ -1512,12 +1533,20 @@ body.web input { user-select: text; -webkit-user-select: text; font: inherit; }
    el rem por altura que usan los juegos. Colores y radios: tokens de styles.css. */
 .jw-menu { width: 100%; max-width: 72em; margin: 0 auto; font-size: 1rem; }
 .jw-menu .eyebrow { font-size: 0.85em; }
-.jw-menu .title { font-size: 2.7em; }
+.jw-menu .title { font-size: 2.1em; }
 .jw-menu .lead { font-size: 1.2em; }
 .jw-sub { display: block; margin: 0; font-family: var(--mono); font-size: 0.85em; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-soft); }
-.jw-sub-juegos { margin-top: 2em; }
+.jw-sub-juegos { margin-top: 1.4em; }
 
-.jw-premios { display: grid; gap: 1.3em; margin-top: 1.5em; padding: 1.2em 1.3em; border: 1px solid var(--line); border-radius: var(--radius-media); background: rgba(11, 24, 28, 0.45); }
+/* Premios: en celular un <details> plegado para que el menú entre en pantalla; desde 640 px va abierto y sin resumen
+   (web-app.js lo abre según el ancho). */
+.jw-premios { margin-top: 1em; border: 1px solid var(--line); border-radius: var(--radius-media); background: rgba(11, 24, 28, 0.45); }
+.jw-premios-sum { display: flex; align-items: center; justify-content: space-between; gap: 1em; min-height: 3.2em; padding: 0 1.1em; font-size: 1.05em; font-weight: 700; cursor: pointer; list-style: none; }
+.jw-premios-sum::-webkit-details-marker { display: none; }
+.jw-premios-sum::after { content: ""; flex: none; width: 0.6em; height: 0.6em; border-right: 2px solid var(--gold); border-bottom: 2px solid var(--gold); transform: rotate(45deg); transition: transform 160ms ease; }
+.jw-premios[open] .jw-premios-sum::after { transform: rotate(-135deg); }
+.jw-premios-sum:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; border-radius: var(--radius-media); }
+.jw-premios-body { display: grid; gap: 1.1em; padding: 0.2em 1.2em 1.1em; }
 .jw-pasos { display: grid; gap: 0.8em; margin: 0; padding: 0; list-style: none; }
 .jw-pasos li { display: flex; align-items: center; gap: 0.8em; font-size: 1.1em; line-height: 1.3; }
 .jw-pasos b { flex: none; display: grid; place-items: center; width: 2em; height: 2em; border-radius: 50%; background: var(--sun); color: var(--btn-ink); font-family: var(--mono); font-size: 0.9em; }
@@ -1526,8 +1555,8 @@ body.web input { user-select: text; -webkit-user-select: text; font: inherit; }
 .jw-chips li { padding: 0.4em 0.9em; border: 1px solid var(--gold-line); border-radius: var(--radius-pill); color: var(--gold-soft); font-weight: 700; }
 .jw-nota { margin: 0; color: var(--text-soft); font-size: 0.9em; line-height: 1.4; }
 
-.jw-grid { display: grid; gap: 1em; width: 100%; margin-top: 1.2em; }
-.jw-card { display: flex; align-items: center; gap: 1.1em; width: 100%; min-height: 5.6em; padding: 0.9em 1.1em; font: inherit; text-align: left; cursor: pointer;
+.jw-grid { display: grid; gap: 0.7em; width: 100%; margin-top: 0.9em; }
+.jw-card { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.9em; width: 100%; padding: 0.7em 1em; font: inherit; text-align: left; cursor: pointer;
   border: 1px solid var(--line-strong); border-radius: var(--radius-media); background: var(--glass); color: var(--text); box-shadow: var(--shadow-card);
   transition: transform 160ms var(--ease-out), border-color 160ms ease, box-shadow 160ms ease;
   /* backwards, no both: con both el transform final de fade-in pisaría hover y active. */
@@ -1536,25 +1565,37 @@ body.web input { user-select: text; -webkit-user-select: text; font: inherit; }
 .jw-card:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 @media (hover: hover) { .jw-card:hover { transform: translateY(-0.2em); border-color: var(--gold-line); box-shadow: var(--shadow-lift); } }
 .jw-card::after { content: ""; flex: none; width: 0.7em; height: 0.7em; margin-right: 0.3em; border-top: 2px solid var(--gold); border-right: 2px solid var(--gold); transform: rotate(45deg); }
-.jw-card-icon { flex: none; width: 3.8em; height: 3.8em; padding: 0.6em; border-radius: 50%; color: var(--acento, var(--gold));
+.jw-card-icon { width: 3em; height: 3em; padding: 0.5em; border-radius: 50%; color: var(--acento, var(--gold));
   background: var(--line); background: color-mix(in srgb, var(--acento, var(--gold)) 16%, transparent); }
-.jw-card-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.3em; }
-.jw-card-text b { font-family: var(--display); font-size: 1.35em; font-weight: 600; line-height: 1.15; }
-.jw-card-text small { color: var(--text-soft); font-size: 1em; line-height: 1.35; }
-.jw-chip { align-self: flex-start; margin-top: 0.3em; padding: 0.2em 0.75em; border: 1px solid var(--line-strong); border-radius: var(--radius-pill); color: var(--text-soft); font-family: var(--mono); font-size: 0.8em; }
-.jw-card-go { display: none; }
+.jw-card-text { min-width: 0; display: flex; flex-direction: column; gap: 0.2em; }
+.jw-card-text b { font-family: var(--display); font-size: 1.2em; font-weight: 600; line-height: 1.15; }
+.jw-card-text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-soft); font-size: 0.9em; line-height: 1.35; }
+/* Pie de la tarjeta (chip de niveles + "Jugar"): solo desde 640 px; en celular la tarjeta es una fila con chevron. */
+.jw-card-foot { display: none; }
+.jw-chip { padding: 0.2em 0.75em; border: 1px solid var(--line-strong); border-radius: var(--radius-pill); color: var(--text-soft); font-family: var(--mono); font-size: 0.8em; }
 
 @media (min-width: 640px) {
   .jw-menu { font-size: max(1rem, 15px); }
-  .jw-pasos { grid-template-columns: repeat(3, 1fr); gap: 1.2em; }
-  .jw-grid { grid-template-columns: repeat(2, 1fr); gap: 1.2em; }
-  .jw-card { flex-direction: column; align-items: flex-start; gap: 1em; min-height: 0; padding: 1.4em; }
+  .jw-premios-sum { display: none; }
+  .jw-premios-body { gap: 0.7em; padding: 1em 1.2em; }
+  .jw-pasos { grid-template-columns: repeat(3, 1fr); gap: 1em; }
+  .jw-pasos li { font-size: 1em; }
+  .jw-premios-lista { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5em 0.9em; }
+  .jw-chips li { padding: 0.25em 0.8em; font-size: 0.9em; }
+  .jw-nota { font-size: 0.85em; }
+  .jw-grid { grid-template-columns: repeat(2, 1fr); gap: 1em; }
+  .jw-card { grid-template-columns: auto 1fr; align-items: start; gap: 0.8em 1em; padding: 1em 1.1em; }
   .jw-card::after { display: none; }
-  .jw-card-text { align-self: stretch; }
-  .jw-card-go { display: flex; align-items: center; justify-content: center; align-self: stretch; min-height: 3em; margin-top: 0.2em; border-radius: var(--radius-pill);
-    background: var(--sun); color: var(--btn-ink); font-size: 1.05em; font-weight: 800; }
+  .jw-card-text small { display: -webkit-box; white-space: normal; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .jw-card-foot { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 0.8em; }
+  .jw-card-go { display: flex; align-items: center; justify-content: center; min-height: 2.4em; padding: 0 1.4em; border-radius: var(--radius-pill);
+    background: var(--sun); color: var(--btn-ink); font-weight: 800; }
 }
-@media (min-width: 960px) { .jw-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 960px) {
+  .jw-grid { grid-template-columns: repeat(3, 1fr); }
+  .jw-menu .title { font-size: 2em; }
+  body[data-screen="menu"] .jw-screen { padding-top: 1.2rem; padding-bottom: 1.6rem; }
+}
 @media (prefers-reduced-motion: reduce) { .jw-card { animation: none; transition: none; } }
 
 .jw-hero { width: 6rem; height: 6rem; color: var(--gold); margin-bottom: 1rem; }

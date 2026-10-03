@@ -5091,23 +5091,33 @@ window.JUEGOS_WEB = {
         L.el('span', { class: 'jw-card-icon' }, L.svg(g.icon)),
         L.el('span', { class: 'jw-card-text' },
           L.el('b', {}, g.title),
-          L.el('small', {}, g.tagline),
-          L.el('span', { class: 'jw-chip' }, `3 niveles · hasta ${hastaDe(id)}`)),
-        L.el('span', { class: 'jw-card-go', 'aria-hidden': 'true' }, 'Jugar'));
+          L.el('small', {}, g.tagline)),
+        L.el('span', { class: 'jw-card-foot' },
+          L.el('span', { class: 'jw-chip' }, `3 niveles · hasta ${hastaDe(id)}`),
+          L.el('span', { class: 'jw-card-go', 'aria-hidden': 'true' }, 'Jugar')));
       card.addEventListener('click', () => intro(id));
       return card;
     });
     const rec = recreativo();
-    show('menu', L.el('div', { class: 'jw-menu' },
-      ...(rec
-        ? head('Modo recreativo', 'Sigue jugando por diversión', 'Elige un juego:')
-        : head('Juega y viaja', 'Gana un minijuego y gira la ruleta', null)),
-      rec ? L.el('p', { class: 'jw-aviso' }, AVISO_RECREATIVO) : L.el('section', { class: 'jw-premios' },
+    // Los pasos y premios van plegados en celular y abiertos desde 640 px (mobile.css oculta el resumen ahí).
+    const premios = rec ? null : L.el('details', { class: 'jw-premios' },
+      L.el('summary', { class: 'jw-premios-sum' }, 'Cómo ganar y premios posibles'),
+      L.el('div', { class: 'jw-premios-body' },
         L.el('ol', { class: 'jw-pasos' }, PASOS.map((t, i) => L.el('li', {}, L.el('b', {}, String(i + 1)), L.el('span', {}, t)))),
         L.el('div', { class: 'jw-premios-lista' },
           L.el('span', { class: 'jw-sub' }, 'Premios posibles'),
           L.el('ul', { class: 'jw-chips' }, PREMIOS.map((t) => L.el('li', {}, t)))),
-        L.el('p', { class: 'jw-nota' }, 'Sujetos a disponibilidad diaria. Un descuento por teléfono cada 30 días.')),
+        L.el('p', { class: 'jw-nota' }, 'Sujetos a disponibilidad diaria. Un descuento por teléfono cada 30 días.')));
+    if (premios) {
+      const ancho = window.matchMedia('(min-width: 640px)');
+      premios.open = ancho.matches;
+      ancho.onchange = (e) => { premios.open = e.matches; };
+    }
+    show('menu', L.el('div', { class: 'jw-menu' },
+      ...(rec
+        ? head('Modo recreativo', 'Sigue jugando por diversión', 'Elige un juego:')
+        : head('Juega y viaja', 'Gana un minijuego y gira la ruleta', null)),
+      rec ? L.el('p', { class: 'jw-aviso' }, AVISO_RECREATIVO) : premios,
       rec ? null : L.el('h3', { class: 'jw-sub jw-sub-juegos' }, 'Elige un juego'),
       L.el('div', { class: 'jw-grid' }, cards)));
   }
