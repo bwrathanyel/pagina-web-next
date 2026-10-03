@@ -9,7 +9,7 @@ import { verificarTurnstile } from "../../_shared/turnstile";
 
 const ACCIONES = new Set(["iniciar", "nivel", "estado", "girar", "reclamar"]);
 const CON_TURNSTILE = new Set(["girar", "reclamar"]);
-const CAMPOS = ["token", "juego", "ms", "paso", "nombre", "telefono", "acepta_promos"] as const;
+const CAMPOS = ["token", "juego", "nivel", "ms", "paso", "nombre", "telefono", "acepta_promos"] as const;
 const SIN_CACHE = { "Cache-Control": "no-store" };
 
 export async function POST(request: Request, { params }: { params: Promise<{ accion: string }> }) {
