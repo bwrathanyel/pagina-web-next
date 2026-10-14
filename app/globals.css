@@ -121,6 +121,26 @@
   --color-linea-fuerte: rgba(36, 31, 26, 0.24);
 }
 
+/* Co-branding de /aliados/[slug]: `data-aliado` en el <main> pone el acento
+   de la marca aliada. `aliado`/`aliado-suave` van sobre sand/card y cambian
+   con el tema; `aliado-dusk` es fijo, para las bandas dusk (iguales en los dos
+   temas). Sin marca propia, cae al acento de Lotus. GH Hoteles: dorado de su
+   sitio (#B99D75), oscurecido en claro para texto (4.8:1 sobre sand). */
+[data-aliado] {
+  --color-aliado: var(--color-acento);
+  --color-aliado-suave: var(--color-acento-suave);
+  --color-aliado-dusk: var(--color-coral-bright);
+}
+[data-aliado="gh"] {
+  --color-aliado: #7a5f38;
+  --color-aliado-suave: #efe6d8;
+  --color-aliado-dusk: #B99D75;
+}
+:root[data-theme="dark"] [data-aliado="gh"] {
+  --color-aliado: #B99D75;
+  --color-aliado-suave: #2b261d;
+}
+
 /* Radios, sombras y anchos compartidos -- antes cada componente inventaba su
    propio valor arbitrario (rounded-[1.5rem], shadow-[0_18px_50px_-30px_...]),
    auditoría redesign desktop 2026-08-22. */
@@ -195,6 +215,9 @@
   --color-whatsapp: var(--color-whatsapp);
   --color-acento: var(--color-acento);
   --color-acento-suave: var(--color-acento-suave);
+  --color-aliado: var(--color-aliado);
+  --color-aliado-suave: var(--color-aliado-suave);
+  --color-aliado-dusk: var(--color-aliado-dusk);
   --color-ambar: var(--color-ambar);
   --color-ambar-suave: var(--color-ambar-suave);
   --color-sobre-acento: var(--color-sobre-acento);

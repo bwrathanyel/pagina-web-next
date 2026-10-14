@@ -33,6 +33,29 @@ export const getAliado = cache(async (slug: string): Promise<Aliado | null> => {
   return data ? { ...data, descuento_pct: Number(data.descuento_pct) } as Aliado : null;
 });
 
+// Co-branding por slug (F2d). Logo oficial del aliado en blanco, para ir
+// sobre dusk; su acento de color vive en globals.css ([data-aliado]). Un
+// aliado sin marca acá se muestra con el hero de texto de siempre.
+export interface MarcaAliado {
+  logo: { src: string; ancho: number; alto: number };
+  /** A quién va dirigido el catálogo, en plural ("huéspedes, ..."). */
+  publico: string;
+  lema: string;
+  /** Qué gana el aliado con la alianza. */
+  valor: string;
+}
+
+const MARCAS: Record<string, MarcaAliado> = {
+  gh: {
+    logo: { src: "/aliados/gh-hoteles.png", ancho: 480, alto: 295 },
+    publico: "huéspedes, colaboradores y clientes corporativos",
+    lema: "Su huésped sale a conocer, nosotros nos encargamos",
+    valor: "Un servicio de valor agregado para sus huéspedes y empresas aliadas, sin costo de operación para el hotel.",
+  },
+};
+
+export const marcaAliado = (slug: string): MarcaAliado | null => MARCAS[slug] ?? null;
+
 const ADULTOS = 2;
 const NOCHES_BASE = 3;
 const DIAS_BUSQUEDA = 365;
