@@ -23,6 +23,7 @@ export async function POST(request: Request) {
     destino: texto("destino", 220) || ".",
     personas: texto("personas", 160),
     consulta: texto("consulta", 3000),
+    origen: /^aliado:[a-z0-9-]{1,40}$/.test(texto("origen", 60)) ? texto("origen", 60) : "",
   };
   if (!datos.nombre || datos.destino === ".") {
     return NextResponse.json({ ok: false, error: "datos_invalidos" }, { status: 400 });

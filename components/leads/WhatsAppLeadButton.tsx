@@ -24,6 +24,7 @@ import { whatsappHref } from "@/lib/whatsapp";
 export function WhatsAppLeadButton({
   mensajeBase,
   destinoInicial = "",
+  origen,
   triggerClassName,
   triggerAriaLabel,
   triggerTitle,
@@ -32,6 +33,8 @@ export function WhatsAppLeadButton({
   mensajeBase: string;
   /** Destino ya conocido (ficha de un hotel): llega escrito al formulario. */
   destinoInicial?: string;
+  /** "aliado:<slug>" en el catálogo corporativo; marca el lead en el CRM. */
+  origen?: string;
   triggerClassName?: string;
   triggerAriaLabel?: string;
   triggerTitle?: string;
@@ -83,6 +86,7 @@ export function WhatsAppLeadButton({
         destino: destino.trim(),
         personas: textoPersonas(),
         consulta: mensajeWhatsapp,
+        origen,
       });
       const numero = resultado.asesor_whatsapp?.replace(/[^\d+]/g, "");
       const href = numero

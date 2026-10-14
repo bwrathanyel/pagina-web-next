@@ -6,6 +6,8 @@ export interface LeadCRM {
   destino: string;
   personas: string;
   consulta: string;
+  /** "aliado:<slug>" desde /aliados/<slug>; queda en el external_id del lead. */
+  origen?: string;
 }
 
 export interface RespuestaLeadCRM {
