@@ -1,33 +1,31 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { PaqueteAliadoCard } from "@/components/aliados/PaqueteAliadoCard";
 import { SolicitudAliado } from "@/components/aliados/SolicitudAliado";
-import { TicketCard } from "@/components/catalogo/TicketCard";
+import { Boton } from "@/components/ui/Boton";
 import { CLASE_ETIQUETA_SECCION, CLASE_TITULO_SECCION, EncabezadoSeccion } from "@/components/ui/EncabezadoSeccion";
+import { Icono, type NombreIcono } from "@/components/ui/Icono";
 import { Seccion } from "@/components/ui/Seccion";
-import { getAliado, getGruposAliado, precioAliado } from "@/lib/aliados";
-import { esSoloReferencial, fotosDe } from "@/lib/supabase/fotos";
-import { tarifaDestacada } from "@/lib/tarifas";
-import type { Producto } from "@/types/supabase";
+import { getAliado, getPaquetesAliado } from "@/lib/aliados";
 
 export const dynamicParams = true;
 
-const BADGE: Record<Producto["tipo"], string> = { hotel: "Hotel", paquete: "Paquete", destino: "Guía / Tour", info: "Info" };
-
-const SERVICIOS = [
-  ["Paquetes todo incluido", "Margarita, Los Roques, Mérida y más destinos nacionales."],
-  ["Tours y full days", "Puerto Cabello, playas y excursiones de un día."],
-  ["Boletos aéreos", "Vuelos nacionales e internacionales con la mejor tarifa disponible."],
-  ["Traslados", "Aeropuerto, hotel y traslados para grupos."],
-  ["Actividades corporativas", "Viajes de incentivo, convenciones y eventos de equipo."],
-] as const;
+const SERVICIOS: [NombreIcono, string, string][] = [
+  ["hotel", "Paquetes todo incluido", "Margarita, Los Roques, Mérida y más destinos nacionales."],
+  ["sol", "Tours y full days", "Puerto Cabello, playas y excursiones de un día."],
+  ["avion", "Boletos aéreos", "Vuelos nacionales e internacionales con la mejor tarifa disponible."],
+  ["maletin", "Traslados", "Aeropuerto, hotel y traslados para grupos."],
+  ["destello", "Actividades corporativas", "Viajes de incentivo, convenciones y eventos de equipo."],
+];
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const aliado = await getAliado((await params).slug);
   if (!aliado) return {};
   return {
     title: `Catálogo corporativo ${aliado.nombre}`,
-    description: `Servicios de viaje de Destino y Eventos Lotus 360 con ${aliado.descuento_pct}% de descuento de aliado para ${aliado.nombre}.`,
+    description: `Paquetes Hot Sale de Destino y Eventos Lotus 360 con ${aliado.descuento_pct}% adicional de descuento de aliado para ${aliado.nombre}.`,
     robots: { index: false, follow: false },
   };
 }
@@ -35,71 +33,116 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function AliadoPage({ params }: { params: Promise<{ slug: string }> }) {
   const aliado = await getAliado((await params).slug);
   if (!aliado) notFound();
-  const grupos = await getGruposAliado(aliado);
+  const paquetes = await getPaquetesAliado(aliado);
   const descuento = aliado.descuento_pct;
   const pct = `${descuento.toLocaleString("es-VE")}%`;
+  const cotizar = (texto: string) => `/aliados/${aliado.slug}?destino=${encodeURIComponent(texto)}#cotizar`;
 
   return (
     <main className="pb-16">
-      <Seccion ritmo="intro">
-        <p className="font-mono text-xs font-bold uppercase tracking-[0.14em] text-acento">Catálogo corporativo</p>
-        <h1 className={`${CLASE_TITULO_SECCION} mt-3 md:text-6xl`}>{aliado.nombre} × Lotus 360</h1>
-        <p className="mt-5 max-w-[60ch] text-lg text-ink-soft">
-          Como aliado de Lotus 360, {aliado.nombre} tiene <strong className="text-ink">{pct} de descuento de agencia</strong>{" "}
-          sobre la tarifa vigente en todos nuestros servicios. Elija lo que necesita y le enviamos la cotización por WhatsApp.
-        </p>
-        <div id="cotizar" className="mt-7 scroll-mt-24">
-          <Suspense fallback={null}>
-            <SolicitudAliado slug={aliado.slug} nombre={aliado.nombre} descuento={descuento} />
-          </Suspense>
+      <section className="bg-dusk px-5 py-10 text-dusk-text md:py-20">
+        <div className="mx-auto grid max-w-[var(--ancho-contenido)] gap-8 md:grid-cols-[1.5fr_1fr] md:items-end">
+          <div className="hero-sube">
+            <h1 className="font-display text-4xl font-bold leading-none md:text-7xl">
+              {aliado.nombre} <span className="text-coral-bright">×</span> Lotus 360
+            </h1>
+            <p className="mt-3 font-mono text-xs font-bold uppercase tracking-[0.14em] text-dusk-text-soft">
+              Catálogo corporativo
+            </p>
+            <p className="mt-5 max-w-[52ch] text-lg text-dusk-text-soft">
+              Paquetes armados con nuestras Hot Sales vigentes, con el precio total para dos adultos y{" "}
+              <strong className="text-dusk-text">{pct} adicional de descuento de aliado</strong>. Elija el suyo y le
+              enviamos la cotización por WhatsApp.
+            </p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Boton href="#paquetes" variante="firma" tamano="md" iconoFin={<Icono nombre="flecha-der" tamano={18} />}>
+                Ver paquetes
+              </Boton>
+              <Boton href="#cotizar" variante="sobre-foto" tamano="md">
+                Pedir otra cotización
+              </Boton>
+            </div>
+          </div>
+          <div className="rounded-card bg-dusk-2 p-6 md:p-8">
+            <p className="font-display text-7xl font-bold leading-none text-coral-bright md:text-8xl">−{pct}</p>
+            <p className="mt-2 text-dusk-text">de descuento de aliado, encima del precio Hot Sale</p>
+            <p className="mt-5 border-t border-dusk-text/20 pt-4 font-mono text-xs uppercase tracking-widest text-dusk-text-soft">
+              {paquetes.length} {paquetes.length === 1 ? "paquete listo" : "paquetes listos"} para cotizar
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <Seccion ritmo="densa">
+        <div id="paquetes" className="scroll-mt-28">
+          <EncabezadoSeccion
+            titulo={<h2 className={CLASE_TITULO_SECCION}>Paquetes Hot Sale</h2>}
+            etiqueta={<p className={`${CLASE_ETIQUETA_SECCION} text-ink-soft`}>Precio total para 2 adultos, con {pct} de aliado</p>}
+          />
+          {paquetes.length > 0 ? (
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {paquetes.map((p, i) => (
+                <PaqueteAliadoCard
+                  key={p.id}
+                  paquete={p}
+                  descuento={descuento}
+                  prioridad={i < 3}
+                  cotizarHref={cotizar(`${p.hotel} · ${p.adultos} adultos, ${p.noches} noches`)}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-card bg-seafoam-bg p-6 text-seafoam-text">
+              En este momento no hay Hot Sales vigentes. Pídanos la cotización y le armamos el paquete con su descuento de aliado.
+            </p>
+          )}
         </div>
       </Seccion>
 
       <Seccion ritmo="densa">
         <EncabezadoSeccion
-          titulo={<h2 className={CLASE_TITULO_SECCION}>Qué puede cotizar</h2>}
+          titulo={<h2 className={CLASE_TITULO_SECCION}>Todo lo que puede cotizar</h2>}
           etiqueta={<p className={`${CLASE_ETIQUETA_SECCION} text-ink-soft`}>{pct} de aliado en cada servicio</p>}
         />
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {SERVICIOS.map(([titulo, texto]) => (
-            <li key={titulo} className="rounded-card border border-linea bg-card p-5">
-              <h3 className="font-body text-base font-bold text-ink">{titulo}</h3>
-              <p className="mt-1.5 text-sm text-ink-soft">{texto}</p>
+        <ul className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
+          {SERVICIOS.map(([icono, titulo, texto]) => (
+            <li key={titulo}>
+              <Link
+                href={cotizar(titulo)}
+                className="flex h-full flex-col rounded-card border border-linea bg-card p-5 transition-colors duration-[var(--dur-rapida)] hover:border-acento/60"
+              >
+                <span aria-hidden="true" className="flex h-11 w-11 items-center justify-center rounded-control bg-acento-suave text-acento">
+                  <Icono nombre={icono} tamano={22} />
+                </span>
+                <h3 className="mt-4 font-body text-base font-bold text-ink">{titulo}</h3>
+                <p className="mt-1.5 text-sm text-ink-soft">{texto}</p>
+              </Link>
             </li>
           ))}
         </ul>
       </Seccion>
 
-      {grupos.map((grupo) => (
-        <Seccion key={grupo.titulo} ritmo="densa">
-          <EncabezadoSeccion
-            titulo={<h2 className={CLASE_TITULO_SECCION}>{grupo.titulo}</h2>}
-            etiqueta={<p className={`${CLASE_ETIQUETA_SECCION} text-ink-soft`}>Precio de aliado desde, por persona</p>}
-          />
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {grupo.productos.map((p, i) => (
-              <TicketCard
-                key={p.id}
-                href={`/producto/${p.id}`}
-                prioridad={i < 3}
-                badge={BADGE[p.tipo]}
-                nombre={p.nombre}
-                destino={p.destino}
-                fotos={fotosDe(p.producto_fotos)}
-                fotosReferenciales={esSoloReferencial(p.producto_fotos)}
-                cotizarHref={`/aliados/${aliado.slug}?destino=${encodeURIComponent(p.nombre)}#cotizar`}
-                precio={precioAliado(tarifaDestacada(p), descuento)}
-              />
-            ))}
+      <Seccion ritmo="densa">
+        <div id="cotizar" className="scroll-mt-28 rounded-card bg-seafoam-bg p-6 md:p-10">
+          <h2 className="font-display text-3xl font-bold leading-none text-ink md:text-4xl">
+            ¿Otra fecha, más personas u otro servicio?
+          </h2>
+          <p className="mt-3 max-w-[60ch] text-seafoam-text">
+            Le armamos la cotización a la medida con su {pct} de aliado ya aplicado.
+          </p>
+          <div className="mt-6">
+            <Suspense fallback={null}>
+              <SolicitudAliado slug={aliado.slug} nombre={aliado.nombre} descuento={descuento} />
+            </Suspense>
           </div>
-        </Seccion>
-      ))}
+        </div>
+      </Seccion>
 
       <Seccion ritmo="densa" ancho="medio">
         <p className="text-sm text-ink-soft">
-          Precios de referencia por persona tomados del tarifario vigente, con el {pct} de aliado ya aplicado. La tarifa final
-          depende de la fecha, la ocupación y la disponibilidad al momento de reservar. El descuento de aliado no se acumula
-          con otras promociones.
+          Precios totales de referencia para 2 adultos en habitación doble, calculados con la tarifa Hot Sale vigente y con el{" "}
+          {pct} de aliado ya aplicado. El monto final depende de la fecha, la ocupación y la disponibilidad al momento de
+          reservar; su asesor lo confirma al enviarle la cotización.
         </p>
       </Seccion>
     </main>
