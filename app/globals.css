@@ -133,7 +133,7 @@
 }
 [data-aliado="gh"] {
   --color-aliado: #7a5f38;
-  --color-aliado-suave: #efe6d8;
+  --color-aliado-suave: #e3d2b5;
   --color-aliado-dusk: #B99D75;
 }
 :root[data-theme="dark"] [data-aliado="gh"] {

@@ -107,7 +107,7 @@ export default async function AliadoPage({ params }: { params: Promise<{ slug: s
               [
                 ["etiqueta", `${pct} de aliado`, "Sobre la tarifa Hot Sale vigente y en todos los servicios de la agencia."],
                 ["hotel", `Para ${aliado.nombre}`, marca.valor],
-                ["cotizar", "Cotización por WhatsApp", "Elija un paquete o pida otro servicio, y un asesor le envía la cotización con el descuento aplicado."],
+                ["cotizar", "Atención directa por WhatsApp", "Elija un paquete o pida otro servicio: lo atiende directamente la dirección comercial de Lotus 360, sin pasar por la cola general, con el descuento aplicado."],
               ] as [NombreIcono, string, string][]
             ).map(([icono, titulo, texto]) => (
               <li key={titulo} className="flex gap-4 border-t-2 border-aliado pt-5">
@@ -193,7 +193,7 @@ export default async function AliadoPage({ params }: { params: Promise<{ slug: s
         <p className="text-sm text-ink-soft">
           Precios totales de referencia para 2 adultos en habitación doble, calculados con la tarifa Hot Sale vigente y con el{" "}
           {pct} de aliado ya aplicado. El monto final depende de la fecha, la ocupación y la disponibilidad al momento de
-          reservar; su asesor lo confirma al enviarle la cotización.
+          reservar, y se confirma al enviarle la cotización.
           {marca && ` El nombre y el logo de ${aliado.nombre} pertenecen a su titular y se muestran como parte de la alianza con Destino y Eventos Lotus 360.`}
         </p>
       </Seccion>
