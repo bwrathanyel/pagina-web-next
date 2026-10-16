@@ -34,3 +34,19 @@ export function asesorPorNombre(nombre: string | null | undefined): Asesor | nul
   const normalizado = nombre.trim().toLocaleLowerCase("es-VE");
   return ASESORES.find((asesor) => asesor.nombre.toLocaleLowerCase("es-VE") === normalizado) ?? null;
 }
+
+/** El asesor que asignó el CRM (ingest_lead_v2, misma rotación que el resto de
+ * los canales). Su WhatsApp viaja en la respuesta ("+58..."); el pool de arriba
+ * solo cubre si falta. null = sin número: el que llama cae al corporativo, nunca
+ * a un sorteo local que no coincida con el CRM. */
+export function asesorAsignado(
+  nombre: string | null | undefined,
+  whatsapp: string | null | undefined,
+): { nombre: string; telefono: string } | null {
+  const telefono = whatsapp?.replace(/\D/g, "") || asesorPorNombre(nombre)?.telefono;
+  if (!nombre?.trim() || !telefono) return null;
+  return { nombre: nombre.trim(), telefono };
+}
+
+/** Lo que ve el cliente: solo el nombre de pila ("Ambar Arévalo" -> "Ambar"). */
+export const nombreDePila = (nombre: string) => nombre.trim().split(/\s+/)[0] ?? nombre;

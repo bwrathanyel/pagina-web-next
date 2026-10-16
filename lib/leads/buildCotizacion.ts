@@ -11,21 +11,43 @@ export interface ResultadoCotizacion {
 }
 
 /** A line is [emoji-prefix, content] so both message variants (emoji for
- * normal browsers, plain "►" for Instagram's in-app browser, which
- * doesn't render emoji reliably) are built from the same data — no
- * regex-stripping of emoji from a single string. `false` skips the
+ * normal browsers, plain "•" for Instagram's in-app browser, which
+ * doesn't render emoji reliably) are built from the same data. An empty
+ * prefix continues the line above (indented detail). `false` skips the
  * line entirely (conditional fields). */
 type Linea = [string, string] | false | null | undefined;
 
-export function armarMensajes(titulo: string, lineas: Linea[], cierre?: string): { emoji: string; texto: string } {
+/** Solo saca emoji (y sus modificadores): los acentos y la "ñ" se quedan.
+ * Antes se recortaba a ASCII y "COTIZACIÓN" llegaba como "COTIZACIN". */
+const sinEmoji = (s: string) =>
+  s
+    .replace(/[\p{Extended_Pictographic}\u{1F3FB}-\u{1F3FF}️‍]/gu, "")
+    .replace(/ {2,}/g, " ")
+    .trim();
+
+const SANGRIA = "      ";
+
+export function armarMensajes(
+  titulo: string,
+  lineas: Linea[],
+  cierre?: string,
+  /** Va antes del título, en las dos variantes. */
+  saludo?: string,
+): { emoji: string; texto: string } {
   const validas = lineas.filter((l): l is [string, string] => Boolean(l));
-  const emoji = [titulo, "", ...validas.map(([e, c]) => `${e} ${c}`), ...(cierre ? ["", cierre] : [])].join("\n");
-  const texto = [
-    titulo.replace(/[^\x00-\x7F]/gu, "").trim(),
-    "",
-    ...validas.map(([, c]) => `► ${c}`),
-    ...(cierre ? ["", cierre.replace(/[^\x00-\x7F]/gu, "").trim()] : []),
-  ].join("\n");
+  const armar = (limpiar: (s: string) => string, linea: (prefijo: string, c: string) => string) =>
+    [
+      ...(saludo ? [limpiar(saludo), ""] : []),
+      limpiar(titulo),
+      "",
+      ...validas.map(([e, c]) => linea(e, c)),
+      ...(cierre ? ["", limpiar(cierre)] : []),
+    ].join("\n");
+  const emoji = armar(
+    (s) => s,
+    (e, c) => (e ? `${e} ${c}` : `${SANGRIA}${c}`),
+  );
+  const texto = armar(sinEmoji, (e, c) => (e ? `• ${sinEmoji(c)}` : `   ${sinEmoji(c)}`));
   return { emoji, texto };
 }
 
@@ -40,6 +62,17 @@ export interface ContactoViaje {
 
 const FECHA_LARGA = new Intl.DateTimeFormat("es-VE", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 const fechaLarga = (iso: string) => FECHA_LARGA.format(new Date(`${iso}T00:00:00Z`));
+const DIA_MES = new Intl.DateTimeFormat("es-VE", { day: "numeric", month: "long", timeZone: "UTC" });
+
+/** "12 al 15 de noviembre de 2026" en vez de repetir mes y año en las dos puntas. */
+function rangoFechas(desde: string, hasta: string): string {
+  if (desde.slice(0, 4) !== hasta.slice(0, 4)) return `${fechaLarga(desde)} al ${fechaLarga(hasta)}`;
+  const inicio =
+    desde.slice(0, 7) === hasta.slice(0, 7)
+      ? String(Number(desde.slice(8, 10)))
+      : DIA_MES.format(new Date(`${desde}T00:00:00Z`));
+  return `${inicio} al ${fechaLarga(hasta)}`;
+}
 
 // Topes de /api/lead (destino 220, personas 160, consulta 3000).
 const recortar = (texto: string, max: number) => (texto.length > max ? `${texto.slice(0, max - 3).trimEnd()}...` : texto);
@@ -65,6 +98,8 @@ export function armarCotizacionViaje(
   toursElegidos: string[] = [],
   /** Ruta y aproximado del vuelo que vio el cliente (estimarVueloViaje). */
   vueloInfo: VueloViaje | null = null,
+  /** Nombre de pila del asesor que recibe el WhatsApp, para el saludo. */
+  asesor: string | null = null,
 ): ResultadoCotizacion {
   const tiene = (s: EstadoViaje["servicios"][number]) => e.servicios.includes(s);
   const hospedaje = tiene("hospedaje");
@@ -76,14 +111,14 @@ export function armarCotizacionViaje(
   const edades = e.ninos > 0 ? e.edades.map((a) => `${a} años`).join(", ") : "";
   const fechas = e.desde
     ? e.hasta
-      ? `${fechaLarga(e.desde)} al ${fechaLarga(e.hasta)} (${noches} ${noches === 1 ? "noche" : "noches"})`
+      ? `${rangoFechas(e.desde, e.hasta)} (${noches} ${noches === 1 ? "noche" : "noches"})`
       : `${fechaLarga(e.desde)} (salida por definir)`
     : "Por definir";
   const fv = fechasVuelo(e);
-  const fechasDelVuelo = fv.propias
-    ? ` (${fechaLarga(fv.ida)}${fv.vuelta ? ` al ${fechaLarga(fv.vuelta)}` : ""})`
-    : "";
-  const equipaje = EQUIPAJES.find((q) => q.valor === e.equipaje)?.etiqueta.toLowerCase() ?? "";
+  const fechasPropias = fv.propias ? (fv.vuelta ? rangoFechas(fv.ida, fv.vuelta) : fechaLarga(fv.ida)) : "";
+  const fechasDelVuelo = fechasPropias ? ` (${fechasPropias})` : "";
+  const etiquetaEquipaje = EQUIPAJES.find((q) => q.valor === e.equipaje)?.etiqueta ?? "";
+  const equipaje = etiquetaEquipaje.toLowerCase();
   const destinoVuelo = !vueloInfo?.destino
     ? e.destino
     : vueloInfo.destino === "otro"
@@ -143,25 +178,42 @@ export function armarCotizacionViaje(
     .filter(Boolean)
     .join(" | ");
 
+  // Mensaje de WhatsApp: una línea corta por dato y solo emoji de amplio
+  // soporte (nada de 🧭/🧳, Unicode 11, ni 🛏️ con selector de variación). El
+  // #id del hotel y la tarifa de referencia quedan solo en `consulta` (CRM).
+  const aprox =
+    vueloInfo?.porPersona != null
+      ? [
+          `Aprox. $${vueloInfo.porPersona} por persona${vueloInfo.total != null ? ` ($${vueloInfo.total} total)` : ""}`,
+          vueloInfo.cercano ? "fecha cercana" : "",
+          vueloInfo.bebesSinCosto ? "bebés sin costo" : "",
+        ]
+          .filter(Boolean)
+          .join(", ")
+      : "Precio a confirmar";
   const { emoji, texto } = armarMensajes(
-    "🧭 *COTIZACIÓN DE VIAJE - DESTINO Y EVENTOS LOTUS 360*",
+    `*COTIZACIÓN DE VIAJE${leadId ? ` #${leadId}` : ""}*\nDestino y Eventos Lotus 360`,
     [
-      leadId ? ["🔖", `*Cotización:* #${leadId}`] : null,
       ["👤", `*Nombre:* ${c.nombre}`],
-      ["🧳", `*Servicios:* ${servicio}${hospedaje && vuelo ? " (hospedaje con vuelo)" : ""}`],
+      ["📋", `*Servicios:* ${servicio}`],
       ["📍", `*Destino:* ${e.destino}`],
       ["📅", `*Fechas:* ${fechas}`],
       ["👥", `*Viajeros:* ${viajeros}`],
-      edades ? ["👶", `*Edades niños:* ${edades}`] : null,
-      hospedaje ? ["🏨", `*Hotel:* ${hotelTexto}`] : null,
-      habitacion ? ["🛏️", `*Habitación:* ${habitacion}`] : null,
+      edades ? ["👶", `*Edades de niños:* ${edades}`] : null,
+      hospedaje ? ["🏨", `*Hotel:* ${hotel ? hotel.nombre : "sin elegir, que el asesor proponga opciones"}`] : null,
+      habitacion ? ["", habitacion] : null,
       estimado ? ["💵", `*Estimado web:* ${estimado} (sujeto a disponibilidad)`] : null,
-      vuelo ? ["✈️", `*Vuelo:* ${tramoVuelo}`] : null,
+      vuelo ? ["✈️", `*Vuelo:* ${origenVuelo} a ${destinoVuelo}`] : null,
+      vuelo ? ["", `${e.vuelo === "ida" ? "Solo ida" : "Ida y vuelta"}${fechasPropias ? `, ${fechasPropias}` : ""}`] : null,
+      vuelo && etiquetaEquipaje ? ["", etiquetaEquipaje] : null,
+      vuelo && e.flexible ? ["", "Fechas flexibles"] : null,
+      vuelo ? ["", aprox] : null,
       tours ? ["🌴", `*Full day y tours:* ${toursTexto || "sí"} (grupo mínimo 15 personas)`] : null,
       c.correo ? ["✉️", `*Correo:* ${c.correo}`] : null,
       c.notas ? ["📝", `*Notas:* ${c.notas}`] : null,
     ],
-    "✅ *Enviar opciones con precio confirmado. ¡Gracias!*",
+    "Quedo a la espera de las opciones con precio confirmado. ¡Gracias!",
+    `Hola${asesor ? `, ${asesor}` : ""}. Le escribo por esta cotización de la web:`,
   );
 
   return {

@@ -32,7 +32,7 @@ import { Boton } from "@/components/ui/Boton";
 import { AreaTexto, Campo, Entrada } from "@/components/ui/Campo";
 import { Hoja } from "@/components/ui/Hoja";
 import { Icono } from "@/components/ui/Icono";
-import { ASESOR_BOLETERIA, asesorPorNombre, elegirAsesor } from "@/lib/asesores";
+import { ASESOR_BOLETERIA, asesorAsignado, nombreDePila } from "@/lib/asesores";
 import {
   alternarTour,
   atajosFinde,
@@ -57,6 +57,7 @@ import { crearLeadCRM } from "@/lib/leads/ingestWebLead";
 import { enviarASheetMonkey } from "@/lib/leads/sheetMonkey";
 import type { HotelCotizador } from "@/lib/supabase/queries";
 import { detectarProcedencia, esInstagramInApp } from "@/lib/utils/procedencia";
+import { NUMERO_CORPORATIVO } from "@/lib/whatsapp";
 
 interface Errores {
   fechas?: string;
@@ -70,6 +71,8 @@ interface Enviado {
   waHref: string;
   leadId: number | null;
   fallo: boolean;
+  /** Nombre de pila de quien recibe el WhatsApp; null = número corporativo. */
+  asesorNombre: string | null;
 }
 
 type Servicio = EstadoViaje["servicios"][number];
@@ -591,22 +594,12 @@ export function CotizadorViaje({
         notas: contacto.notas.trim(),
       };
       const solo = vuelo && !hospedaje && !tours;
-      const asesorLocal = solo ? ASESOR_BOLETERIA : elegirAsesor();
       const nombresTours = toursElegidos.map((t) => t.nombre);
       const base = armarCotizacionViaje(estado, datos, hotel, undefined, elegido, nombresTours, vueloViaje);
 
-      enviarASheetMonkey({
-        destino: base.destino,
-        servicio: base.servicio,
-        pagina: "Arme su viaje",
-        nombre: datos.nombre,
-        procedencia: detectarProcedencia(),
-        telefono: datos.telefono,
-        asesor: asesorLocal.telefono,
-      });
-
       let leadId: number | null = null;
-      let asesor = asesorLocal;
+      // Vuelo solo: siempre boletería. Lo demás: el asesor que asignó el CRM.
+      let asesor: { nombre: string; telefono: string } | null = solo ? ASESOR_BOLETERIA : null;
       let fallo = false;
       try {
         const lead = await crearLeadCRM({
@@ -617,17 +610,43 @@ export function CotizadorViaje({
           consulta: base.consulta,
         });
         leadId = lead.lead_id ?? null;
-        // Vuelo solo: siempre al asesor de boletería. Con hospedaje, el que asignó el CRM.
-        asesor = solo ? asesorLocal : (asesorPorNombre(lead.asesor) ?? asesorLocal);
+        if (!solo) asesor = asesorAsignado(lead.asesor, lead.asesor_whatsapp);
       } catch {
         fallo = true;
       }
+      const telefonoAsesor = asesor?.telefono ?? NUMERO_CORPORATIVO;
+      const asesorNombre = asesor ? nombreDePila(asesor.nombre) : null;
 
-      const final = armarCotizacionViaje(estado, datos, hotel, leadId ?? undefined, elegido, nombresTours, vueloViaje);
+      // Después del lead: el reporte lleva al asesor que de verdad recibe el WhatsApp.
+      enviarASheetMonkey({
+        destino: base.destino,
+        servicio: base.servicio,
+        pagina: "Arme su viaje",
+        nombre: datos.nombre,
+        procedencia: detectarProcedencia(),
+        telefono: datos.telefono,
+        asesor: telefonoAsesor,
+      });
+
+      const final = armarCotizacionViaje(
+        estado,
+        datos,
+        hotel,
+        leadId ?? undefined,
+        elegido,
+        nombresTours,
+        vueloViaje,
+        asesorNombre,
+      );
       // Con el CRM caído el borrador se queda: el cliente puede reintentar.
       if (!fallo) borrarBorrador(almacenLocal());
       const mensaje = esInstagramInApp() ? final.mensajeTexto : final.mensajeEmoji;
-      setEnviado({ waHref: `https://wa.me/${asesor.telefono}?text=${encodeURIComponent(mensaje)}`, leadId, fallo });
+      setEnviado({
+        waHref: `https://wa.me/${telefonoAsesor}?text=${encodeURIComponent(mensaje)}`,
+        leadId,
+        fallo,
+        asesorNombre,
+      });
       setHojaAbierta(false);
       window.scrollTo({ top: 0 });
     } finally {
@@ -643,6 +662,7 @@ export function CotizadorViaje({
           waHref={enviado.waHref}
           detalle={enviado.leadId ? `Cotización #${enviado.leadId}` : "Arme su viaje"}
           titulo={enviado.fallo ? "Falta un paso para enviarla" : "Su cotización está lista"}
+          boton={enviado.asesorNombre ? `Enviar a ${enviado.asesorNombre}` : undefined}
         >
           <div className="flex flex-col gap-3">
             {enviado.fallo ? (
@@ -650,6 +670,11 @@ export function CotizadorViaje({
                 No pudimos registrar su solicitud en nuestro sistema. Envíela ahora por WhatsApp y un asesor la
                 recibe directamente.
               </Aviso>
+            ) : enviado.asesorNombre ? (
+              <p>
+                Su asesor es <strong className="font-semibold text-ink">{enviado.asesorNombre}</strong>. Envíele la
+                cotización por WhatsApp y le confirma disponibilidad y precio.
+              </p>
             ) : (
               <p>Envíela por WhatsApp y un asesor le confirma disponibilidad y precio.</p>
             )}

@@ -60,7 +60,21 @@ export async function POST(request: Request) {
   if (upstream.status >= 500 && data?.ok !== true) {
     await registrarLeadFallido(datos, `next_proxy_http_${upstream.status}`);
   }
-  return NextResponse.json(data, { status: upstream.status });
+  return NextResponse.json(respuestaPublica(data), { status: upstream.status });
+}
+
+/** La respuesta de ingest_lead_v2 trae datos internos (telegram_chat_id del
+ * asesor, etc.) que no pueden llegar al navegador: solo pasa esta lista. */
+function respuestaPublica(data: Record<string, unknown>) {
+  const texto = (v: unknown) => (typeof v === "string" ? v : null);
+  return {
+    ok: data?.ok === true,
+    lead_id: Number.isFinite(Number(data?.lead_id)) && data?.lead_id != null ? Number(data.lead_id) : null,
+    duplicado: data?.duplicado === true,
+    asesor: texto(data?.asesor),
+    asesor_whatsapp: texto(data?.asesor_whatsapp),
+    ...(typeof data?.error === "string" ? { error: data.error } : {}),
+  };
 }
 
 /** Última red de seguridad: si el lead no llegó al CRM y tampoco quedó en

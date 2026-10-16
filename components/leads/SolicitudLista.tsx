@@ -11,6 +11,7 @@ export function SolicitudLista({
   detalle,
   titulo = "Su solicitud está lista",
   nivel = "h2",
+  boton = "Enviar a un asesor",
   children,
 }: {
   waHref: string;
@@ -19,6 +20,8 @@ export function SolicitudLista({
   titulo?: string;
   /** h1 cuando la confirmación reemplaza a toda la página (carrito). */
   nivel?: "h1" | "h2";
+  /** Texto del botón de WhatsApp ("Enviar a Ambar" cuando se sabe el asesor). */
+  boton?: string;
   children?: ReactNode;
 }) {
   const Titulo = nivel;
@@ -28,7 +31,7 @@ export function SolicitudLista({
       talon={
         <div className="flex h-full items-center px-5">
           <Boton href={waHref} variante="whatsapp" tamano="lg" ancho iconoInicio={<WhatsAppIcon size={20} />}>
-            Enviar a un asesor
+            {boton}
           </Boton>
           <span aria-hidden="true" className="franja-marca absolute inset-x-0 bottom-0 h-1" />
         </div>
