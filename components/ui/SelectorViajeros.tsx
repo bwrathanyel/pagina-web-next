@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, type CSSProperties } from "react";
+import { useId, useRef, type CSSProperties, type ReactNode } from "react";
 import { Icono } from "@/components/ui/Icono";
 
 // Viajeros del cotizador rápido: un botón con el resumen y un popover con un
@@ -42,9 +42,13 @@ interface Props {
   onCambio: (valor: Viajeros) => void;
   maximos: Viajeros;
   className?: string;
+  /** Segunda línea bajo el resumen (las edades de los niños, en /cotizar). */
+  detalle?: string;
+  /** Va dentro del panel, debajo de los contadores. */
+  children?: ReactNode;
 }
 
-export function SelectorViajeros({ id, valor, onCambio, maximos, className = "" }: Props) {
+export function SelectorViajeros({ id, valor, onCambio, maximos, className = "", detalle, children }: Props) {
   const idPanel = useId();
   const panel = useRef<HTMLDivElement>(null);
   const ancla = `--viajeros-${idPanel.replace(/[^a-zA-Z0-9]/g, "")}`;
@@ -56,11 +60,18 @@ export function SelectorViajeros({ id, valor, onCambio, maximos, className = "" 
         id={id}
         type="button"
         popoverTarget={idPanel}
-        aria-label={`Viajeros: ${texto}`}
+        aria-label={`Viajeros: ${texto}${detalle ? `. ${detalle}` : ""}`}
         style={{ anchorName: ancla } as CSSProperties}
         className={`flex items-center gap-2 text-left ${className}`}
       >
-        <span className="min-w-0 truncate">{texto}</span>
+        {detalle ? (
+          <span className="flex min-w-0 flex-col">
+            <span className="truncate">{texto}</span>
+            <span className="truncate text-xs font-normal text-ink-soft">{detalle}</span>
+          </span>
+        ) : (
+          <span className="min-w-0 truncate">{texto}</span>
+        )}
         <Icono nombre="chevron-abajo" tamano={18} className="ml-auto shrink-0 text-ink-soft" />
       </button>
       <input type="hidden" name="adultos" value={valor.adultos} />
@@ -116,6 +127,7 @@ export function SelectorViajeros({ id, valor, onCambio, maximos, className = "" 
             );
           })}
         </ul>
+        {children ? <div className="border-t border-linea py-3">{children}</div> : null}
         <div className="flex justify-end border-t border-linea pt-3">
           <button
             type="button"

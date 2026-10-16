@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AsistenteVirtualPanel } from "@/components/layout/AsistenteVirtualPanel";
 import Solcito, { type SolcitoMood } from "@/components/mascota/Solcito";
 import { textoFechas } from "@/components/cotizador/ResumenViaje";
@@ -25,6 +25,11 @@ export function AyudanteCotizar({
   variante: "movil" | "escritorio";
 }) {
   const [abierto, setAbierto] = useState(false);
+  // En escritorio va debajo del resumen: al abrirse, el chat se trae a la vista dentro de la columna.
+  const chat = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (abierto) chat.current?.scrollIntoView({ block: "nearest" });
+  }, [abierto]);
 
   const [mood, pista]: [SolcitoMood, string] =
     estado.ninos > 0 && hayRegalo && !hotel
@@ -86,7 +91,7 @@ export function AyudanteCotizar({
     <div className="flex flex-col gap-3">
       {tarjeta}
       {abierto ? (
-        <div className="h-[460px]">
+        <div ref={chat} className="h-[460px]">
           <AsistenteVirtualPanel
             modo="embebido"
             onClose={() => setAbierto(false)}

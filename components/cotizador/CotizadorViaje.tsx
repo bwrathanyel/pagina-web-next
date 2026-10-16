@@ -2,17 +2,29 @@
 
 import Image from "next/image";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { BarraViaje, BarraViajeCompacta, ChipsServicios } from "@/components/cotizador/BarraViaje";
+import { BarraViaje, BarraViajeCompacta, ChipsServicios, chip } from "@/components/cotizador/BarraViaje";
 import { AyudanteCotizar } from "@/components/cotizador/AyudanteCotizar";
 import { DetalleHotel } from "@/components/cotizador/DetalleHotel";
 import { OfertasHospedaje } from "@/components/cotizador/OfertasHospedaje";
+import { RecomendacionesHospedaje, type PrecioViaje } from "@/components/cotizador/RecomendacionesHospedaje";
 import { ResumenViaje, textoFechas } from "@/components/cotizador/ResumenViaje";
 import { SeccionTours } from "@/components/cotizador/SeccionTours";
 import { SeccionVuelo } from "@/components/cotizador/SeccionVuelo";
 import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { estimarEstadia, type Estadia } from "@/lib/cotizador/estimado";
-import { bloqueosEnFechas, hotelParaCotizar, textoSinDisponibilidad, type Bloqueo, type HotelDetalle } from "@/lib/cotizador/hotel";
+import {
+  bloqueosEnFechas,
+  esOnRequest,
+  hotelParaCotizar,
+  tarifasDeHoteles,
+  textoSinDisponibilidad,
+  type Bloqueo,
+  type HotelDetalle,
+} from "@/lib/cotizador/hotel";
 import type { OfertaHotel } from "@/lib/cotizador/ofertas";
+import { candidatosEstimado, recomendarHoteles } from "@/lib/cotizador/recomendar";
+import type { Tarifa } from "@/types/supabase";
 import { montoConMoneda } from "@/lib/tarifas";
 import { SolicitudLista } from "@/components/leads/SolicitudLista";
 import { Aviso } from "@/components/ui/Aviso";
@@ -23,6 +35,7 @@ import { Icono } from "@/components/ui/Icono";
 import { ASESOR_BOLETERIA, asesorPorNombre, elegirAsesor } from "@/lib/asesores";
 import {
   alternarTour,
+  atajosFinde,
   correoValido,
   fechasVuelo,
   hoyCaracas,
@@ -31,6 +44,7 @@ import {
   serializarEstado,
   telefonoValido,
   textoDuracion,
+  textoRangoCorto,
   textoViajeros,
   type EstadoViaje,
 } from "@/lib/cotizador/estado";
@@ -69,7 +83,8 @@ const TONO_PESTANA: Record<EstadoPestana["tono"], string> = {
 };
 
 /** Una pestaña por servicio marcado, con su estado a la vista. Los paneles
- * inactivos quedan montados y ocultos: no pierden lo que el cliente tocó. */
+ * inactivos quedan montados y ocultos: no pierden lo que el cliente tocó. Con
+ * un solo servicio no hay pestañas: un título y el panel. */
 function Pestanas({
   base,
   activa,
@@ -79,8 +94,25 @@ function Pestanas({
   base: string;
   activa: Servicio;
   onActivar: (s: Servicio) => void;
-  items: { id: Servicio; estado: EstadoPestana; panel: ReactNode }[];
+  items: { id: Servicio; titulo: string; estado: EstadoPestana; panel: ReactNode }[];
 }) {
+  if (items.length === 1) {
+    const [it] = items;
+    return (
+      <section aria-labelledby={`${base}-titulo-${it.id}`} className="rounded-card border border-linea bg-card">
+        <div id={`${base}-panel-${it.id}`} className="flex flex-col gap-4 p-4 md:p-5">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            <h2 id={`${base}-titulo-${it.id}`} className="font-display text-2xl font-bold leading-tight text-ink">
+              {it.titulo}
+            </h2>
+            <span className={`text-xs ${TONO_PESTANA[it.estado.tono]}`}>{it.estado.texto}</span>
+          </div>
+          {it.panel}
+        </div>
+      </section>
+    );
+  }
+
   function teclado(ev: React.KeyboardEvent) {
     const i = items.findIndex((it) => it.id === activa);
     const destino =
@@ -115,12 +147,12 @@ function Pestanas({
               aria-controls={`${base}-panel-${it.id}`}
               tabIndex={sel ? 0 : -1}
               onClick={() => onActivar(it.id)}
-              className={`relative flex min-h-16 min-w-0 flex-col items-start justify-center gap-0.5 px-4 py-3 text-left transition-colors duration-150 ease-salida motion-reduce:transition-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-acento ${
+              className={`relative flex min-h-12 min-w-0 items-center gap-2 px-4 py-2 text-left transition-colors duration-150 ease-salida motion-reduce:transition-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-acento ${
                 sel ? "bg-card" : "hover:bg-sand"
               }`}
             >
-              <span className={`font-semibold ${sel ? "text-ink" : "text-ink-soft"}`}>{NOMBRE_PESTANA[it.id]}</span>
-              <span className={`w-full truncate text-xs ${TONO_PESTANA[it.estado.tono]}`}>{it.estado.texto}</span>
+              <span className={`shrink-0 font-semibold ${sel ? "text-ink" : "text-ink-soft"}`}>{NOMBRE_PESTANA[it.id]}</span>
+              <span className={`min-w-0 truncate text-xs ${TONO_PESTANA[it.estado.tono]}`}>{it.estado.texto}</span>
               {sel ? <span aria-hidden="true" className="franja-marca absolute inset-x-0 bottom-0 h-1" /> : null}
             </button>
           );
@@ -133,7 +165,7 @@ function Pestanas({
           role="tabpanel"
           aria-labelledby={`${base}-tab-${it.id}`}
           hidden={it.id !== activa}
-          className="flex flex-col gap-5 p-5 md:p-7"
+          className="flex flex-col gap-4 p-4 md:p-5"
         >
           {it.panel}
         </div>
@@ -289,10 +321,11 @@ export function CotizadorViaje({
   rutas: RutaVuelo[];
 }) {
   const formId = useId();
+  const { tasaUSD, tasaEUR } = useCurrency();
   const [estado, setEstado] = useState(inicial);
   const [detalles, setDetalles] = useState<Record<number, HotelDetalle | "error">>({});
   const [verHotel, setVerHotel] = useState<{ id: number; nombre: string } | null>(null);
-  const [bloqueos, setBloqueos] = useState<{ clave: string; mapa: Map<number, Bloqueo[]> } | null>(null);
+  const [bloqueos, setBloqueos] = useState<{ clave: string; mapa: Map<number, Bloqueo[]>; fallo?: boolean } | null>(null);
   const [contacto, setContacto] = useState(CONTACTO_VACIO);
   const [errores, setErrores] = useState<Errores>({});
   const [enviando, setEnviando] = useState(false);
@@ -302,6 +335,9 @@ export function CotizadorViaje({
   const [editarViaje, setEditarViaje] = useState(false);
   const [pestana, setPestana] = useState<Servicio | null>(null);
   const [catalogoTours, setCatalogoTours] = useState<TourWeb[] | "error" | null>(null);
+  // Tarifas de los hoteles que se pueden recomendar, para mostrar su total sin abrirlos.
+  const [tarifasHoteles, setTarifasHoteles] = useState<Record<number, Tarifa[] | "error">>({});
+  const [verTodos, setVerTodos] = useState(false);
   // Borrador guardado de una visita anterior: se ofrece retomar, no se aplica solo.
   const [borradorPendiente, setBorradorPendiente] = useState<Borrador | null>(null);
   const borradorResuelto = useRef(false);
@@ -315,7 +351,6 @@ export function CotizadorViaje({
   const tours = estado.servicios.includes("tours");
   const ofertasDestino = ofertas.filter((o) => o.destino === estado.destino);
   const ofertaElegida = ofertas.find((o) => o.hotelId === estado.hotel);
-  const otrasOfertas = ofertasDestino.filter((o) => o.hotelId !== estado.hotel);
   const hotel: HotelCotizador | null =
     estado.hotel == null
       ? null
@@ -350,12 +385,29 @@ export function CotizadorViaje({
     const [ids, desde, hasta] = claveBloqueo.split("|");
     bloqueosEnFechas(ids.split(",").filter(Boolean).map(Number), desde, hasta)
       .then((mapa) => vivo && setBloqueos({ clave: claveBloqueo, mapa }))
-      // Si la consulta falla no se bloquea nada: el asesor confirma disponibilidad igual.
-      .catch(() => vivo && setBloqueos({ clave: claveBloqueo, mapa: new Map() }));
+      // Si la consulta falla no hay cómo saber si hay stop sale: se avisa y no se estima (Fase 6).
+      .catch(() => vivo && setBloqueos({ clave: claveBloqueo, mapa: new Map(), fallo: true }));
     return () => {
       vivo = false;
     };
   }, [claveBloqueo]);
+  // Tarifas de los candidatos a recomendar: una lectura por destino. No
+  // dependen de las fechas, así el total aparece apenas el cliente las elige.
+  const candidatos = hospedaje ? candidatosEstimado(ofertasDestino) : [];
+  const claveCandidatos = candidatos.filter((id) => !(id in tarifasHoteles)).join(",");
+  useEffect(() => {
+    if (!claveCandidatos) return;
+    let vivo = true;
+    const ids = claveCandidatos.split(",").map(Number);
+    const guardar = (de: (id: number) => Tarifa[] | "error") =>
+      setTarifasHoteles((m) => ({ ...m, ...Object.fromEntries(ids.map((id) => [id, de(id)])) }));
+    tarifasDeHoteles(ids)
+      .then((mapa) => vivo && guardar((id) => mapa.get(id) ?? "error"))
+      .catch(() => vivo && guardar(() => "error"));
+    return () => {
+      vivo = false;
+    };
+  }, [claveCandidatos]);
   // Tours del catálogo: una lectura la primera vez que se marca el servicio.
   useEffect(() => {
     if (!tours || catalogoTours !== null) return;
@@ -404,6 +456,7 @@ export function CotizadorViaje({
   }
 
   const mapaBloqueos = bloqueos && bloqueos.clave === claveBloqueo ? bloqueos.mapa : null;
+  const bloqueosFallo = !!bloqueos && bloqueos.clave === claveBloqueo && !!bloqueos.fallo;
   const sinDisponibilidad = (id: number) =>
     estado.desde && estado.hasta ? textoSinDisponibilidad(mapaBloqueos?.get(id), estado.desde, estado.hasta) : null;
 
@@ -423,7 +476,7 @@ export function CotizadorViaje({
   };
   const hotelBloqueado = hospedaje && hotel ? sinDisponibilidad(hotel.id) : null;
   const estimado =
-    hospedaje && tarifaElegida && detalleElegido && detalleElegido !== "error" && !hotelBloqueado
+    hospedaje && tarifaElegida && detalleElegido && detalleElegido !== "error" && !hotelBloqueado && !bloqueosFallo
       ? estimarEstadia(tarifaElegida, detalleElegido.tarifas, estadia)
       : null;
   const toursElegidos = (catalogoTours && catalogoTours !== "error" ? catalogoTours : []).filter((t) => estado.tours.includes(t.id));
@@ -434,6 +487,32 @@ export function CotizadorViaje({
     plan: tarifaElegida?.plan ?? null,
     estimado: estimado?.ok ? montoConMoneda(estimado.total, estimado.moneda) : null,
   };
+
+  // Total de cada hotel recomendable con la tarifa que anuncia su oferta: el
+  // mismo cálculo (y el mismo número) que el resumen cuando el cliente lo elige.
+  const conFechas = !!(estado.desde && estado.hasta);
+  const precioDe = (o: OfertaHotel): PrecioViaje => {
+    if (!conFechas || bloqueosFallo) return null;
+    const detalle = detalles[o.hotelId];
+    const filas = detalle && detalle !== "error" ? detalle.tarifas : tarifasHoteles[o.hotelId];
+    if (filas === undefined) return candidatos.includes(o.hotelId) ? "cargando" : null;
+    if (filas === "error") return null;
+    const anunciada = filas.find((t) => t.id === o.tarifaId);
+    return anunciada ? estimarEstadia(anunciada, filas, { ...estadia, ninosGratis: o.ninosGratisCantidad || undefined }) : null;
+  };
+  const recomendaciones = recomendarHoteles(ofertasDestino, {
+    ninos: estado.ninos,
+    bloqueada: (o) => !!sinDisponibilidad(o.hotelId),
+    // EUR y USD se comparan en dólares con la tasa del día (la de PrecioMostrado);
+    // sin tasa, cada moneda va aparte.
+    total: (o) => {
+      const p = precioDe(o);
+      if (!p || p === "cargando" || !p.ok) return null;
+      return p.moneda === "EUR" && tasaUSD && tasaEUR
+        ? { monto: (p.total * tasaEUR) / tasaUSD, moneda: "USD" }
+        : { monto: p.total, moneda: p.moneda };
+    },
+  });
 
   // El estado vive en la URL: se reescribe sin apilar historial. La primera
   // vez no, así una URL limpia sigue limpia hasta que el cliente toca algo.
@@ -622,6 +701,23 @@ export function CotizadorViaje({
     o.conFotosHabitacion
       ? setVerHotel({ id: o.hotelId, nombre: o.nombre })
       : cambiar({ ...estado, hotel: o.hotelId, tarifa: o.tarifaId });
+  // Desde la hoja de todos los hoteles: primero se cierra, después se abre el
+  // detalle; si no, la hoja que sale le devuelve el foco a su botón y se lo
+  // quita a la que entra.
+  const verDesdeTodos = (o: OfertaHotel) => {
+    setVerTodos(false);
+    if (o.conFotosHabitacion) setTimeout(() => abrirOferta(o), 260);
+    else abrirOferta(o);
+  };
+  // "Otras fechas": en escritorio abre el calendario de la barra; en móvil, la hoja del viaje.
+  const abrirCalendario = () => {
+    const boton = window.matchMedia("(min-width: 64rem)").matches ? document.getElementById(`${formId}-barra-desde`) : null;
+    if (!boton) return setEditarViaje(true);
+    boton.scrollIntoView({ block: "nearest", behavior: comportamientoScroll() });
+    boton.click();
+  };
+  const noches = nochesDe(estado);
+  const textoNoches = `${noches} ${noches === 1 ? "noche" : "noches"}`;
   const montoBarra = estimado?.ok ? montoConMoneda(estimado.total, estimado.moneda) : null;
   const hayRegalo = ofertasDestino.some((o) => o.ninosGratis);
   // Móvil: en qué paso va (1 viaje, 2 elegir, 3 enviar), solo para orientar.
@@ -656,7 +752,9 @@ export function CotizadorViaje({
               </p>
             ) : (
               <p className="text-sm text-ink-soft">
-                {estimado && !estimado.ok ? `${estimado.texto} ` : !tarifaBase ? "Elija la habitación para ver el estimado. " : ""}
+                {bloqueosFallo
+                  ? "No pudimos verificar la disponibilidad en esas fechas. "
+                  : estimado && !estimado.ok ? `${estimado.texto} ` : !tarifaBase ? "Elija la habitación para ver el estimado. " : ""}
                 Precio a confirmar por el asesor.
               </p>
             )}
@@ -678,39 +776,47 @@ export function CotizadorViaje({
           </div>
         </div>
       ) : null}
-      {hotel && otrasOfertas.length ? (
-        <div className="flex flex-col gap-3">
-          <h3 className="font-semibold text-ink">Otras ofertas en {estado.destino}</h3>
-          <OfertasHospedaje
-            variante="lista"
-            ofertas={otrasOfertas}
-            destino={estado.destino}
-            elegido={hotel.id}
-            bloqueos={mapaBloqueos}
-            desde={estado.desde}
-            hasta={estado.hasta}
-            onVer={abrirOferta}
-          />
+      {!estado.desde ? (
+        <div className="flex flex-col gap-2 rounded-card bg-acento-suave p-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+          <p className="text-sm font-semibold text-ink">¿Cuándo viaja? Elija y le mostramos el total:</p>
+          <div role="group" aria-label="Fechas sugeridas" className="flex flex-wrap gap-2">
+            {atajosFinde().map((a) => (
+              <button
+                key={a.desde}
+                type="button"
+                onClick={() => cambiar({ ...estado, desde: a.desde, hasta: a.hasta })}
+                className={chip(false)}
+              >
+                {textoRangoCorto(a.desde, a.hasta)}
+              </button>
+            ))}
+            <button type="button" onClick={abrirCalendario} className={chip(false)}>
+              Otras fechas
+            </button>
+          </div>
         </div>
       ) : null}
-      {!hotel ? (
-        <OfertasHospedaje
-          ofertas={ofertasDestino}
-          destino={estado.destino}
+      {ofertasDestino.length ? (
+        <RecomendacionesHospedaje
+          recomendaciones={recomendaciones}
+          precioDe={precioDe}
+          onRequest={(o) => esOnRequest(mapaBloqueos?.get(o.hotelId))}
+          detalle={`${textoNoches} · ${textoViajeros(estado)}`}
+          detalleCorto={`por ${textoNoches}`}
           ninos={estado.ninos}
-          elegido={null}
-          bloqueos={mapaBloqueos}
-          desde={estado.desde}
-          hasta={estado.hasta}
-          onVer={abrirOferta}
+          elegido={hotel?.id ?? null}
+          totalHoteles={ofertasDestino.length}
+          destino={estado.destino}
+          onElegir={(o) => cambiar({ ...estado, hotel: o.hotelId, tarifa: o.tarifaId })}
+          onVerHabitaciones={(o) => setVerHotel({ id: o.hotelId, nombre: o.nombre })}
+          onVerTodos={() => setVerTodos(true)}
         />
-      ) : null}
-      {!hotel && ofertasDestino.length ? (
-        <p className="text-sm text-ink-soft">
-          ¿No encontró lo que busca? Escriba su presupuesto, plan o zona en los comentarios, junto al botón de
-          envío, y un asesor le propone opciones.
+      ) : (
+        <p className="text-ink-soft">
+          Aún no tenemos ofertas publicadas en {estado.destino}. Escriba en los comentarios, junto al botón de envío,
+          qué busca (plan, presupuesto, zona) y un asesor le propone opciones con disponibilidad para sus fechas.
         </p>
-      ) : null}
+      )}
     </>
   );
   const panelVuelo = <SeccionVuelo estado={estado} rutas={rutas} vuelo={vueloViaje} error={errores.vuelo} errorId={`${formId}-vuelo`} onCambio={cambiar} />;
@@ -727,8 +833,8 @@ export function CotizadorViaje({
 
   return (
     <>
-      <div className="mb-6 hidden lg:block">
-        <BarraViajeCompacta estado={estado} onCambio={cambiar} />
+      <div className="mb-4 hidden lg:block">
+        <BarraViajeCompacta estado={estado} onCambio={cambiar} idBase={`${formId}-barra`} />
       </div>
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_23rem] lg:items-start xl:gap-12">
         <div className="flex min-w-0 flex-col gap-6 md:gap-8">
@@ -770,13 +876,6 @@ export function CotizadorViaje({
               <span className="shrink-0 text-sm font-semibold text-acento underline underline-offset-4">Editar</span>
             </button>
             <ChipsServicios estado={estado} onCambio={cambiar} compacto />
-            <AyudanteCotizar
-              variante="movil"
-              estado={estado}
-              hotel={hotel?.nombre ?? null}
-              estimado={montoBarra}
-              hayRegalo={hayRegalo}
-            />
           </div>
 
           {errores.fechas ? (
@@ -800,13 +899,29 @@ export function CotizadorViaje({
             onActivar={setPestana}
             items={estado.servicios.map((s) => ({
               id: s,
+              titulo:
+                s === "hospedaje" ? `Hospedaje en ${estado.destino}`
+                : s === "vuelo" ? "Vuelo"
+                : `Full day y tours en ${estado.destino}`,
               estado: estadoPestana[s],
               panel: s === "hospedaje" ? panelHospedaje : s === "vuelo" ? panelVuelo : panelTours,
             }))}
           />
+          {/* Móvil: Solcito después de las opciones, no antes: lo primero que se ve es qué elegir. */}
+          <div className="lg:hidden">
+            <AyudanteCotizar
+              variante="movil"
+              estado={estado}
+              hotel={hotel?.nombre ?? null}
+              estimado={montoBarra}
+              hayRegalo={hayRegalo}
+            />
+          </div>
         </div>
 
+        {/* Resumen arriba: nombre, WhatsApp y "Enviar solicitud" a la vista sin bajar. */}
         <aside aria-label="Su cotización" className="hidden lg:sticky lg:top-24 lg:flex lg:max-h-[calc(100dvh-7rem)] lg:flex-col lg:gap-4 lg:overflow-y-auto lg:overscroll-contain">
+          {resumen(true)}
           <AyudanteCotizar
             variante="escritorio"
             estado={estado}
@@ -814,7 +929,6 @@ export function CotizadorViaje({
             estimado={montoBarra}
             hayRegalo={hayRegalo}
           />
-          {resumen(true)}
         </aside>
       </div>
 
@@ -857,6 +971,30 @@ export function CotizadorViaje({
           <Boton tamano="lg" ancho onClick={() => setEditarViaje(false)}>
             Listo
           </Boton>
+        </div>
+      </Hoja>
+
+      <Hoja
+        abierta={verTodos}
+        onCerrar={() => setVerTodos(false)}
+        titulo={`Hoteles en ${estado.destino}`}
+        anchoClassName="lg:max-w-4xl"
+      >
+        <div className="flex flex-col gap-4 p-4 md:p-5">
+          <OfertasHospedaje
+            ofertas={ofertasDestino}
+            destino={estado.destino}
+            ninos={estado.ninos}
+            elegido={hotel?.id ?? null}
+            bloqueos={mapaBloqueos}
+            desde={estado.desde}
+            hasta={estado.hasta}
+            onVer={verDesdeTodos}
+          />
+          <p className="text-sm text-ink-soft">
+            ¿No encontró lo que busca? Escriba su presupuesto, plan o zona en los comentarios, junto al botón de
+            envío, y un asesor le propone opciones.
+          </p>
         </div>
       </Hoja>
 

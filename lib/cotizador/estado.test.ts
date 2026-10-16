@@ -3,6 +3,7 @@ import { test } from "node:test";
 import {
   alternarServicio,
   alternarTour,
+  atajosFinde,
   cambiarDesde,
   cambiarViajeros,
   correoValido,
@@ -11,9 +12,34 @@ import {
   parsearEstado,
   serializarEstado,
   telefonoValido,
+  textoRangoCorto,
 } from "./estado.ts";
 
 const HOY = "2026-09-25";
+
+test("atajos de fin de semana: viernes a domingo con 2 dias de anticipacion", () => {
+  // Miércoles: este mismo viernes.
+  assert.deepEqual(atajosFinde("2026-10-14"), [
+    { desde: "2026-10-16", hasta: "2026-10-18" },
+    { desde: "2026-10-23", hasta: "2026-10-25" },
+  ]);
+  // Jueves y viernes ya no llegan: pasa al siguiente.
+  assert.equal(atajosFinde("2026-10-15")[0].desde, "2026-10-23");
+  assert.equal(atajosFinde("2026-10-16")[0].desde, "2026-10-23");
+  // Sábado y domingo: el viernes que viene.
+  assert.equal(atajosFinde("2026-10-17")[0].desde, "2026-10-23");
+  assert.equal(atajosFinde("2026-10-18")[0].desde, "2026-10-23");
+  // Los atajos son fechas válidas para la URL.
+  const [a] = atajosFinde("2026-10-16");
+  const e = parsearEstado({ fecha: a.desde, hasta: a.hasta }, "2026-10-16");
+  assert.equal(e.desde, a.desde);
+  assert.equal(e.hasta, a.hasta);
+});
+
+test("rango corto de los atajos", () => {
+  assert.equal(textoRangoCorto("2026-10-23", "2026-10-25"), "vie 23 – dom 25 oct");
+  assert.equal(textoRangoCorto("2026-10-30", "2026-11-01"), "vie 30 oct – dom 1 nov");
+});
 
 test("sin parametros devuelve el estado inicial", () => {
   assert.deepEqual(parsearEstado({}, HOY), estadoInicial());

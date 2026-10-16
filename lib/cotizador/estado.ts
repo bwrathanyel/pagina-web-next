@@ -110,6 +110,30 @@ export function textoDuracion(noches: number) {
   return `${dias} ${dias === 1 ? "día" : "días"} · ${noches} ${noches === 1 ? "noche" : "noches"}`;
 }
 
+/** Atajos de /cotizar cuando aún no hay fechas: los dos próximos fines de
+ * semana (viernes a domingo), con al menos 2 días para que el asesor confirme. */
+export function atajosFinde(hoy = hoyCaracas()): { desde: string; hasta: string }[] {
+  const dia = new Date(`${hoy}T00:00:00Z`).getUTCDay();
+  let falta = (5 - dia + 7) % 7;
+  if (falta < 2) falta += 7;
+  const viernes = sumarDias(hoy, falta);
+  return [0, 7].map((n) => ({ desde: sumarDias(viernes, n), hasta: sumarDias(viernes, n + 2) }));
+}
+
+const DIAS_CORTOS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+const MESES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sept", "oct", "nov", "dic"];
+
+/** "vie 23 – dom 25 oct" o, si cambia el mes, "vie 30 oct – dom 1 nov". */
+export function textoRangoCorto(desde: string, hasta: string): string {
+  const parte = (iso: string) => {
+    const d = new Date(`${iso}T00:00:00Z`);
+    return { dia: `${DIAS_CORTOS[d.getUTCDay()]} ${d.getUTCDate()}`, mes: MESES_CORTOS[d.getUTCMonth()] };
+  };
+  const a = parte(desde);
+  const b = parte(hasta);
+  return a.mes === b.mes ? `${a.dia} – ${b.dia} ${b.mes}` : `${a.dia} ${a.mes} – ${b.dia} ${b.mes}`;
+}
+
 const esFechaViaje = (v: string | undefined, hoy: string): v is string =>
   !!v && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v)) && v >= hoy;
 

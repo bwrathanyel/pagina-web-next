@@ -48,11 +48,11 @@ export default async function CotizarPage({
   for (const o of ofertas) if (o.foto && !fotosDestino[o.destino]) fotosDestino[o.destino] = o.foto;
 
   return (
-    <main className="relative isolate mx-auto max-w-6xl px-4 py-5 pb-32 sm:px-5 md:py-10 lg:pb-10">
+    <main className="relative isolate mx-auto max-w-6xl px-4 py-5 pb-32 sm:px-5 md:py-6 lg:pb-10">
       <Suspense fallback={null}>
         <FondoDestino fotos={fotosDestino} inicial={estado.destino} />
       </Suspense>
-      <div className="mb-4 flex flex-wrap items-baseline gap-x-5 gap-y-2 lg:mb-6">
+      <div className="mb-4 flex flex-wrap items-baseline gap-x-5 gap-y-2">
         <h1 className="font-display text-3xl font-bold leading-none text-ink sm:text-4xl">Arme su viaje</h1>
         <p className="max-w-2xl text-ink-soft max-lg:hidden">
           Elija qué necesita, cuándo y cuántos viajan. Un asesor le responde por WhatsApp.

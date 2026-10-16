@@ -21,7 +21,7 @@ const VISIBLES_LISTA = 3;
 const PASO_FOTO_MS = 1100;
 
 /** Qué hotel tiene el mouse encima. Solo mouse: en táctil no hay hover. */
-function useEncima() {
+export function useEncima() {
   const [encima, setEncima] = useState<number | null>(null);
   const props = (id: number) => ({
     onPointerEnter: (e: React.PointerEvent) => e.pointerType === "mouse" && setEncima(id),
@@ -33,7 +33,7 @@ function useEncima() {
 /** Foto de la oferta que, con el mouse encima, va pasando las del hotel. Solo
  * con mouse (en táctil no hay hover) y sin reduced-motion. Las fotos se montan
  * a medida que llegan, una por delante, para no bajarlas todas al cargar. */
-function FotoRotativa({
+export function FotoRotativa({
   fotos,
   sizes,
   apagada,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useState } from "react";
 import { chip } from "@/components/cotizador/BarraViaje";
 import { textoFechas } from "@/components/cotizador/ResumenViaje";
 import { Aviso } from "@/components/ui/Aviso";
@@ -9,6 +9,7 @@ import { CLASE_CONTROL, Campo, Entrada, Selector } from "@/components/ui/Campo";
 import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
 import { SelectorFecha } from "@/components/ui/SelectorFecha";
 import {
+  EQUIPAJE_INICIAL,
   EQUIPAJES,
   fechasVuelo,
   hoyCaracas,
@@ -57,6 +58,10 @@ export function SeccionVuelo({
   const fv = fechasVuelo(estado);
   const idaVuelta = estado.vuelo === "ida-vuelta";
   const fechas = textoFechas({ ...estado, desde: fv.ida, hasta: fv.vuelta });
+  // Fechas propias, equipaje y flexibilidad van plegados con sus valores a la
+  // vista; se abren solos si el cliente ya los cambió o si hay un error ahí.
+  const [mas, setMas] = useState(fv.propias || estado.flexible || estado.equipaje !== EQUIPAJE_INICIAL);
+  const abierto = mas || !!error;
 
   function otrasFechas() {
     if (fv.propias) return onCambio({ ...estado, vueloDesde: "", vueloHasta: "" });
@@ -137,66 +142,7 @@ export function SeccionVuelo({
         </div>
       </div>
 
-      <dl className="grid gap-x-6 gap-y-1 rounded-control bg-sand-2 p-4 text-sm sm:grid-cols-[auto_1fr]">
-        <dt className="font-semibold text-ink">Ruta</dt>
-        <dd className="text-ink-soft">
-          {estado.origen} a {destinoTexto}
-        </dd>
-        <dt className="font-semibold text-ink">Fechas</dt>
-        <dd className="text-ink-soft">
-          {fechas}
-          {acompana && !fv.propias ? " (las de su viaje)" : ""}
-        </dd>
-        <dt className="font-semibold text-ink">Pasajeros</dt>
-        <dd className="text-ink-soft">{textoViajeros(estado)}</dd>
-      </dl>
-
-      {acompana ? (
-        <div className="flex flex-col gap-3">
-          <button type="button" aria-pressed={fv.propias} onClick={otrasFechas} className={`${chip(fv.propias)} self-start`}>
-            {fv.propias ? "Usar las fechas de mi viaje" : "El vuelo tiene otras fechas"}
-          </button>
-          {fv.propias ? (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Campo etiqueta="Ida del vuelo">
-                {() => (
-                  <SelectorFecha
-                    id={`${id}-ida`}
-                    name="vuelo_ida"
-                    etiqueta="Ida del vuelo"
-                    valor={fv.ida}
-                    onCambio={(iso) =>
-                      onCambio({ ...estado, vueloDesde: iso, vueloHasta: estado.vueloHasta && estado.vueloHasta <= iso ? "" : estado.vueloHasta })
-                    }
-                    rango={idaVuelta ? { desde: fv.ida, hasta: fv.vuelta } : undefined}
-                    vacio="Elegir fecha"
-                    className={CONTROL_BOTON}
-                  />
-                )}
-              </Campo>
-              {idaVuelta ? (
-                <Campo etiqueta="Vuelta del vuelo">
-                  {() => (
-                    <SelectorFecha
-                      id={`${id}-vuelta`}
-                      name="vuelo_vuelta"
-                      etiqueta="Vuelta del vuelo"
-                      valor={fv.vuelta}
-                      min={sumarDias(fv.ida, 1)}
-                      onCambio={(iso) => onCambio({ ...estado, vueloHasta: iso })}
-                      rango={{ desde: fv.ida, hasta: fv.vuelta }}
-                      vacio="Elegir fecha"
-                      className={CONTROL_BOTON}
-                    />
-                  )}
-                </Campo>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-      ) : (
-        <p className="text-sm text-ink-soft">Las fechas de ida y vuelta se eligen arriba, en Su viaje.</p>
-      )}
+      <EstimadoVuelo vuelo={vuelo} idaVuelta={idaVuelta} />
 
       {error ? (
         <Aviso>
@@ -206,35 +152,101 @@ export function SeccionVuelo({
         </Aviso>
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Campo etiqueta="Equipaje">
-          {(a11y) => (
-            <Selector {...a11y} value={estado.equipaje} onChange={(ev) => onCambio({ ...estado, equipaje: ev.target.value as Equipaje })}>
-              {EQUIPAJES.map((q) => (
-                <option key={q.valor} value={q.valor}>
-                  {q.etiqueta}
-                </option>
-              ))}
-            </Selector>
-          )}
-        </Campo>
-        <div>
-          <p id={`${id}-flex`} className="mb-1.5 text-sm font-semibold text-ink">
-            Flexibilidad
+      <div className="flex flex-col gap-1">
+        <button
+          type="button"
+          aria-expanded={abierto}
+          aria-controls={`${id}-mas`}
+          onClick={() => setMas((v) => !v)}
+          className="self-start text-sm font-semibold text-acento underline underline-offset-4 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento"
+        >
+          {abierto ? "Ocultar opciones del vuelo" : "Más opciones del vuelo"}
+        </button>
+        {abierto ? null : (
+          <p className="text-sm text-ink-soft">
+            {estado.origen} a {destinoTexto} · {fechas}
+            {acompana && !fv.propias ? " (las de su viaje)" : ""} · {textoViajeros(estado)} ·{" "}
+            {EQUIPAJES.find((q) => q.valor === estado.equipaje)?.etiqueta.toLowerCase()}
           </p>
-          <button
-            type="button"
-            aria-pressed={estado.flexible}
-            aria-labelledby={`${id}-flex`}
-            onClick={() => onCambio({ ...estado, flexible: !estado.flexible })}
-            className={chip(estado.flexible)}
-          >
-            Puedo mover las fechas unos días
-          </button>
-        </div>
+        )}
       </div>
 
-      <EstimadoVuelo vuelo={vuelo} idaVuelta={idaVuelta} />
+      <div id={`${id}-mas`} hidden={!abierto} className="flex flex-col gap-5">
+        {acompana ? (
+          <div className="flex flex-col gap-3">
+            <button type="button" aria-pressed={fv.propias} onClick={otrasFechas} className={`${chip(fv.propias)} self-start`}>
+              {fv.propias ? "Usar las fechas de mi viaje" : "El vuelo tiene otras fechas"}
+            </button>
+            {fv.propias ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Campo etiqueta="Ida del vuelo">
+                  {() => (
+                    <SelectorFecha
+                      id={`${id}-ida`}
+                      name="vuelo_ida"
+                      etiqueta="Ida del vuelo"
+                      valor={fv.ida}
+                      onCambio={(iso) =>
+                        onCambio({ ...estado, vueloDesde: iso, vueloHasta: estado.vueloHasta && estado.vueloHasta <= iso ? "" : estado.vueloHasta })
+                      }
+                      rango={idaVuelta ? { desde: fv.ida, hasta: fv.vuelta } : undefined}
+                      vacio="Elegir fecha"
+                      className={CONTROL_BOTON}
+                    />
+                  )}
+                </Campo>
+                {idaVuelta ? (
+                  <Campo etiqueta="Vuelta del vuelo">
+                    {() => (
+                      <SelectorFecha
+                        id={`${id}-vuelta`}
+                        name="vuelo_vuelta"
+                        etiqueta="Vuelta del vuelo"
+                        valor={fv.vuelta}
+                        min={sumarDias(fv.ida, 1)}
+                        onCambio={(iso) => onCambio({ ...estado, vueloHasta: iso })}
+                        rango={{ desde: fv.ida, hasta: fv.vuelta }}
+                        vacio="Elegir fecha"
+                        className={CONTROL_BOTON}
+                      />
+                    )}
+                  </Campo>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <p className="text-sm text-ink-soft">Las fechas de ida y vuelta se eligen arriba, en Su viaje.</p>
+        )}
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Campo etiqueta="Equipaje">
+            {(a11y) => (
+              <Selector {...a11y} value={estado.equipaje} onChange={(ev) => onCambio({ ...estado, equipaje: ev.target.value as Equipaje })}>
+                {EQUIPAJES.map((q) => (
+                  <option key={q.valor} value={q.valor}>
+                    {q.etiqueta}
+                  </option>
+                ))}
+              </Selector>
+            )}
+          </Campo>
+          <div>
+            <p id={`${id}-flex`} className="mb-1.5 text-sm font-semibold text-ink">
+              Flexibilidad
+            </p>
+            <button
+              type="button"
+              aria-pressed={estado.flexible}
+              aria-labelledby={`${id}-flex`}
+              onClick={() => onCambio({ ...estado, flexible: !estado.flexible })}
+              className={chip(estado.flexible)}
+            >
+              Puedo mover las fechas unos días
+            </button>
+          </div>
+        </div>
+      </div>
 
       <p className="text-sm text-ink-soft">La cédula no se pide ahora: el asesor la solicita al confirmar.</p>
     </>

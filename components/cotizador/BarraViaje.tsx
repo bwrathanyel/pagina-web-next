@@ -251,11 +251,30 @@ const CONTROL_CELDA =
   "transition-colors duration-150 ease-salida motion-reduce:transition-none hover:bg-sand-2 " +
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento";
 
+/** "Edad: 5 años" / "Edades: 5 y 8 años". */
+function textoEdades(edades: number[]): string {
+  if (!edades.length) return "";
+  const lista = edades.length > 1 ? `${edades.slice(0, -1).join(", ")} y ${edades[edades.length - 1]}` : String(edades[0]);
+  return `${edades.length === 1 ? "Edad" : "Edades"}: ${lista} años`;
+}
+
 /** Barra de viaje de escritorio (opción A): una tarjeta de una fila con
  * destino, fechas, viajeros y servicios. Entre lg y xl los servicios bajan a
- * una segunda fila para que las fechas no se corten. */
-export function BarraViajeCompacta({ estado, onCambio }: { estado: EstadoViaje; onCambio: (e: EstadoViaje) => void }) {
-  const id = useId();
+ * una segunda fila para que las fechas no se corten. Las edades de los niños
+ * van dentro del selector de viajeros (y a la vista bajo el resumen), no en
+ * una banda aparte que empujaba los hoteles hacia abajo. */
+export function BarraViajeCompacta({
+  estado,
+  onCambio,
+  idBase,
+}: {
+  estado: EstadoViaje;
+  onCambio: (e: EstadoViaje) => void;
+  /** Para abrir el calendario desde fuera (atajo "Otras fechas"): `${idBase}-desde`. */
+  idBase?: string;
+}) {
+  const idAuto = useId();
+  const id = idBase ?? idAuto;
   const noches = nochesDe(estado);
   const hospedaje = estado.servicios.includes("hospedaje");
   const vuelo = estado.servicios.includes("vuelo");
@@ -330,7 +349,10 @@ export function BarraViajeCompacta({ estado, onCambio }: { estado: EstadoViaje; 
             onCambio={(v) => onCambio(cambiarViajeros(estado, v))}
             maximos={{ adultos: ADULTOS_MAX, ninos: NINOS_MAX, bebes: BEBES_MAX }}
             className={CONTROL_CELDA}
-          />
+            detalle={estado.ninos > 0 ? textoEdades(estado.edades) : undefined}
+          >
+            {estado.ninos > 0 ? <EdadesNinos estado={estado} onCambio={onCambio} /> : null}
+          </SelectorViajeros>
         </div>
 
         <div className="col-span-3 flex items-center gap-3 border-t border-linea px-4 py-2.5 xl:col-span-1 xl:flex-col xl:items-start xl:justify-center xl:gap-1 xl:border-l xl:border-t-0">
@@ -338,12 +360,6 @@ export function BarraViajeCompacta({ estado, onCambio }: { estado: EstadoViaje; 
           <ChipsServicios estado={estado} onCambio={onCambio} compacto />
         </div>
       </div>
-
-      {estado.ninos > 0 ? (
-        <div className="border-t border-linea px-4 py-3">
-          <EdadesNinos estado={estado} onCambio={onCambio} />
-        </div>
-      ) : null}
     </div>
   );
 }

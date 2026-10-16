@@ -79,6 +79,25 @@ export async function hotelParaCotizar(id: number): Promise<HotelDetalle | null>
   };
 }
 
+/** Tarifas de varios hoteles en una sola lectura, para estimar las
+ * recomendaciones sin abrir cada hotel (anon solo ve filas vendibles: ~10 por
+ * hotel). Mismo filtro que `hotelParaCotizar`, así el total coincide. */
+export async function tarifasDeHoteles(ids: number[]): Promise<Map<number, Tarifa[]>> {
+  const out = new Map<number, Tarifa[]>();
+  if (!ids.length) return out;
+  const { data, error } = await supabaseBrowser()
+    .from("productos")
+    .select(`id,tarifas(${TARIFA_SELECT})`)
+    .eq("activo", true)
+    .eq("tipo", "hotel")
+    .in("id", ids);
+  if (error) throw error;
+  for (const p of (data ?? []) as unknown as { id: number; tarifas: Tarifa[] | null }[]) {
+    out.set(p.id, (p.tarifas ?? []).filter(vendibleHoy));
+  }
+  return out;
+}
+
 const clave = (s: string | null | undefined) =>
   (s ?? "")
     .normalize("NFD")
