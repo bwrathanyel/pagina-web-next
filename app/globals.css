@@ -290,6 +290,25 @@ html {
   }
 }
 
+/* Ese 90% se calibró en una laptop de 1366px: en pantallas más anchas el
+   sitio se veía "con menos zoom" (pedido del dueño, 2026-10-16). Subir la
+   raíz por escalones hace que 1920 se vea como 1366 (ancho equivalente
+   ~1350-1440 en cada escalón, siempre sobre xl). Escalones y no vw: con vw el
+   zoom del navegador casi no agranda nada. Las media queries siguen midiendo
+   en px (el rem de una media query es el tamaño inicial), no cambian. */
+@media (min-width: 1500px) {
+  html { font-size: 100%; }
+}
+@media (min-width: 1700px) {
+  html { font-size: 112.5%; }
+}
+@media (min-width: 1880px) {
+  html { font-size: 125%; }
+}
+@media (min-width: 2200px) {
+  html { font-size: 137.5%; }
+}
+
 /* Aviso del nombre de la foto en el Hero (esquina superior). El crossfade de
    las fotos en sí ya no usa esto -- pasada 3 lo reemplazó por capas apiladas
    con opacidad por clase de estado (ver Hero.tsx). Con reduced-motion se

@@ -204,9 +204,14 @@ export function OfertasHospedaje({
     filtro === "todo-incluido" ? o.todoIncluido : filtro === "ninos-gratis" ? o.ninosGratis : true,
   );
   // "Menor precio" solo ordena las que tienen un número comparable; el resto va detrás.
-  const ordenadas = menorPrecio
+  const porPrecio = menorPrecio
     ? [...filtradas].sort((a, b) => (a.orden ?? Infinity) - (b.orden ?? Infinity))
     : filtradas;
+  // Las que no tienen cupo en esas fechas van al final (sort estable): en medio
+  // de la grilla cortaban la lectura de las que sí se pueden elegir.
+  const bloqueada = (o: OfertaHotel) =>
+    !!(desde && hasta && textoSinDisponibilidad(bloqueos?.get(o.hotelId), desde, hasta));
+  const ordenadas = [...porPrecio].sort((a, b) => Number(bloqueada(a)) - Number(bloqueada(b)));
   const visibles = todas ? ordenadas : ordenadas.slice(0, VISIBLES);
   const hayFiltro = (id: Filtro) =>
     id === "todas" || ofertas.some((o) => (id === "todo-incluido" ? o.todoIncluido : o.ninosGratis));
@@ -282,7 +287,7 @@ export function OfertasHospedaje({
                   <span className="relative block aspect-4/3 w-full overflow-hidden bg-sand-2">
                     <FotoRotativa
                       fotos={o.fotos}
-                      sizes="(min-width: 1280px) 16rem, (min-width: 640px) 45vw, 100vw"
+                      sizes="(min-width: 1280px) 20rem, (min-width: 640px) 45vw, 100vw"
                       apagada={!!sinDisponibilidad}
                       encima={encima === o.hotelId}
                     />
@@ -290,6 +295,16 @@ export function OfertasHospedaje({
                       {o.ninosGratis ? <Etiqueta tono="seafoam">1 niño gratis</Etiqueta> : null}
                       {esElegido ? <Etiqueta tono="acento">Elegido</Etiqueta> : null}
                     </span>
+                    {/* La tarjeta entera es el botón, pero nada lo decía: en el
+                        video de prueba no se entendía que había que tocarla. */}
+                    {sinDisponibilidad || esElegido ? null : (
+                      <span
+                        aria-hidden="true"
+                        className="absolute bottom-3 right-3 rounded-full bg-acento px-3.5 py-1.5 text-sm font-semibold text-sobre-acento shadow-chrome transition-transform duration-150 ease-salida group-hover:scale-105"
+                      >
+                        {o.conFotosHabitacion ? "Ver habitaciones" : "Elegir"}
+                      </span>
+                    )}
                   </span>
                   <span className="flex flex-1 flex-col gap-2 p-4">
                     <span className="font-display text-xl font-bold leading-tight text-ink">{o.nombre}</span>

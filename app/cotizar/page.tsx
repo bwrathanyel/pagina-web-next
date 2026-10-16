@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { CotizadorViaje } from "@/components/cotizador/CotizadorViaje";
+import { FondoDestino } from "@/components/cotizador/FondoDestino";
 import { DESTINOS, parsearEstado } from "@/lib/cotizador/estado";
 import { ofertasHoteles } from "@/lib/cotizador/ofertas";
 import { getHotSales, getHotelCotizador, getPromociones, rutasVuelo } from "@/lib/supabase/queries";
@@ -41,9 +43,15 @@ export default async function CotizarPage({
   // traía destino, el del hotel manda.
   if (estado.hotel && !hotel) estado = { ...estado, hotel: null, tarifa: null };
   else if (hotel?.destino && !sp.destino && DESTINOS.includes(hotel.destino)) estado = { ...estado, destino: hotel.destino };
+  // Una foto por destino para el fondo: la de la primera oferta (ya vienen por prioridad).
+  const fotosDestino: Record<string, string> = {};
+  for (const o of ofertas) if (o.foto && !fotosDestino[o.destino]) fotosDestino[o.destino] = o.foto;
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-5 pb-32 sm:px-5 md:py-10 lg:pb-10">
+    <main className="relative isolate mx-auto max-w-6xl px-4 py-5 pb-32 sm:px-5 md:py-10 lg:pb-10">
+      <Suspense fallback={null}>
+        <FondoDestino fotos={fotosDestino} inicial={estado.destino} />
+      </Suspense>
       <div className="mb-4 flex flex-wrap items-baseline gap-x-5 gap-y-2 lg:mb-6">
         <h1 className="font-display text-3xl font-bold leading-none text-ink sm:text-4xl">Arme su viaje</h1>
         <p className="max-w-2xl text-ink-soft max-lg:hidden">

@@ -96,9 +96,13 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
   // pestaña oculta y con el hero fuera de pantalla.
   const [pestanaVisible, setPestanaVisible] = useState(true);
   const [enPantalla, setEnPantalla] = useState(true);
+  // Quien empieza a llenar el cotizador ya eligió: si la foto, el destino y la
+  // oferta siguen rotando mientras pone fechas y viajeros, distrae (visto en el
+  // video de prueba del 2026-10-16). Desde el primer toque el hero queda quieto.
+  const [tocado, setTocado] = useState(false);
   const seccion = useRef<HTMLElement>(null);
   useHeroBajoBarra(seccion);
-  const activo = pestanaVisible && enPantalla;
+  const activo = pestanaVisible && enPantalla && !tocado;
   const largo = useMemo(() => largoTablero(fotos), [fotos]);
 
   // La primera queda fija y solo se baraja el resto: barajarlas todas cambiaba
@@ -343,7 +347,11 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
           ) : null}
         </div>
 
-        <div className="mt-auto pt-8 lg:pt-12">
+        <div
+          className="mt-auto pt-8 lg:pt-12"
+          onPointerDownCapture={() => setTocado(true)}
+          onFocusCapture={() => setTocado(true)}
+        >
           <div className="hero-sube hidden lg:block" style={retraso(120)}>
             <CotizadorRapidoBarra />
           </div>
