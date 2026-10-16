@@ -144,7 +144,7 @@ export async function getTodosLosProductoIds(): Promise<number[]> {
     .from("productos")
     .select("id")
     .eq("activo", true)
-    .in("tipo", ["hotel", "paquete", "destino"]);
+    .in("tipo", ["hotel", "paquete", "excursion", "traslado"]);
   if (error) throw error;
   return (data ?? []).map((d) => d.id as number);
 }

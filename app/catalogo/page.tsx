@@ -7,9 +7,9 @@ import { fotosDe } from "@/lib/supabase/fotos";
 import { Icono } from "@/components/ui/Icono";
 import { jsonLdScript, buildBreadcrumbJsonLd } from "@/lib/seo/jsonld";
 
-const TITLE = "Catálogo — Hoteles, Paquetes, Tours y Promociones en Venezuela";
+const TITLE = "Catálogo — Hoteles, Paquetes, Excursiones, Traslados y Promociones en Venezuela";
 const DESCRIPTION =
-  "Explore hoteles, paquetes todo incluido, tours/full days y promociones de viajes en Venezuela: Los Roques, Margarita, Canaima, Morrocoy, Mérida y más.";
+  "Explore hoteles, paquetes todo incluido, excursiones/full days, traslados y promociones de viajes en Venezuela: Los Roques, Margarita, Coche, Canaima, Morrocoy, Mérida y más.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -21,20 +21,24 @@ export const metadata: Metadata = {
 const FOTO_EDITORIAL: Record<Categoria, string> = {
   hoteles: "/images/editorial/escapada-caribe.png",
   paquetes: "/images/editorial/escapada-caribe.png",
-  "guias-tours": "/images/editorial/tour-tropical.png",
+  excursiones: "/images/editorial/tour-tropical.png",
+  traslados: "/images/editorial/vuelo-a-tu-medida.png",
   promociones: "/images/editorial/vuelo-a-tu-medida.png",
 };
 
 export default async function CatalogoIndexPage() {
-  const [hoteles, promociones] = await Promise.all([
-    getProductosPorCategoria("hoteles").catch(() => []),
-    getPromociones().catch(() => []),
+  // Sin .catch: un fallo de Supabase no debe quedar cacheado como catálogo sin fotos (Fase 6).
+  const [hoteles, excursiones, promociones] = await Promise.all([
+    getProductosPorCategoria("hoteles"),
+    getProductosPorCategoria("excursiones"),
+    getPromociones(),
   ]);
 
   const fotosPorCategoria: Record<Categoria, string | null> = {
     hoteles: fotosDe(hoteles[0]?.producto_fotos)[0] ?? null,
     paquetes: null,
-    "guias-tours": null,
+    excursiones: fotosDe(excursiones.find((p) => fotosDe(p.producto_fotos).length)?.producto_fotos)[0] ?? null,
+    traslados: null,
     promociones: fotosDe(promociones[0]?.promocion_fotos)[0] ?? null,
   };
 
@@ -48,7 +52,7 @@ export default async function CatalogoIndexPage() {
         <h1 className="font-display text-4xl font-bold leading-none text-ink md:text-5xl">¿Qué está buscando?</h1>
       </header>
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
         {CATEGORIAS.map(({ slug, label }) => {
           const foto = fotosPorCategoria[slug] ?? FOTO_EDITORIAL[slug];
           return (

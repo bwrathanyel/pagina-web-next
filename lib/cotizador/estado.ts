@@ -351,7 +351,15 @@ export function enlaceCotizarProducto(p: { id: number; tipo: string; destino?: s
   if (p.tipo === "hotel") return `/cotizar?hotel=${p.id}`;
   const q = new URLSearchParams();
   if (p.tipo === "paquete") q.set("servicio", "paquete");
-  if (p.destino && DESTINOS.includes(p.destino)) q.set("destino", p.destino);
+  // Excursiones y traslados de Coche/Cubagua se cotizan desde Margarita. La
+  // excursión llega ya marcada en Tours.
+  const enMargarita = /^(margarita|coche|cubagua)$/i.test(p.destino ?? "");
+  const destino = enMargarita ? "Isla de Margarita" : p.destino;
+  if (p.tipo === "excursion" && enMargarita) {
+    q.set("servicios", "tours");
+    q.set("tour", String(p.id));
+  }
+  if (destino && DESTINOS.includes(destino)) q.set("destino", destino);
   const qs = q.toString();
   return qs ? `/cotizar?${qs}` : "/cotizar";
 }

@@ -7,6 +7,8 @@ import { ProductoAccionesOverlay, ProductoFooterMobile } from "@/components/prod
 import { fotosDe, fotosDeAncho } from "@/lib/supabase/fotos";
 import { jsonLdScript, buildProductJsonLd, buildBreadcrumbJsonLd } from "@/lib/seo/jsonld";
 import { CarpetaTarifas } from "@/components/producto/CarpetaTarifas";
+import { TarifasServicio } from "@/components/producto/TarifasServicio";
+import { esServicio } from "@/lib/servicios";
 import { getProductoPorId, getTodosLosProductoIds } from "@/lib/supabase/queries";
 import { tarifaDestacada } from "@/lib/tarifas";
 
@@ -81,7 +83,7 @@ export default async function ProductoPage({ params }: { params: Promise<{ id: s
         <GaleriaProducto fotos={fotos} alt={producto.nombre} />
       </div>
       <ProductoInfo producto={producto}>
-        <CarpetaTarifas producto={producto} />
+        {esServicio(producto.tipo) ? <TarifasServicio producto={producto} /> : <CarpetaTarifas producto={producto} />}
       </ProductoInfo>
       <ProductoFooterMobile cotizarHref={enlaceCotizarProducto(producto)} />
     </main>

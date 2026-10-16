@@ -7,6 +7,10 @@ import { GrillaFiltrable, type EntradaGrilla } from "@/components/catalogo/Grill
 import { ProductoCard } from "@/components/catalogo/ProductoCard";
 import { PromocionCard } from "@/components/catalogo/PromocionCard";
 import { montoOrden, precioPorPersona, tarifaDestacada } from "@/lib/tarifas";
+import { datosExcursion, tarifaBaseExcursion } from "@/lib/servicios";
+import { TarifasServicio } from "@/components/producto/TarifasServicio";
+import { Boton } from "@/components/ui/Boton";
+import { enlaceCotizarProducto } from "@/lib/cotizador/estado";
 import { getProductosPorCategoria, getPromociones } from "@/lib/supabase/queries";
 import { agruparPorDestino } from "@/lib/supabase/agruparPorDestino";
 import { jsonLdScript, buildBreadcrumbJsonLd, buildItemListJsonLd } from "@/lib/seo/jsonld";
@@ -37,11 +41,17 @@ const SEO_POR_CATEGORIA: Record<Categoria, { title: string; description: string;
       "Paquetes de viaje todo incluido en Venezuela: Los Roques, Canaima y Salto Ángel, Isla de Margarita y Mérida. Ideales para lunas de miel, familias y regalos a familiares.",
     heading: "Paquetes turísticos",
   },
-  "guias-tours": {
-    title: "Tours y Full Days en Venezuela — Los Roques, Canaima, Morrocoy",
+  excursiones: {
+    title: "Excursiones y Full Days en Margarita, Cubagua y Coche",
     description:
-      "Full days de playa y tours guiados por Venezuela: Los Roques, Canaima, Morrocoy y Chichiriviche, Mérida. Salidas con todo coordinado, cotice su fecha por WhatsApp.",
-    heading: "Guías y tours",
+      "Excursiones y full days en Isla de Margarita, Cubagua y Coche: delfines, catamarán, playas y tours con precio por adulto y por niño. Cotice su fecha por WhatsApp.",
+    heading: "Excursiones",
+  },
+  traslados: {
+    title: "Traslados en Margarita y Los Roques — Tarifas por tramo",
+    description:
+      "Traslados aeropuerto–hotel en Isla de Margarita (compartido, privado y a disposición) y suplementos de traslado a cayos en Los Roques. Tarifas claras, cotice por WhatsApp.",
+    heading: "Traslados",
   },
 };
 
@@ -100,7 +110,7 @@ export default async function CatalogoPage({
     return {
       id: p.id,
       destino,
-      monto: destacada?.precios ? precioPorPersona(destacada) : null,
+      monto: p.tipo === "excursion" ? (datosExcursion(tarifaBaseExcursion(p.tarifas))?.adulto ?? null) : destacada?.precios ? precioPorPersona(destacada) : null,
       tarjeta: <ProductoCard producto={p} prioridad={i < 2} />,
     };
   });
@@ -147,6 +157,25 @@ export default async function CatalogoPage({
           No hay {label.toLowerCase()} disponibles ahora mismo. Escríbanos por WhatsApp y le
           contamos qué opciones podemos preparar.
         </p>
+      ) : categoria === "traslados" ? (
+        <div className="flex flex-col gap-10">
+          {grupos.map(({ destino, items: delGrupo }) => (
+            <section key={destino} aria-label={`Traslados en ${destino}`}>
+              <h2 className="font-display text-2xl font-bold text-ink">{destino}</h2>
+              {(delGrupo as Producto[]).map((p) => (
+                <article key={p.id} className="mt-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <h3 className="font-display text-xl font-bold text-ink">{p.nombre}</h3>
+                    <Boton href={enlaceCotizarProducto(p)} tamano="sm">
+                      Cotizar
+                    </Boton>
+                  </div>
+                  <TarifasServicio producto={p} conTitulo={false} />
+                </article>
+              ))}
+            </section>
+          ))}
+        </div>
       ) : (
         <GrillaFiltrable
           entradas={entradas}

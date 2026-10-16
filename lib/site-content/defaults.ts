@@ -22,7 +22,8 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       { id: "hot-sales", label: "Hot Sales", href: "/catalogo/hot-sales", visible: true },
       { id: "hoteles", label: "Hoteles", href: "/catalogo/hoteles", visible: true },
       { id: "paquetes", label: "Paquetes", href: "/catalogo/paquetes", visible: true },
-      { id: "guias", label: "Guías y tours", href: "/catalogo/guias-tours", visible: true },
+      { id: "excursiones", label: "Excursiones", href: "/catalogo/excursiones", visible: true },
+      { id: "traslados", label: "Traslados", href: "/catalogo/traslados", visible: true },
       { id: "empleo", label: "Trabaje con nosotros", href: "/trabaja-con-nosotros", visible: true },
       { id: "ia-negocio", label: "IA para su negocio", href: "/ia-para-tu-negocio", visible: true },
     ],
@@ -56,7 +57,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
         { label: "Escapadas", title: "Un día puede cambiar su semana.", description: "Full days y experiencias para salir de la rutina.", href: "/catalogo/paquetes", image: "/images/editorial/escapada-caribe.png" },
         { label: "Hospedajes", title: "Descanse donde quiere estar.", description: "Hoteles, posadas y opciones seleccionadas para cada plan.", href: "/catalogo/hoteles", image: "" },
         { label: "Boletería", title: "Del aeropuerto a su destino.", description: "Rutas nacionales e internacionales.", href: "/cotizar?servicios=vuelo", image: "/images/editorial/vuelo-a-tu-medida.png" },
-        { label: "Guías y tours", title: "Conozca más que un destino.", description: "Recorridos acompañados para ver cada lugar con más contexto.", href: "/catalogo/guias-tours", image: "/images/editorial/tour-tropical.png" },
+        { label: "Excursiones", title: "Conozca más que un destino.", description: "Full days y recorridos para ver cada lugar con más contexto.", href: "/catalogo/excursiones", image: "/images/editorial/tour-tropical.png" },
       ],
     },
     trust: {
@@ -88,7 +89,8 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       promociones: "Ofertas vigentes para aprovechar cuando encuentre el plan indicado.",
       hoteles: "Hospedajes para descansar, celebrar o descubrir un destino a su manera.",
       paquetes: "Experiencias organizadas para que disfrute más y coordine menos.",
-      "guias-tours": "Recorridos y actividades para conocer cada lugar con más contexto.",
+      excursiones: "Full days y actividades en Margarita, Cubagua y Coche, con precio por adulto y por niño.",
+      traslados: "Traslados en Margarita y suplementos de cayos en Los Roques, con tarifa por tramo.",
     },
   },
   footer: {

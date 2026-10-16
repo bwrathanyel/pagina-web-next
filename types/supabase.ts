@@ -1,4 +1,4 @@
-export type ProductoTipo = "hotel" | "destino" | "paquete" | "info";
+export type ProductoTipo = "hotel" | "destino" | "paquete" | "excursion" | "traslado" | "info";
 
 export interface Foto {
   id: number;
@@ -160,15 +160,16 @@ export interface HotSale extends Promocion {
   nino_gratis: NinoGratis | null;
 }
 
-/** Categorías públicas del catálogo — mapeo confirmado contra datos reales,
- * ver plan de migración: 'destino' agrupa guías/tours (nombres incluyen
- * "Guía de viaje", "Tour", paquetes internacionales), no es un typo de 'hotel'. */
-export type Categoria = "hoteles" | "paquetes" | "guias-tours" | "promociones";
+/** Categorías públicas del catálogo. Desde el rework de Excursiones/Traslados
+ * (2026-10-15) 'destino' (guías/tours) ya no se vende: la ruta vieja
+ * /catalogo/guias-tours redirige a /catalogo/excursiones (next.config.ts). */
+export type Categoria = "hoteles" | "paquetes" | "excursiones" | "traslados" | "promociones";
 
 export const CATEGORIA_A_TIPO: Record<Exclude<Categoria, "promociones">, ProductoTipo> = {
   hoteles: "hotel",
   paquetes: "paquete",
-  "guias-tours": "destino",
+  excursiones: "excursion",
+  traslados: "traslado",
 };
 
 // Promociones primero a propósito: es lo primero que debe ver el usuario
@@ -177,5 +178,6 @@ export const CATEGORIAS: { slug: Categoria; label: string }[] = [
   { slug: "promociones", label: "Promociones" },
   { slug: "hoteles", label: "Hoteles" },
   { slug: "paquetes", label: "Paquetes" },
-  { slug: "guias-tours", label: "Guías y tours" },
+  { slug: "excursiones", label: "Excursiones" },
+  { slug: "traslados", label: "Traslados" },
 ];

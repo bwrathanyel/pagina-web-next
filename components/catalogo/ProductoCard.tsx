@@ -12,12 +12,15 @@ import { EditarProductoModal } from "@/components/admin/EditarProductoModal";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { revalidarSitioPublico } from "@/lib/admin/revalidate";
 import { badgePrecio, precioDeTarifa, tarifaDestacada } from "@/lib/tarifas";
+import { esServicio, precioDeServicio } from "@/lib/servicios";
 import type { Producto } from "@/types/supabase";
 
 export const BADGE_POR_TIPO: Record<Producto["tipo"], string> = {
   hotel: "Hotel",
   paquete: "Paquete",
   destino: "Guía / Tour",
+  excursion: "Excursión",
+  traslado: "Traslado",
   info: "Info",
 };
 
@@ -40,10 +43,15 @@ export function ProductoCard({ producto, prioridad = false }: { producto: Produc
   // promoción del hotel. Con precios estructurados el badge dice el precio por
   // persona; sin ellos se queda con el `precio_texto` de siempre.
   const destacada = tarifaDestacada(producto);
-  const precioLabel = badgePrecio(destacada) ?? "Consultar disponibilidad";
-  // Mismo dato que badgePrecio, separado en monto y unidad; la ficha del
-  // producto llama a la misma función.
-  const precio = precioDeTarifa(destacada);
+  // Excursiones y traslados anuncian adulto/niño o la tarifa más baja del tramo
+  // (lib/servicios.ts); la ficha llama a la misma función.
+  const servicio = esServicio(producto.tipo);
+  const precio = servicio ? precioDeServicio(producto) : precioDeTarifa(destacada);
+  const precioLabel = servicio
+    ? precio
+      ? `${precio.desde ? "Desde " : ""}${precio.monto}${precio.unidad ? ` ${precio.unidad}` : ""}`
+      : "Consultar disponibilidad"
+    : (badgePrecio(destacada) ?? "Consultar disponibilidad");
   const href = `/producto/${producto.id}`;
   const key = `producto-${producto.id}`;
   const puedeEditar = rol === "admin" && modoEdicion;

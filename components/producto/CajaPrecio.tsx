@@ -14,6 +14,7 @@ import {
   ventanasDe,
 } from "@/lib/tarifas";
 import { enlaceCotizarProducto } from "@/lib/cotizador/estado";
+import { esServicio, precioDeServicio } from "@/lib/servicios";
 import type { Producto } from "@/types/supabase";
 
 /** Caja de precio de la ficha: el boleto de la tarjeta, con la tarifa destacada
@@ -23,11 +24,12 @@ import type { Producto } from "@/types/supabase";
 export function CajaPrecio({ producto, className = "" }: { producto: Producto; className?: string }) {
   // La destacada la elige la base; el detalle de las demás vive en la carpeta.
   const destacada = tarifaDestacada(producto);
-  const precio = precioDeTarifa(destacada);
+  const servicio = esServicio(producto.tipo);
+  const precio = servicio ? precioDeServicio(producto) : precioDeTarifa(destacada);
   const { monto, unidad, grande } = separarMonto(precio);
-  const ventana = destacada ? ventanasDe(destacada)[0] : undefined;
-  const vigencia = ventana ? rangoFechas(ventana) : (destacada?.vigencia_texto ?? null);
-  const hasta = ventaHasta(destacada);
+  const ventana = destacada && !servicio ? ventanasDe(destacada)[0] : undefined;
+  const vigencia = servicio ? null : ventana ? rangoFechas(ventana) : (destacada?.vigencia_texto ?? null);
+  const hasta = servicio ? null : ventaHasta(destacada);
   const mensaje = `Hola! Quiero información sobre ${producto.nombre}${producto.destino ? ` en ${producto.destino}` : ""}.`;
 
   return (
@@ -86,7 +88,7 @@ export function CajaPrecio({ producto, className = "" }: { producto: Producto; c
               {hasta ? <p className="mt-1 pl-6 text-xs text-ink-soft">Venta hasta {fechaCorta(hasta)}</p> : null}
             </div>
           ) : null}
-          {destacada && producto.tarifas && producto.tarifas.length > 1 ? (
+          {destacada && !servicio && producto.tarifas && producto.tarifas.length > 1 ? (
             <a
               href="#tarifas"
               className="mt-3 inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-acento hover:underline"

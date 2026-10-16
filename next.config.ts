@@ -17,6 +17,8 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/posadas", destination: "/ia-planes", permanent: true },
+      // "Guías y tours" pasó a Excursiones (+ Traslados) en el rework del tarifario.
+      { source: "/catalogo/guias-tours", destination: "/catalogo/excursiones", permanent: true },
       // /juega fue la página del stand (evento Naguanagua, 18-sep-2026) y los QR
       // impresos apuntan ahí. Temporal (307) para poder reactivarla en el próximo
       // evento quitando esta línea: con 308 los navegadores la guardarían.

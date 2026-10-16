@@ -28,7 +28,7 @@ export function SeccionTours({
   return (
     <>
       <p className="text-ink-soft">
-        Los full day son por grupo privado, con un mínimo de 15 personas. Agregue los que le interesen y el asesor confirma fechas y precio.
+        Precios por persona, con niños y bebés según cada excursión. Agregue las que le interesen y el asesor confirma fecha, cupo y precio.
       </p>
       {cargando ? (
         <p className="text-sm text-ink-soft" role="status">

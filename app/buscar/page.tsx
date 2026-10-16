@@ -16,12 +16,14 @@ export const metadata: Metadata = {
 };
 
 export default async function BuscarPage() {
-  const [hoteles, paquetes, guiasTours, promociones, hotSales] = await Promise.all([
-    getProductosPorCategoria("hoteles").catch(() => []),
-    getProductosPorCategoria("paquetes").catch(() => []),
-    getProductosPorCategoria("guias-tours").catch(() => []),
-    getPromociones().catch(() => []),
-    getHotSales().catch(() => []),
+  // Sin .catch: un fallo de Supabase no debe quedar cacheado como buscador vacío (Fase 6).
+  const [hoteles, paquetes, excursiones, traslados, promociones, hotSales] = await Promise.all([
+    getProductosPorCategoria("hoteles"),
+    getProductosPorCategoria("paquetes"),
+    getProductosPorCategoria("excursiones"),
+    getProductosPorCategoria("traslados"),
+    getPromociones(),
+    getHotSales(),
   ]);
 
   return (
@@ -29,7 +31,7 @@ export default async function BuscarPage() {
       <h1 className="mb-4 font-display text-3xl font-semibold text-ink md:text-4xl">Buscar</h1>
       {/* El fallback es el mismo buscador vacío: el HTML estático ya trae el campo. */}
       <Suspense fallback={<BuscarClient productos={[]} promociones={[]} hotSales={[]} />}>
-        <BuscarDesdeUrl productos={[...hoteles, ...paquetes, ...guiasTours]} promociones={promociones} hotSales={hotSales} />
+        <BuscarDesdeUrl productos={[...hoteles, ...paquetes, ...excursiones, ...traslados]} promociones={promociones} hotSales={hotSales} />
       </Suspense>
     </main>
   );
