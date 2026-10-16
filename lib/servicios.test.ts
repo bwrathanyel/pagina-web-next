@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { Producto, Tarifa } from "../types/supabase.ts";
-import { datosExcursion, filaTraslado, precioDeServicio, suplementoRoques, textoNoIncluye } from "./servicios.ts";
+import { datosExcursion, esGrupoPrivado, filaTraslado, precioDeServicio, suplementoRoques, textoNoIncluye } from "./servicios.ts";
 
 const tarifa = (id: number, precios: Record<string, unknown>, extra: Partial<Tarifa> = {}): Tarifa =>
   ({ id, precio_texto: "", precio_desde_usd: null, vigencia_texto: null, vigente: true, moneda: "USD", precios, ...extra }) as unknown as Tarifa;
@@ -22,6 +22,13 @@ test("excursión: adulto, niño con edad, infante gratis y lo que no incluye", (
 test("tarjeta de excursión: precio del adulto y el niño en la unidad", () => {
   const p = precioDeServicio(producto("excursion", [COCHE]))!;
   assert.deepEqual(p, { monto: "$80", unidad: "por adulto · niños $50 (4-11 años)", desde: false, corto: true });
+});
+
+test("full day de grupo privado: precio p/p con mínimo y marca de cotización", () => {
+  const cayo = producto("excursion", [tarifa(9, { base: "persona", adulto: 30, nino: null, modalidad: "privado", min_pax: 15, incluye_traslado: false, no_incluye: [] })]);
+  assert.equal(esGrupoPrivado(cayo), true);
+  assert.equal(esGrupoPrivado(producto("excursion", [COCHE])), false);
+  assert.deepEqual(precioDeServicio(cayo), { monto: "$30", unidad: "por persona · grupo privado (mín. 15)", desde: false, corto: true });
 });
 
 test("traslado compartido: rango, monto y niño 50%", () => {

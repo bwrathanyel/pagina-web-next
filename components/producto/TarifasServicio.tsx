@@ -38,6 +38,7 @@ function TarjetaExcursion({ tarifa, titulo }: { tarifa: Tarifa; titulo: string |
         {infante ? <Fila clave="Infante (0-3 años)" valor={infante} /> : null}
       </dl>
       <div className="flex flex-wrap gap-2">
+        {d.privado ? <Etiqueta tono="acento">Grupo privado</Etiqueta> : null}
         {d.etiqueta ? <Etiqueta>{d.etiqueta}</Etiqueta> : null}
         {d.incluyeTraslado ? <Etiqueta tono="acento">Incluye traslado</Etiqueta> : null}
         {d.minPax ? <Etiqueta>Mínimo {d.minPax} personas</Etiqueta> : null}

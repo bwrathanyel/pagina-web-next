@@ -14,7 +14,7 @@ import {
   ventanasDe,
 } from "@/lib/tarifas";
 import { enlaceCotizarProducto } from "@/lib/cotizador/estado";
-import { esServicio, precioDeServicio } from "@/lib/servicios";
+import { esGrupoPrivado, esServicio, precioDeServicio } from "@/lib/servicios";
 import type { Producto } from "@/types/supabase";
 
 /** Caja de precio de la ficha: el boleto de la tarjeta, con la tarifa destacada
@@ -30,7 +30,10 @@ export function CajaPrecio({ producto, className = "" }: { producto: Producto; c
   const ventana = destacada && !servicio ? ventanasDe(destacada)[0] : undefined;
   const vigencia = servicio ? null : ventana ? rangoFechas(ventana) : (destacada?.vigencia_texto ?? null);
   const hasta = servicio ? null : ventaHasta(destacada);
-  const mensaje = `Hola! Quiero información sobre ${producto.nombre}${producto.destino ? ` en ${producto.destino}` : ""}.`;
+  const privado = esGrupoPrivado(producto);
+  const mensaje = privado
+    ? `Hola! Quiero cotizar un grupo privado para ${producto.nombre}.`
+    : `Hola! Quiero información sobre ${producto.nombre}${producto.destino ? ` en ${producto.destino}` : ""}.`;
 
   return (
     <aside aria-label="Precio y contacto" className={className}>
@@ -38,21 +41,23 @@ export function CajaPrecio({ producto, className = "" }: { producto: Producto; c
         tamanoTalon="5rem"
         talon={
           <div className="flex h-full items-center gap-2 px-4">
-            <Boton
-              href={enlaceCotizarProducto(producto)}
-              tamano="sm"
-              className="min-w-0 flex-1"
-              iconoFin={<Icono nombre="flecha-der" tamano={16} />}
-            >
-              Cotizar
-            </Boton>
+            {privado ? null : (
+              <Boton
+                href={enlaceCotizarProducto(producto)}
+                tamano="sm"
+                className="min-w-0 flex-1"
+                iconoFin={<Icono nombre="flecha-der" tamano={16} />}
+              >
+                Cotizar
+              </Boton>
+            )}
             <WhatsAppLeadButton
               mensajeBase={mensaje}
               destinoInicial={producto.destino ?? ""}
               triggerClassName={clasesBoton({ variante: "whatsapp", tamano: "sm", className: "min-w-0 flex-1" })}
             >
               <WhatsAppIcon size={18} />
-              WhatsApp
+              {privado ? "Cotizar grupo privado" : "WhatsApp"}
             </WhatsAppLeadButton>
             <span aria-hidden="true" className="franja-marca absolute inset-x-0 bottom-0 h-1" />
           </div>

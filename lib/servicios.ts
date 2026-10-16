@@ -5,7 +5,7 @@
 // migrations/20261015290200 del repo CRM):
 //   excursión: { base:'persona', adulto, nino, infante (0 = gratis, null = no aplica),
 //     edad_nino:[min,max], min_pax, incluye_traslado, no_incluye:[{concepto,monto,aplica}],
-//     etiqueta ('Cubagua'), notas }
+//     etiqueta ('Cubagua'), modalidad ('privado' = full day de grupo privado, origen 'manual'), notas }
 //   traslado:  { modalidad:'compartido'|'privado'|'disposicion', tramo, sentido:'OW'|'RT',
 //     base:'persona'|'unidad'|'horas', pax_min, pax_max, horas, hora_extra, monto,
 //     nino:'50%'|monto, vehiculo, capacidad }
@@ -41,6 +41,8 @@ export interface DatosExcursion {
   infante: number | null;
   edadNino: string | null;
   minPax: number | null;
+  /** Full day de grupo privado: no se reserva por persona suelta, se cotiza (modalidad:'privado'). */
+  privado: boolean;
   incluyeTraslado: boolean;
   noIncluye: NoIncluye[];
   notas: string | null;
@@ -73,6 +75,7 @@ export function datosExcursion(t: Tarifa | null | undefined): DatosExcursion | n
     infante: num(p.infante),
     edadNino: edadTexto(p.edad_nino),
     minPax: num(p.min_pax),
+    privado: p.modalidad === "privado",
     incluyeTraslado: p.incluye_traslado === true,
     noIncluye,
     notas: texto(p.notas),
@@ -177,6 +180,7 @@ export function precioDeServicio(producto: Pick<Producto, "tipo" | "tarifas">): 
     if (!t || !d || d.adulto === null) return null;
     const varias = (producto.tarifas ?? []).filter((x) => datosExcursion(x)).length > 1;
     const nino = d.nino !== null ? ` · niños ${montoConMoneda(d.nino, d.moneda)}${d.edadNino ? ` (${d.edadNino})` : ""}` : "";
+    if (d.privado) return { monto: montoConMoneda(d.adulto, d.moneda), unidad: `por persona · grupo privado${d.minPax ? ` (mín. ${d.minPax})` : ""}`, desde: varias, corto: true };
     return { monto: montoConMoneda(d.adulto, d.moneda), unidad: `por adulto${nino}`, desde: varias, corto: true };
   }
   if (producto.tipo === "traslado") {
@@ -195,5 +199,9 @@ export function precioDeServicio(producto: Pick<Producto, "tipo" | "tarifas">): 
   }
   return null;
 }
+
+/** Excursión de grupo privado: la ficha ofrece "Cotizar grupo privado" en vez de la cotización por persona. */
+export const esGrupoPrivado = (producto: Pick<Producto, "tipo" | "tarifas">): boolean =>
+  producto.tipo === "excursion" && datosExcursion(tarifaBaseExcursion(producto.tarifas))?.privado === true;
 
 export const esServicio = (tipo: string) => tipo === "excursion" || tipo === "traslado";
