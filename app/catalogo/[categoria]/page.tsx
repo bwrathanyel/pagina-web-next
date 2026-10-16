@@ -100,6 +100,13 @@ export default async function CatalogoPage({
   const planas = (grupos as { destino: string; items: (Promocion | Producto)[] }[]).flatMap(
     ({ destino, items: delGrupo }) => delGrupo.map((item) => ({ destino, item })),
   );
+  // Full days de grupo privado primero en Excursiones (pedido del dueño); el resto
+  // conserva su orden. Array.prototype.sort es estable.
+  if (categoria === "excursiones") {
+    const privado = (item: Promocion | Producto) =>
+      datosExcursion(tarifaBaseExcursion((item as Producto).tarifas))?.privado === true;
+    planas.sort((a, b) => Number(privado(b.item)) - Number(privado(a.item)));
+  }
   const entradas: EntradaGrilla[] = planas.map(({ destino, item }, i) => {
     if (esPromociones) {
       const p = item as Promocion;
