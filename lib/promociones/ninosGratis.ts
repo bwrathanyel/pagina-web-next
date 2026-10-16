@@ -18,7 +18,10 @@ export function ninoGratisVigente(ng: NinoGratis | null, ahora = new Date()): Ni
 }
 
 export interface HotelNinoGratis {
+  /** La tarifa de la Hot Sale (`?tarifa=` de /cotizar). */
   id: number;
+  /** El producto hotel (`?hotel=` de /cotizar). */
+  hotelId: number;
   hotel: string;
   plan: string | null;
   foto: string | null;
@@ -63,6 +66,7 @@ export function ninosGratisEn(pool: HotSale[], destino: string, ahora = new Date
       moneda,
       h: {
         id: p.id,
+        hotelId: p.producto.id,
         hotel: p.producto.nombre,
         plan: p.plan?.trim() || null,
         foto: fotoDelAlojamiento(p) ?? null,

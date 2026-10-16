@@ -21,6 +21,7 @@ import {
   sumarDias,
   textoDuracion,
 } from "@/lib/cotizador/cotizacionRapida";
+import type { HotelNinoGratis } from "@/lib/promociones/ninosGratis";
 
 // Cotizador rápido del hero. Es un formulario GET de verdad (next/form): sin
 // JavaScript igual llega a /cotizar con los datos en la URL,
@@ -29,10 +30,14 @@ import {
 const DESTINO = "/cotizar";
 
 const MAXIMOS: Viajeros = { adultos: ADULTOS_MAX, ninos: NINOS_MAX, bebes: BEBES_MAX };
+const SERVICIOS_CON_HOTEL = new Set(["hospedaje", "paquete"]);
+
+/** Hotel con niño gratis que la home destaca (el que vence primero). */
+type PropsCotizador = { ninoGratis?: HotelNinoGratis | null };
 
 /** Estado que comparten la barra y la hoja: el servicio decide cómo se llaman
  * las fechas y si hay segunda fecha (el full day es de un solo día). */
-function useCotizacionRapida() {
+function useCotizacionRapida(ninoGratis: HotelNinoGratis | null) {
   const [servicio, setServicio] = useState<string>(INICIAL.servicio);
   const [destino, setDestino] = useState<string>(INICIAL.destino);
   const [entrada, setEntrada] = useState("");
@@ -48,13 +53,17 @@ function useCotizacionRapida() {
   }
 
   const noches = etiquetaFin ? contarNoches(entrada, salida) : 0;
+  // Margarita con niños: hay hoteles con el primer niño gratis (ver OfertasHospedaje).
+  const promoNinos = /margarita/i.test(destino) && viajeros.ninos > 0;
   return {
     servicio,
     setServicio,
     destino,
     setDestino,
-    // Margarita con niños: hay hoteles con el primer niño gratis (ver OfertasHospedaje).
-    promoNinos: /margarita/i.test(destino) && viajeros.ninos > 0,
+    promoNinos,
+    // Si el servicio lleva hotel, /cotizar abre con el de niño gratis ya
+    // elegido (pedido del dueño, 2026-10-16); el cliente puede cambiarlo allá.
+    hotelNinos: promoNinos && SERVICIOS_CON_HOTEL.has(servicio) ? ninoGratis : null,
     entrada,
     cambiarEntrada,
     salida,
@@ -70,15 +79,31 @@ function useCotizacionRapida() {
 
 /** Margarita + niños: se avisa antes de cotizar. En /cotizar se muestran esos
  * hoteles primero, con lo que paga el siguiente niño. */
-function AvisoNinosGratis({ ninos }: { ninos: number }) {
+function AvisoNinosGratis({ ninos, hotel }: { ninos: number; hotel: HotelNinoGratis | null }) {
+  const siguiente = ninos > 1 ? " y cuánto paga el segundo niño" : "";
   return (
     <p role="status" className="sobre-claro flex items-start gap-2.5 rounded-card border border-seafoam bg-seafoam-bg px-4 py-2.5 text-sm text-ink">
       <span aria-hidden="true">🎁</span>
       <span>
         <strong className="font-semibold">En Margarita el primer niño va totalmente gratis</strong> en hoteles seleccionados.
-        {ninos > 1 ? " Al cotizar le mostramos esos hoteles y cuánto paga el segundo niño." : " Al cotizar le mostramos esos hoteles primero."}
+        {hotel
+          ? ` Al cotizar le dejamos elegido el ${hotel.hotel}${siguiente}; puede cambiarlo por otro.`
+          : ninos > 1
+            ? " Al cotizar le mostramos esos hoteles y cuánto paga el segundo niño."
+            : " Al cotizar le mostramos esos hoteles primero."}
       </span>
     </p>
+  );
+}
+
+/** Viaja en la URL como un enlace "Cotizar" de la promo (enlaceCotizarPromocion). */
+function CamposHotelNinos({ hotel }: { hotel: HotelNinoGratis | null }) {
+  if (!hotel) return null;
+  return (
+    <>
+      <input type="hidden" name="hotel" value={hotel.hotelId} />
+      <input type="hidden" name="tarifa" value={hotel.id} />
+    </>
   );
 }
 
@@ -142,8 +167,8 @@ const CONTROL_TRAMO =
 const SELECTOR_TRAMO = `selector-marca ${CONTROL_TRAMO}`;
 
 /** Escritorio: barra ancha estilo buscador de viajes, con "Cotizar" como CTA. */
-export function CotizadorRapidoBarra() {
-  const c = useCotizacionRapida();
+export function CotizadorRapidoBarra({ ninoGratis = null }: PropsCotizador) {
+  const c = useCotizacionRapida(ninoGratis);
   const idSalida = useId();
   const fin = c.etiquetaFin;
   const rango = fin ? { desde: c.entrada, hasta: c.salida } : undefined;
@@ -234,20 +259,21 @@ export function CotizadorRapidoBarra() {
           )}
         </Tramo>
       </div>
+      <CamposHotelNinos hotel={c.hotelNinos} />
       <Boton type="submit" variante="firma" tamano="lg" className="ml-2 shrink-0 self-stretch">
         Cotizar
       </Boton>
     </Form>
-    {c.promoNinos ? <AvisoNinosGratis ninos={c.viajeros.ninos} /> : null}
+    {c.promoNinos ? <AvisoNinosGratis ninos={c.viajeros.ninos} hotel={c.hotelNinos} /> : null}
     </div>
   );
 }
 
 /** Teléfono: un botón con forma de campo que abre la hoja con los datos. */
-export function CotizadorRapidoMovil() {
+export function CotizadorRapidoMovil({ ninoGratis = null }: PropsCotizador) {
   const [abierta, setAbierta] = useState(false);
   const idForm = useId();
-  const c = useCotizacionRapida();
+  const c = useCotizacionRapida(ninoGratis);
   const cambiarViajeros = (clave: keyof Viajeros) => (e: { target: { value: string } }) =>
     c.setViajeros({ ...c.viajeros, [clave]: Number(e.target.value) });
 
@@ -358,7 +384,8 @@ export function CotizadorRapidoMovil() {
               )}
             </Campo>
           </div>
-          {c.promoNinos ? <AvisoNinosGratis ninos={c.viajeros.ninos} /> : null}
+          {c.promoNinos ? <AvisoNinosGratis ninos={c.viajeros.ninos} hotel={c.hotelNinos} /> : null}
+          <CamposHotelNinos hotel={c.hotelNinos} />
         </Form>
       </Hoja>
     </>

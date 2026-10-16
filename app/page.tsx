@@ -27,6 +27,7 @@ export default async function Home() {
   // (pedido del dueño, 2026-09-24); /catalogo/hot-sales conserva el resto.
   const deLaHome = soloDestinosHome(hotSales);
   const heroFotos = fotosHeroDeHotSales(deLaHome);
+  const ninosGratis = ninosGratisEn(deLaHome, "Margarita");
 
   // Respaldo si todavía no hay Hot Sales con foto propia -- la portada nunca
   // se queda sin imagen (sin pase: no hay promo detrás).
@@ -42,11 +43,13 @@ export default async function Home() {
   // leen el pool por ranking; solo la grilla rota con el orden del día.
   return (
     <main>
-      <Hero fotos={heroFotos.length > 0 ? heroFotos : heroFallback} />
+      {/* El cotizador del hero preselecciona el hotel destacado de la banda
+          (el que vence primero) cuando viajan niños a Margarita. */}
+      <Hero fotos={heroFotos.length > 0 ? heroFotos : heroFallback} ninoGratis={ninosGratis?.hoteles[0] ?? null} />
 
       {/* Opción C aprobada (2026-09-24): la banda de niños gratis abre las
           ofertas; sin regalos vigentes no se monta y Hot Sales sube. */}
-      <NinosGratisBanda bloque={ninosGratisEn(deLaHome, "Margarita")} />
+      <NinosGratisBanda bloque={ninosGratis} />
 
       <HotSalesSection pool={ordenDelDia(deLaHome)} />
 

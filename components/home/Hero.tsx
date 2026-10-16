@@ -14,6 +14,7 @@ import { CotizadorRapidoBarra, CotizadorRapidoMovil } from "@/components/home/Co
 import { PaseDestacado } from "@/components/home/PaseDestacado";
 import { useHeroBajoBarra } from "@/lib/layout/barraSobreFoto";
 import type { FondoHero, FotoHero } from "@/lib/promociones/fotosHero";
+import type { HotelNinoGratis } from "@/lib/promociones/ninosGratis";
 
 const MS_POR_FOTO = 8000;
 const SEG_CRUCE = 1.2;
@@ -61,7 +62,7 @@ function fondoDe(foto: FotoHero, ciclo: number): FondoHero {
   return foto.fondos?.length ? foto.fondos[ciclo % foto.fondos.length] : foto;
 }
 
-export function Hero({ fotos }: { fotos: FotoHero[] }) {
+export function Hero({ fotos, ninoGratis = null }: { fotos: FotoHero[]; ninoGratis?: HotelNinoGratis | null }) {
   const fotoPrincipal = fotos[0];
   const { content } = useSiteContent();
   const hero = content.home.hero;
@@ -353,11 +354,11 @@ export function Hero({ fotos }: { fotos: FotoHero[] }) {
           onFocusCapture={() => setTocado(true)}
         >
           <div className="hero-sube hidden lg:block" style={retraso(120)}>
-            <CotizadorRapidoBarra />
+            <CotizadorRapidoBarra ninoGratis={ninoGratis} />
           </div>
 
           <div className="hero-sube lg:hidden" style={retraso(120)}>
-            <CotizadorRapidoMovil />
+            <CotizadorRapidoMovil ninoGratis={ninoGratis} />
           </div>
 
           <div className="mt-3 flex flex-col-reverse items-center gap-1 lg:mt-4 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:gap-6">
