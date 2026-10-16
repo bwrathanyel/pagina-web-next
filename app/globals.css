@@ -871,6 +871,9 @@ html {
 @utility perforacion-h {
   border-top: 2px dashed var(--color-linea-fuerte);
 }
+@utility perforacion-h-arriba {
+  border-bottom: 2px dashed var(--color-linea-fuerte);
+}
 /* El degradado del logo como relleno: solo para la firma (canto del talón,
    indicador activo), nunca detrás de texto. */
 @utility franja-marca {

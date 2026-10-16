@@ -13,6 +13,7 @@ export function Boleto({
   talon,
   orientacion = "h",
   tamanoTalon = "5rem",
+  talonArriba = false,
   className = "",
 }: {
   children: ReactNode;
@@ -20,10 +21,21 @@ export function Boleto({
   orientacion?: "h" | "v";
   /** Alto (en "h") o ancho (en "v") del talón, en unidades CSS. */
   tamanoTalon?: string;
+  /** Solo en "h": el talón va arriba (la acción a la vista sin bajar). */
+  talonArriba?: boolean;
   className?: string;
 }) {
   const horizontal = orientacion === "h";
-  const estilo = { "--corte": `calc(100% - ${tamanoTalon})` } as CSSProperties;
+  const arriba = horizontal && talonArriba;
+  const estilo = { "--corte": arriba ? tamanoTalon : `calc(100% - ${tamanoTalon})` } as CSSProperties;
+  const talonEl = (
+    <div
+      style={horizontal ? { height: tamanoTalon } : { width: tamanoTalon }}
+      className={"relative shrink-0 " + (!horizontal ? "perforacion-v" : arriba ? "perforacion-h-arriba" : "perforacion-h")}
+    >
+      {talon}
+    </div>
+  );
 
   return (
     <div
@@ -34,13 +46,9 @@ export function Boleto({
         className
       }
     >
+      {arriba ? talonEl : null}
       <div className="min-h-0 min-w-0 flex-1">{children}</div>
-      <div
-        style={horizontal ? { height: tamanoTalon } : { width: tamanoTalon }}
-        className={"relative shrink-0 " + (horizontal ? "perforacion-h" : "perforacion-v")}
-      >
-        {talon}
-      </div>
+      {arriba ? null : talonEl}
     </div>
   );
 }

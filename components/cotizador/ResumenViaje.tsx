@@ -76,7 +76,7 @@ export function ResumenViaje({
   formId: string;
   enviando: boolean;
   conTitulo?: boolean;
-  /** Nombre y WhatsApp: van en el pase, justo encima del envío. */
+  /** Nombre y WhatsApp: van en el pase, después de la lista (enviar sin ellos los enfoca). */
   datos?: ReactNode;
   /** Precio anunciado por la oferta, para mostrar mientras faltan fechas. */
   desde?: { monto: string; unidad: string | null } | null;
@@ -111,9 +111,10 @@ export function ResumenViaje({
   return (
     <Boleto
       orientacion="h"
-      // El talón tiene alto fijo: solo caben el total y el envío. Los avisos van
-      // arriba de la perforación, si no desbordan hacia la lista.
+      // El talón tiene alto fijo: solo caben el total y el envío. Va arriba para
+      // que "Enviar solicitud" se vea sin bajar, y los avisos quedan al final.
       tamanoTalon="7.5rem"
+      talonArriba
       talon={
         <div className="flex h-full flex-col justify-center gap-3 px-5">
           <div className="flex items-baseline justify-between gap-3">
@@ -125,7 +126,7 @@ export function ResumenViaje({
           <Boton type="submit" form={formId} tamano="lg" ancho cargando={enviando}>
             Enviar solicitud
           </Boton>
-          <span aria-hidden="true" className="franja-marca absolute inset-x-0 bottom-0 h-1" />
+          <span aria-hidden="true" className="franja-marca absolute inset-x-0 top-0 h-1" />
         </div>
       }
     >
