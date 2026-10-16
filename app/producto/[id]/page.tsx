@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { GaleriaProducto } from "@/components/producto/GaleriaProducto";
 import { ProductoInfo } from "@/components/producto/ProductoInfo";
 import { ProductoAccionesOverlay, ProductoFooterMobile } from "@/components/producto/ProductoAccionesMobile";
-import { fotosDe, fotosDeAncho } from "@/lib/supabase/fotos";
+import { fotosDe, fotosDeAncho, ordenarFotos } from "@/lib/supabase/fotos";
 import { jsonLdScript, buildProductJsonLd, buildBreadcrumbJsonLd } from "@/lib/seo/jsonld";
 import { CarpetaTarifas } from "@/components/producto/CarpetaTarifas";
 import { TarifasServicio } from "@/components/producto/TarifasServicio";
@@ -62,6 +62,9 @@ export default async function ProductoPage({ params }: { params: Promise<{ id: s
   if (!producto) notFound();
 
   const fotos = fotosDe(producto.producto_fotos);
+  const creditos = ordenarFotos(producto.producto_fotos).map((f) =>
+    f.credito ? { texto: f.credito, url: f.credito_url ?? null } : null,
+  );
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-6 pb-28 md:py-10 lg:pb-10">
@@ -80,7 +83,7 @@ export default async function ProductoPage({ params }: { params: Promise<{ id: s
       />
       <div className="relative">
         <ProductoAccionesOverlay tipo="producto" id={producto.id} nombre={producto.nombre} />
-        <GaleriaProducto fotos={fotos} alt={producto.nombre} />
+        <GaleriaProducto fotos={fotos} creditos={creditos} alt={producto.nombre} />
       </div>
       <ProductoInfo producto={producto}>
         {esServicio(producto.tipo) ? <TarifasServicio producto={producto} /> : <CarpetaTarifas producto={producto} />}

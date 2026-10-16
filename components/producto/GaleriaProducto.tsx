@@ -32,11 +32,39 @@ function tamanos(n: number, i: number) {
   return "(min-width: 1024px) 25vw, 100vw";
 }
 
-export function GaleriaProducto({ fotos, alt }: { fotos: string[]; alt: string }) {
+/** Atribución de una foto con licencia CC BY-SA; alineada por índice con `fotos`. */
+export type CreditoFoto = { texto: string; url: string | null } | null;
+
+function Credito({ credito }: { credito: NonNullable<CreditoFoto> }) {
+  const enlace = credito.url?.startsWith("https://") ? credito.url : null;
+  return (
+    <>
+      Foto:{" "}
+      {enlace ? (
+        <a href={enlace} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+          {credito.texto}
+        </a>
+      ) : (
+        credito.texto
+      )}
+    </>
+  );
+}
+
+export function GaleriaProducto({
+  fotos,
+  alt,
+  creditos,
+}: {
+  fotos: string[];
+  alt: string;
+  creditos?: CreditoFoto[];
+}) {
   const pista = useRef<HTMLDivElement>(null);
   const [activa, setActiva] = useState(0);
   const [visor, setVisor] = useState<number | null>(null);
   const n = fotos.length;
+  const conCredito = (creditos ?? []).filter((c): c is NonNullable<CreditoFoto> => c !== null);
 
   // Al abrir el visor, la lista queda en la foto que se tocó.
   useEffect(() => {
@@ -57,85 +85,102 @@ export function GaleriaProducto({ fotos, alt }: { fotos: string[]; alt: string }
   }
 
   return (
-    <div className="relative overflow-hidden rounded-card bg-sand">
-      <div
-        ref={pista}
-        onScroll={alDeslizar}
-        role="group"
-        aria-roledescription="carrusel"
-        aria-label={`Fotos de ${alt}`}
-        className={
-          "flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden " +
-          "lg:aspect-[5/2] lg:grid lg:snap-none lg:gap-2 lg:overflow-visible " +
-          disposicion(n)
-        }
-      >
-        {fotos.map((foto, i) => (
-          <button
-            key={foto}
-            type="button"
-            onClick={() => setVisor(i)}
-            aria-label={`Ampliar foto ${i + 1} de ${n}`}
-            className={
-              "group/foto relative aspect-[4/3] w-full shrink-0 snap-center overflow-hidden bg-sand-2 lg:aspect-auto lg:h-full " +
-              celda(n, i)
-            }
-          >
-            <Image
-              src={foto}
-              alt={i === 0 ? alt : ""}
-              fill
-              sizes={tamanos(n, i)}
-              loading={i === 0 ? "eager" : "lazy"}
-              fetchPriority={i === 0 ? "high" : "auto"}
-              className="object-cover transition-transform duration-[var(--dur-lenta)] ease-salida motion-reduce:transition-none lg:group-hover/foto:scale-[1.03]"
-            />
-          </button>
-        ))}
-      </div>
-
-      {n > 1 ? (
-        <Etiqueta tono="dusk" className="pointer-events-none absolute bottom-3 right-3 lg:hidden">
-          <span aria-hidden="true">
-            {activa + 1} / {n}
-          </span>
-        </Etiqueta>
-      ) : null}
-      {n > FOTOS_EN_GRILLA ? (
-        <Boton
-          variante="secundario"
-          tamano="sm"
-          onClick={() => setVisor(0)}
-          className="absolute bottom-4 right-4 max-lg:hidden"
+    <>
+      <div className="relative overflow-hidden rounded-card bg-sand">
+        <div
+          ref={pista}
+          onScroll={alDeslizar}
+          role="group"
+          aria-roledescription="carrusel"
+          aria-label={`Fotos de ${alt}`}
+          className={
+            "flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden " +
+            "lg:aspect-[5/2] lg:grid lg:snap-none lg:gap-2 lg:overflow-visible " +
+            disposicion(n)
+          }
         >
-          Ver las {n} fotos
-        </Boton>
-      ) : null}
-
-      <Hoja
-        abierta={visor !== null}
-        onCerrar={() => setVisor(null)}
-        titulo={`Fotos de ${alt}`}
-        escritorio="centrado"
-        anchoClassName="max-w-4xl"
-      >
-        <ul className="flex flex-col gap-3">
           {fotos.map((foto, i) => (
-            <li key={foto} id={`visor-foto-${i}`} className="scroll-mt-2">
-              <div className="relative aspect-[4/3] overflow-hidden rounded-media bg-sand-2">
-                <Image
-                  src={foto}
-                  alt={`${alt}, foto ${i + 1} de ${n}`}
-                  fill
-                  sizes="(min-width: 1024px) 56rem, 100vw"
-                  loading="lazy"
-                  className="object-cover"
-                />
-              </div>
-            </li>
+            <button
+              key={foto}
+              type="button"
+              onClick={() => setVisor(i)}
+              aria-label={`Ampliar foto ${i + 1} de ${n}`}
+              className={
+                "group/foto relative aspect-[4/3] w-full shrink-0 snap-center overflow-hidden bg-sand-2 lg:aspect-auto lg:h-full " +
+                celda(n, i)
+              }
+            >
+              <Image
+                src={foto}
+                alt={i === 0 ? alt : ""}
+                fill
+                sizes={tamanos(n, i)}
+                loading={i === 0 ? "eager" : "lazy"}
+                fetchPriority={i === 0 ? "high" : "auto"}
+                className="object-cover transition-transform duration-[var(--dur-lenta)] ease-salida motion-reduce:transition-none lg:group-hover/foto:scale-[1.03]"
+              />
+            </button>
           ))}
-        </ul>
-      </Hoja>
-    </div>
+        </div>
+
+        {n > 1 ? (
+          <Etiqueta tono="dusk" className="pointer-events-none absolute bottom-3 right-3 lg:hidden">
+            <span aria-hidden="true">
+              {activa + 1} / {n}
+            </span>
+          </Etiqueta>
+        ) : null}
+        {n > FOTOS_EN_GRILLA ? (
+          <Boton
+            variante="secundario"
+            tamano="sm"
+            onClick={() => setVisor(0)}
+            className="absolute bottom-4 right-4 max-lg:hidden"
+          >
+            Ver las {n} fotos
+          </Boton>
+        ) : null}
+
+        <Hoja
+          abierta={visor !== null}
+          onCerrar={() => setVisor(null)}
+          titulo={`Fotos de ${alt}`}
+          escritorio="centrado"
+          anchoClassName="max-w-4xl"
+        >
+          <ul className="flex flex-col gap-3">
+            {fotos.map((foto, i) => (
+              <li key={foto} id={`visor-foto-${i}`} className="scroll-mt-2">
+                <div className="relative aspect-[4/3] overflow-hidden rounded-media bg-sand-2">
+                  <Image
+                    src={foto}
+                    alt={`${alt}, foto ${i + 1} de ${n}`}
+                    fill
+                    sizes="(min-width: 1024px) 56rem, 100vw"
+                    loading="lazy"
+                    className="object-cover"
+                  />
+                </div>
+                {creditos?.[i] ? (
+                  <p className="mt-1 px-1 text-xs text-ink-soft">
+                    <Credito credito={creditos[i]!} />
+                  </p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </Hoja>
+      </div>
+    {conCredito.length > 0 ? (
+      <p className="mt-2 px-1 text-xs text-ink-soft">
+        {conCredito.map((c, i) => (
+          <span key={c.texto}>
+            {i > 0 ? " · " : null}
+            <Credito credito={c} />
+          </span>
+        ))}
+      </p>
+    ) : null}
+    </>
   );
 }

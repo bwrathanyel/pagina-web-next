@@ -14,6 +14,9 @@ export interface Foto {
   origen?: string | null;
   /** Foto de una habitación concreta (`producto_habitaciones`); null = del hotel. */
   habitacion_id?: number | null;
+  /** Autor y licencia cuando la foto exige atribución (CC BY-SA); se muestra como "Foto: <credito>". */
+  credito?: string | null;
+  credito_url?: string | null;
 }
 
 /** Ventana de disfrute. Una tarifa puede tener varias (MALOKA REGULAR trae 3):

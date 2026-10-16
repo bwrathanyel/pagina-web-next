@@ -33,7 +33,7 @@ function promoConDestinoPublico(promo: Promocion): Promocion {
 export const PRODUCTO_SELECT =
   "id,tipo,nombre,destino,descripcion,requisitos,tarifa_destacada_id," +
   `tarifas(${TARIFA_SELECT}),` +
-  "producto_fotos(id,storage_path,orden,es_principal,activo,width,height,origen)";
+  "producto_fotos(id,storage_path,orden,es_principal,activo,width,height,origen,credito,credito_url)";
 
 // La fuente de /catalogo/promociones es la vista `web_promociones`
 // (migración 20260906120000): flyers vigentes + Hot Sales pinchados + la tarifa
