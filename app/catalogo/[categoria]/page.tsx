@@ -13,6 +13,7 @@ import { Boton } from "@/components/ui/Boton";
 import { enlaceCotizarProducto } from "@/lib/cotizador/estado";
 import { getProductosPorCategoria, getPromociones } from "@/lib/supabase/queries";
 import { agruparPorDestino } from "@/lib/supabase/agruparPorDestino";
+import { ordenarDestinos } from "@/lib/catalogo/destinos";
 import { jsonLdScript, buildBreadcrumbJsonLd, buildItemListJsonLd } from "@/lib/seo/jsonld";
 import { CATEGORIAS, type Categoria, type Producto, type Promocion } from "@/types/supabase";
 
@@ -186,7 +187,7 @@ export default async function CatalogoPage({
       ) : (
         <GrillaFiltrable
           entradas={entradas}
-          destinos={grupos.map((g) => g.destino)}
+          destinos={ordenarDestinos(grupos.map((g) => g.destino))}
           vacio="No hay opciones en este destino ahora mismo. Escríbanos por WhatsApp y le contamos qué podemos preparar."
         />
       )}

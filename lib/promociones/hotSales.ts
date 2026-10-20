@@ -1,5 +1,6 @@
 import { fotosDe } from "@/lib/supabase/fotos";
 import { agruparPorDestino } from "@/lib/supabase/agruparPorDestino";
+import { DESTINOS_PRIORITARIOS, ordenarDestinos } from "@/lib/catalogo/destinos";
 import { formatearPrecioDesde } from "@/lib/utils/formatoPrecio";
 import type { HotSale, Promocion } from "@/types/supabase";
 
@@ -14,10 +15,12 @@ export function fotosDeLaPromo(p: Promocion): string[] {
 // en la base, la misma lista que la pestaña del CRM (ver getHotSales()).
 
 // La home muestra solo estos 5 destinos (pedido del dueño, 2026-09-24);
-// /catalogo/hot-sales conserva el resto. En la base el mismo lugar aparece con
-// más de un nombre, así que se compara sin acentos ni mayúsculas y se reescribe
-// al nombre canónico: si no, los chips mostrarían "Margarita" dos veces.
-export const DESTINOS_HOME = ["Margarita", "Los Roques", "Canaima", "Chichiriviche", "Mérida"] as const;
+// /catalogo/hot-sales conserva el resto. La lista canónica vive en
+// lib/catalogo/destinos.ts porque también fija el orden de los chips. En la
+// base el mismo lugar aparece con más de un nombre, así que se compara sin
+// acentos ni mayúsculas y se reescribe al nombre canónico: si no, los chips
+// mostrarían "Margarita" dos veces.
+export const DESTINOS_HOME = DESTINOS_PRIORITARIOS;
 const ALIAS_DESTINO: Record<string, string> = { "isla margarita": "Margarita" };
 const clave = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").trim().toLowerCase();
 const CANONICO = new Map<string, string>([
@@ -37,7 +40,7 @@ export function destinosDelPool(pool: Promocion[]): string[] {
   for (const p of pool) {
     if (p.producto?.destino) destinos.add(p.producto.destino);
   }
-  return [...destinos].sort();
+  return ordenarDestinos([...destinos]);
 }
 
 // Orden de Hot Sales en la home (plan 2026-09-24): las manuales quedan arriba

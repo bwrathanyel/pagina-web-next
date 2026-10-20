@@ -15,6 +15,9 @@ import type { RutaVuelo } from "@/lib/cotizador/vuelo";
 // real -- este mapeo aplica solo acá, en la capa de lectura para el sitio.
 const DESTINO_PUBLICO_OVERRIDE: Record<string, string> = {
   "Casa Vacacional Playa del Sur": "Chichiriviche",
+  // Un hotel quedó cargado como "Isla Margarita" y partía el filtro en dos
+  // chips ("Isla Margarita" y "Margarita") con una sola ficha suelta.
+  "Isla Margarita": "Margarita",
 };
 function destinoPublico<T extends { destino?: string | null }>(p: T): T {
   if (!p?.destino || !(p.destino in DESTINO_PUBLICO_OVERRIDE)) return p;
@@ -44,7 +47,7 @@ export const PRODUCTO_SELECT =
 export const PROMOCION_SELECT =
   "id,titulo,precio_texto,precio_desde_usd,vigencia_texto,fecha_fin_estimada:fecha_fin,fecha_venta_fin," +
   "precios,plan,moneda,habitacion," +
-  "hot_sale_estado,hot_sale_orden,ninos_gratis_cantidad,incluye_tags,resumen_ia,score," +
+  "hot_sale_estado,hot_sale_orden,ninos_gratis_cantidad,nino_gratis,incluye_tags,resumen_ia,score," +
   "producto:productos(id,tipo,nombre,destino,producto_fotos(id,storage_path,orden,es_principal,activo,origen,habitacion_id))," +
   "promocion_fotos(id,storage_path,orden,es_principal,activo,width,height,origen)";
 
@@ -74,7 +77,11 @@ export async function getPromociones(): Promise<Promocion[]> {
     .order("score", { ascending: false })
     .order("precio_desde_usd", { ascending: true, nullsFirst: false });
   if (error) throw error;
-  return ((data ?? []) as unknown as Promocion[]).map(promoConDestinoPublico);
+  // `nino_gratis` ya viene de la vista (tarifa_nino_gratis); el sello vencido no se muestra.
+  return ((data ?? []) as unknown as Promocion[]).map((p) => ({
+    ...promoConDestinoPublico(p),
+    nino_gratis: ninoGratisVigente(p.nino_gratis ?? null),
+  }));
 }
 
 // Hot Sales = exactamente la pestaña del CRM (migración 20260924150000): la
