@@ -3,7 +3,7 @@
 import { useId, useState, type ReactNode } from "react";
 import Form from "next/form";
 import { Boton, clasesBoton } from "@/components/ui/Boton";
-import { Campo, Entrada, Selector } from "@/components/ui/Campo";
+import { CLASE_CONTROL, Campo, Selector } from "@/components/ui/Campo";
 import { Hoja } from "@/components/ui/Hoja";
 import { Icono } from "@/components/ui/Icono";
 import { SelectorFecha } from "@/components/ui/SelectorFecha";
@@ -327,28 +327,32 @@ export function CotizadorRapidoMovil({ ninoGratis = null }: PropsCotizador) {
             <div className={c.etiquetaFin ? "grid grid-cols-2 gap-3" : ""}>
               <Campo etiqueta={c.etiquetaInicio}>
                 {(a11y) => (
-                  <Entrada
-                    {...a11y}
-                    type="date"
+                  <SelectorFecha
+                    id={a11y.id}
                     name="fecha"
+                    etiqueta={c.etiquetaInicio}
+                    valor={c.entrada}
+                    onCambio={c.cambiarEntrada}
                     min={hoyCaracas()}
-                    value={c.entrada}
-                    onChange={(e) => c.cambiarEntrada(e.target.value)}
-                    className="font-mono tabular-nums"
+                    rango={c.etiquetaFin ? { desde: c.entrada, hasta: c.salida } : undefined}
+                    vacio="Elegir fecha"
+                    className={`${CLASE_CONTROL} min-h-12 cursor-pointer py-2.5`}
                   />
                 )}
               </Campo>
               {c.etiquetaFin ? (
                 <Campo etiqueta={c.etiquetaFin}>
                   {(a11y) => (
-                    <Entrada
-                      {...a11y}
-                      type="date"
+                    <SelectorFecha
+                      id={a11y.id}
                       name="hasta"
+                      etiqueta={c.etiquetaFin ?? "Salida"}
+                      valor={c.salida}
+                      onCambio={c.setSalida}
                       min={c.minSalida}
-                      value={c.salida}
-                      onChange={(e) => c.setSalida(e.target.value)}
-                      className="font-mono tabular-nums"
+                      rango={{ desde: c.entrada, hasta: c.salida }}
+                      vacio="Elegir fecha"
+                      className={`${CLASE_CONTROL} min-h-12 cursor-pointer py-2.5`}
                     />
                   )}
                 </Campo>
