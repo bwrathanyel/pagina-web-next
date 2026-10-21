@@ -88,7 +88,7 @@ export function WhatsAppLeadButton({
         consulta: mensajeWhatsapp,
         origen,
       });
-      const numero = resultado.asesor_whatsapp?.replace(/[^\d+]/g, "");
+      const numero = resultado.asesor_whatsapp?.replace(/\D/g, "");
       const href = numero
         ? `https://wa.me/${numero}?text=${encodeURIComponent(mensajeWhatsapp)}`
         : whatsappHref(mensajeWhatsapp);

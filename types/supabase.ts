@@ -1,3 +1,5 @@
+import { CATEGORIAS_OCULTAS } from "../lib/catalogo/ocultas.ts";
+
 export type ProductoTipo = "hotel" | "destino" | "paquete" | "excursion" | "traslado" | "info";
 
 export interface Foto {
@@ -130,6 +132,8 @@ export interface Promocion {
   hot_sale_estado: "poner" | "quitar" | null;
   hot_sale_orden: number | null;
   ninos_gratis_cantidad: number | null;
+  /** Regalo de niño gratis (tarifa_nino_gratis() en la vista web_promociones). */
+  nino_gratis?: NinoGratis | null;
   incluye_tags: string[];
   /** Score de rendimiento (Hot Sales), recalculado a diario por el cron
    * catalogo-score. La lista de promociones viene ordenada por este campo. */
@@ -177,10 +181,12 @@ export const CATEGORIA_A_TIPO: Record<Exclude<Categoria, "promociones">, Product
 
 // Promociones primero a propósito: es lo primero que debe ver el usuario
 // al entrar al catálogo, Hoteles pasa a segundo lugar.
+// Excursiones y Traslados salen de aquí mientras estén ocultos (lib/catalogo/ocultas.ts):
+// con esto desaparecen de las pestañas, el índice, el sitemap y las rutas del catálogo.
 export const CATEGORIAS: { slug: Categoria; label: string }[] = [
   { slug: "promociones", label: "Promociones" },
   { slug: "hoteles", label: "Hoteles" },
   { slug: "paquetes", label: "Paquetes" },
   { slug: "excursiones", label: "Excursiones" },
   { slug: "traslados", label: "Traslados" },
-];
+].filter((c) => !CATEGORIAS_OCULTAS.includes(c.slug)) as { slug: Categoria; label: string }[];

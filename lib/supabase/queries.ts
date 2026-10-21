@@ -151,7 +151,8 @@ export async function getTodosLosProductoIds(): Promise<number[]> {
     .from("productos")
     .select("id")
     .eq("activo", true)
-    .in("tipo", ["hotel", "paquete", "excursion", "traslado"]);
+    // Excursiones y traslados están ocultos al público (lib/catalogo/ocultas.ts).
+    .in("tipo", ["hotel", "paquete"]);
   if (error) throw error;
   return (data ?? []).map((d) => d.id as number);
 }

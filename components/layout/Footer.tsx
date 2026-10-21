@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { REDES } from "@/lib/social";
+import { itemMenuPublico } from "@/lib/catalogo/ocultas";
 import { EstadoAtencion } from "@/components/layout/EstadoAtencion";
 import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
 import { BrandMark } from "@/components/layout/BrandMark";
@@ -72,7 +73,7 @@ function InfoContacto() {
 
 export function Footer() {
   const { content } = useSiteContent();
-  const navItems = content.navigation.items.filter((item) => item.visible);
+  const navItems = content.navigation.items.filter(itemMenuPublico);
   return (
     <footer className="sobre-dusk relative bg-dusk">
       <div className="mx-auto max-w-[var(--ancho-contenido)] px-5 py-9 md:py-16">

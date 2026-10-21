@@ -16,6 +16,7 @@ import { useHeaderAutoHide } from "@/lib/layout/useHeaderAutoHide";
 import { useBarraSobreFoto } from "@/lib/layout/barraSobreFoto";
 import { usePaneles } from "@/lib/layout/paneles";
 import { useSiteContent } from "@/components/providers/SiteContentProvider";
+import { itemMenuPublico } from "@/lib/catalogo/ocultas";
 
 function WhatsAppIconNav() {
   return (
@@ -50,7 +51,7 @@ export function Navbar() {
   const prefRef = useRef<HTMLButtonElement>(null);
   const abrirBuscador = usePaneles((s) => s.abrirBuscador);
   const sobreFoto = useBarraSobreFoto((s) => s.sobreFoto);
-  const categorias = content.navigation.items.filter((item) => item.visible && !IDS_FUERA_DE_FILA.has(item.id));
+  const categorias = content.navigation.items.filter((item) => itemMenuPublico(item) && !IDS_FUERA_DE_FILA.has(item.id));
   const { visible, propsContenedor } = useHeaderAutoHide();
 
   const esActiva = (href: string) => pathname === href || pathname.startsWith(`${href}/`);

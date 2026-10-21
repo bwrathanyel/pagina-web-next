@@ -4,9 +4,7 @@ export interface Asesor {
   peso: number;
 }
 
-/** Pool ponderado — port 1:1 de assets/common.js. peso = probabilidad
- * relativa. Boletería usa su propio contacto único, no este pool
- * (confirmado intencional por el usuario, ver ASESOR_BOLETERIA). */
+/** Solo respaldo nombre -> teléfono si el CRM no trae el WhatsApp del asesor. */
 export const ASESORES: Asesor[] = [
   { nombre: "Ambar Arévalo", telefono: "584244900601", peso: 3 },
   { nombre: "Nicoll Osorio", telefono: "584127136169", peso: 2 },
@@ -16,18 +14,8 @@ export const ASESORES: Asesor[] = [
   { nombre: "Andric Arévalo", telefono: "584140415685", peso: 1 },
 ];
 
-export const ASESOR_BOLETERIA: Asesor = { nombre: "Luis Rueda", telefono: "584244269876" } as Asesor;
-
-export function elegirAsesor(): Asesor {
-  const total = ASESORES.reduce((s, a) => s + a.peso, 0);
-  const r = Math.random() * total;
-  let acumulado = 0;
-  for (const a of ASESORES) {
-    acumulado += a.peso;
-    if (r < acumulado) return a;
-  }
-  return ASESORES[ASESORES.length - 1];
-}
+// Ya no hay sorteo local ni asesor fijo de boletería: el que recibe el WhatsApp
+// es siempre el que asignó el reparto del CRM (ver asesorAsignado).
 
 export function asesorPorNombre(nombre: string | null | undefined): Asesor | null {
   if (!nombre) return null;

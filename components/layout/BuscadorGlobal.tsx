@@ -7,6 +7,7 @@ import { Hoja } from "@/components/ui/Hoja";
 import { Icono, type NombreIcono } from "@/components/ui/Icono";
 import { useSiteContent } from "@/components/providers/SiteContentProvider";
 import { coincide, DESTINOS_SUGERIDOS } from "@/lib/catalogo/busqueda";
+import { itemMenuPublico } from "@/lib/catalogo/ocultas";
 import { usePaneles } from "@/lib/layout/paneles";
 
 type Opcion = { id: string; texto: string; href: string; icono: NombreIcono };
@@ -43,7 +44,7 @@ export function BuscadorGlobal() {
   const grupos = useMemo<Grupo[]>(() => {
     const accesos: Opcion[] = [
       ...content.navigation.items
-        .filter((i) => i.visible)
+        .filter(itemMenuPublico)
         .map((i) => ({ id: `nav-${i.id}`, texto: i.label, href: i.href, icono: "flecha-der" as const })),
       { id: "cotizar", texto: content.navigation.quoteLabel, href: content.navigation.quoteHref, icono: "cotizar" },
       { id: "favoritos", texto: "Favoritos", href: "/cuenta/favoritos", icono: "corazon" },

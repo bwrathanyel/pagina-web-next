@@ -5,6 +5,7 @@ import { Hoja } from "@/components/ui/Hoja";
 import { Icono } from "@/components/ui/Icono";
 import { PreferenciasControles } from "@/components/layout/PreferenciasControles";
 import { useSiteContent } from "@/components/providers/SiteContentProvider";
+import { itemMenuPublico } from "@/lib/catalogo/ocultas";
 
 // Hot Sales ya es la pestaña "Promos" de la barra inferior. El resto de las
 // entradas de navegación salen del contenido editable, así el admin sigue
@@ -15,7 +16,7 @@ const IDS_EN_BARRA = new Set(["hot-sales"]);
  * de menú de la barra superior (Navbar). */
 export function HojaMas({ abierta, onCerrar }: { abierta: boolean; onCerrar: () => void }) {
   const { content } = useSiteContent();
-  const items = content.navigation.items.filter((item) => item.visible && !IDS_EN_BARRA.has(item.id));
+  const items = content.navigation.items.filter((item) => itemMenuPublico(item) && !IDS_EN_BARRA.has(item.id));
 
   return (
     <Hoja abierta={abierta} onCerrar={onCerrar} titulo="Más">

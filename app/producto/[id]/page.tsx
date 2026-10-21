@@ -11,6 +11,7 @@ import { TarifasServicio } from "@/components/producto/TarifasServicio";
 import { esServicio } from "@/lib/servicios";
 import { getProductoPorId, getTodosLosProductoIds } from "@/lib/supabase/queries";
 import { tarifaDestacada } from "@/lib/tarifas";
+import { tipoOculto } from "@/lib/catalogo/ocultas";
 
 export const dynamicParams = true;
 
@@ -26,7 +27,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
   const producto = await getProductoPorId(Number(id));
-  if (!producto) return {};
+  if (!producto || tipoOculto(producto.tipo)) return {};
   // La destacada la elige la base (`tarifa_destacada_id`): la más barata por
   // persona que se pueda vender hoy, no la primera fila que llegue.
   const tarifa = tarifaDestacada(producto);
@@ -59,7 +60,7 @@ export async function generateMetadata({
 export default async function ProductoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const producto = await getProductoPorId(Number(id));
-  if (!producto) notFound();
+  if (!producto || tipoOculto(producto.tipo)) notFound();
 
   const fotos = fotosDe(producto.producto_fotos);
   const creditos = ordenarFotos(producto.producto_fotos).map((f) =>

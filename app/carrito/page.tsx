@@ -6,7 +6,8 @@ import Link from "next/link";
 import { AnimatePresence, m } from "motion/react";
 import { useCarritoStore } from "@/lib/carrito/store";
 import { armarCarrito } from "@/lib/leads/buildCarrito";
-import { asesorPorNombre, elegirAsesor } from "@/lib/asesores";
+import { asesorAsignado } from "@/lib/asesores";
+import { NUMERO_CORPORATIVO } from "@/lib/whatsapp";
 import { crearLeadCRM } from "@/lib/leads/ingestWebLead";
 import { enviarASheetMonkey } from "@/lib/leads/sheetMonkey";
 import { detectarProcedencia, esInstagramInApp } from "@/lib/utils/procedencia";
@@ -41,15 +42,6 @@ export default function CarritoPage() {
     try {
       const resultado = armarCarrito(items, nombre, telefono, nota);
 
-      enviarASheetMonkey({
-        destino: resultado.destino,
-        servicio: resultado.servicio,
-        pagina: "Carrito",
-        nombre,
-        procedencia: detectarProcedencia(),
-        telefono,
-        asesor: elegirAsesor().telefono,
-      });
       const leadCRM = await crearLeadCRM({
         nombre,
         telefono,
@@ -57,11 +49,24 @@ export default function CarritoPage() {
         personas: resultado.personas,
         consulta: resultado.consulta,
       }).catch(() => null);
-      const asesor = asesorPorNombre(leadCRM?.asesor) ?? elegirAsesor();
+      // El WhatsApp es el del asesor que el reparto del CRM asignó al lead; si el
+      // CRM no respondió, el corporativo (nunca un sorteo local que no coincida).
+      const asesor = asesorAsignado(leadCRM?.asesor, leadCRM?.asesor_whatsapp);
+      const telefonoAsesor = asesor?.telefono ?? NUMERO_CORPORATIVO;
+
+      enviarASheetMonkey({
+        destino: resultado.destino,
+        servicio: resultado.servicio,
+        pagina: "Carrito",
+        nombre,
+        procedencia: detectarProcedencia(),
+        telefono,
+        asesor: telefonoAsesor,
+      });
 
       const mensaje = esInstagramInApp() ? resultado.mensajeTexto : resultado.mensajeEmoji;
       setEnviados(items.length);
-      setWaHref(`https://wa.me/${asesor.telefono}?text=${encodeURIComponent(mensaje)}`);
+      setWaHref(`https://wa.me/${telefonoAsesor}?text=${encodeURIComponent(mensaje)}`);
       limpiar();
     } finally {
       enviandoRef.current = false;

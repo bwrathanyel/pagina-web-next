@@ -28,16 +28,15 @@ const FOTO_EDITORIAL: Record<Categoria, string> = {
 
 export default async function CatalogoIndexPage() {
   // Sin .catch: un fallo de Supabase no debe quedar cacheado como catálogo sin fotos (Fase 6).
-  const [hoteles, excursiones, promociones] = await Promise.all([
+  const [hoteles, promociones] = await Promise.all([
     getProductosPorCategoria("hoteles"),
-    getProductosPorCategoria("excursiones"),
     getPromociones(),
   ]);
 
   const fotosPorCategoria: Record<Categoria, string | null> = {
     hoteles: fotosDe(hoteles[0]?.producto_fotos)[0] ?? null,
     paquetes: null,
-    excursiones: fotosDe(excursiones.find((p) => fotosDe(p.producto_fotos).length)?.producto_fotos)[0] ?? null,
+    excursiones: null,
     traslados: null,
     promociones: fotosDe(promociones[0]?.promocion_fotos)[0] ?? null,
   };
@@ -52,7 +51,7 @@ export default async function CatalogoIndexPage() {
         <h1 className="font-display text-4xl font-bold leading-none text-ink md:text-5xl">¿Qué está buscando?</h1>
       </header>
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
         {CATEGORIAS.map(({ slug, label }) => {
           const foto = fotosPorCategoria[slug] ?? FOTO_EDITORIAL[slug];
           return (

@@ -32,7 +32,7 @@ import { Boton } from "@/components/ui/Boton";
 import { AreaTexto, Campo, Entrada } from "@/components/ui/Campo";
 import { Hoja } from "@/components/ui/Hoja";
 import { Icono } from "@/components/ui/Icono";
-import { ASESOR_BOLETERIA, asesorAsignado, nombreDePila } from "@/lib/asesores";
+import { asesorAsignado, nombreDePila } from "@/lib/asesores";
 import {
   alternarTour,
   atajosFinde,
@@ -593,13 +593,13 @@ export function CotizadorViaje({
         correo: contacto.correo.trim(),
         notas: contacto.notas.trim(),
       };
-      const solo = vuelo && !hospedaje && !tours;
       const nombresTours = toursElegidos.map((t) => t.nombre);
       const base = armarCotizacionViaje(estado, datos, hotel, undefined, elegido, nombresTours, vueloViaje);
 
       let leadId: number | null = null;
-      // Vuelo solo: siempre boletería. Lo demás: el asesor que asignó el CRM.
-      let asesor: { nombre: string; telefono: string } | null = solo ? ASESOR_BOLETERIA : null;
+      // Siempre el asesor que asignó el reparto del CRM (también en vuelo solo):
+      // el WhatsApp tiene que coincidir con el dueño del lead en el CRM.
+      let asesor: { nombre: string; telefono: string } | null = null;
       let fallo = false;
       try {
         const lead = await crearLeadCRM({
@@ -610,7 +610,7 @@ export function CotizadorViaje({
           consulta: base.consulta,
         });
         leadId = lead.lead_id ?? null;
-        if (!solo) asesor = asesorAsignado(lead.asesor, lead.asesor_whatsapp);
+        asesor = asesorAsignado(lead.asesor, lead.asesor_whatsapp);
       } catch {
         fallo = true;
       }
