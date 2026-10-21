@@ -5,7 +5,7 @@
 import type { Tarifa } from "@/types/supabase";
 import { bloqueDe } from "@/lib/tarifas";
 import { estimarEstadia, tarjetasPorHabitacion, type Estimado } from "@/lib/cotizador/estimado";
-import { DIAS_CERCANO, estimarVuelo, type EstimadoVuelo, type RutaVuelo } from "@/lib/cotizador/vuelo";
+import { DIAS_CERCANO, estimarVuelo, rutaParaFecha, type EstimadoVuelo, type RutaVuelo } from "@/lib/cotizador/vuelo";
 import {
   contarNoches,
   DESTINOS,
@@ -28,15 +28,17 @@ export interface OrigenPaquete {
 }
 
 /** Orígenes del paquete que tienen ruta publicada al destino y que /cotizar
- * sabe nombrar. Sin ninguno, el paquete no se muestra. */
+ * sabe nombrar. Sin ninguno, el paquete no se muestra. `fecha` es la ida: los
+ * paquetes con salida en Navidad cotizan la tarifa de temporada alta. */
 export function origenesValidos(
   p: Pick<Paquete, "vuelo_origenes" | "vuelo_destino_iata">,
   rutas: readonly RutaVuelo[],
+  fecha?: string | null,
 ): OrigenPaquete[] {
   const out: OrigenPaquete[] = [];
   for (const iata of new Set(p.vuelo_origenes)) {
     const origen = ORIGENES_VUELO.find((o) => o.iata === iata);
-    const ruta = rutas.find((r) => r.origen_iata === iata && r.destino_iata === p.vuelo_destino_iata);
+    const ruta = rutaParaFecha(rutas, iata, p.vuelo_destino_iata, fecha);
     if (origen && ruta) out.push({ iata, valor: origen.valor, etiqueta: origen.etiqueta, ruta });
   }
   return out;

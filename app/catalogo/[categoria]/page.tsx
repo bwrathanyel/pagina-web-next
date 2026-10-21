@@ -13,7 +13,7 @@ import { Boton } from "@/components/ui/Boton";
 import { enlaceCotizarProducto } from "@/lib/cotizador/estado";
 import { getProductosPorCategoria, getPromociones, rutasVuelo } from "@/lib/supabase/queries";
 import { getPaquetes } from "@/lib/paquetes/queries";
-import { origenesValidos, vencido } from "@/lib/paquetes/precio";
+import { entradaInicial, origenesValidos, vencido } from "@/lib/paquetes/precio";
 import { hoyCaracas } from "@/lib/cotizador/estado";
 import { PaquetesListado } from "@/components/paquetes/PaquetesListado";
 import { agruparPorDestino } from "@/lib/supabase/agruparPorDestino";
@@ -205,7 +205,9 @@ export default async function CatalogoPage({
 async function PaquetesPage({ label }: { label: string }) {
   const [todos, rutas] = await Promise.all([getPaquetes(), rutasVuelo()]);
   const hoy = hoyCaracas();
-  const paquetes = todos.filter((p) => origenesValidos(p, rutas).length > 0 && !vencido(p, hoy));
+  const paquetes = todos.filter(
+    (p) => origenesValidos(p, rutas, p.fecha_entrada ?? entradaInicial(p, hoy)).length > 0 && !vencido(p, hoy),
+  );
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-4 md:py-14">

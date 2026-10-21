@@ -78,7 +78,39 @@ export type RutaVuelo = {
   ambito: "nacional" | "internacional";
   desde_usd: number;
   ida_vuelta: boolean;
+  /** Temporada de viaje (Navidad y Fin de Año…). null = tarifa de todo el año.
+   * Una ruta puede tener una fila base y una por temporada, y se elige con la
+   * fecha de ida (ver rutaParaFecha). */
+  temporada?: string | null;
+  temporada_desde?: string | null;
+  temporada_hasta?: string | null;
 };
+
+/** La tarifa que aplica a esa fecha de viaje: la temporada que la cubre si la
+ * hay, si no la de todo el año. Sin elegir una sola fila, dos filas de la misma
+ * ruta (base y Navidad) harían que la web cotice una u otra al azar. */
+export function rutaParaFecha(
+  rutas: readonly RutaVuelo[],
+  origenIata: string | undefined,
+  destinoIata: string,
+  fecha?: string | null,
+): RutaVuelo | null {
+  const candidatas = rutas.filter((r) => r.origen_iata === origenIata && r.destino_iata === destinoIata);
+  if (!candidatas.length) return null;
+  if (fecha) {
+    const enTemporada = candidatas.filter(
+      (r) =>
+        r.temporada &&
+        r.temporada_desde &&
+        r.temporada_hasta &&
+        r.temporada_desde <= fecha &&
+        fecha <= r.temporada_hasta,
+    );
+    // Dos temporadas que se pisan: gana la más cara (la fecha cae en alta).
+    if (enTemporada.length) return enTemporada.sort((a, b) => Number(b.desde_usd) - Number(a.desde_usd))[0];
+  }
+  return candidatas.find((r) => !r.temporada) ?? candidatas[0];
+}
 
 /** Destinos del viaje que tienen aeropuerto con ruta: preseleccionan el vuelo. */
 const IATA_DE_DESTINO: Record<string, string> = { "Isla de Margarita": "PMV" };
@@ -99,11 +131,13 @@ export type VueloElegido = {
   ruta: RutaVuelo | null;
 };
 
-/** Ruta del vuelo según el estado: lo elegido, o lo que se deduce del destino del viaje. */
+/** Ruta del vuelo según el estado: lo elegido, o lo que se deduce del destino del
+ * viaje. `fecha` es la ida: si cae en temporada alta (Navidad), cambia el precio. */
 export function vueloElegido(
   e: { origen: string; destino: string; vueloDestino: string; vueloDestinoOtro: string },
   origenIata: string | undefined,
   rutas: readonly RutaVuelo[],
+  fecha?: string | null,
 ): VueloElegido {
   if (e.vueloDestino === "otro") return { destino: "otro", destinoNombre: e.vueloDestinoOtro.trim(), ruta: null };
   const destinos = destinosDeRutas(rutas);
@@ -112,7 +146,7 @@ export function vueloElegido(
   // Un IATA de la URL sin ruta se ignora: el selector no puede mostrar lo que no ofrece.
   const destino = existe(e.vueloDestino) ? e.vueloDestino : existe(deducido) ? deducido : "";
   const nombre = destinos.find((d) => d.iata === destino)?.nombre ?? "";
-  const ruta = rutas.find((r) => r.origen_iata === origenIata && r.destino_iata === destino) ?? null;
+  const ruta = rutaParaFecha(rutas, origenIata, destino, fecha);
   return { destino, destinoNombre: nombre, ruta };
 }
 
@@ -121,7 +155,7 @@ export type VueloViaje = VueloElegido & EstimadoVuelo & { origenIata: string | u
 /** Ruta + estimado del vuelo del viaje: lo que muestran la pantalla, el resumen y el lead. */
 export function estimarVueloViaje(e: EstadoViaje, rutas: readonly RutaVuelo[], hoy: string): VueloViaje {
   const origenIata = ORIGENES_VUELO.find((o) => o.valor === e.origen)?.iata;
-  const elegido = vueloElegido(e, origenIata, rutas);
+  const elegido = vueloElegido(e, origenIata, rutas, fechasVuelo(e).ida);
   const estimado = estimarVuelo({
     desdeUsd: elegido.ruta ? Number(elegido.ruta.desde_usd) : null,
     idaVuelta: e.vuelo === "ida-vuelta",

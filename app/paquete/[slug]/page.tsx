@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function PaquetePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const [paquete, rutas] = await Promise.all([getPaquetePorSlug(slug), rutasVuelo()]);
-  if (!paquete || !origenesValidos(paquete, rutas).length) notFound();
+  if (!paquete || !origenesValidos(paquete, rutas, paquete.fecha_entrada).length) notFound();
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-6 pb-44 md:py-10 lg:pb-12">

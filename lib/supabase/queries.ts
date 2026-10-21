@@ -194,7 +194,9 @@ export const rutasVuelo = cache(async (): Promise<RutaVuelo[]> => {
   const sb = supabaseServer();
   const { data, error } = await sb
     .from("web_vuelos_referencia")
-    .select("origen_iata,origen_nombre,destino_iata,destino_nombre,ambito,desde_usd,ida_vuelta")
+    .select(
+      "origen_iata,origen_nombre,destino_iata,destino_nombre,ambito,desde_usd,ida_vuelta,temporada,temporada_desde,temporada_hasta",
+    )
     .order("destino_nombre");
   if (error) throw error;
   return ((data ?? []) as RutaVuelo[]).map((r) => ({ ...r, desde_usd: Number(r.desde_usd) }));

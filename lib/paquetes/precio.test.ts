@@ -55,6 +55,25 @@ test("orígenes: solo los que tienen ruta al destino y /cotizar sabe nombrar", (
   assert.deepEqual(origenesValidos({ vuelo_origenes: ["VLN"], vuelo_destino_iata: "LRV" }, RUTAS), []);
 });
 
+test("orígenes: salida en Navidad cotiza la tarifa de temporada alta", () => {
+  const conTemporada: RutaVuelo[] = [
+    RUTAS[0],
+    RUTAS[1],
+    RUTAS[2],
+    {
+      ...RUTAS[0],
+      desde_usd: 395,
+      temporada: "Navidad y Fin de Año 2026-27",
+      temporada_desde: "2026-12-15",
+      temporada_hasta: "2027-01-10",
+    },
+  ];
+  const navidad = origenesValidos({ vuelo_origenes: ["CCS"], vuelo_destino_iata: "PMV" }, conTemporada, "2026-12-22");
+  assert.equal(navidad[0].ruta.desde_usd, 395);
+  const baja = origenesValidos({ vuelo_origenes: ["CCS"], vuelo_destino_iata: "PMV" }, conTemporada, "2026-11-13");
+  assert.equal(baja[0].ruta.desde_usd, 109);
+});
+
 test("noches dentro del rango del paquete", () => {
   assert.equal(limitarNoches(FLEX, 1), 2);
   assert.equal(limitarNoches(FLEX, 30), 7);

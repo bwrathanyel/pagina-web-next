@@ -81,7 +81,7 @@ test("diasHasta ignora fechas inválidas", () => {
 // ---- rutas y estado del cotizador ----
 
 import { estadoInicial, parsearEstado, serializarEstado, type EstadoViaje } from "./estado.ts";
-import { destinosDeRutas, estimarVueloViaje, type RutaVuelo } from "./vuelo.ts";
+import { destinosDeRutas, estimarVueloViaje, rutaParaFecha, type RutaVuelo } from "./vuelo.ts";
 
 const ruta = (o: string, d: string, nombre: string, desde: number, ambito: RutaVuelo["ambito"] = "internacional"): RutaVuelo => ({
   origen_iata: o,
@@ -126,6 +126,29 @@ test("destinosDeRutas: únicos y ordenados", () => {
     destinosDeRutas(RUTAS).map((d) => d.iata),
     ["BOG", "PMV"],
   );
+});
+
+test("temporada alta (Navidad): la fecha de ida elige la tarifa", () => {
+  const conTemporada: RutaVuelo[] = [
+    ruta("CCS", "PMV", "Margarita", 190, "nacional"),
+    {
+      ...ruta("CCS", "PMV", "Margarita", 395, "nacional"),
+      temporada: "Navidad y Fin de Año 2026-27",
+      temporada_desde: "2026-12-15",
+      temporada_hasta: "2027-01-10",
+    },
+  ];
+  assert.equal(rutaParaFecha(conTemporada, "CCS", "PMV", "2026-12-23")?.desde_usd, 395);
+  assert.equal(rutaParaFecha(conTemporada, "CCS", "PMV", "2026-11-13")?.desde_usd, 190);
+  assert.equal(rutaParaFecha(conTemporada, "CCS", "PMV", null)?.desde_usd, 190);
+  assert.equal(rutaParaFecha(conTemporada, "VLN", "PMV", "2026-12-23"), null);
+  // La ficha del cotizador usa la temporada cuando la ida cae adentro.
+  const navidad = estimarVueloViaje(viaje({ origen: "Caracas", vueloDestino: "PMV", desde: "2026-12-23", hasta: "2026-12-26" }), conTemporada, HOY);
+  assert.equal(navidad.porPersona, 474);
+  const baja = estimarVueloViaje(viaje({ origen: "Caracas", vueloDestino: "PMV", desde: "2026-11-13", hasta: "2026-11-16" }), conTemporada, HOY);
+  assert.equal(baja.porPersona, 228);
+  // El selector de destinos no duplica la ruta por tener dos tarifas.
+  assert.deepEqual(destinosDeRutas(conTemporada).map((d) => d.iata), ["PMV"]);
 });
 
 test("vdestino y vdestino_otro viajan por la URL con topes", () => {
