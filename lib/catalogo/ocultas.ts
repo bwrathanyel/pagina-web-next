@@ -2,7 +2,9 @@
 // 2026-10-21). Para reactivarlos: vaciar estas dos listas; el resto del código
 // (rutas, tarifas, fichas) sigue intacto.
 export const CATEGORIAS_OCULTAS: readonly string[] = ["excursiones", "traslados"];
-export const TIPOS_OCULTOS: readonly string[] = ["excursion", "traslado"];
+// "paquete" = los paquetes del tarifario (productos): desde 2026-10-21 los
+// paquetes públicos son los de la tabla `paquetes` (/paquete/<slug>).
+export const TIPOS_OCULTOS: readonly string[] = ["excursion", "traslado", "paquete"];
 
 export const tipoOculto = (tipo: string | null | undefined) => !!tipo && TIPOS_OCULTOS.includes(tipo);
 

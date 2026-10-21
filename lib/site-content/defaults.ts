@@ -54,7 +54,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       ctaLabel: "Cotizar mi viaje",
       ctaHref: "/cotizar",
       cards: [
-        { label: "Escapadas", title: "Un día puede cambiar su semana.", description: "Full days y experiencias para salir de la rutina.", href: "/catalogo/paquetes", image: "/images/editorial/escapada-caribe.png" },
+        { label: "Paquetes", title: "Un viaje puede cambiar su semana.", description: "Boleto y hotel en un solo precio.", href: "/catalogo/paquetes", image: "/images/editorial/escapada-caribe.png" },
         { label: "Hospedajes", title: "Descanse donde quiere estar.", description: "Hoteles, posadas y opciones seleccionadas para cada plan.", href: "/catalogo/hoteles", image: "" },
         { label: "Boletería", title: "Del aeropuerto a su destino.", description: "Rutas nacionales e internacionales.", href: "/cotizar?servicios=vuelo", image: "/images/editorial/vuelo-a-tu-medida.png" },
         { label: "Excursiones", title: "Conozca más que un destino.", description: "Full days y recorridos para ver cada lugar con más contexto.", href: "/catalogo/excursiones", image: "/images/editorial/tour-tropical.png" },
@@ -88,7 +88,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     descriptions: {
       promociones: "Ofertas vigentes para aprovechar cuando encuentre el plan indicado.",
       hoteles: "Hospedajes para descansar, celebrar o descubrir un destino a su manera.",
-      paquetes: "Experiencias organizadas para que disfrute más y coordine menos.",
+      paquetes: "Boleto aéreo y hotel en un solo precio: elija pasajeros y noches.",
       excursiones: "Full days y actividades en Margarita, Cubagua y Coche, con precio por adulto y por niño.",
       traslados: "Traslados en Margarita y suplementos de cayos en Los Roques, con tarifa por tramo.",
     },

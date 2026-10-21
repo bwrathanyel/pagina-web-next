@@ -19,7 +19,7 @@ const DESTINO_PUBLICO_OVERRIDE: Record<string, string> = {
   // chips ("Isla Margarita" y "Margarita") con una sola ficha suelta.
   "Isla Margarita": "Margarita",
 };
-function destinoPublico<T extends { destino?: string | null }>(p: T): T {
+export function destinoPublico<T extends { destino?: string | null }>(p: T): T {
   if (!p?.destino || !(p.destino in DESTINO_PUBLICO_OVERRIDE)) return p;
   return { ...p, destino: DESTINO_PUBLICO_OVERRIDE[p.destino] };
 }
@@ -143,16 +143,16 @@ async function _getPromocionPorId(id: number): Promise<Promocion | null> {
 // carpeta los pinta con las demás. Consultarlos aparte mostraba cada flyer dos
 // veces, que es el mismo doble conteo que se sacó del CRM.
 
-/** All active product ids across the three sellable tipos (excludes
- * 'info', which is internal notices, not a public catalog entry). */
+/** Ids de las fichas públicas /producto/<id>: solo hoteles. Excursiones,
+ * traslados y los paquetes del tarifario están ocultos (lib/catalogo/ocultas.ts);
+ * los paquetes viven en /paquete/<slug>. */
 export async function getTodosLosProductoIds(): Promise<number[]> {
   const sb = supabaseServer();
   const { data, error } = await sb
     .from("productos")
     .select("id")
     .eq("activo", true)
-    // Excursiones y traslados están ocultos al público (lib/catalogo/ocultas.ts).
-    .in("tipo", ["hotel", "paquete"]);
+    .eq("tipo", "hotel");
   if (error) throw error;
   return (data ?? []).map((d) => d.id as number);
 }

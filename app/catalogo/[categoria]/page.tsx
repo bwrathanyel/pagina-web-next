@@ -11,7 +11,11 @@ import { datosExcursion, tarifaBaseExcursion } from "@/lib/servicios";
 import { TarifasServicio } from "@/components/producto/TarifasServicio";
 import { Boton } from "@/components/ui/Boton";
 import { enlaceCotizarProducto } from "@/lib/cotizador/estado";
-import { getProductosPorCategoria, getPromociones } from "@/lib/supabase/queries";
+import { getProductosPorCategoria, getPromociones, rutasVuelo } from "@/lib/supabase/queries";
+import { getPaquetes } from "@/lib/paquetes/queries";
+import { origenesValidos, vencido } from "@/lib/paquetes/precio";
+import { hoyCaracas } from "@/lib/cotizador/estado";
+import { PaquetesListado } from "@/components/paquetes/PaquetesListado";
 import { agruparPorDestino } from "@/lib/supabase/agruparPorDestino";
 import { ordenarDestinos } from "@/lib/catalogo/destinos";
 import { jsonLdScript, buildBreadcrumbJsonLd, buildItemListJsonLd } from "@/lib/seo/jsonld";
@@ -37,10 +41,10 @@ const SEO_POR_CATEGORIA: Record<Categoria, { title: string; description: string;
     heading: "Hoteles y posadas",
   },
   paquetes: {
-    title: "Paquetes Turísticos Todo Incluido en Venezuela",
+    title: "Paquetes con boleto aéreo incluido — Margarita, Los Roques, Mérida",
     description:
-      "Paquetes de viaje todo incluido en Venezuela: Los Roques, Canaima y Salto Ángel, Isla de Margarita y Mérida. Ideales para lunas de miel, familias y regalos a familiares.",
-    heading: "Paquetes turísticos",
+      "Paquetes con boleto aéreo ida y vuelta y hotel en Margarita, Los Roques y Mérida, con salidas de Navidad y Fin de Año. Elija pasajeros y noches y vea el precio al instante.",
+    heading: "Paquetes con boleto incluido",
   },
   excursiones: {
     title: "Excursiones y Full Days en Margarita, Cubagua y Coche",
@@ -89,6 +93,7 @@ export default async function CatalogoPage({
   if (!isCategoria(categoria)) notFound();
 
   const label = CATEGORIAS.find((c) => c.slug === categoria)!.label;
+  if (categoria === "paquetes") return <PaquetesPage label={label} />;
   const esPromociones = categoria === "promociones";
   const items = esPromociones ? await getPromociones() : await getProductosPorCategoria(categoria);
 
@@ -190,6 +195,52 @@ export default async function CatalogoPage({
           destinos={ordenarDestinos(grupos.map((g) => g.destino))}
           vacio="No hay opciones en este destino ahora mismo. Escríbanos por WhatsApp y le contamos qué podemos preparar."
         />
+      )}
+    </main>
+  );
+}
+
+// Paquetes con boleto incluido (tabla `paquetes`, se editan en el CRM). Los
+// paquetes del tarifario (productos tipo 'paquete') ya no se publican.
+async function PaquetesPage({ label }: { label: string }) {
+  const [todos, rutas] = await Promise.all([getPaquetes(), rutasVuelo()]);
+  const hoy = hoyCaracas();
+  const paquetes = todos.filter((p) => origenesValidos(p, rutas).length > 0 && !vencido(p, hoy));
+
+  return (
+    <main className="mx-auto max-w-7xl px-5 py-4 md:py-14">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={jsonLdScript(
+          buildBreadcrumbJsonLd([
+            { name: "Inicio", url: "/" },
+            { name: label, url: "/catalogo/paquetes" },
+          ]),
+        )}
+      />
+      {paquetes.length > 0 ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={jsonLdScript(
+            buildItemListJsonLd(paquetes.map((p) => ({ name: p.titulo, url: `/paquete/${p.slug}` }))),
+          )}
+        />
+      ) : null}
+      <h1 className="mb-4 font-display text-3xl font-bold text-ink lg:hidden">Catálogo</h1>
+      <div className="hidden lg:block">
+        <CatalogHeader categoria="paquetes" label={SEO_POR_CATEGORIA.paquetes.heading} count={paquetes.length} />
+      </div>
+
+      <div className={FILA_FIJA + " mb-6 lg:mb-10"}>
+        <CategoriaTabs activa="paquetes" className="px-5 scroll-px-5" />
+      </div>
+
+      {paquetes.length === 0 ? (
+        <p className="text-ink-soft">
+          Estamos preparando nuevos paquetes. Escríbanos por WhatsApp y le armamos uno con boleto y hotel.
+        </p>
+      ) : (
+        <PaquetesListado paquetes={paquetes} rutas={rutas} />
       )}
     </main>
   );

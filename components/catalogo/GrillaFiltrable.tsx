@@ -34,12 +34,15 @@ export function GrillaFiltrable({
   destinos,
   fijo = false,
   nombre = ["opción", "opciones"],
+  ordenable = true,
   vacio,
 }: {
   entradas: EntradaGrilla[];
   destinos: string[];
   fijo?: boolean;
   nombre?: [string, string];
+  /** false = sin "Menor precio" (precios que se calculan en el navegador). */
+  ordenable?: boolean;
   vacio: string;
 }) {
   const desdeUrl = useSyncExternalStore(suscribirUrl, destinoDeUrl, () => null);
@@ -96,10 +99,12 @@ export function GrillaFiltrable({
         <p className="font-mono text-xs text-ink-soft" aria-live="polite">
           {visibles.length} {visibles.length === 1 ? nombre[0] : nombre[1]}
         </p>
-        <div role="group" aria-label="Ordenar" className="flex rounded-pill border border-linea-fuerte p-0.5">
-          {opcionOrden("recomendadas", "Recomendadas")}
-          {opcionOrden("precio", "Menor precio")}
-        </div>
+        {ordenable ? (
+          <div role="group" aria-label="Ordenar" className="flex rounded-pill border border-linea-fuerte p-0.5">
+            {opcionOrden("recomendadas", "Recomendadas")}
+            {opcionOrden("precio", "Menor precio")}
+          </div>
+        ) : null}
       </div>
 
       {visibles.length === 0 ? (
