@@ -40,6 +40,8 @@ const FLECHA =
   "flex h-9 w-9 items-center justify-center rounded-control text-ink transition-colors duration-150 ease-salida " +
   "enabled:hover:bg-sand-2 disabled:text-ink-soft/40";
 
+export type SinCupo = { dia: (iso: string) => boolean; leyenda: string };
+
 interface Props {
   id: string;
   name: string;
@@ -49,6 +51,9 @@ interface Props {
   onCambio: (iso: string) => void;
   min?: string;
   rango?: { desde: string; hasta: string };
+  /** Noches sin cupo (stop sale del hotel): van en rojo y con su leyenda. Se
+   * pueden elegir igual (la salida puede caer en una), el aviso lo da el cotizador. */
+  sinCupo?: SinCupo;
   /** Texto sin fecha elegida: en tramos angostos, uno más corto. */
   vacio?: string;
   className?: string;
@@ -62,6 +67,7 @@ export function SelectorFecha({
   onCambio,
   min,
   rango,
+  sinCupo,
   vacio = "Cualquier fecha",
   className = "",
 }: Props) {
@@ -117,7 +123,9 @@ export function SelectorFecha({
   }
 
   function clasesDia(iso: string) {
-    if (iso === valor) return "bg-acento font-semibold text-sobre-acento";
+    const lleno = iso >= piso && !!sinCupo?.dia(iso);
+    if (iso === valor) return `bg-acento font-semibold text-sobre-acento${lleno ? " ring-2 ring-inset ring-peligro" : ""}`;
+    if (lleno) return "bg-peligro-suave font-medium text-peligro line-through hover:ring-1 hover:ring-inset hover:ring-peligro";
     if (rango && (iso === rango.desde || iso === rango.hasta)) return "bg-acento-suave font-semibold text-acento";
     if (rango && rango.desde && iso > rango.desde && iso < rango.hasta) return "bg-acento-suave text-ink";
     if (iso === hoy) return "font-semibold text-acento ring-1 ring-inset ring-acento/50 hover:bg-acento-suave";
@@ -191,7 +199,7 @@ export function SelectorFecha({
                     disabled={iso < piso}
                     aria-pressed={iso === valor}
                     aria-current={iso === hoy ? "date" : undefined}
-                    aria-label={LARGA.format(aFecha(iso))}
+                    aria-label={`${LARGA.format(aFecha(iso))}${iso >= piso && sinCupo?.dia(iso) ? ", sin disponibilidad" : ""}`}
                     onClick={() => elegir(iso)}
                     className={
                       "flex h-10 items-center justify-center rounded-control text-sm tabular-nums transition-colors duration-150 ease-salida focus-visible:outline-offset-0 disabled:text-ink-soft/35 " +
@@ -203,6 +211,13 @@ export function SelectorFecha({
                 );
               })}
             </div>
+
+            {sinCupo ? (
+              <p className="mt-3 flex items-center gap-2 text-xs text-ink-soft">
+                <span aria-hidden className="h-3 w-3 shrink-0 rounded-sm bg-peligro-suave ring-1 ring-inset ring-peligro" />
+                {sinCupo.leyenda}
+              </p>
+            ) : null}
 
             <div className="mt-3 flex items-center justify-between border-t border-linea pt-3 text-sm font-medium">
               <button

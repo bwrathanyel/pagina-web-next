@@ -8,6 +8,12 @@ const nextConfig: NextConfig = {
   experimental: {
     cpus: 1,
   },
+  // Memoiza solo lo que no cambió: sin esto cada tecla en el formulario de
+  // /cotizar re-renderizaba el cotizador entero (grilla de hoteles, fotos,
+  // calendario) porque nada en el sitio usa memo/useMemo. Next lo aplica solo a
+  // archivos con JSX o hooks; el componente que rompe las reglas de React queda
+  // sin compilar (igual que antes), no se rompe.
+  reactCompiler: true,
   // La propuesta para las posadas vivió un rato en /posadas antes de pasar a
   // /ia-planes; sin esto, cualquier link ya compartido daría 404.
   //

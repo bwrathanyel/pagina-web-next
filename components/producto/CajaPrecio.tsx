@@ -4,6 +4,7 @@ import { Icono } from "@/components/ui/Icono";
 import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
+import { ReservarCta } from "@/components/producto/ReservarCta";
 import {
   fechaCorta,
   precioDeTarifa,
@@ -102,6 +103,7 @@ export function CajaPrecio({ producto, className = "" }: { producto: Producto; c
               <Icono nombre="chevron-abajo" tamano={16} />
             </a>
           ) : null}
+          {producto.tipo === "hotel" ? <ReservarCta productoId={producto.id} tarifaId={destacada?.id} nombre={producto.nombre} /> : null}
         </div>
       </Boleto>
     </aside>

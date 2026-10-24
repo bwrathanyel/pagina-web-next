@@ -1,6 +1,7 @@
 "use client";
 
 import { LazyMotion, MotionConfig } from "motion/react";
+import { ListaSelectores } from "@/components/ui/ListaSelectores";
 
 // Los componentes nuevos usan `m.*`, que pesa poco en el bundle inicial; las
 // features (domMax: hace falta por el layoutId del tab bar y el arrastre de
@@ -13,7 +14,10 @@ const cargarFeatures = () => import("./motion-features").then((r) => r.default);
 export function MotionProvider({ children }: { children: React.ReactNode }) {
   return (
     <LazyMotion features={cargarFeatures}>
-      <MotionConfig reducedMotion="user">{children}</MotionConfig>
+      <MotionConfig reducedMotion="user">
+        {children}
+        <ListaSelectores />
+      </MotionConfig>
     </LazyMotion>
   );
 }

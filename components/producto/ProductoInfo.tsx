@@ -28,8 +28,8 @@ export function ProductoInfo({ producto, children }: { producto: Producto; child
     <div className="mt-5 lg:mt-8 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-x-10">
       <header className="lg:col-start-1 lg:row-start-1">
         <Etiqueta tono="dusk">{BADGE_POR_TIPO[producto.tipo]}</Etiqueta>
-        <h1 className="mt-3 font-display text-3xl font-bold leading-tight text-ink lg:text-4xl">{nombre}</h1>
-        {producto.destino ? <p className="mt-1 text-lg text-ink-soft">{producto.destino}</p> : null}
+        <h1 className="titulo-marca mt-3 text-balance font-display text-3xl font-bold leading-tight text-ink lg:text-4xl">{nombre}</h1>
+        {producto.destino ? <p className="mt-2 text-lg text-ink-soft">{producto.destino}</p> : null}
       </header>
 
       <CajaPrecio

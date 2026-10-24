@@ -14,9 +14,11 @@ import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { estimarEstadia, type Estadia } from "@/lib/cotizador/estimado";
 import {
+  bloqueosDelAno,
   bloqueosEnFechas,
   esOnRequest,
   hotelParaCotizar,
+  nocheSinCupo,
   tarifasDeHoteles,
   textoSinDisponibilidad,
   type Bloqueo,
@@ -25,7 +27,11 @@ import {
 import type { OfertaHotel } from "@/lib/cotizador/ofertas";
 import { candidatosEstimado, recomendarHoteles } from "@/lib/cotizador/recomendar";
 import type { Tarifa } from "@/types/supabase";
-import { montoConMoneda } from "@/lib/tarifas";
+import { montoConMoneda, vendibleHoy } from "@/lib/tarifas";
+import { useCheckoutConfig } from "@/components/checkout/useCheckoutConfig";
+import { enlaceReservar } from "@/components/producto/ReservarCta";
+import { registrarEvento } from "@/lib/analitica/eventos";
+import { MAX_BEBES, MAX_PAX } from "@/lib/checkout/calculo";
 import { SolicitudLista } from "@/components/leads/SolicitudLista";
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
@@ -394,6 +400,24 @@ export function CotizadorViaje({
       vivo = false;
     };
   }, [claveBloqueo]);
+  // Noches sin cupo del hotel elegido en el próximo año: el calendario las pinta
+  // en rojo antes de que el cliente elija. Si falla, el aviso por fechas sigue.
+  const idOcupacion = hospedaje && hotel ? hotel.id : 0;
+  const [ocupacion, setOcupacion] = useState<{ id: number; bloqueos: Bloqueo[] } | null>(null);
+  useEffect(() => {
+    if (!idOcupacion) return;
+    let vivo = true;
+    bloqueosDelAno(idOcupacion)
+      .then((bloqueos) => vivo && setOcupacion({ id: idOcupacion, bloqueos }))
+      .catch(() => vivo && setOcupacion(null));
+    return () => {
+      vivo = false;
+    };
+  }, [idOcupacion]);
+  const nochesOcupadas = ocupacion && ocupacion.id === idOcupacion ? ocupacion.bloqueos : [];
+  const sinCupo = nochesOcupadas.some((b) => b.estado === "stop_sale")
+    ? { dia: (iso: string) => nocheSinCupo(nochesOcupadas, iso), leyenda: `${hotel?.nombre}: noches sin disponibilidad` }
+    : undefined;
   // Tarifas de los candidatos a recomendar: una lectura por destino. No
   // dependen de las fechas, así el total aparece apenas el cliente las elige.
   const candidatos = hospedaje ? candidatosEstimado(ofertasDestino) : [];
@@ -490,6 +514,22 @@ export function CotizadorViaje({
     plan: tarifaElegida?.plan ?? null,
     estimado: estimado?.ok ? montoConMoneda(estimado.total, estimado.moneda) : null,
   };
+  // «Reservar y pagar» solo si /reservar puede cobrar lo mismo que se ve: solo hospedaje, precio
+  // exacto (estimado ok), tarifa vendible hoy, viajeros dentro del límite del checkout y la
+  // ventana de atención abierta. Si no, la única acción sigue siendo «Enviar solicitud».
+  const { config: checkout } = useCheckoutConfig();
+  const viajeros = estado.adultos + estadia.edades.length + estado.bebes;
+  const reservar =
+    estado.servicios.length === 1 && hotel && tarifaElegida && estimado?.ok && vendibleHoy(tarifaElegida) &&
+    checkout?.activo && checkout.abierto && viajeros <= MAX_PAX && estado.bebes <= MAX_BEBES &&
+    estadia.edades.every((e) => e >= 2 && e <= 11)
+      ? {
+          href: enlaceReservar(hotel.id, tarifaElegida.id, {
+            desde: estado.desde, hasta: estado.hasta, adultos: estado.adultos, edades: estadia.edades, bebes: estado.bebes,
+          }),
+          onClick: () => registrarEvento("abrir_pago", { ruta: "/cotizar", meta: { etapa: "cotizador", producto_id: hotel.id } }),
+        }
+      : null;
 
   // Total de cada hotel recomendable con la tarifa que anuncia su oferta: el
   // mismo cálculo (y el mismo número) que el resumen cuando el cliente lo elige.
@@ -715,6 +755,7 @@ export function CotizadorViaje({
       conTitulo={conTitulo}
       tours={toursElegidos.map((t) => t.nombre)}
       vuelo={vueloViaje}
+      reservar={reservar}
       desde={ofertaElegida?.precio ? { monto: ofertaElegida.precio.monto, unidad: ofertaElegida.precio.unidad } : null}
       datos={<DatosContacto formId={formId} contacto={contacto} errores={errores} onCampo={campo} compacto />}
     />
@@ -859,7 +900,7 @@ export function CotizadorViaje({
   return (
     <>
       <div className="mb-4 hidden lg:block">
-        <BarraViajeCompacta estado={estado} onCambio={cambiar} idBase={`${formId}-barra`} />
+        <BarraViajeCompacta estado={estado} onCambio={cambiar} idBase={`${formId}-barra`} sinCupo={sinCupo} />
       </div>
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_23rem] lg:items-start xl:gap-12">
         <div className="flex min-w-0 flex-col gap-6 md:gap-8">
@@ -982,7 +1023,7 @@ export function CotizadorViaje({
           </span>
         </span>
         <Boton tamano="lg" aria-haspopup="dialog" onClick={() => setHojaAbierta(true)}>
-          {pasoActual === 3 ? "Enviar" : "Revisar"}
+          {reservar ? "Continuar" : pasoActual === 3 ? "Enviar" : "Revisar"}
         </Boton>
       </div>
 
@@ -992,7 +1033,7 @@ export function CotizadorViaje({
 
       <Hoja abierta={editarViaje} onCerrar={() => setEditarViaje(false)} titulo="Su viaje">
         <div className="flex flex-col gap-6 p-4">
-          <BarraViaje estado={estado} onCambio={cambiar} conServicios={false} />
+          <BarraViaje estado={estado} onCambio={cambiar} conServicios={false} sinCupo={sinCupo} />
           <Boton tamano="lg" ancho onClick={() => setEditarViaje(false)}>
             Listo
           </Boton>

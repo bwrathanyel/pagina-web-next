@@ -2,8 +2,13 @@
 
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { SiteEditorPanel } from "@/components/admin/SiteEditorPanel";
+import dynamic from "next/dynamic";
 import { useSiteContent } from "@/components/providers/SiteContentProvider";
+
+// Solo admins y con edición prendida: no viaja en el JS de cada visitante.
+const SiteEditorPanel = dynamic(() => import("@/components/admin/SiteEditorPanel").then((m) => m.SiteEditorPanel), {
+  ssr: false,
+});
 
 /** Flotante, esquina opuesta al botón de WhatsApp — solo se renderiza para
  * rol admin. Estar logueado como admin no activa edición sola: es un

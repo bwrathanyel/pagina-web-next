@@ -139,6 +139,10 @@ export function Footer() {
 
         <p className="border-t border-dusk-text/10 pt-6 text-xs text-dusk-text-soft">
           © {new Date().getFullYear()} {content.footer.copyright}
+          {" · "}
+          <Link href="/creditos-fotograficos" className="inline-flex min-h-11 items-center underline underline-offset-4 hover:text-dusk-text">
+            Créditos fotográficos
+          </Link>
         </p>
       </div>
     </footer>

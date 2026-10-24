@@ -7,10 +7,16 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useCarritoStore } from "@/lib/carrito/store";
 import { usePaneles } from "@/lib/layout/paneles";
 import { useNotificacionesChat } from "@/lib/notificaciones/useNotificacionesChat";
-import { NotificacionesPanel } from "@/components/layout/NotificacionesPanel";
+import dynamic from "next/dynamic";
 import { BOTON_ICONO } from "@/components/layout/botonIcono";
 import { Icono } from "@/components/ui/Icono";
 import { Contador } from "@/components/ui/Insignia";
+
+// Solo se monta al abrir la campana: fuera del JS inicial.
+const NotificacionesPanel = dynamic(
+  () => import("@/components/layout/NotificacionesPanel").then((m) => m.NotificacionesPanel),
+  { ssr: false },
+);
 
 /** Sin `compacto`: barra del escritorio (favoritos, carrito, campana y cuenta).
  * `compacto`: header móvil, solo buscar y carrito -- la campana (notificaciones

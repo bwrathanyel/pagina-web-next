@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 
 /* Rutas que se presentan solas, sin el cromo del sitio de consumidor: barra de
    navegación, footer del catálogo, botones flotantes de WhatsApp y del chat de
-   viajes, y el onboarding de bienvenida. `/ia-para-tu-negocio` pasó a ser
+   viajes. `/ia-para-tu-negocio` pasó a ser
    pública y con navegación normal (2026-08-11), no va más en esta lista. */
 const RUTAS_SIN_CROMO: string[] = ["/ig", "/fb", "/tiktok", "/juega"];
 

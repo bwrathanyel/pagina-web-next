@@ -1,4 +1,5 @@
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { TAG_DATOS_WEB } from "@/lib/supabase/queries";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
@@ -17,6 +18,9 @@ async function revalidarDesdeBody(request: Request) {
   } else {
     revalidatePath("/", "layout");
   }
+  // Los datos cacheados de /cotizar (lib/supabase/queries.ts) no cuelgan de
+  // ninguna ruta: se vencen siempre, de una vez (expire 0, no stale-while-revalidate).
+  revalidateTag(TAG_DATOS_WEB, { expire: 0 });
 }
 
 export async function POST(request: Request) {

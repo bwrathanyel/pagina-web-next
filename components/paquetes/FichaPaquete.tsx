@@ -24,7 +24,15 @@ import {
   textoRangoCorto,
 } from "@/lib/cotizador/estado";
 import { tarjetasPorHabitacion } from "@/lib/cotizador/estimado";
-import { bloqueosEnFechas, esOnRequest, habitacionDeTarifa, textoSinDisponibilidad, type Bloqueo } from "@/lib/cotizador/hotel";
+import {
+  bloqueosDelAno,
+  bloqueosEnFechas,
+  esOnRequest,
+  habitacionDeTarifa,
+  nocheSinCupo,
+  textoSinDisponibilidad,
+  type Bloqueo,
+} from "@/lib/cotizador/hotel";
 import { textoBoletos, type RutaVuelo } from "@/lib/cotizador/vuelo";
 import {
   enlaceCotizarPaquete,
@@ -69,10 +77,9 @@ export function FichaPaquete({ paquete, rutas }: { paquete: Paquete; rutas: Ruta
   const id = useId();
   const hoy = useHoy();
   const { hotel } = paquete;
-  const origenes = origenesValidos(paquete, rutas);
   const fijo = esFijo(paquete);
 
-  const [origen, setOrigen] = useState(origenes[0]?.iata ?? "");
+  const [origen, setOrigen] = useState("");
   const [entradaElegida, setEntrada] = useState<string | null>(null);
   const [noches, setNoches] = useState(paquete.noches_default);
   const [viajeros, setViajeros] = useState<Viajeros>({ adultos: 2, ninos: 0, bebes: 0 });
@@ -80,9 +87,11 @@ export function FichaPaquete({ paquete, rutas }: { paquete: Paquete; rutas: Ruta
   const [tarifaId, setTarifaId] = useState<number | null>(null);
   const [bloqueos, setBloqueos] = useState<Bloqueo[] | undefined>(undefined);
 
-  const elegido = origenes.find((o) => o.iata === origen) ?? origenes[0];
   const entrada = entradaElegida ?? (hoy ? entradaInicial(paquete, hoy) : "");
   const f = fechasPaquete(paquete, entrada, noches);
+  // Con temporada cargada (Navidad) la fecha de ida cambia la tarifa del vuelo.
+  const origenes = origenesValidos(paquete, rutas, f.desde);
+  const elegido = origenes.find((o) => o.iata === origen) ?? origenes[0];
   const pax = { adultos: viajeros.adultos, edades, bebes: viajeros.bebes };
   const tarifas = tarifasDelPlan(hotel.tarifas, paquete.plan);
   const plan = planMostrado(hotel.tarifas, paquete.plan);
@@ -102,6 +111,24 @@ export function FichaPaquete({ paquete, rutas }: { paquete: Paquete; rutas: Ruta
     };
   }, [hotel.id, f.desde, f.hasta]);
   const sinDisponibilidad = textoSinDisponibilidad(bloqueos, f.desde, f.hasta);
+  // Noches sin cupo del año para pintar el calendario en rojo antes de elegir.
+  const [ocupadas, setOcupadas] = useState<Bloqueo[]>([]);
+  useEffect(() => {
+    let vivo = true;
+    bloqueosDelAno(hotel.id)
+      .then((b) => vivo && setOcupadas(b))
+      .catch(() => vivo && setOcupadas([]));
+    return () => {
+      vivo = false;
+    };
+  }, [hotel.id]);
+  // Se marca la fecha de ida: en rojo si alguna noche del paquete que arranca ahí no tiene cupo.
+  const sinCupo = ocupadas.some((b) => b.estado === "stop_sale")
+    ? {
+        dia: (iso: string) => Array.from({ length: f.noches }, (_, k) => sumarDias(iso, k)).some((n) => nocheSinCupo(ocupadas, n)),
+        leyenda: `Sin disponibilidad en ${hotel.nombre} para ${textoDuracion(f.noches)} desde esa fecha`,
+      }
+    : undefined;
 
   const href =
     elegido && f.desde
@@ -178,6 +205,7 @@ export function FichaPaquete({ paquete, rutas }: { paquete: Paquete; rutas: Ruta
               onCambio={(iso) => setEntrada(iso)}
               min={hoy ? sumarDias(hoy, 2) : undefined}
               rango={f.desde ? { desde: f.desde, hasta: f.hasta } : undefined}
+              sinCupo={sinCupo}
               vacio="Elegir fecha"
               className={CONTROL_BOTON}
             />

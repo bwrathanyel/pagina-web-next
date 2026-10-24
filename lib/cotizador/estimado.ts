@@ -119,12 +119,19 @@ function porHabitacion(t: Tarifa): boolean {
   return sgl !== null && dbl !== null && dbl > sgl;
 }
 
+/** Lista CERRADA de claves de `precios` que son una ocupación, la misma que
+ * OCUPACION_ADULTOS de `_shared/ventas-ia.ts` y TAR_OCUPACION del CRM (el script
+ * `verif_fase4_capacidad.mjs` revisa el CRM contra el bot). `precios` también
+ * trae claves que parecen capacidad y no lo son (`4_a_10_pasajeros`, `pax_6`,
+ * `temporada_alta`, `chd_5_9`): lo que no está acá no cuenta y no se adivina. Si
+ * un PDF nuevo trae otra (ver `scripts/fixtures_precios_claves.json`), se suma
+ * en los tres lados. De 6 adultos para arriba el asesor arma la combinación. */
 const CLAVES_OCUPACION: Record<number, string[]> = {
-  1: ["sgl"],
-  2: ["dbl"],
-  3: ["tpl"],
-  4: ["cdp", "cpl"],
-  5: ["qpl"],
+  1: ["sgl", "sencilla", "hab_sgl", "1_persona"],
+  2: ["dbl", "doble", "hab_dbl", "dbl_pax"],
+  3: ["tpl", "triple"],
+  4: ["cdp", "cpl", "cdl", "cdpl", "cua", "cuad", "cuadruple", "cpl_cua"],
+  5: ["qpl", "quin", "quint", "qtp", "qtpl", "qui", "qpl_qui"],
 };
 const NOMBRE_OCUPACION: Record<number, string> = { 1: "sencilla", 2: "doble", 3: "triple", 4: "cuádruple", 5: "quíntuple" };
 
@@ -140,7 +147,7 @@ function rangosNinos(t: Tarifa): RangoNino[] {
   const p = t.precios ?? {};
   const out: RangoNino[] = [];
   for (const clave of Object.keys(p)) {
-    const m = /^chd_(\d{1,2})_(\d{1,2})$/.exec(clave);
+    const m = /^(?:2do_)?chd_(\d{1,2})_(\d{1,2})$/.exec(clave);
     if (m && numero(p[clave]) !== null) out.push({ clave, desde: Number(m[1]), hasta: Number(m[2]) });
   }
   const n = bloqueDe(t)?.ninos;
@@ -148,6 +155,32 @@ function rangosNinos(t: Tarifa): RangoNino[] {
     out.push({ clave: "chd", desde: n.chd_desde, hasta: n.chd_hasta });
   }
   return out.sort((a, b) => a.desde - b.desde);
+}
+
+/** Hoteles que publican 1er y 2do niño (`1er_chd_5_10`, `2do_chd_5_11`): el 1er
+ * niño de CADA PAREJA de adultos paga la tarifa `1er_*` (null = FREE) y los demás
+ * niños la `2do_*` (regla del dueño, Margarita Village). Parejas = adultos / 2. */
+function primerNinoPorPareja(t: Tarifa): { hasta: number; precio: number | null } | null {
+  const p = t.precios ?? {};
+  for (const clave of Object.keys(p)) {
+    const m = /^1er_chd_(\d{1,2})_(\d{1,2})$/.exec(clave);
+    if (m) {
+      // FREE solo vale si la fila lo promete ("Niño gratis de (5-10)", promo de
+      // temporada baja); un null sin esa promesa es N/A y no se adivina.
+      const gratis = /gratis/i.test(t.vigencia_texto ?? "");
+      return { hasta: Number(m[2]), precio: numero(p[clave]) ?? (gratis ? 0 : null) };
+    }
+  }
+  return null;
+}
+
+/** Edad hasta la que el hotel no cobra al infante (`ninos.gratis_hasta` del
+ * bloque, inclusive). Solo se cree entre 0 y 5: más arriba el parser mezcló una
+ * promoción de temporada baja ("niños de 0 a 10 sin costo") o meses ("0 a 23
+ * meses"), y tratarlo como edad regalaría el precio de niños. */
+function infantesGratisHasta(t: Tarifa): number | null {
+  const g = numero(bloqueDe(t)?.ninos?.gratis_hasta);
+  return g !== null && g >= 0 && g <= 5 ? g : null;
 }
 
 type Noche = { ok: true; monto: number; adultos: number } | { ok: false; motivo: MotivoSinEstimado; texto: string };
@@ -161,13 +194,30 @@ function precioNoche(t: Tarifa, e: Estadia): Noche {
   let adultos = e.adultos;
   let ninos = 0;
   let gratis = e.ninosGratis ?? 0;
+  const gratisHasta = infantesGratisHasta(t);
+  const primero = primerNinoPorPareja(t);
+  let primerosCupos = primero ? Math.floor(e.adultos / 2) : 0;
+  // Los bebés (menores de 2) no pagan solo si la política del hotel lo dice; sin
+  // política cargada se mantiene lo que dicen todas las demás ("0 a 3 sin costo").
+  if (e.bebes > 0 && gratisHasta !== null && gratisHasta < 1) {
+    return { ok: false, motivo: "ninos", texto: "Esta tarifa cobra a los bebés: el asesor lo confirma." };
+  }
   for (const edad of e.edades) {
+    // Infantes exentos según la política del hotel (`ninos.gratis_hasta`): no
+    // pagan aunque la tarifa no publique precio de niño.
+    if (gratisHasta !== null && edad <= gratisHasta) continue;
     if (!rangos.length) {
       return { ok: false, motivo: "ninos", texto: "Esta tarifa no publica precio de niños: el asesor lo confirma." };
     }
     const r = rangos.find((x) => edad >= x.desde && edad <= x.hasta);
     if (r) {
-      if (gratis > 0) gratis -= 1;
+      if (primero && primerosCupos > 0 && edad <= primero.hasta) {
+        if (primero.precio === null) {
+          return { ok: false, motivo: "ninos", texto: "Esta tarifa no publica el precio del primer niño: el asesor lo confirma." };
+        }
+        primerosCupos -= 1;
+        ninos += primero.precio;
+      } else if (gratis > 0) gratis -= 1;
       else ninos += numero(p[r.clave]) as number;
     }
     else if (edad > rangos[rangos.length - 1].hasta) adultos += 1;

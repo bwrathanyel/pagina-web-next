@@ -68,6 +68,7 @@ export function ResumenViaje({
   desde,
   tours = [],
   vuelo = null,
+  reservar = null,
 }: {
   estado: EstadoViaje;
   hotel: Pick<HotelCotizador, "nombre" | "foto"> | null;
@@ -84,6 +85,9 @@ export function ResumenViaje({
   tours?: string[];
   /** Ruta y aproximado del vuelo; sin él, el vuelo queda "a confirmar". */
   vuelo?: VueloViaje | null;
+  /** Compra directa: solo hospedaje con precio exacto y checkout abierto. Pasa a ser la acción
+   * principal y «Enviar solicitud» queda debajo. */
+  reservar?: { href: string; onClick: () => void } | null;
 }) {
   const noches = nochesDe(estado);
   const fechas = textoFechas(estado);
@@ -113,7 +117,7 @@ export function ResumenViaje({
       orientacion="h"
       // El talón tiene alto fijo: solo caben el total y el envío. Va arriba para
       // que "Enviar solicitud" se vea sin bajar, y los avisos quedan al final.
-      tamanoTalon="7.5rem"
+      tamanoTalon={reservar ? "10.5rem" : "7.5rem"}
       talonArriba
       talon={
         <div className="flex h-full flex-col justify-center gap-3 px-5">
@@ -123,9 +127,20 @@ export function ResumenViaje({
               {montoTalon ? <PrecioMostrado texto={montoTalon} /> : referencia ? <PrecioMostrado texto={referencia.monto} /> : "A confirmar"}
             </span>
           </div>
-          <Boton type="submit" form={formId} tamano="lg" ancho cargando={enviando}>
-            Enviar solicitud
-          </Boton>
+          {reservar ? (
+            <div className="flex flex-col gap-2">
+              <Boton href={reservar.href} tamano="lg" ancho onClick={reservar.onClick}>
+                Reservar y pagar
+              </Boton>
+              <Boton type="submit" form={formId} variante="secundario" ancho cargando={enviando}>
+                Enviar solicitud
+              </Boton>
+            </div>
+          ) : (
+            <Boton type="submit" form={formId} tamano="lg" ancho cargando={enviando}>
+              Enviar solicitud
+            </Boton>
+          )}
           <span aria-hidden="true" className="franja-marca absolute inset-x-0 top-0 h-1" />
         </div>
       }
@@ -194,7 +209,9 @@ export function ResumenViaje({
         {referencia ? `${referencia.unidad ? `${referencia.unidad[0].toUpperCase()}${referencia.unidad.slice(1)}. ` : ""}Elija fechas para ver su total. ` : ""}
         {montoTalon && pendientes.length ? `${pendientes.join(" y ").replace(/^./, (c) => c.toUpperCase())} a confirmar. ` : ""}
         {montoVuelo ? "El vuelo es aproximado: la boletería cambia según la disponibilidad y puede salir menos. " : ""}
-        Sujeto a disponibilidad. El asesor le escribe por WhatsApp con el precio final.
+        {reservar
+          ? "Sujeto a disponibilidad. Puede reservar y pagar en línea ahora, o enviar la solicitud y un asesor le escribe por WhatsApp."
+          : "Sujeto a disponibilidad. El asesor le escribe por WhatsApp con el precio final."}
       </p>
     </Boleto>
   );

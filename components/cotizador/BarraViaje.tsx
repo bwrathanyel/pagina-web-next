@@ -2,7 +2,7 @@
 
 import { useId } from "react";
 import { CLASE_CONTROL, Selector } from "@/components/ui/Campo";
-import { SelectorFecha } from "@/components/ui/SelectorFecha";
+import { SelectorFecha, type SinCupo } from "@/components/ui/SelectorFecha";
 import { SelectorViajeros } from "@/components/ui/SelectorViajeros";
 import { SelectorDestino } from "@/components/cotizador/SelectorDestino";
 import {
@@ -130,10 +130,13 @@ export function BarraViaje({
   estado,
   onCambio,
   conServicios = true,
+  sinCupo,
 }: {
   estado: EstadoViaje;
   onCambio: (e: EstadoViaje) => void;
   conServicios?: boolean;
+  /** Noches sin cupo del hotel elegido: solo pintan las fechas de hospedaje. */
+  sinCupo?: SinCupo;
 }) {
   const id = useId();
   const noches = nochesDe(estado);
@@ -168,6 +171,7 @@ export function BarraViaje({
             valor={estado.desde}
             onCambio={(iso) => onCambio(cambiarDesde(estado, iso))}
             rango={conSegunda ? { desde: estado.desde, hasta: estado.hasta } : undefined}
+            sinCupo={hospedaje ? sinCupo : undefined}
             vacio="Elegir fecha"
             className={CONTROL_BOTON}
           />
@@ -184,6 +188,7 @@ export function BarraViaje({
               min={sumarDias(estado.desde || hoyCaracas(), 1)}
               onCambio={(iso) => onCambio({ ...estado, hasta: iso })}
               rango={{ desde: estado.desde, hasta: estado.hasta }}
+              sinCupo={hospedaje ? sinCupo : undefined}
               vacio="Elegir fecha"
               className={CONTROL_BOTON}
             />
@@ -226,6 +231,7 @@ function EdadesNinos({ estado, onCambio }: { estado: EstadoViaje; onCambio: (e: 
             </label>
             <Selector
               id={`${id}-edad-${i}`}
+              data-nativo
               value={edad}
               onChange={(ev) =>
                 onCambio({ ...estado, edades: estado.edades.map((e, j) => (j === i ? Number(ev.target.value) : e)) })
@@ -267,11 +273,13 @@ export function BarraViajeCompacta({
   estado,
   onCambio,
   idBase,
+  sinCupo,
 }: {
   estado: EstadoViaje;
   onCambio: (e: EstadoViaje) => void;
   /** Para abrir el calendario desde fuera (atajo "Otras fechas"): `${idBase}-desde`. */
   idBase?: string;
+  sinCupo?: SinCupo;
 }) {
   const idAuto = useId();
   const id = idBase ?? idAuto;
@@ -315,6 +323,7 @@ export function BarraViajeCompacta({
               valor={estado.desde}
               onCambio={(iso) => onCambio(cambiarDesde(estado, iso))}
               rango={conSegunda ? { desde: estado.desde, hasta: estado.hasta } : undefined}
+              sinCupo={hospedaje ? sinCupo : undefined}
               vacio={conSegunda ? rotuloDesde : "Elegir fecha"}
               className={CONTROL_CELDA}
             />
@@ -331,6 +340,7 @@ export function BarraViajeCompacta({
                   min={sumarDias(estado.desde || hoyCaracas(), 1)}
                   onCambio={(iso) => onCambio({ ...estado, hasta: iso })}
                   rango={{ desde: estado.desde, hasta: estado.hasta }}
+                  sinCupo={hospedaje ? sinCupo : undefined}
                   vacio={rotuloHasta}
                   className={CONTROL_CELDA}
                 />

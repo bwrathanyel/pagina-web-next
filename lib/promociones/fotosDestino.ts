@@ -1,40 +1,32 @@
-/** Fotos propias de cada DESTINO (el lugar, no el hotel). Las usan el hero de
- * la home y el selector de destino de /cotizar. Son de Pexels: licencia de uso
- * comercial sin atribución, y ninguna con personas reconocibles (regla del
- * dueño). Viven en `public/destinos/<archivo>-<ancho>.jpg` (ver `imageLoader`)
- * porque a pantalla completa piden 2560 px y el Worker de fotos no pasa de 2048.
- * El comentario de cada una es su id de Pexels, para rehacer los derivados;
- * las verticales se recortaron a 4:3 para no mandarle 2560x3840 al escritorio.
- *
- * Varias por destino (pedido del dueño, 2026-09-25): en cada vuelta de la
- * rotación del hero el destino entra con la siguiente. Canaima tiene una sola
- * porque Pexels no tiene otra del parque, y Los Roques tres por lo mismo: el
- * resto se le pide a marketing en 2500 px o más. Coche, La Tortuga y Delta Amacuro tuvieron
- * una foto del bucket (commit 30351a6) y salieron: medían 1000-1300 px y se
- * veían blandas.
- * Clave: el destino normalizado con `claveDestino`. Sin imports a propósito:
- * lo carga un componente cliente. */
-export const FOTOS_DESTINO: Record<string, { archivo: string; alt: string }[]> = {
+/** Fotografías reales del destino para el hero y el selector de /cotizar.
+ * Curaduría turística renovada el 2026-10-23: originales de al menos 2560 px,
+ * sin personas reconocibles como protagonistas. Créditos y licencias de la
+ * selección en creditosFotosDestino.ts y /creditos-fotograficos; Caracas
+ * conserva las fotos de Pexels. Los derivados locales tienen nombres nuevos
+ * para evitar que la caché siga mostrando la selección anterior.
+ * Clave: destino normalizado con claveDestino. Sin imports: también va al cliente. */
+export interface FotoDestino {
+  archivo: string;
+  alt: string;
+  /** Otra composición cuando la portada no admite el recorte del hero móvil. */
+  hero?: { archivo: string; alt: string };
+}
+
+export const FOTOS_DESTINO: Record<string, FotoDestino[]> = {
   canaima: [
-    { archivo: "canaima", alt: "Cascada y tepuy en el Parque Nacional Canaima" }, // 7360544
+    { archivo: "canaima-salto-angel", alt: "Salto Ángel cayendo desde el Auyantepuy entre nubes, Parque Nacional Canaima" },
+    { archivo: "canaima-auyantepuy", alt: "Auyantepuy y Salto Ángel sobre la selva del Parque Nacional Canaima" },
   ],
   "los roques": [
-    { archivo: "los-roques", alt: "Aguas turquesa frente a un cayo de Los Roques" }, // 30587633
-    { archivo: "los-roques-orilla", alt: "Orilla de arena blanca y agua turquesa en Los Roques" }, // 31871910
-    { archivo: "los-roques-gran-roque", alt: "El Gran Roque visto desde el mar" }, // 16230240
+    { archivo: "los-roques-cayo-agua", alt: "Lengua de arena blanca entre aguas turquesa en Cayo de Agua, Los Roques" },
+    { archivo: "los-roques-puente-arena", alt: "Puente de arena entre dos playas de Cayo de Agua, Archipiélago Los Roques" },
   ],
   margarita: [
-    { archivo: "margarita", alt: "Bahía de Pampatar, Isla de Margarita" }, // 26241556
-    { archivo: "margarita-laguna", alt: "Laguna y montañas de la Isla de Margarita" }, // 32690921
-    { archivo: "margarita-playa", alt: "Playa larga entre el mar y la laguna en Margarita" }, // 32699741
-    { archivo: "margarita-pescadores", alt: "Peñeros en una bahía de Margarita" }, // 26241551
-    { archivo: "margarita-costa", alt: "Playa de aguas tranquilas en Nueva Esparta" }, // 32699665
+    { archivo: "margarita-el-agua", alt: "Oleaje, arena blanca y palmeras en Playa El Agua, Isla de Margarita" },
+    { archivo: "margarita-palmeras", alt: "Palmeras y sombrillas junto al mar en Playa El Agua, Isla de Margarita" },
   ],
   merida: [
-    { archivo: "merida", alt: "Valle entre montañas en Mérida" }, // 19199162
-    { archivo: "merida-valle", alt: "Pueblos en el valle andino de Mérida" }, // 19199169
-    { archivo: "merida-iglesia", alt: "Torre neogótica de una iglesia en Mérida" }, // 14055474
-    { archivo: "merida-campanario", alt: "Campanario colonial en Mérida" }, // 14094180
+    { archivo: "merida-pico-bolivar", alt: "Cumbres rocosas del Pico Bolívar en la Sierra Nevada de Mérida" },
   ],
   caracas: [
     { archivo: "caracas", alt: "Caracas con El Ávila al fondo" }, // 38556235
@@ -43,23 +35,27 @@ export const FOTOS_DESTINO: Record<string, { archivo: string; alt: string }[]> =
     { archivo: "caracas-panorama", alt: "Valle de Caracas con El Ávila entre nubes" }, // 20733321
     { archivo: "caracas-atardecer", alt: "Caracas al atardecer frente a El Ávila" }, // 14377784
   ],
-  // Desde aquí, Unsplash (licencia de uso comercial sin atribución) salvo que
-  // el comentario diga Pexels. Agregadas para el selector de /cotizar
-  // (2026-09-25).
   morrocoy: [
-    { archivo: "morrocoy-playa", alt: "Playa de cocoteros en el Parque Nacional Morrocoy" }, // 2bbd2n4ccjI
-    { archivo: "morrocoy-cayo", alt: "Cocoteros vistos desde el aire en Cayo Sombrero, Morrocoy" }, // qR-tCxLXrno
+    { archivo: "morrocoy-sombrero", alt: "Agua cristalina y palmeras en Cayo Sombrero, Parque Nacional Morrocoy" },
+    { archivo: "morrocoy-orilla", alt: "Arena blanca y cocoteros junto al agua turquesa de Cayo Sombrero, Morrocoy" },
   ],
-  // Del lago, no del relámpago: no hay foto libre del fenómeno. Pedir a marketing.
   catatumbo: [
-    { archivo: "catatumbo", alt: "Lancha junto a un palafito al atardecer en el Lago de Maracaibo" }, // Pexels 36769604
+    { archivo: "catatumbo-relampagos", alt: "Relámpagos iluminando el cielo sobre el Lago de Maracaibo, Catatumbo" },
+    { archivo: "catatumbo-tormenta", alt: "Rayos entre nubes nocturnas sobre el Lago de Maracaibo, Catatumbo" },
   ],
   "colonia tovar": [
-    { archivo: "colonia-tovar", alt: "Arco de entrada a la Colonia Tovar" }, // RgjPNmBOjX0
+    {
+      archivo: "colonia-tovar-san-martin",
+      alt: "Iglesia San Martín de Tours y arquitectura alemana en la Colonia Tovar",
+      hero: {
+        archivo: "colonia-tovar-montanas",
+        alt: "Arquitectura de tradición alemana entre jardines y montañas de la Colonia Tovar",
+      },
+    },
   ],
   // Genérica a propósito: "Viajar al extranjero" no es un lugar.
   extranjero: [
-    { archivo: "extranjero", alt: "Ala de un avión sobre las nubes al atardecer" }, // Pexels 14482714
+    { archivo: "extranjero-sobre-nubes", alt: "Ala de avión sobre un mar de nubes bajo el cielo azul" },
   ],
 };
 

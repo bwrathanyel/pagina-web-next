@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { TicketCard } from "@/components/catalogo/TicketCard";
+import { useReservarTarjeta } from "@/components/producto/ReservarCta";
 import { fotosDe, esSoloReferencial } from "@/lib/supabase/fotos";
 import { enlaceCotizarProducto } from "@/lib/cotizador/estado";
 import { useCarritoStore } from "@/lib/carrito/store";
@@ -55,6 +56,7 @@ export function ProductoCard({ producto, prioridad = false }: { producto: Produc
   const href = `/producto/${producto.id}`;
   const key = `producto-${producto.id}`;
   const puedeEditar = rol === "admin" && modoEdicion;
+  const reservar = useReservarTarjeta(producto.tipo === "hotel" ? producto.id : null, destacada?.id, "tarjeta_hotel");
 
   return (
     <>
@@ -68,6 +70,7 @@ export function ProductoCard({ producto, prioridad = false }: { producto: Produc
         fotosReferenciales={fotosReferenciales}
         cotizarHref={enlaceCotizarProducto(producto)}
         precio={precio}
+        reservar={reservar}
         oculto={!activo}
         enCarrito={tieneItem(key)}
         onToggleCarrito={() =>

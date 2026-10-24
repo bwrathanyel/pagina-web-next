@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { m } from "motion/react";
 import { Icono, type NombreIcono } from "@/components/ui/Icono";
+import { esRutaCheckout } from "@/lib/layout/rutasCheckout";
 
 // Cinco pestañas: las dos de la izquierda y la de la derecha de "Cotizar" son
 // destinos de mirar; "Cotizar" va al centro, levantada, porque es lo que el
@@ -76,6 +77,8 @@ export function BottomTabBar() {
   // /cotizar tiene su propia barra al pie (total + Revisar): dos barras
   // apiladas tapaban el contenido y se leían como una sola.
   if (pathname?.startsWith("/cotizar")) return null;
+  // /reservar y /pagar tienen su barra fija (total + acción): misma razón.
+  if (esRutaCheckout(pathname)) return null;
 
   return (
     <nav

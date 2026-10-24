@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
 import { ViewTransition } from "react";
 import { MotionProvider } from "@/components/providers/MotionProvider";
 import { CargaFotos } from "@/components/providers/CargaFotos";
@@ -10,7 +9,6 @@ import { ContactoFab } from "@/components/layout/ContactoFab";
 import { BottomTabBar } from "@/components/layout/BottomTabBar";
 import { BuscadorGlobal } from "@/components/layout/BuscadorGlobal";
 import { CarritoHoja } from "@/components/layout/CarritoHoja";
-import { OnboardingOverlay } from "@/components/onboarding/OnboardingOverlay";
 import { jsonLdScript, buildTravelAgencyJsonLd } from "@/lib/seo/jsonld";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
@@ -43,35 +41,15 @@ const RECARGA_SI_FALTA_CSS = `(function(){function c(){var l=document.querySelec
 // avisa al admin.
 export const revalidate = 3600;
 
-// Archivo instanciada a ancho fijo 82 (condensada, tipo señalética de
-// aeropuerto) y pesos 500-800: 32 KB contra 90 KB de la variable completa.
-// Se regenera con fontTools.varLib.instancer si hace falta otro ancho.
-const archivo = localFont({
-  src: "./fonts/archivo-cond-latin.woff2",
-  variable: "--font-display",
-  weight: "500 800",
-  display: "swap",
-  fallback: ["Arial Narrow", "Arial", "sans-serif"],
-  adjustFontFallback: "Arial",
-});
-
-const figtree = localFont({
-  src: "./fonts/figtree-latin.woff2",
-  variable: "--font-body",
-  weight: "400 700",
-  display: "swap",
-  fallback: ["Arial", "sans-serif"],
-});
-
-const spaceMono = localFont({
-  src: [
-    { path: "./fonts/space-mono-400-latin.woff2", weight: "400" },
-    { path: "./fonts/space-mono-700-latin.woff2", weight: "700" },
-  ],
-  variable: "--font-mono",
-  display: "swap",
-  fallback: ["Courier New", "monospace"],
-});
+// Las @font-face están en globals.css (ahí se explica por qué no next/font).
+// Se precargan las cuatro (72 KB): sin esto el navegador las descubre recién
+// al aplicar el CSS y el primer pintado sale con la de respaldo.
+const FUENTES = [
+  "/fonts/archivo-cond-latin-v1.woff2",
+  "/fonts/figtree-latin-v1.woff2",
+  "/fonts/space-mono-400-latin-v1.woff2",
+  "/fonts/space-mono-700-latin-v1.woff2",
+];
 
 const TITLE = "Destino y Eventos Lotus 360 · Agencia de Viajes en Venezuela";
 const DESCRIPTION =
@@ -127,11 +105,15 @@ export default async function RootLayout({
   const siteContent = await getSiteContent();
 
   return (
-    <html
-      lang="es-VE"
-      suppressHydrationWarning
-      className={`${archivo.variable} ${figtree.variable} ${spaceMono.variable} h-full antialiased`}
-    >
+    <html lang="es-VE" suppressHydrationWarning className="h-full antialiased">
+      {/* <link> directo y no preload() de react-dom: en páginas dinámicas
+          (/cotizar) el hint viaja por el flight tras vaciar el <head> y el
+          navegador no lo recibe a tiempo. */}
+      <head>
+        {FUENTES.map((href) => (
+          <link key={href} rel="preload" href={href} as="font" type="font/woff2" crossOrigin="anonymous" />
+        ))}
+      </head>
       <body className="min-h-full flex flex-col bg-sand text-ink font-body">
         <script
           type="application/ld+json"
@@ -161,7 +143,6 @@ export default async function RootLayout({
                     <BottomTabBar />
                     <CarritoHoja />
                     <BuscadorGlobal />
-                    <OnboardingOverlay />
                   </CromoSitio>
                   <AdminEditToggle />
                   <Analitica />

@@ -38,12 +38,15 @@ export function FotoRotativa({
   sizes,
   apagada,
   encima,
+  prioridad = false,
 }: {
   fotos: string[];
   sizes: string;
   apagada: boolean;
   /** El mouse está sobre la tarjeta o el renglón (no la foto sola). */
   encima: boolean;
+  /** Foto grande a la vista al abrir: baja ya y antes que el resto, no en diferido. */
+  prioridad?: boolean;
 }) {
   const [indice, setIndice] = useState(0);
   const [montadas, setMontadas] = useState(1);
@@ -73,6 +76,7 @@ export function FotoRotativa({
           alt=""
           fill
           sizes={sizes}
+          {...(prioridad && i === 0 ? { loading: "eager", fetchPriority: "high" } as const : {})}
           className={`object-cover transition-opacity duration-300 ease-salida motion-reduce:transition-none ${
             i === indice ? "opacity-100" : "opacity-0"
           } ${apagada ? "grayscale" : ""}`}

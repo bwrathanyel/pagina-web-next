@@ -1,5 +1,74 @@
 @import "tailwindcss";
 
+/* Fuentes propias, no next/font: en Windows (donde se buildea) el plugin de
+   Next nunca registra las fuentes en next-font-manifest.json (busca la ruta
+   del loader con "/" y acá va con "\"), así que jamás emitía los
+   <link rel="preload">: el texto salía en Arial y saltaba al llegar la fuente.
+   Los archivos viven en public/fonts con versión en el nombre (cache immutable
+   en public/_headers) y app/layout.tsx los precarga. Las métricas de los
+   "Fallback" son las que calculaba next/font: Arial ajustado a cada fuente
+   para que el cambio no mueva el texto. Archivo va instanciada a ancho fijo 82
+   y pesos 500-800 (32 KB contra 90 KB de la variable completa); se regenera
+   con fontTools.varLib.instancer si hace falta otro ancho. Si cambia un
+   archivo, subir la versión (-v2) acá, en layout.tsx y en el nombre. */
+@font-face {
+  font-family: "archivo";
+  src: url("/fonts/archivo-cond-latin-v1.woff2") format("woff2");
+  font-weight: 500 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: "archivo Fallback";
+  src: local("Arial");
+  ascent-override: 100.16%;
+  descent-override: 23.96%;
+  line-gap-override: 0%;
+  size-adjust: 87.66%;
+}
+@font-face {
+  font-family: "figtree";
+  src: url("/fonts/figtree-latin-v1.woff2") format("woff2");
+  font-weight: 400 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "figtree Fallback";
+  src: local("Arial");
+  ascent-override: 95.06%;
+  descent-override: 25.02%;
+  line-gap-override: 0%;
+  size-adjust: 99.94%;
+}
+@font-face {
+  font-family: "spaceMono";
+  src: url("/fonts/space-mono-400-latin-v1.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "spaceMono";
+  src: url("/fonts/space-mono-700-latin-v1.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "spaceMono Fallback";
+  src: local("Arial");
+  ascent-override: 83.51%;
+  descent-override: 26.92%;
+  line-gap-override: 0%;
+  size-adjust: 134.12%;
+}
+
+/* Fuera de @layer a propósito: Tailwind declara en `@layer theme` la versión
+   circular (`--font-display: var(--font-display)`, por el @theme inline) y lo
+   que no tiene capa le gana. */
+:root {
+  --font-display: "archivo", "archivo Fallback", "Arial Narrow", Arial, sans-serif;
+  --font-body: "figtree", "figtree Fallback", Arial, sans-serif;
+  --font-mono: "spaceMono", "spaceMono Fallback", "Courier New", monospace;
+}
+
 :root {
   /* Destino y Eventos Lotus 360 brand tokens — approved direction.
      Dusk = header/footer/hero, stays dark in both themes (brand signature).
@@ -880,6 +949,19 @@ html {
   background-image: var(--degradado-marca);
 }
 
+/* Nombre de hotel/producto como título: trazo corto con el degradado del logo debajo. */
+@utility titulo-marca {
+  &::after {
+    content: "";
+    display: block;
+    width: 3rem;
+    height: 0.25rem;
+    margin-top: 0.625rem;
+    border-radius: 9999px;
+    background-image: var(--degradado-marca);
+  }
+}
+
 /* Transición entre páginas (<ViewTransition update="pagina"> en app/layout.tsx):
    un cruce corto, no una coreografía. Lo nuevo entra ENCIMA de lo viejo, que
    sigue opaco debajo hasta la mitad: antes lo viejo se iba primero y lo nuevo
@@ -903,6 +985,16 @@ html {
 }
 ::view-transition-new(.pagina) {
   animation: pagina-entra var(--dur-media) var(--ease-salida) both;
+}
+/* Sin esto el navegador cruzaba también `root` (la página entera, cromo
+   incluido: el nav de la home con su marca quedaba encima del de /cotizar) y
+   el grupo `.pagina` se deslizaba desde el rectángulo viejo -- la home sube
+   bajo la barra, así que el contenido nuevo entraba montado sobre el header.
+   El cromo cambia de una vez y el contenido cruza ya en su lugar. */
+::view-transition-old(root),
+::view-transition-new(root),
+::view-transition-group(.pagina) {
+  animation: none;
 }
 
 /* ── Movimiento reducido ─────────────────────────────────────────────────

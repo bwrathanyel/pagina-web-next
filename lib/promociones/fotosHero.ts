@@ -1,7 +1,7 @@
 import { ordenarFotos, fotoUrl } from "@/lib/supabase/fotos";
 import { precioTarjeta } from "@/lib/tarifas";
 import { DESTINOS_TODO_INCLUIDO, esTodoIncluido, prioridadOferta, tieneNinoGratis } from "@/lib/promociones/hotSales";
-import { ATRACTIVO_DESTINO, claveDestino, FOTOS_DESTINO } from "@/lib/promociones/fotosDestino";
+import { ATRACTIVO_DESTINO, claveDestino, FOTOS_DESTINO, type FotoDestino } from "@/lib/promociones/fotosDestino";
 import type { Foto, Promocion } from "@/types/supabase";
 
 /** La promo que acompaña a la foto: el "pase destacado" del hero. */
@@ -92,9 +92,10 @@ function esFotoDeLugar(f: Foto): boolean {
 /** Las fotos del destino empezando por la n-ésima: cada entrada de un mismo
  * destino (Margarita tiene varias) arranca en otra, así en una misma vuelta
  * no se repite el fondo. */
-function fondosDesde(fotos: { archivo: string; alt: string }[], n: number): FondoHero[] {
+function fondosDesde(fotos: FotoDestino[], n: number): FondoHero[] {
   return fotos.map((_, k) => {
-    const f = fotos[(n + k) % fotos.length];
+    const foto = fotos[(n + k) % fotos.length];
+    const f = foto.hero ?? foto;
     return { url: `/destinos/${f.archivo}.jpg`, alt: f.alt };
   });
 }

@@ -1,11 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Boton } from "@/components/ui/Boton";
+import { Icono } from "@/components/ui/Icono";
 
 // Primer consumidor de Turnstile en el sitio. Carga el script de Cloudflare
 // una sola vez (renderizado explícito) y entrega el token al padre. El CSP
 // del sitio ya permite challenges.cloudflare.com en script-src / frame-src /
 // connect-src (ver next.config.ts).
+//
+// `interaction-only`: el widget no ocupa lugar salvo que Cloudflare pida que la
+// persona toque la casilla. Si algo falla, «Reintentar» lo vuelve a montar sin
+// recargar la página (recargar borraría el formulario).
 
 const SCRIPT_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 
@@ -28,7 +34,7 @@ function cargarScript(): Promise<void> {
     s.async = true;
     s.defer = true;
     s.onload = () => resolve();
-    s.onerror = () => { scriptPromesa = null; reject(new Error("no se pudo cargar Turnstile")); };
+    s.onerror = () => { scriptPromesa = null; s.remove(); reject(new Error("no se pudo cargar Turnstile")); };
     document.head.appendChild(s);
   });
   return scriptPromesa;
@@ -37,6 +43,8 @@ function cargarScript(): Promise<void> {
 export function TurnstileWidget({ onToken }: { onToken: (token: string | null) => void }) {
   const contenedor = useRef<HTMLDivElement | null>(null);
   const [error, setError] = useState(false);
+  // Cada «Reintentar» suma uno: el efecto se vuelve a correr y monta un widget nuevo.
+  const [intento, setIntento] = useState(0);
 
   useEffect(() => {
     let widgetId: string | null = null;
@@ -59,10 +67,16 @@ export function TurnstileWidget({ onToken }: { onToken: (token: string | null) =
       }
       if (cancelado || !contenedor.current || !window.turnstile) return;
 
+      // next-themes deja el tema en <html data-theme> antes de hidratar; el widget lo sigue.
+      const tema = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
       widgetId = window.turnstile.render(contenedor.current, {
         sitekey: siteKey,
+        language: "es",
+        theme: tema,
+        appearance: "interaction-only",
         callback: (t: string) => onToken(t),
         "expired-callback": () => onToken(null),
+        "timeout-callback": () => { onToken(null); setError(true); },
         "error-callback": () => { onToken(null); setError(true); },
       });
     })();
@@ -73,16 +87,28 @@ export function TurnstileWidget({ onToken }: { onToken: (token: string | null) =
         try { window.turnstile.remove(widgetId); } catch { /* ya removido */ }
       }
     };
-    // onToken se pasa estable desde el padre (useCallback); no re-montar el widget.
+    // onToken se pasa estable desde el padre (useCallback); no re-montar el widget por eso.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [intento]);
+
+  function reintentar() {
+    setError(false);
+    onToken(null);
+    setIntento((n) => n + 1);
+  }
 
   if (error) {
     return (
-      <p className="rounded-xl bg-coral/10 px-4 py-3 text-sm font-semibold text-coral" role="alert">
-        No se pudo cargar la verificación de seguridad. Recarga la página e inténtalo de nuevo.
-      </p>
+      <div role="alert" className="flex flex-col gap-3 rounded-control bg-peligro-suave px-4 py-3 sm:flex-row sm:items-center">
+        <p className="flex flex-1 items-start gap-3 text-sm font-semibold text-peligro">
+          <Icono nombre="alerta" tamano={18} className="mt-0.5 shrink-0" />
+          <span>No se pudo completar la verificación de seguridad. Revise su conexión y toque Reintentar.</span>
+        </p>
+        <Boton type="button" variante="secundario" tamano="sm" onClick={reintentar}>
+          Reintentar
+        </Boton>
+      </div>
     );
   }
-  return <div ref={contenedor} className="min-h-[65px]" />;
+  return <div ref={contenedor} />;
 }

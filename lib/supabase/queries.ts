@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { TARIFA_SELECT } from "@/lib/supabase/selects";
 import { fotosDe } from "@/lib/supabase/fotos";
 import { supabaseServer } from "@/lib/supabase/server";
@@ -57,6 +58,7 @@ export async function getProductosPorTipo(tipo: ProductoTipo): Promise<Producto[
     .from("productos")
     .select(PRODUCTO_SELECT)
     .eq("activo", true)
+    .eq("oculto_sin_foto", false)
     .eq("tipo", tipo)
     .order("nombre");
   if (error) throw error;
@@ -120,6 +122,7 @@ async function _getProductoPorId(id: number): Promise<Producto | null> {
     .from("productos")
     .select(PRODUCTO_SELECT)
     .eq("activo", true)
+    .eq("oculto_sin_foto", false)
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
@@ -152,6 +155,7 @@ export async function getTodosLosProductoIds(): Promise<number[]> {
     .from("productos")
     .select("id")
     .eq("activo", true)
+    .eq("oculto_sin_foto", false)
     .eq("tipo", "hotel");
   if (error) throw error;
   return (data ?? []).map((d) => d.id as number);
@@ -180,6 +184,7 @@ export const getHotelCotizador = cache(async (id: number): Promise<HotelCotizado
     .from("productos")
     .select("id,nombre,destino,producto_fotos(id,storage_path,orden,es_principal,activo,width,height,origen)")
     .eq("activo", true)
+    .eq("oculto_sin_foto", false)
     .eq("tipo", "hotel")
     .eq("id", id)
     .maybeSingle();
@@ -201,3 +206,16 @@ export const rutasVuelo = cache(async (): Promise<RutaVuelo[]> => {
   if (error) throw error;
   return ((data ?? []) as RutaVuelo[]).map((r) => ({ ...r, desde_usd: Number(r.desde_usd) }));
 });
+
+// /cotizar es dinámica (lee searchParams) y sin esto cada visita pagaba tres
+// consultas a Supabase antes de mandar un byte (TTFB 1,5-1,8 s medido
+// 2026-10-22, con el Micro de Supabase ya caído por RAM ese día). 5 minutos y
+// no 1 hora como las páginas ISR: ahí se cotiza. El tag se purga en
+// /api/admin/revalidate junto con las páginas, así que un cambio publicado
+// desde el CRM se ve al instante. unstable_cache no guarda un throw: una caída
+// de Supabase no queda pegada, la página sigue usando su .catch de siempre.
+export const TAG_DATOS_WEB = "datos-web";
+const DATOS_COTIZAR = { revalidate: 300, tags: [TAG_DATOS_WEB] };
+export const hotSalesCotizar = unstable_cache(() => getHotSales(), ["cotizar-hot-sales"], DATOS_COTIZAR);
+export const promocionesCotizar = unstable_cache(() => getPromociones(), ["cotizar-promociones"], DATOS_COTIZAR);
+export const rutasVueloCotizar = unstable_cache(() => rutasVuelo(), ["cotizar-rutas-vuelo"], DATOS_COTIZAR);

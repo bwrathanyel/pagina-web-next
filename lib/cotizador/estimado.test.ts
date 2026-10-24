@@ -199,6 +199,27 @@ test("promo niño gratis: el primero no paga, del segundo en adelante sí", () =
   assert.equal(sin.total, 315); // sin promo pagan los dos
 });
 
+test("1er niño por pareja: FREE el primero de cada pareja, el resto paga el 2do", () => {
+  const mv = (precios: Tarifa["precios"], vigencia_texto = "PROMO TEMP. BAJA (1) Niño gratis de (5-10) A partir de ocupación DBL") =>
+    fila({ id: 93515, habitacion: "STANDART", vigencia_texto, precios, ventanas: v("2026-10-01", "2026-12-20"), tarifario_bloques: BLOQUE_VENETUR });
+  const gratis = mv({ "1er_chd_5_10": null, "2do_chd_5_11": 33, dbl: 65, tpl: 65, cpl: 65 });
+  const total = (t: Tarifa, adultos: number, edades: number[]) => {
+    const r = estimarEstadia(t, [t], estadia("2026-10-10", "2026-10-13", adultos, edades));
+    assert.ok(r.ok);
+    return r.total;
+  };
+  assert.equal(total(gratis, 2, [6]), 390); // 65 x 2 x 3: el niño no paga
+  assert.equal(total(gratis, 2, [6, 7]), 390 + 99); // el 2do paga 33 x 3
+  assert.equal(total(gratis, 4, [6, 7]), 780); // dos parejas, cada una con su niño gratis
+  assert.equal(total(gratis, 4, [6, 7, 8]), 780 + 99);
+  // Navidad: el PDF trae FREE pero sin la promo de temporada baja: no se adivina.
+  const navidad = mv({ "1er_chd_5_10": null, "2do_chd_5_11": 75, dbl: 149, tpl: 149, cpl: 149 }, "NAVIDAD Disfrute 21/12/2026 al 28/12/2026");
+  const r = estimarEstadia(navidad, [navidad], estadia("2026-10-10", "2026-10-13", 2, [6]));
+  assert.ok(!r.ok && r.motivo === "ninos");
+  const pago = mv({ "1er_chd_5_10": 43, "2do_chd_5_11": 53, dbl: 85, tpl: 85, cpl: 85 });
+  assert.equal(total(pago, 2, [6, 7]), 510 + (43 + 53) * 3);
+});
+
 test("tarjetas: las temporadas de una habitación van en una sola tarjeta", () => {
   const tarjetas = tarjetasPorHabitacion(PALM, "2026-12-23");
   assert.equal(tarjetas.length, 1);
@@ -215,4 +236,49 @@ test("tarjetas: dos tablas con las mismas fechas muestran solo la primera (Venet
     [VENETUR_PERSONA.id],
   );
   assert.equal(tarjetasPorHabitacion(VENETUR, "").length, 1);
+});
+
+// Fase 5 (tarifario sin errores): claves de ocupación = lista cerrada y bebés/infantes
+// según la política del hotel (ninos.gratis_hasta).
+test("ocupación: una clave de la lista cerrada (quin, cua) se cotiza; una que no lo es, no", () => {
+  const b = bloque({ id: 9, base_precio: "persona", ninos: { chd_desde: 4, chd_hasta: 10 } });
+  const quin = fila({ id: 70001, habitacion: "FAMILIAR", precios: { quin: 50, dbl: 70 }, tarifario_bloques: b });
+  const cinco = estimarEstadia(quin, [quin], estadia("2026-10-10", "2026-10-12", 5));
+  assert.ok(cinco.ok);
+  assert.equal(cinco.total, 500); // 50 x 5 x 2 noches
+  const cua = fila({ id: 70002, habitacion: "FAMILIAR", precios: { cua: 45, dbl: 70 }, tarifario_bloques: b });
+  const cuatro = estimarEstadia(cua, [cua], estadia("2026-10-10", "2026-10-11", 4));
+  assert.ok(cuatro.ok);
+  assert.equal(cuatro.total, 180);
+  // pax_6 y 4_a_10_pasajeros parecen capacidad y no lo son: no se adivina.
+  const falsa = fila({ id: 70003, habitacion: "LANCHA", precios: { pax_6: 300, dbl: 70 }, tarifario_bloques: b });
+  const seis = estimarEstadia(falsa, [falsa], estadia("2026-10-10", "2026-10-11", 3));
+  assert.ok(!seis.ok && seis.motivo === "ocupacion"); // 3 adultos sin tpl ni equivalente cerrado: no se estima
+});
+
+test("infantes: gratis_hasta exime al niño aunque la tarifa no publique precio de niño", () => {
+  const b = bloque({ id: 10, base_precio: "persona", ninos: { gratis_hasta: 4, chd_desde: null, chd_hasta: null } });
+  const t = fila({ id: 70010, habitacion: "STANDARD", precios: { dbl: 100, sgl: 130 }, tarifario_bloques: b });
+  const r = estimarEstadia(t, [t], estadia("2026-10-10", "2026-10-12", 2, [3]));
+  assert.ok(r.ok);
+  assert.equal(r.total, 400); // 100 x 2 x 2; el de 3 años es infante exento
+  const mayor = estimarEstadia(t, [t], estadia("2026-10-10", "2026-10-12", 2, [6]));
+  assert.ok(!mayor.ok && mayor.motivo === "ninos"); // de 5 en adelante sigue sin precio publicado
+});
+
+test("infantes: un gratis_hasta fuera de 0-5 (mes o promo de temporada) no regala niños", () => {
+  const b = bloque({ id: 11, base_precio: "persona", ninos: { gratis_hasta: 23, chd_desde: null, chd_hasta: null } });
+  const t = fila({ id: 70011, habitacion: "STANDARD", precios: { dbl: 100, sgl: 130 }, tarifario_bloques: b });
+  const r = estimarEstadia(t, [t], estadia("2026-10-10", "2026-10-12", 2, [6]));
+  assert.ok(!r.ok && r.motivo === "ninos");
+});
+
+test("bebés: gratis salvo que la política del hotel diga que se cobran", () => {
+  const sin = fila({ id: 70020, habitacion: "STANDARD", precios: { dbl: 100, sgl: 130 }, tarifario_bloques: bloque({ id: 12, ninos: null }) });
+  const libre = estimarEstadia(sin, [sin], estadia("2026-10-10", "2026-10-11", 2, [], 1));
+  assert.ok(libre.ok);
+  assert.equal(libre.total, 200);
+  const cobra = fila({ id: 70021, habitacion: "STANDARD", precios: { dbl: 100, sgl: 130 }, tarifario_bloques: bloque({ id: 13, ninos: { gratis_hasta: 0 } }) });
+  const r = estimarEstadia(cobra, [cobra], estadia("2026-10-10", "2026-10-11", 2, [], 1));
+  assert.ok(!r.ok && r.motivo === "ninos");
 });

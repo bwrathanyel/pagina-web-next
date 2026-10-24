@@ -89,7 +89,10 @@ export default async function ProductoPage({ params }: { params: Promise<{ id: s
       <ProductoInfo producto={producto}>
         {esServicio(producto.tipo) ? <TarifasServicio producto={producto} /> : <CarpetaTarifas producto={producto} />}
       </ProductoInfo>
-      <ProductoFooterMobile cotizarHref={enlaceCotizarProducto(producto)} />
+      <ProductoFooterMobile
+        cotizarHref={enlaceCotizarProducto(producto)}
+        reservar={producto.tipo === "hotel" ? { productoId: producto.id, tarifaId: tarifaDestacada(producto)?.id } : undefined}
+      />
     </main>
   );
 }

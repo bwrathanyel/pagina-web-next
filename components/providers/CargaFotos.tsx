@@ -7,10 +7,12 @@ import { useEffect } from "react";
    llenaban a saltos. Acá se marca cada <img data-nimg> cuando termina de
    cargar para que entre con un fundido (globals.css, .fotos-suaves).
 
-   Solo se ocultan fotos después de hidratar y con este componente escuchando:
-   las que ya habían cargado quedan "ya" (sin animación) y, si el JS no corre,
-   la clase nunca se pone y todo se ve como antes. load/error no burbujean,
-   por eso la escucha va en captura sobre el documento. */
+   Solo se funden las fotos que aparecen DESPUÉS de hidratar (navegación,
+   carruseles): toda <img> que ya venía en el HTML queda "ya", haya terminado o
+   no. Antes se ocultaban también las del HTML que seguían bajando, y en red
+   lenta una foto a medio pintar desaparecía al hidratar y volvía con fundido.
+   Si el JS no corre, la clase nunca se pone y todo se ve como antes.
+   load/error no burbujean, por eso la escucha va en captura sobre el documento. */
 export function CargaFotos() {
   useEffect(() => {
     const raiz = document.documentElement;
@@ -22,7 +24,7 @@ export function CargaFotos() {
     document.addEventListener("load", marcar, true);
     document.addEventListener("error", marcar, true);
     document.querySelectorAll<HTMLImageElement>("img[data-nimg]").forEach((img) => {
-      if (img.complete && !img.dataset.cargada) img.dataset.cargada = "ya";
+      if (!img.dataset.cargada) img.dataset.cargada = "ya";
     });
     raiz.classList.add("fotos-suaves");
     return () => {

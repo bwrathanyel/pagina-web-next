@@ -13,5 +13,5 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 Este proyecto sirve `destinoyeventoslotus360.com` (raíz) — catálogo público, cotizador, cuenta
 de usuario. El CRM interno (leads/pipeline/asesores) es otro proyecto (`CRM/lotus-crm-preview/`,
 vanilla JS, repo `redireccion-whatsapp`), servido en `crm.destinoyeventoslotus360.com`. Comparten
-el mismo backend Supabase (`begbjhrdbsqftbbleecb`) pero son repos y Netlify sites separados —
+el mismo backend Supabase (`begbjhrdbsqftbbleecb`) pero son repos y productos de Cloudflare separados (Workers/OpenNext para la web y Pages para el CRM, configuración/documentación local revisada 2026-10-17; sin verificación en vivo en esa sesión) —
 ver `CRM/CLAUDE.md` para el mapa completo si hace falta tocar el CRM desde acá.

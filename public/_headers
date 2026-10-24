@@ -4,3 +4,11 @@
 # un día de cache y una semana de stale-while-revalidate.
 /juegos-app/*
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+# Fuentes con versión en el nombre (-v1): si cambia el archivo, cambia la URL.
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Logo chico del header (BrandMark). Sin hash en el nombre: un día + una semana stale.
+/logo-lotus360-160.webp
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800

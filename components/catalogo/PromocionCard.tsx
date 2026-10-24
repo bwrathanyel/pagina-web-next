@@ -3,6 +3,7 @@
 import { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { TicketCard } from "@/components/catalogo/TicketCard";
+import { useReservarTarjeta } from "@/components/producto/ReservarCta";
 import { fotosDe, esSoloReferencial } from "@/lib/supabase/fotos";
 import { enlaceCotizarPromocion } from "@/lib/cotizador/estado";
 import { useCarritoStore } from "@/lib/carrito/store";
@@ -101,6 +102,12 @@ export function PromocionCard({ promocion, prioridad = false }: { promocion: Pro
   const href = promocion.producto ? `/producto/${promocion.producto.id}` : null;
   const key = `promocion-${promocion.id}`;
   const puedeEditar = rol === "admin" && modoEdicion;
+  // El id de la promoción es el de su fila en `tarifas` (ver enlaceCotizarPromocion).
+  const reservar = useReservarTarjeta(
+    promocion.producto?.tipo === "hotel" ? promocion.producto.id : null,
+    promocion.id,
+    "tarjeta_promocion",
+  );
 
   return (
     <>
@@ -115,6 +122,7 @@ export function PromocionCard({ promocion, prioridad = false }: { promocion: Pro
         cotizarHref={enlaceCotizarPromocion(promocion)}
         resumen={promocion.resumen_ia}
         precio={precio}
+        reservar={reservar}
         subtitulo={hotelNombre ? subtituloPromo : null}
         vigenciaLabel={promocion.vigencia_texto}
         urgencia={urgencia}

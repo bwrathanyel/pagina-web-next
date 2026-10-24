@@ -54,8 +54,16 @@ export function preciosLista(t: Tarifa): { clave: string; etiqueta: string; mont
   }));
 }
 
+/** La base que declara el PDF: la de la fila (`precios.base`) y, si la fila no la
+ * trae, la del bloque del plan (`tarifario_bloques.base_precio`). Sin esto, una
+ * tarifa por habitación con DBL = SGL (Maloka) se leía como por persona. */
+function baseDeclarada(fila: unknown, bloque: unknown): "habitacion" | "persona" | null {
+  for (const b of [fila, bloque]) if (b === "habitacion" || b === "persona") return b;
+  return null;
+}
+
 /** Espejo en JS de precio_por_persona() (migración 20260904160000). La base
- * declarada gana; si no hay, dbl>sgl = por habitación; sin ninguna de las dos
+ * declarada (fila, o bloque si la fila no trae) gana; si no hay, dbl>sgl = por habitación; sin ninguna de las dos
  * señales NO divide (dividir de más es cotizar de menos). CHD y PAX ADIC nunca
  * compiten: son adicionales, no un precio ofrecible por sí solos. */
 export function precioPorPersona(t: Tarifa): number | null {
@@ -63,8 +71,7 @@ export function precioPorPersona(t: Tarifa): number | null {
   if (!p || typeof p !== "object" || Array.isArray(p)) return null;
   const sgl = numeroDe(p["sgl"]);
   const dbl = numeroDe(p["dbl"]);
-  const declarada = p["base"] === "habitacion" || p["base"] === "persona" ? p["base"] : null;
-  const base = declarada ?? (dbl !== null && sgl !== null && dbl > sgl ? "habitacion" : null);
+  const base = baseDeclarada(p["base"], bloqueDe(t)?.base_precio) ?? (dbl !== null && sgl !== null && dbl > sgl ? "habitacion" : null);
   const porHabitacion = base === "habitacion";
   if (dbl !== null) return porHabitacion ? dbl / 2 : dbl;
   if (sgl !== null) return sgl;
@@ -94,7 +101,7 @@ export function badgePrecio(t: Tarifa | null | undefined): string | null {
  * tal cual si es por persona. Sin clave `dbl` -> null (la tarjeta usa su grilla
  * o su precio_texto de siempre). */
 export function precioDobleHero(t: Tarifa | null | undefined): { monto: string; nota: string } | null {
-  const monto = montoDoble(t?.precios);
+  const monto = montoDoble(t?.precios, bloqueDe(t)?.base_precio);
   if (monto === null) return null;
   return {
     monto: montoConMoneda(monto, t?.moneda),
@@ -103,13 +110,13 @@ export function precioDobleHero(t: Tarifa | null | undefined): { monto: string; 
 }
 
 /** El mismo doble por persona y noche como número (para comparar pisos). */
-export function montoDoble(p: Tarifa["precios"] | null | undefined): number | null {
+export function montoDoble(p: Tarifa["precios"] | null | undefined, baseBloque?: string | null): number | null {
   if (!p || typeof p !== "object" || Array.isArray(p)) return null;
   const dbl = numeroDe(p["dbl"]);
   if (dbl === null) return null;
   const sgl = numeroDe(p["sgl"]);
-  const porHabitacion =
-    p["base"] === "habitacion" ? true : p["base"] === "persona" ? false : sgl !== null && dbl > sgl;
+  const base = baseDeclarada(p["base"], baseBloque);
+  const porHabitacion = base ? base === "habitacion" : sgl !== null && dbl > sgl;
   return Math.round((porHabitacion ? dbl / 2 : dbl) * 100) / 100;
 }
 

@@ -138,6 +138,7 @@ export function RecomendacionesHospedaje({
               sizes="(min-width: 1024px) 18rem, (min-width: 640px) 40vw, 100vw"
               apagada={false}
               encima={encima === principal.oferta.hotelId}
+              prioridad
             />
             <span className="absolute left-3 top-3 flex flex-wrap gap-1.5">
               <Etiqueta tono="acento">{etiquetaMotivo(principal)}</Etiqueta>

@@ -27,12 +27,12 @@ const capitalizar = (s: string) => s.charAt(0).toLocaleUpperCase("es") + s.slice
  * navegador con la fecha de hoy. */
 export function PaqueteCard({ paquete, rutas, prioridad = false }: { paquete: Paquete; rutas: RutaVuelo[]; prioridad?: boolean }) {
   const hoy = useHoy();
-  const origenes = origenesValidos(paquete, rutas);
+  const fijo = esFijo(paquete);
+  const f = fechasPaquete(paquete, hoy ? entradaInicial(paquete, hoy) : "", paquete.noches_default);
+  const origenes = origenesValidos(paquete, rutas, f.desde);
   if (!origenes.length || (hoy && vencido(paquete, hoy))) return null;
 
-  const fijo = esFijo(paquete);
   const plan = planMostrado(paquete.hotel.tarifas, paquete.plan);
-  const f = fechasPaquete(paquete, hoy ? entradaInicial(paquete, hoy) : "", paquete.noches_default);
   let precio: PrecioTarjeta | null = null;
   if (hoy) {
     const tarifas = tarifasDelPlan(paquete.hotel.tarifas, paquete.plan);

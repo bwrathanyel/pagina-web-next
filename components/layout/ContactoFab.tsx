@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { AsistenteVirtualPanel } from "@/components/layout/AsistenteVirtualPanel";
+import { AsistenteVirtualPanel, precargarAsistente } from "@/components/layout/AsistenteVirtualDiferido";
 import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
 import Solcito, { type SolcitoMood } from "@/components/mascota/Solcito";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import { useNotificacionesChat } from "@/lib/notificaciones/useNotificacionesChat";
 import { tieneFooterStickyPropio } from "@/lib/layout/rutasConFooterSticky";
+import { esRutaCheckout } from "@/lib/layout/rutasCheckout";
 
 const SALUDO_VISTO_KEY = "lotus360_solcito_saludo";
 
@@ -38,6 +39,8 @@ export function ContactoFab() {
       setGlobo("");
     }, ms);
   }
+
+  useEffect(precargarAsistente, []);
 
   // Saluda una vez por sesión tras unos segundos, y vuelve a saludar si la
   // persona regresa a la pestaña después de un rato.
@@ -88,8 +91,11 @@ export function ContactoFab() {
 
   if (enCotizar) return null;
 
+  // En /reservar y /pagar, en el teléfono, Solcito tapaba el botón de pago: se oculta solo
+  // por debajo de lg (en escritorio queda igual).
   const posicion =
-    "fixed right-3 z-40 sm:right-5 lg:bottom-6 " + (conFooterSticky ? "bottom-44" : "bottom-24");
+    "fixed right-3 z-40 sm:right-5 lg:bottom-6 " + (conFooterSticky ? "bottom-44" : "bottom-24") +
+    (esRutaCheckout(pathname) ? " max-lg:hidden" : "");
   const margenes = {
     marginBottom: "env(safe-area-inset-bottom)",
     marginRight: "env(safe-area-inset-right)",

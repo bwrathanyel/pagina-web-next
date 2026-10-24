@@ -61,6 +61,9 @@ export interface TicketCardProps {
   incluye?: string[];
   /** Fecha límite de venta ya formateada ("30 sep"), de fecha_venta_fin. */
   ventaHasta?: string | null;
+  /** Compra directa abierta (hotel, checkout en horario): «Reservar y pagar» al pie del cuerpo,
+   * no en el talón, que ya no tiene lugar en la grilla de 2 columnas. */
+  reservar?: { href: string; onClick: () => void } | null;
 }
 
 // Tarjeta de catálogo como pase de abordar: foto 4:3 (la mayoría de las fotos
@@ -95,6 +98,7 @@ export function TicketCard({
   duracion = null,
   incluye = [],
   ventaHasta = null,
+  reservar = null,
 }: TicketCardProps) {
   const { monto, unidad, grande: montoGrande } = separarMonto(precio);
 
@@ -269,6 +273,21 @@ export function TicketCard({
                 </li>
               ))}
             </ul>
+          ) : null}
+
+          {reservar ? (
+            <Boton
+              href={reservar.href}
+              variante="secundario"
+              tamano="sm"
+              ancho
+              onClick={reservar.onClick}
+              aria-label={`Reservar y pagar ${nombre}`}
+              className={(vigenciaLabel || ventaHasta || incluye.length > 0 ? "mt-3" : "mt-auto") + " max-sm:px-3"}
+            >
+              <span className="sm:hidden">Reservar</span>
+              <span className="hidden sm:inline">Reservar y pagar</span>
+            </Boton>
           ) : null}
 
           {pieAdmin}

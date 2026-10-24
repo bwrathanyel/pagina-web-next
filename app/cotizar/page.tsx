@@ -4,7 +4,7 @@ import { CotizadorViaje } from "@/components/cotizador/CotizadorViaje";
 import { FondoDestino } from "@/components/cotizador/FondoDestino";
 import { DESTINOS, parsearEstado } from "@/lib/cotizador/estado";
 import { ofertasHoteles } from "@/lib/cotizador/ofertas";
-import { getHotSales, getHotelCotizador, getPromociones, rutasVuelo } from "@/lib/supabase/queries";
+import { getHotelCotizador, hotSalesCotizar, promocionesCotizar, rutasVueloCotizar } from "@/lib/supabase/queries";
 
 const DESCRIPCION =
   "Arme su viaje en un solo lugar: hospedaje, vuelo, full day y tours. Indique destino, fechas y viajeros, y un asesor le responde por WhatsApp con el precio confirmado.";
@@ -31,13 +31,13 @@ export default async function CotizarPage({
     estado.hotel ? getHotelCotizador(estado.hotel).catch(() => null) : null,
     // Las Hot Sales van delante: traen el regalo de niño gratis que
     // web_promociones no tiene (lo lee tarifa_nino_gratis() del PDF).
-    Promise.all([getHotSales().catch(() => []), getPromociones()])
+    Promise.all([hotSalesCotizar().catch(() => []), promocionesCotizar()])
       .then(([hot, promos]) => {
         const ids = new Set(hot.map((h) => h.id));
         return ofertasHoteles([...hot, ...promos.filter((p) => !ids.has(p.id))]);
       })
       .catch(() => []),
-    rutasVuelo().catch(() => []),
+    rutasVueloCotizar().catch(() => []),
   ]);
   // Un hotel que no existe (o ya no está activo) se descarta; si el enlace no
   // traía destino, el del hotel manda.

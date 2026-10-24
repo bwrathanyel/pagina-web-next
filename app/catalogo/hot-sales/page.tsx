@@ -16,7 +16,8 @@ export const metadata: Metadata = {
 };
 
 export default async function HotSalesPage() {
-  const pool = await getHotSales().catch(() => []);
+  // Sin .catch: un fallo de Supabase no debe quedar cacheado como "sin Hot Sales" (Fase 6).
+  const pool = await getHotSales();
 
   const itemList = pool
     .filter((p) => p.producto)

@@ -1,3 +1,4 @@
+import { hoyCaracas, sumarDias } from "@/lib/cotizador/estado";
 import { fotosDe } from "@/lib/supabase/fotos";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { TARIFA_SELECT } from "@/lib/supabase/selects";
@@ -45,6 +46,7 @@ export async function hotelParaCotizar(id: number): Promise<HotelDetalle | null>
           "producto_fotos(id,storage_path,orden,es_principal,activo,width,height,origen,habitacion_id)",
       )
       .eq("activo", true)
+      .eq("oculto_sin_foto", false)
       .eq("tipo", "hotel")
       .eq("id", id)
       .maybeSingle(),
@@ -89,6 +91,7 @@ export async function tarifasDeHoteles(ids: number[]): Promise<Map<number, Tarif
     .from("productos")
     .select(`id,tarifas(${TARIFA_SELECT})`)
     .eq("activo", true)
+    .eq("oculto_sin_foto", false)
     .eq("tipo", "hotel")
     .in("id", ids);
   if (error) throw error;
@@ -148,6 +151,17 @@ export async function bloqueosEnFechas(ids: number[], desde: string, hasta: stri
   }
   return out;
 }
+
+/** Stop sales del hotel desde hoy hasta un año (el tope de `web_stop_sales`),
+ * para pintar en rojo las noches ocupadas antes de que el cliente elija. */
+export async function bloqueosDelAno(id: number): Promise<Bloqueo[]> {
+  const desde = hoyCaracas();
+  return (await bloqueosEnFechas([id], desde, sumarDias(desde, 366))).get(id) ?? [];
+}
+
+/** La noche `iso` tiene stop sale. `hasta` del bloqueo es la última noche (inclusive). */
+export const nocheSinCupo = (bloqueos: Bloqueo[] | undefined, iso: string) =>
+  (bloqueos ?? []).some((b) => b.estado === "stop_sale" && b.desde <= iso && iso <= b.hasta);
 
 const CORTA = new Intl.DateTimeFormat("es-VE", { day: "numeric", month: "short", timeZone: "UTC" });
 // Sin el punto de la abreviatura ("oct."): el texto sigue con su propia puntuación.

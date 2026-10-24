@@ -5,6 +5,12 @@
 	"account_id": "d8f38ef40663c69dea073ad1745882e4",
 	"compatibility_date": "2026-07-18",
 	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	// Sin esto, esbuild (keepNames) mete `__name(fn, "fn")` dentro de las
+	// funciones. next-themes arma su script inline con fn.toString(): el HTML
+	// salía con `__name(...)`, que en el navegador no existe -> ReferenceError,
+	// el tema no se ponía antes de pintar y la web arrancaba en claro hasta
+	// hidratar (medido en prod 2026-10-22).
+	"keep_names": false,
 	// Custom Domain (destinoyeventoslotus360.com) ya enganchado via API tras Fase
 	// 6 Paso B del plan de migracion. workers_dev:false retira el hostname
 	// publico *.workers.dev, que quedaria indexable/duplicado si no.

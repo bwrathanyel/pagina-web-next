@@ -16,7 +16,7 @@ export default async function PagarPage({ params }: { params: Promise<{ token: s
   if (!TOKEN_RE.test(token)) notFound();
 
   return (
-    <main className="mx-auto max-w-lg px-5 py-8 pb-28 md:py-12 lg:pb-12">
+    <main className="mx-auto max-w-[var(--ancho-medio)] px-4 py-5 sm:px-5 md:py-8 lg:pb-12">
       <PagarCliente token={token} />
     </main>
   );

@@ -59,7 +59,7 @@ export default async function AliadoPage({ params }: { params: Promise<{ slug: s
                   ×
                 </span>
                 <span className="flex items-center gap-2 md:gap-3">
-                  <Image src="/logo-lotus360-transparent.png" alt="" width={80} height={80} priority className="h-11 w-11 md:h-20 md:w-20" />
+                  <Image src="/logo-lotus360-160.webp" alt="" width={80} height={80} priority className="h-11 w-11 md:h-20 md:w-20" />
                   <span className="font-display text-3xl font-bold leading-none md:text-6xl">Lotus 360</span>
                 </span>
               </h1>

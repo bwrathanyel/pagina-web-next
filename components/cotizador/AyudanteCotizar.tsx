@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AsistenteVirtualPanel } from "@/components/layout/AsistenteVirtualPanel";
+import { AsistenteVirtualPanel } from "@/components/layout/AsistenteVirtualDiferido";
 import Solcito, { type SolcitoMood } from "@/components/mascota/Solcito";
 import { textoFechas } from "@/components/cotizador/ResumenViaje";
 import { textoViajeros, type EstadoViaje } from "@/lib/cotizador/estado";

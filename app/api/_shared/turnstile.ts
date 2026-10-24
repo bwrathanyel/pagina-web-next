@@ -4,8 +4,8 @@ export async function verificarTurnstile(token: unknown, request: Request): Prom
   const secret = process.env.TURNSTILE_SECRET;
   const respuesta = typeof token === "string" ? token.trim() : "";
   if (!secret || !respuesta || respuesta.length > 4096) return false;
-  const ip = request.headers.get("x-nf-client-connection-ip")
-    ?? request.headers.get("cf-connecting-ip")
+  const ip = request.headers.get("cf-connecting-ip")
+    ?? request.headers.get("x-nf-client-connection-ip")
     ?? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
   const cuerpo = new URLSearchParams({ secret, response: respuesta });
   if (ip) cuerpo.set("remoteip", ip);

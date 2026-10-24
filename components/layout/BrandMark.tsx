@@ -18,7 +18,7 @@ export function BrandMark({ dark = false, size = "md", priority = false }: Brand
       }
     >
       <Image
-        src="/logo-lotus360-transparent.png"
+        src="/logo-lotus360-160.webp"
         alt="Símbolo de Destino y Eventos Lotus 360"
         fill
         sizes={size === "sm" ? "40px" : "44px"}

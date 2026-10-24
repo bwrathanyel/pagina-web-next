@@ -12,11 +12,11 @@ import { fotosDe } from "@/lib/supabase/fotos";
 import { getHotSales, getProductosPorCategoria } from "@/lib/supabase/queries";
 
 export default async function Home() {
-  // Si Supabase falla acá, mejor una home con menos fotos que una home
-  // rota entera — [] es un fallback seguro para todo lo que sigue.
+  // Sin .catch: si Supabase falla, la regeneración ISR lanza y Next sigue sirviendo la
+  // versión anterior en vez de cachear una home vacía (sin ofertas) por 1 h (Fase 6).
   const [hoteles, hotSales] = await Promise.all([
-    getProductosPorCategoria("hoteles").catch(() => []),
-    getHotSales().catch(() => []),
+    getProductosPorCategoria("hoteles"),
+    getHotSales(),
   ]);
 
   // Fotos del hero: un destino por cada uno con Hot Sales vigentes, rotando
