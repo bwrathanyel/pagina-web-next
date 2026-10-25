@@ -99,7 +99,7 @@ export function ResumenBoleto({
     <Boleto
       // El aside es una columna flex con alto máximo: sin shrink-0 el boleto se encoge y el talón tapa el desglose.
       className="shrink-0"
-      tamanoTalon="4.5rem"
+      tamanoTalon="3.5rem"
       talon={
         <div className="flex h-full items-center justify-between gap-3 px-4 pb-1" aria-live="polite">
           <span className={ROTULO}>Total</span>
@@ -112,32 +112,34 @@ export function ResumenBoleto({
         </div>
       }
     >
-      {datos.foto ? (
-        <div className="relative aspect-[5/2] w-full">
-          <Image src={datos.foto} alt="" fill sizes="27rem" className="object-cover" />
+      {/* Compacto a propósito: datos del cliente, aceptación y botón tienen que entrar sin scroll debajo. */}
+      <div className="flex items-center gap-3 p-4">
+        {datos.foto ? (
+          <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-control">
+            <Image src={datos.foto} alt="" fill sizes="64px" className="object-cover" />
+          </span>
+        ) : null}
+        <div className="min-w-0">
+          <p className="truncate font-display text-base font-bold leading-tight text-ink">{datos.habitacion ?? datos.hotel}</p>
+          {datos.plan ? <p className="truncate text-xs text-ink-soft">{datos.plan}</p> : null}
+          <p className="mt-1 text-sm text-ink">
+            <span className="font-mono font-bold">{datos.desde ? rangoFechas(datos.desde, datos.hasta || null) : "Fechas por elegir"}</span>
+            {" · "}
+            {datos.viajeros}
+          </p>
         </div>
-      ) : null}
-      <div className="flex flex-col gap-4 p-5">
-        <div>
-          <p className="font-display text-lg font-bold leading-tight text-ink">{datos.habitacion ?? datos.hotel}</p>
-          {datos.plan ? <p className="text-sm text-ink-soft">{datos.plan}</p> : null}
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <p className={ROTULO}>Fechas</p>
-            <p className="font-mono text-sm font-bold text-ink">{datos.desde ? rangoFechas(datos.desde, datos.hasta || null) : "Por elegir"}</p>
-          </div>
-          <div>
-            <p className={ROTULO}>Viajeros</p>
-            <p className="text-sm font-semibold text-ink">{datos.viajeros}</p>
-          </div>
-        </div>
-        {totales ? (
-          <div className="border-t border-linea pt-4">
+      </div>
+      {totales ? (
+        <details className="group border-t border-linea px-4 py-2">
+          <summary className="flex min-h-8 cursor-pointer list-none items-center justify-between text-sm font-semibold text-ink-soft">
+            Ver desglose
+            <span aria-hidden="true" className="transition-transform group-open:rotate-180">▾</span>
+          </summary>
+          <div className="pb-2 pt-2">
             <Desglose t={totales} />
           </div>
-        ) : null}
-      </div>
+        </details>
+      ) : null}
     </Boleto>
   );
 }

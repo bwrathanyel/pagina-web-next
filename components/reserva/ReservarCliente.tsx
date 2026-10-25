@@ -542,8 +542,8 @@ export function ReservarCliente({
 
   // Igual que `cierre`: existe UNA sola vez, en el aside (escritorio) o en la columna (teléfono).
   const datos = (
-    <section aria-labelledby="r-datos" className="flex flex-col gap-4">
-      <h2 id="r-datos" className="font-display text-xl font-bold text-ink lg:text-base">
+    <section aria-labelledby="r-datos" className="flex flex-col gap-4 lg:gap-3">
+      <h2 id="r-datos" className="font-display text-xl font-bold text-ink lg:sr-only">
         Sus datos
       </h2>
       <div data-campo="nombre">
@@ -551,27 +551,31 @@ export function ReservarCliente({
           {(a) => <Entrada {...a} value={f.nombre} onChange={(e) => poner({ nombre: e.target.value })} autoComplete="name" maxLength={80} />}
         </Campo>
       </div>
-      <div data-campo="telefono">
-        <Campo etiqueta="Teléfono (WhatsApp)" error={errorDe("telefono")} requerido>
-          {(a) => (
-            <TelefonoPais {...a} iso={f.iso} onIso={(iso) => poner({ iso })} valor={f.telefono} onValor={(v) => poner({ telefono: v })} />
-          )}
-        </Campo>
-      </div>
-      <div data-campo="email">
-        <Campo etiqueta="Correo" ayuda="Aquí le enviamos el localizador." error={errorDe("email")} requerido>
-          {(a) => (
-            <Entrada
-              {...a}
-              type="email"
-              inputMode="email"
-              value={f.email}
-              onChange={(e) => poner({ email: e.target.value })}
-              autoComplete="email"
-              maxLength={120}
-            />
-          )}
-        </Campo>
+      <div className="grid gap-4 lg:gap-3 xl:grid-cols-2">
+        <div data-campo="telefono">
+          <Campo etiqueta="Teléfono (WhatsApp)" error={errorDe("telefono")} requerido>
+            {(a) => (
+              <TelefonoPais {...a} iso={f.iso} onIso={(iso) => poner({ iso })} valor={f.telefono} onValor={(v) => poner({ telefono: v })} />
+            )}
+          </Campo>
+        </div>
+        <div data-campo="email">
+          {/* En el aside la ayuda desalinea la fila Teléfono | Correo: allí va de placeholder. */}
+          <Campo etiqueta="Correo" ayuda={esEscritorio ? undefined : "Aquí le enviamos el localizador."} error={errorDe("email")} requerido>
+            {(a) => (
+              <Entrada
+                {...a}
+                type="email"
+                inputMode="email"
+                placeholder={esEscritorio ? "Para enviarle el localizador" : undefined}
+                value={f.email}
+                onChange={(e) => poner({ email: e.target.value })}
+                autoComplete="email"
+                maxLength={120}
+              />
+            )}
+          </Campo>
+        </div>
       </div>
     </section>
   );
@@ -580,7 +584,7 @@ export function ReservarCliente({
 
   return (
     <form onSubmit={alEnviar} noValidate className="flex flex-col gap-6">
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_27rem] lg:items-start xl:gap-10">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_26rem] lg:items-start xl:grid-cols-[minmax(0,1fr)_30rem] xl:gap-10">
         <div className="flex min-w-0 flex-col gap-8">
           <header className="flex flex-col gap-3">
             <div className="flex items-center gap-3">
@@ -662,7 +666,7 @@ export function ReservarCliente({
 
         <aside
           aria-label="Su reserva"
-          className="hidden lg:sticky lg:top-24 lg:flex lg:max-h-[calc(100dvh-7rem)] lg:flex-col lg:gap-4 lg:overflow-y-auto lg:overscroll-contain"
+          className="hidden lg:sticky lg:top-24 lg:flex lg:max-h-[calc(100dvh-7rem)] lg:flex-col lg:gap-3 lg:overflow-y-auto lg:overscroll-contain"
         >
           <ResumenBoleto
             datos={{ hotel: hotel.nombre, foto, habitacion, plan: elegida?.tarifa.plan?.trim() || null, desde, hasta, viajeros: textoViajeros(pasajeros) }}
