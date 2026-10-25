@@ -113,8 +113,8 @@ export function ResumenBoleto({
       }
     >
       {datos.foto ? (
-        <div className="relative aspect-video w-full">
-          <Image src={datos.foto} alt="" fill sizes="23rem" className="object-cover" />
+        <div className="relative aspect-[5/2] w-full">
+          <Image src={datos.foto} alt="" fill sizes="27rem" className="object-cover" />
         </div>
       ) : null}
       <div className="flex flex-col gap-4 p-5">

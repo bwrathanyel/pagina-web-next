@@ -540,59 +540,95 @@ export function ReservarCliente({
     </div>
   );
 
+  // Igual que `cierre`: existe UNA sola vez, en el aside (escritorio) o en la columna (teléfono).
+  const datos = (
+    <section aria-labelledby="r-datos" className="flex flex-col gap-4">
+      <h2 id="r-datos" className="font-display text-xl font-bold text-ink lg:text-base">
+        Sus datos
+      </h2>
+      <div data-campo="nombre">
+        <Campo etiqueta="Nombre y apellido" error={errorDe("nombre")} requerido>
+          {(a) => <Entrada {...a} value={f.nombre} onChange={(e) => poner({ nombre: e.target.value })} autoComplete="name" maxLength={80} />}
+        </Campo>
+      </div>
+      <div data-campo="telefono">
+        <Campo etiqueta="Teléfono (WhatsApp)" error={errorDe("telefono")} requerido>
+          {(a) => (
+            <TelefonoPais {...a} iso={f.iso} onIso={(iso) => poner({ iso })} valor={f.telefono} onValor={(v) => poner({ telefono: v })} />
+          )}
+        </Campo>
+      </div>
+      <div data-campo="email">
+        <Campo etiqueta="Correo" ayuda="Aquí le enviamos el localizador." error={errorDe("email")} requerido>
+          {(a) => (
+            <Entrada
+              {...a}
+              type="email"
+              inputMode="email"
+              value={f.email}
+              onChange={(e) => poner({ email: e.target.value })}
+              autoComplete="email"
+              maxLength={120}
+            />
+          )}
+        </Campo>
+      </div>
+    </section>
+  );
+
   const segundosAbierta = abierta ? Math.floor((Date.parse(abierta.expira_en) - Date.now()) / 1000) : 0;
 
   return (
     <form onSubmit={alEnviar} noValidate className="flex flex-col gap-6">
-      <header className="flex flex-col gap-3">
-        <div className="flex items-center gap-3">
-          {foto ? (
-            <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-control lg:hidden">
-              <Image src={foto} alt="" fill sizes="48px" className="object-cover" />
-            </span>
-          ) : null}
-          <div className="min-w-0 flex-1">
-            <h1 className="font-display text-xl font-bold leading-tight text-ink lg:titulo-marca lg:text-balance lg:text-4xl">{hotel.nombre}</h1>
-            {destino ? <p className="text-sm text-ink-soft lg:hidden">{destino}</p> : null}
-            <p className={ROTULO + " mt-2 hidden lg:block"}>
-              {destino ? `${destino} · ` : ""}Paso 1 de 3
-            </p>
-          </div>
-          <a
-            {...wa("encabezado")}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Escribirnos por WhatsApp"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-whatsapp text-white lg:hidden"
-          >
-            <WhatsAppIcon size={22} />
-          </a>
-        </div>
-        <Pasos actual={1} className="lg:hidden" />
-      </header>
-
-      {abierta && segundosAbierta > 0 ? (
-        <Aviso tono="info">
-          <span className="block">
-            Tiene la reserva <span className="font-mono font-bold">{abierta.codigo}</span>
-            {abierta.hotel && abierta.hotel !== hotel.nombre ? ` (${abierta.hotel})` : ""} esperando pago (vence en{" "}
-            {plazoRestante(segundosAbierta)}).
-          </span>
-          <Boton href={`/pagar/${abierta.token}`} variante="secundario" tamano="sm" className="mt-2">
-            Continuar al pago
-          </Boton>
-        </Aviso>
-      ) : null}
-
-      {fueraDeHorario ? (
-        <Aviso tono="info">
-          La compra directa está abierta de {horaAmPm(config?.hora_abre, 8)} a {horaAmPm(config?.hora_cierra, 20)} (hora de
-          Venezuela). Puede ver el precio aquí y reservar ahora por WhatsApp con un asesor.
-        </Aviso>
-      ) : null}
-
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_23rem] lg:items-start xl:gap-12">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_27rem] lg:items-start xl:gap-10">
         <div className="flex min-w-0 flex-col gap-8">
+          <header className="flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              {foto ? (
+                <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-control lg:hidden">
+                  <Image src={foto} alt="" fill sizes="48px" className="object-cover" />
+                </span>
+              ) : null}
+              <div className="min-w-0 flex-1">
+                <h1 className="font-display text-xl font-bold leading-tight text-ink lg:titulo-marca lg:text-balance lg:text-4xl">{hotel.nombre}</h1>
+                {destino ? <p className="text-sm text-ink-soft lg:hidden">{destino}</p> : null}
+                <p className={ROTULO + " mt-2 hidden lg:block"}>
+                  {destino ? `${destino} · ` : ""}Paso 1 de 3
+                </p>
+              </div>
+              <a
+                {...wa("encabezado")}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Escribirnos por WhatsApp"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-whatsapp text-white lg:hidden"
+              >
+                <WhatsAppIcon size={22} />
+              </a>
+            </div>
+            <Pasos actual={1} className="lg:hidden" />
+          </header>
+
+          {abierta && segundosAbierta > 0 ? (
+            <Aviso tono="info">
+              <span className="block">
+                Tiene la reserva <span className="font-mono font-bold">{abierta.codigo}</span>
+                {abierta.hotel && abierta.hotel !== hotel.nombre ? ` (${abierta.hotel})` : ""} esperando pago (vence en{" "}
+                {plazoRestante(segundosAbierta)}).
+              </span>
+              <Boton href={`/pagar/${abierta.token}`} variante="secundario" tamano="sm" className="mt-2">
+                Continuar al pago
+              </Boton>
+            </Aviso>
+          ) : null}
+
+          {fueraDeHorario ? (
+            <Aviso tono="info">
+              La compra directa está abierta de {horaAmPm(config?.hora_abre, 8)} a {horaAmPm(config?.hora_cierra, 20)} (hora de
+              Venezuela). Puede ver el precio aquí y reservar ahora por WhatsApp con un asesor.
+            </Aviso>
+          ) : null}
+
           <PaseFechas
             desde={desde}
             hasta={hasta}
@@ -618,40 +654,7 @@ export function ReservarCliente({
             error={errorDe("riel")}
           />
 
-          <section aria-labelledby="r-datos" className="flex flex-col gap-4">
-            <h2 id="r-datos" className="font-display text-xl font-bold text-ink">
-              Sus datos
-            </h2>
-            <div data-campo="nombre">
-              <Campo etiqueta="Nombre y apellido" error={errorDe("nombre")} requerido>
-                {(a) => <Entrada {...a} value={f.nombre} onChange={(e) => poner({ nombre: e.target.value })} autoComplete="name" maxLength={80} />}
-              </Campo>
-            </div>
-            <div className="grid gap-4 lg:grid-cols-2">
-              <div data-campo="telefono">
-                <Campo etiqueta="Teléfono (WhatsApp)" error={errorDe("telefono")} requerido>
-                  {(a) => (
-                    <TelefonoPais {...a} iso={f.iso} onIso={(iso) => poner({ iso })} valor={f.telefono} onValor={(v) => poner({ telefono: v })} />
-                  )}
-                </Campo>
-              </div>
-              <div data-campo="email">
-                <Campo etiqueta="Correo" ayuda="Aquí le enviamos el localizador." error={errorDe("email")} requerido>
-                  {(a) => (
-                    <Entrada
-                      {...a}
-                      type="email"
-                      inputMode="email"
-                      value={f.email}
-                      onChange={(e) => poner({ email: e.target.value })}
-                      autoComplete="email"
-                      maxLength={120}
-                    />
-                  )}
-                </Campo>
-              </div>
-            </div>
-          </section>
+          {esEscritorio ? null : datos}
 
           <PoliticaPlegable parrafos={politica} />
           {esEscritorio ? null : cierre}
@@ -666,6 +669,7 @@ export function ReservarCliente({
             totales={totales}
             sinPrecio={sinPrecio}
           />
+          {esEscritorio ? datos : null}
           {esEscritorio ? cierre : null}
         </aside>
       </div>
