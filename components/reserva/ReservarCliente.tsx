@@ -248,6 +248,7 @@ export function ReservarCliente({
       titulo: nombreDeHabitacion(c.tarifa, hotel.nombre),
       plan: c.tarifa.plan?.trim() || null,
       fotos: ficha?.fotos.length ? ficha.fotos : fotosHotel,
+      fotoPropia: !!ficha?.fotos.length,
       detalles: [
         ficha?.camas,
         ficha?.metros2 ? `${Number(ficha.metros2)} m²` : null,
@@ -259,6 +260,22 @@ export function ReservarCliente({
       nota: r && !r.ok ? (r.error === "sin_disponibilidad" ? "Sin cupo" : "A consultar") : null,
     };
   });
+
+  // Chips del hotel cuando no hay fotos por habitación: amenities y vistas de sus fichas, las más
+  // repetidas primero. «Mini-bar», «Minibar» y «Mini bar» cuentan como una sola.
+  const caracteristicas = useMemo(() => {
+    const cuenta = new Map<string, { texto: string; n: number }>();
+    for (const h of habitaciones) {
+      for (const a of [...(h.amenities ?? []), h.vista]) {
+        const texto = a?.trim();
+        if (!texto) continue;
+        const clave = texto.toLowerCase().normalize("NFD").replace(/[^a-z0-9]/g, "");
+        const previa = cuenta.get(clave);
+        cuenta.set(clave, { texto: previa?.texto ?? texto, n: (previa?.n ?? 0) + 1 });
+      }
+    }
+    return [...cuenta.values()].sort((a, b) => b.n - a.n).slice(0, 8).map((c) => c.texto);
+  }, [habitaciones]);
 
   // El precio que fijó el servidor vale solo para ESTE carrito: si el cliente cambia algo, se descarta.
   const claveSel = JSON.stringify([tarifaEfectiva, desde, hasta, pasajeros]);
@@ -551,7 +568,8 @@ export function ReservarCliente({
           {(a) => <Entrada {...a} value={f.nombre} onChange={(e) => poner({ nombre: e.target.value })} autoComplete="name" maxLength={80} />}
         </Campo>
       </div>
-      <div className="grid gap-4 lg:gap-3 xl:grid-cols-2">
+      {/* El teléfono lleva selector de país: a partes iguales su placeholder «0412 1234567» se cortaba. */}
+      <div className="grid gap-4 lg:gap-3 xl:grid-cols-[1.2fr_1fr]">
         <div data-campo="telefono">
           <Campo etiqueta="Teléfono (WhatsApp)" error={errorDe("telefono")} requerido>
             {(a) => (
@@ -648,7 +666,15 @@ export function ReservarCliente({
           />
 
           <div data-campo="precio" className="flex flex-col gap-3">
-            <OpcionesHabitacion opciones={opciones} elegida={tarifaEfectiva} onElegir={(id) => poner({ tarifaId: id })} hayFechas={hayFechas} />
+            <OpcionesHabitacion
+              opciones={opciones}
+              elegida={tarifaEfectiva}
+              onElegir={(id) => poner({ tarifaId: id })}
+              hayFechas={hayFechas}
+              nombreHotel={hotel.nombre}
+              fotosHotel={fotosHotel}
+              caracteristicas={caracteristicas}
+            />
           </div>
 
           <OpcionesRiel

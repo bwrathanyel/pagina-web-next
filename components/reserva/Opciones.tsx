@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRef, useState, type PointerEvent } from "react";
 import { Hoja } from "@/components/ui/Hoja";
 import { Icono } from "@/components/ui/Icono";
+import { Etiqueta } from "@/components/ui/Insignia";
 import type { Riel, TasaBcv } from "@/lib/checkout/calculo";
 import { usd } from "@/lib/checkout/formato";
 
@@ -21,7 +22,7 @@ const LEYENDA = "font-display text-xl font-bold text-ink";
  * izquierda a derecha según la posición del puntero; en el teléfono se deslizan. El «+» abre el visor con
  * todas. Vive dentro del `<label>` de la tarjeta, así que sus controles frenan el clic: tocar el «+» no
  * debe elegir la habitación (el visor va en un portal, fuera del label). */
-function FotosHabitacion({ fotos, alt }: { fotos: string[]; alt: string }) {
+function FotosHabitacion({ fotos, alt, forma = "aspect-video" }: { fotos: string[]; alt: string; forma?: string }) {
   const n = fotos.length;
   const [activa, setActiva] = useState(0);
   // Las fotos 2..N solo se bajan cuando alguien las pide (primer gesto): 4-7 fotos por tarjeta.
@@ -39,7 +40,7 @@ function FotosHabitacion({ fotos, alt }: { fotos: string[]; alt: string }) {
 
   return (
     <span
-      className="relative block aspect-video w-full overflow-hidden bg-sand-2"
+      className={"relative block w-full overflow-hidden bg-sand-2 " + forma}
       onPointerMove={alMover}
       onPointerLeave={(e) => {
         if (e.pointerType === "mouse") setActiva(0);
@@ -121,6 +122,8 @@ export interface OpcionHabitacion {
   plan: string | null;
   /** Fotos de la habitación o, si no tiene, las del hotel. */
   fotos: string[];
+  /** true = `fotos` son de la habitación (producto_fotos.habitacion_id), no del hotel. */
+  fotoPropia: boolean;
   /** Camas, m², capacidad y vista de la ficha revisada. */
   detalles: string[];
   descripcion: string | null;
@@ -130,25 +133,49 @@ export interface OpcionHabitacion {
   nota: string | null;
 }
 
+/** Sin fotos por habitación (la mayoría de los hoteles), repetir las del hotel en cada tarjeta no
+ * distingue nada: va un mini hero con las del hotel, chips con lo que traen las habitaciones y
+ * tarjetas sin foto para elegir habitación/plan (pedido del dueño, 2026-10-25). */
 export function OpcionesHabitacion({
   opciones,
   elegida,
   onElegir,
   hayFechas,
+  nombreHotel,
+  fotosHotel,
+  caracteristicas,
 }: {
   opciones: OpcionHabitacion[];
   elegida: number | null;
   onElegir: (id: number) => void;
   hayFechas: boolean;
+  nombreHotel: string;
+  fotosHotel: string[];
+  caracteristicas: string[];
 }) {
   if (!opciones.length) return null;
+  const conFotos = opciones.some((o) => o.fotoPropia);
   return (
     <fieldset className="flex flex-col gap-3">
       <legend className={LEYENDA + " mb-3"}>Habitación</legend>
+      {!conFotos && fotosHotel.length ? (
+        <div className="overflow-hidden rounded-card">
+          <FotosHabitacion fotos={fotosHotel} alt={nombreHotel} forma="aspect-[21/9]" />
+        </div>
+      ) : null}
+      {!conFotos && caracteristicas.length ? (
+        <ul className="flex flex-wrap gap-2" aria-label="Características de las habitaciones">
+          {caracteristicas.map((c) => (
+            <li key={c}>
+              <Etiqueta>{c}</Etiqueta>
+            </li>
+          ))}
+        </ul>
+      ) : null}
       <div className="grid gap-3 lg:grid-cols-2">
         {opciones.map((o) => (
           <label key={o.id} className={TARJETA + " min-h-16 flex-col overflow-hidden"}>
-            {o.fotos.length ? <FotosHabitacion fotos={o.fotos} alt={o.titulo} /> : null}
+            {conFotos && o.fotos.length ? <FotosHabitacion fotos={o.fotos} alt={o.titulo} /> : null}
             <span className="flex items-center gap-3 px-4 py-3">
               <input
                 type="radio"
