@@ -13,7 +13,7 @@ import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import { CotizadorRapidoBarra, CotizadorRapidoMovil } from "@/components/home/CotizadorRapido";
 import { PaseDestacado } from "@/components/home/PaseDestacado";
 import { useHeroBajoBarra } from "@/lib/layout/barraSobreFoto";
-import type { FondoHero, FotoHero } from "@/lib/promociones/fotosHero";
+import type { FondoHero, FotoHero, PaseHero } from "@/lib/promociones/fotosHero";
 import type { HotelNinoGratis } from "@/lib/promociones/ninosGratis";
 
 const MS_POR_FOTO = 8000;
@@ -178,6 +178,12 @@ export function Hero({ fotos, ninoGratis = null }: { fotos: FotoHero[]; ninoGrat
   const destino = actual?.destino?.trim();
   const tablero = destino || actual?.alt || "Lotus 360";
   const pase = actual?.pase;
+  // El precio del pase nuevo cuenta desde el del anterior (PaseDestacado se
+  // vuelve a montar con cada promo, así que el anterior lo recuerda el hero).
+  // Estado ajustado en el render, no un efecto: el pase nuevo ya pinta su
+  // primer cuadro con el monto de partida.
+  const [pases, setPases] = useState({ actual: pase, anterior: undefined as PaseHero | undefined });
+  if (pases.actual?.promoId !== pase?.promoId) setPases({ actual: pase, anterior: pases.actual });
   // Sin pase, el nombre del hotel va bajo el tablero; con pase ya lo dice él.
   const lugar = destino && !pase ? actual?.alt : null;
   // Lo más atractivo turístico del destino (fijo por destino, ver
@@ -344,7 +350,7 @@ export function Hero({ fotos, ninoGratis = null }: { fotos: FotoHero[]; ninoGrat
                   exit={{ opacity: 0, y: -16 }}
                   transition={{ duration: reducido ? 0 : 0.42, ease: CURVA }}
                 >
-                  <PaseDestacado pase={pase} destino={destino} />
+                  <PaseDestacado pase={pase} destino={destino} precioAnterior={pases.anterior?.precio} />
                 </m.div>
               </AnimatePresence>
             </div>
@@ -357,7 +363,7 @@ export function Hero({ fotos, ninoGratis = null }: { fotos: FotoHero[]; ninoGrat
           onFocusCapture={() => setTocado(true)}
         >
           <div className="hero-sube hidden lg:block" style={retraso(120)}>
-            <CotizadorRapidoBarra ninoGratis={ninoGratis} />
+            <CotizadorRapidoBarra ninoGratis={ninoGratis} brillo={!tocado} />
           </div>
 
           <div className="hero-sube lg:hidden" style={retraso(120)}>

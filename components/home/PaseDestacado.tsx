@@ -1,22 +1,73 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useReducedMotion } from "motion/react";
 import { Boleto } from "@/components/ui/Boleto";
 import { Icono } from "@/components/ui/Icono";
 import { MontoAjustado, PrecioMostrado } from "@/components/ui/PrecioMostrado";
 import type { PaseHero } from "@/lib/promociones/fotosHero";
-import { separarMonto } from "@/lib/tarifas";
+import { separarMonto, type PrecioTarjeta } from "@/lib/tarifas";
+
+// --dur-lenta y --ease-salida de globals.css.
+const CONTEO_MS = 600;
+const salida = (t: number) => 1 - Math.pow(1 - t, 3);
+
+// Solo montos de montoConMoneda ("$286", "€1250.50"): el texto libre del
+// tarifario no se cuenta.
+function leerMonto(texto: string | undefined) {
+  const m = texto ? /^([$€])(\d+(?:\.\d+)?)$/.exec(texto) : null;
+  return m ? { signo: m[1], valor: Number(m[2]), decimales: m[2].includes(".") } : null;
+}
+
+// El monto del pase nuevo cuenta desde el del anterior. Se cuenta el texto
+// nativo (USD/EUR) y PrecioMostrado convierte cada cuadro, así en Bs también
+// cuenta. Entre monedas distintas no: pasar de €286 a $450 contando
+// insinuaría que el mismo precio subió.
+function useMontoContado(texto: string | undefined, desde: string | undefined) {
+  const reducido = useReducedMotion();
+  const de = leerMonto(desde);
+  const a = leerMonto(texto);
+  const cuenta = !reducido && !!de && !!a && de.signo === a.signo && de.valor !== a.valor;
+  const [cuadro, setCuadro] = useState<string | null>(cuenta ? desde! : null);
+
+  useEffect(() => {
+    if (!cuenta || !de || !a) return;
+    const inicio = performance.now();
+    let id = requestAnimationFrame(function paso(ahora) {
+      const t = Math.min(1, (ahora - inicio) / CONTEO_MS);
+      if (t === 1) return setCuadro(null);
+      const v = de.valor + (a.valor - de.valor) * salida(t);
+      setCuadro(a.signo + (a.decimales ? v.toFixed(2) : String(Math.round(v))));
+      id = requestAnimationFrame(paso);
+    });
+    return () => cancelAnimationFrame(id);
+    // Una sola cuenta por montaje: el pase se vuelve a montar con cada promo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return cuenta ? (cuadro ?? texto) : texto;
+}
 
 // El "pase destacado" del hero: la promo de la foto que está en pantalla,
 // como un boleto con el precio en el talón. Un solo árbol: en el teléfono es
 // una tira compacta (hotel + precio) bajo el titular; desde lg crece a la
 // columna derecha con plan, lo que incluye, la vigencia y "Ver oferta".
-export function PaseDestacado({ pase, destino }: { pase: PaseHero; destino?: string | null }) {
+export function PaseDestacado({
+  pase,
+  destino,
+  precioAnterior,
+}: {
+  pase: PaseHero;
+  destino?: string | null;
+  precioAnterior?: PrecioTarjeta | null;
+}) {
   const lugar = [destino, pase.plan].filter(Boolean).join(" · ");
   const incluye = pase.incluye.length > 0 ? `Incluye ${pase.incluye.join(", ").toLocaleLowerCase("es")}` : null;
   const precio = pase.precio;
-  const { monto, unidad, grande } = separarMonto(precio);
+  const { monto: montoFinal, unidad, grande } = separarMonto(precio);
+  const monto = useMontoContado(montoFinal, separarMonto(precioAnterior ?? null).monto);
 
   return (
     <Link

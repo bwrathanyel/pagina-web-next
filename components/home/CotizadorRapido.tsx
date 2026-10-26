@@ -167,7 +167,7 @@ const CONTROL_TRAMO =
 const SELECTOR_TRAMO = `selector-marca ${CONTROL_TRAMO}`;
 
 /** Escritorio: barra ancha estilo buscador de viajes, con "Cotizar" como CTA. */
-export function CotizadorRapidoBarra({ ninoGratis = null }: PropsCotizador) {
+export function CotizadorRapidoBarra({ ninoGratis = null, brillo = false }: PropsCotizador & { brillo?: boolean }) {
   const c = useCotizacionRapida(ninoGratis);
   const idSalida = useId();
   const fin = c.etiquetaFin;
@@ -260,8 +260,22 @@ export function CotizadorRapidoBarra({ ninoGratis = null }: PropsCotizador) {
         </Tramo>
       </div>
       <CamposHotelNinos hotel={c.hotelNinos} />
-      <Boton type="submit" variante="firma" tamano="lg" className="ml-2 shrink-0 self-stretch">
-        Cotizar
+      <Boton
+        type="submit"
+        variante="firma"
+        tamano="lg"
+        className={"ml-2 shrink-0 self-stretch" + (brillo ? " relative overflow-hidden" : "")}
+      >
+        {/* El destello del botón del asistente (fab-shine, cada ~6 s) mientras
+            nadie tocó el cotizador; al primer toque se va con el resto del
+            movimiento del hero. */}
+        {brillo ? (
+          <span
+            aria-hidden="true"
+            className="animate-fab-shine pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 bg-gradient-to-r from-transparent via-white/60 to-transparent motion-reduce:animate-none"
+          />
+        ) : null}
+        <span className="relative">Cotizar</span>
       </Boton>
     </Form>
     {c.promoNinos ? <AvisoNinosGratis ninos={c.viajeros.ninos} hotel={c.hotelNinos} /> : null}
