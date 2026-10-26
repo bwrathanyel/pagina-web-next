@@ -323,6 +323,12 @@ body {
   overflow-x: clip;
 }
 
+/* Una sola foto de fondo por página: si la página trae la suya (destino,
+   /cotizar o bio), el paisaje por defecto del layout se oculta y no se baja. */
+body:has([data-fondo-pagina], [data-fondo-destino], [data-fondo-propio]) [data-fondo-defecto] {
+  display: none;
+}
+
 html {
   scroll-behavior: smooth;
   /* Barra fina y en tono de marca en vez de la gris gruesa del sistema.

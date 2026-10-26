@@ -5,6 +5,7 @@ import { CargaFotos } from "@/components/providers/CargaFotos";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { CromoSitio } from "@/components/layout/CromoSitio";
+import { FondoPaisaje } from "@/components/layout/FondoPaisaje";
 import { ContactoFab } from "@/components/layout/ContactoFab";
 import { BottomTabBar } from "@/components/layout/BottomTabBar";
 import { BuscadorGlobal } from "@/components/layout/BuscadorGlobal";
@@ -115,6 +116,7 @@ export default async function RootLayout({
         ))}
       </head>
       <body className="min-h-full flex flex-col bg-sand text-ink font-body">
+        <FondoPaisaje defecto />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={jsonLdScript(buildTravelAgencyJsonLd())}

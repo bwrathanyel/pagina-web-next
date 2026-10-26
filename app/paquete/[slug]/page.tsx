@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { FondoPaisaje } from "@/components/layout/FondoPaisaje";
 import type { Metadata } from "next";
 import { FichaPaquete } from "@/components/paquetes/FichaPaquete";
 import { rutasVuelo } from "@/lib/supabase/queries";
@@ -40,6 +41,7 @@ export default async function PaquetePage({ params }: { params: Promise<{ slug: 
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-6 pb-44 md:py-10 lg:pb-12">
+      <FondoPaisaje destino={paquete.hotel.destino} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript(

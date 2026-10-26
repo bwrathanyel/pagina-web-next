@@ -93,7 +93,7 @@ export function VacantesYPostulacion() {
         </div>
       </section>
 
-      <section id="postular" className="scroll-mt-20 bg-sand">
+      <section id="postular" className="scroll-mt-20">
         <div className="mx-auto max-w-2xl px-5 pb-28 pt-9 md:py-16">
           <h2 className="font-display text-3xl font-bold leading-tight text-ink md:text-4xl">Postúlese en 1 minuto</h2>
           <p className="mb-6 mt-2 text-sm leading-6 text-ink-soft">

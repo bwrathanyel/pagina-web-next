@@ -1,5 +1,6 @@
 import { enlaceCotizarProducto } from "@/lib/cotizador/estado";
 import { notFound } from "next/navigation";
+import { FondoPaisaje } from "@/components/layout/FondoPaisaje";
 import type { Metadata } from "next";
 import { GaleriaProducto } from "@/components/producto/GaleriaProducto";
 import { ProductoInfo } from "@/components/producto/ProductoInfo";
@@ -69,6 +70,7 @@ export default async function ProductoPage({ params }: { params: Promise<{ id: s
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-6 pb-28 md:py-10 lg:pb-10">
+      <FondoPaisaje destino={producto.destino} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript(buildProductJsonLd(producto))}

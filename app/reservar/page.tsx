@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { FondoPaisaje } from "@/components/layout/FondoPaisaje";
 import { ReservarCliente } from "@/components/reserva/ReservarCliente";
 import type { Pasajeros } from "@/components/reserva/PaseFechas";
 import { MAX_BEBES, MAX_PAX } from "@/lib/checkout/calculo";
@@ -72,6 +73,7 @@ export default async function ReservarPage({ searchParams }: { searchParams: Pro
 
   return (
     <main className="mx-auto max-w-[var(--ancho-contenido)] px-4 py-5 sm:px-5 md:py-8 lg:pb-12">
+      <FondoPaisaje destino={vitrina?.destino ?? hotel.destino} />
       <ReservarCliente
         hotel={{ id: hotel.id, nombre: hotel.nombre, tarifas: vendibles }}
         destino={vitrina?.destino ?? hotel.destino}

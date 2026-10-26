@@ -86,7 +86,7 @@ export async function PaginaEnlaces({ red }: { red: Red }) {
   const fotosFondo = fotosHeroDeHotSales(await getHotSales().catch(() => []), 6);
 
   return (
-    <div className="relative -mb-20 flex min-h-[100svh] flex-col items-center overflow-hidden bg-gradient-to-b from-dusk to-dusk-2 px-5 pb-[calc(env(safe-area-inset-bottom)+2rem)] pt-14 lg:mb-0">
+    <div data-fondo-propio className="relative -mb-20 flex min-h-[100svh] flex-col items-center overflow-hidden bg-gradient-to-b from-dusk to-dusk-2 px-5 pb-[calc(env(safe-area-inset-bottom)+2rem)] pt-14 lg:mb-0">
       {fotosFondo.length > 0 ? <FondoRotativoBio fotos={fotosFondo} /> : null}
       <div
         aria-hidden="true"
