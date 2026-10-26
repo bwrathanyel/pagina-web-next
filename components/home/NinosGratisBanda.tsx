@@ -132,6 +132,9 @@ export function NinosGratisBanda({ bloque }: { bloque: BloqueNinosGratis | null 
       <div aria-hidden="true" className="absolute inset-x-0 top-0 h-72 lg:inset-y-0 lg:right-auto lg:h-auto lg:w-[62%]">
         <Image src="/destinos/margarita.jpg" alt="" fill sizes="(min-width: 1024px) 62vw, 100vw" className="object-cover" />
         <span className="absolute inset-0 bg-gradient-to-t from-dusk from-5% via-dusk/35 via-70% to-dusk/55 lg:bg-gradient-to-r lg:from-dusk/55 lg:from-0% lg:via-dusk/35 lg:via-55% lg:to-dusk" />
+        {/* Fundido con el pie del hero (que termina en dusk liso): sin esto la
+            foto arrancaba con un corte recto (pedido del dueño, 2026-10-26). */}
+        <span className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-dusk to-transparent lg:h-40" />
       </div>
 
       <div className="relative mx-auto grid max-w-[var(--ancho-contenido)] gap-8 px-5 pt-40 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-center lg:gap-12 lg:pt-0">

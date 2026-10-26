@@ -465,6 +465,15 @@ html {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); }
 }
+/* La flecha del pie del hero: baja un poco y vuelve, avisando que la página
+   sigue abajo. */
+@keyframes indicar-abajo {
+  0%, 100% { transform: translateY(0); opacity: 0.6; }
+  50% { transform: translateY(5px); opacity: 1; }
+}
+.animate-indicar-abajo {
+  animation: indicar-abajo 1.8s var(--ease-entrada-salida) infinite;
+}
 /* Aviones del estimado de vuelo: el contenedor ocupa todo el ancho de la ruta,
    así translateX(100%) lo corre exactamente de un extremo al otro. El de
    regreso hace el camino inverso, desfasado para no cruzarse en el centro. */
@@ -1038,6 +1047,7 @@ html {
   .hero-parallax,
   .animate-fab-halo,
   .animate-fab-shine,
+  .animate-indicar-abajo,
   .animate-typing-dot,
   .animate-carrito-rebote,
   .animate-corazon-latido,

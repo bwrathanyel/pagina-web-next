@@ -407,6 +407,21 @@ export function Hero({ fotos, ninoGratis = null }: { fotos: FotoHero[]; ninoGrat
           </div>
         </div>
       </div>
+
+      {/* Escritorio: el hero llena la pantalla y no asoma nada de abajo; la
+          flecha avisa que la página sigue. Absoluta en el pb-8 para no sumar
+          alto al bloque calibrado a 1366x688. En el teléfono la sección
+          siguiente ya asoma (min-h 100svh-5rem). */}
+      <button
+        type="button"
+        aria-label="Ver más ofertas"
+        onClick={() =>
+          seccion.current?.nextElementSibling?.scrollIntoView({ behavior: reducido ? "auto" : "smooth" })
+        }
+        className="absolute bottom-0 left-1/2 hidden -translate-x-1/2 p-1.5 text-white/80 transition-colors duration-150 ease-salida hover:text-white lg:block"
+      >
+        <Icono nombre="chevron-abajo" tamano={22} className="animate-indicar-abajo" />
+      </button>
     </section>
   );
 }
