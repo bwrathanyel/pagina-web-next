@@ -9,15 +9,15 @@ export function Esqueleto({ className = "" }: { className?: string }) {
 export function EsqueletoTarjeta() {
   return (
     <div aria-hidden="true" className="overflow-hidden rounded-card border border-linea bg-card">
-      <Esqueleto className="aspect-[4/3] rounded-none" />
-      <div className="px-4 pb-4 pt-3.5">
+      <Esqueleto className="aspect-[3/2] rounded-none" />
+      <div className="px-4 pb-3.5 pt-3">
         <Esqueleto className="h-9 w-2/5" />
-        <Esqueleto className="mt-1 h-7 w-3/5" />
-        <Esqueleto className="mt-2.5 h-11 w-full" />
+        <Esqueleto className="h-8 w-3/5 sm:h-4" />
+        <Esqueleto className="mt-2 h-11 w-full" />
         <Esqueleto className="mt-1 h-5 w-1/2" />
-        <Esqueleto className="mt-2 h-12 w-full" />
+        <Esqueleto className="mt-2 h-8 w-full max-sm:hidden" />
       </div>
-      <div className="flex h-18 items-center gap-2 border-t border-dashed border-linea-fuerte px-4">
+      <div className="flex h-16 items-center gap-2 border-t border-dashed border-linea-fuerte px-4">
         <div className="flex-1 space-y-1.5">
           <Esqueleto className="h-3 w-1/2" />
           <Esqueleto className="h-3 w-2/3" />

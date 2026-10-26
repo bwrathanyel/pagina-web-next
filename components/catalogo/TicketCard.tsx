@@ -66,10 +66,13 @@ export interface TicketCardProps {
   reservar?: { href: string; onClick: () => void } | null;
 }
 
-// Tarjeta de catálogo como pase de abordar: foto 4:3 (la mayoría de las fotos
+// Tarjeta de catálogo como pase de abordar: foto 3:2 (la mayoría de las fotos
 // del tarifario son horizontales; en 3:4 se ampliaban y se veían borrosas),
 // precio arriba y filas de alto fijo para que una grilla quede alineada. El
 // talón lleva destino, vigencia y las acciones.
+// Compactada el 2026-10-25 (el dueño: "demasiado alargadas"): foto 4:3 a 3:2,
+// unidad y vigencia a una línea, resumen a dos y fuera del teléfono, donde la
+// columna es angosta y el resumen era la mitad del alto.
 // Se eleva con borde, no con sombra: la máscara de las muescas recortaría una.
 export function TicketCard({
   href,
@@ -104,7 +107,7 @@ export function TicketCard({
 
   return (
     <Boleto
-      tamanoTalon="4.5rem"
+      tamanoTalon="4rem"
       className={
         "h-full transition-[transform,border-color] duration-[var(--dur-media)] ease-salida " +
         "hover:-translate-y-1 hover:border-acento/60 motion-reduce:transition-none " +
@@ -157,7 +160,7 @@ export function TicketCard({
       }
     >
       <div className="flex h-full flex-col">
-        <div className="group/foto relative aspect-[4/3] overflow-hidden bg-sand-2">
+        <div className="group/foto relative aspect-[3/2] overflow-hidden bg-sand-2">
           {/* Máximo dos sellos apilados: el principal (niño gratis / tipo /
               destacada) y la duración. Abajo no caben: ahí van los puntos. */}
           <div className="absolute left-3 top-3 z-10 flex flex-col items-start gap-1.5">
@@ -206,7 +209,7 @@ export function TicketCard({
           )}
         </div>
 
-        <div className="flex flex-1 flex-col px-4 pb-4 pt-3.5">
+        <div className="flex flex-1 flex-col px-4 pb-3.5 pt-3">
           <p className="flex h-9 min-w-0 items-baseline gap-1.5 whitespace-nowrap font-mono tabular-nums">
             {precio?.desde ? <span className="text-xs font-semibold text-ink-soft">desde</span> : null}
             {precio && montoGrande ? (
@@ -223,9 +226,9 @@ export function TicketCard({
               </span>
             )}
           </p>
-          <p className="line-clamp-2 h-8 text-xs leading-4 text-ink-soft" title={unidad ?? undefined}>{unidad || " "}</p>
+          <p className="line-clamp-2 h-8 text-xs leading-4 text-ink-soft sm:line-clamp-1 sm:h-4" title={unidad ?? undefined}>{unidad || " "}</p>
 
-          <h3 className="mt-2.5 line-clamp-2 h-11 font-body text-base font-bold leading-snug text-ink">
+          <h3 className="mt-2 line-clamp-2 h-11 font-body text-base font-bold leading-snug text-ink">
             {href ? (
               <Link href={href} className="transition-colors hover:text-acento">
                 {titulo ?? nombre}
@@ -240,7 +243,7 @@ export function TicketCard({
           ) : null}
 
           {resumen !== undefined ? (
-            <p className="mt-2 line-clamp-3 h-12 text-xs leading-4 text-ink-soft">{resumen}</p>
+            <p className="mt-2 line-clamp-2 h-8 text-xs leading-4 text-ink-soft max-sm:hidden">{resumen}</p>
           ) : null}
 
           {vigenciaLabel || ventaHasta ? (
@@ -250,7 +253,7 @@ export function TicketCard({
                   <span aria-hidden="true" className="mt-px shrink-0 text-acento">
                     <Icono nombre="calendario" tamano={12} />
                   </span>
-                  <span className="line-clamp-2">{vigenciaLabel}</span>
+                  <span className="line-clamp-1">{vigenciaLabel}</span>
                 </p>
               ) : null}
               {ventaHasta ? (

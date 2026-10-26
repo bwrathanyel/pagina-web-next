@@ -212,11 +212,14 @@ export function Hero({ fotos, ninoGratis = null }: { fotos: FotoHero[]; ninoGrat
     // Un solo árbol responsive (dos árboles separados por breakpoint fue lo
     // que hizo que el pase móvil del 14-ago rompiera desktop sin que nadie lo
     // viera). Foto a sangre bajo la barra transparente; el contenido arriba y
-    // el cotizador anclado al pie.
+    // el cotizador anclado al pie. En desktop llena la pantalla justa (con 80svh
+    // asomaba la sección siguiente en pantalla completa, 2026-10-25); los
+    // márgenes y el título se encogen con el alto (min con svh, calibrados para
+    // que en 1366x688 queden igual) para que el cotizador no se salga.
     <section
       ref={seccion}
       className={
-        "sobre-dusk bajo-barra relative isolate flex min-h-[calc(100svh-5rem)] flex-col overflow-hidden bg-dusk lg:min-h-[80svh]" +
+        "sobre-dusk bajo-barra relative isolate flex min-h-[calc(100svh-5rem)] flex-col overflow-hidden bg-dusk lg:min-h-svh" +
         (activo ? "" : " en-pausa")
       }
     >
@@ -298,7 +301,7 @@ export function Hero({ fotos, ninoGratis = null }: { fotos: FotoHero[]; ninoGrat
           capa, fija. Sin esto, cada cruce reordena las capas de foto de abajo
           y el teléfono tenía que volver a rasterizar todo el bloque: se
           vaciaba de arriba abajo por unos cuadros (video 2026-09-25). */}
-      <div className="relative mx-auto flex w-full max-w-[var(--ancho-contenido)] flex-1 flex-col px-5 pb-6 max-lg:will-change-transform pt-[calc(var(--alto-barra)+var(--alto-categorias)+2rem)] lg:pb-8 lg:pt-[calc(var(--alto-barra)+var(--alto-categorias)+3.5rem)]">
+      <div className="relative mx-auto flex w-full max-w-[var(--ancho-contenido)] flex-1 flex-col px-5 pb-6 max-lg:will-change-transform pt-[calc(var(--alto-barra)+var(--alto-categorias)+2rem)] lg:pb-8 lg:pt-[calc(var(--alto-barra)+var(--alto-categorias)+min(3.5rem,7.3svh))]">
         <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,27rem)] lg:items-start lg:gap-12">
           {/* Sin Revelar: el texto está en pantalla desde el primer pintado
               (candidato a LCP). El tablero es el único movimiento de carga del
@@ -318,7 +321,7 @@ export function Hero({ fotos, ninoGratis = null }: { fotos: FotoHero[]; ninoGrat
               <p className="mt-2.5 truncate text-sm font-medium text-dusk-text-soft">{lugar}</p>
             ) : null}
 
-            <h1 className="mt-6 max-w-[13ch] text-balance font-display text-[clamp(2.75rem,6.4vw,5rem)] font-bold leading-[0.95] tracking-[-0.02em] text-white lg:mt-8">
+            <h1 className="mt-6 max-w-[13ch] text-balance font-display text-[clamp(2.75rem,min(6.4vw,10.4svh),5rem)] font-bold leading-[0.95] tracking-[-0.02em] text-white lg:mt-[min(2rem,4.2svh)]">
               <EditableText path="home.hero.title" />{" "}
               <EditableText path="home.hero.accent" className="text-coral-bright" />
             </h1>
@@ -327,7 +330,7 @@ export function Hero({ fotos, ninoGratis = null }: { fotos: FotoHero[]; ninoGrat
               path="home.hero.description"
               as="p"
               multiline
-              className="mt-5 hidden max-w-lg text-pretty text-lg leading-7 text-dusk-text sm:block"
+              className="hero-solo-alto mt-5 hidden max-w-lg text-pretty text-lg leading-7 text-dusk-text sm:block"
             />
           </div>
 
@@ -349,7 +352,7 @@ export function Hero({ fotos, ninoGratis = null }: { fotos: FotoHero[]; ninoGrat
         </div>
 
         <div
-          className="mt-auto pt-8 lg:pt-12"
+          className="mt-auto pt-8 lg:pt-[min(3rem,6.25svh)]"
           onPointerDownCapture={() => setTocado(true)}
           onFocusCapture={() => setTocado(true)}
         >

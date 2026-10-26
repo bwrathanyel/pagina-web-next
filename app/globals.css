@@ -370,18 +370,37 @@ html {
    raíz por escalones hace que 1920 se vea como 1366 (ancho equivalente
    ~1350-1440 en cada escalón, siempre sobre xl). Escalones y no vw: con vw el
    zoom del navegador casi no agranda nada. Las media queries siguen midiendo
-   en px (el rem de una media query es el tamaño inicial), no cambian. */
-@media (min-width: 1500px) {
+   en px (el rem de una media query es el tamaño inicial), no cambian.
+   Cada escalón pide también alto (2026-10-25): solo por ancho, una ventana
+   ancha pero baja (1536x730, la laptop 1920 al 125% de Windows) subía la raíz
+   y el cotizador del Hero quedaba fuera de pantalla. El Hero mide ~48rem en
+   desktop, así que el alto mínimo de cada escalón es 48 x su raíz en px. */
+@media (min-width: 1420px) and (min-height: 730px) {
+  html { font-size: 95%; }
+}
+@media (min-width: 1500px) and (min-height: 768px) {
   html { font-size: 100%; }
 }
-@media (min-width: 1700px) {
+@media (min-width: 1600px) and (min-height: 816px) {
+  html { font-size: 106.25%; }
+}
+@media (min-width: 1700px) and (min-height: 864px) {
   html { font-size: 112.5%; }
 }
-@media (min-width: 1880px) {
+@media (min-width: 1790px) and (min-height: 912px) {
+  html { font-size: 118.75%; }
+}
+@media (min-width: 1880px) and (min-height: 960px) {
   html { font-size: 125%; }
 }
-@media (min-width: 2200px) {
+@media (min-width: 2200px) and (min-height: 1056px) {
   html { font-size: 137.5%; }
+}
+
+/* Ventana baja en la raíz mínima (1280x720 con las barras del navegador):
+   ni encogiendo los márgenes entra todo, la descripción del Hero se va. */
+@media (min-width: 1024px) and (max-height: 669px) {
+  .hero-solo-alto { display: none; }
 }
 
 /* Aviso del nombre de la foto en el Hero (esquina superior). El crossfade de
