@@ -163,6 +163,14 @@ export function Footer() {
           <Link href="/creditos-fotograficos" className="inline-flex min-h-11 items-center underline underline-offset-4 hover:text-dusk-text">
             Créditos fotográficos
           </Link>
+          {NEGOCIO.googleOpiniones && (
+            <>
+              {" · "}
+              <a href={NEGOCIO.googleOpiniones} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center underline underline-offset-4 hover:text-dusk-text">
+                Déjenos su opinión en Google
+              </a>
+            </>
+          )}
         </p>
       </div>
     </footer>

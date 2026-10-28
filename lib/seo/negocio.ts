@@ -21,6 +21,8 @@ export const NEGOCIO = {
   },
   // Perfil de Google Business (se suma a sameAs).
   googleBusiness: "https://share.google/oeIdt5lV8qDTp68XP" as string | null,
+  // Formulario de opiniones de la ficha GBP (footer y mensaje post-viaje).
+  googleOpiniones: "https://g.page/r/CXyi5Xz0LKwOEBM/review" as string | null,
 } as const;
 
 export function direccionLegible() {
