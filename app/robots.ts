@@ -18,7 +18,29 @@ export default function robots(): MetadataRoute.Robots {
   }
 
   return {
-    rules: { userAgent: "*", allow: "/", disallow: "/api/" },
+    rules: [
+      { userAgent: "*", allow: "/", disallow: "/api/" },
+      // Bots de buscadores con IA (Gemini, ChatGPT, Perplexity, Claude, Apple).
+      // Ya entraban por "*"; nombrarlos deja explícito que queremos que nos lean
+      // para recomendarnos. Si dejan de aparecer, revisar Cloudflare → AI Crawl
+      // Control: puede bloquearlos aunque robots.txt los permita.
+      {
+        userAgent: [
+          "Googlebot",
+          "Google-Extended",
+          "GPTBot",
+          "OAI-SearchBot",
+          "ChatGPT-User",
+          "PerplexityBot",
+          "ClaudeBot",
+          "Claude-SearchBot",
+          "Applebot-Extended",
+          "Bingbot",
+        ],
+        allow: "/",
+        disallow: "/api/",
+      },
+    ],
     sitemap: `${SITE_URL}/sitemap.xml`,
   };
 }

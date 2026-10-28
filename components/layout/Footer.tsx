@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { REDES } from "@/lib/social";
+import { NEGOCIO, direccionLegible } from "@/lib/seo/negocio";
 import { itemMenuPublico } from "@/lib/catalogo/ocultas";
 import { EstadoAtencion } from "@/components/layout/EstadoAtencion";
 import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
@@ -136,6 +137,25 @@ export function Footer() {
             <InfoContacto />
           </div>
         </div>
+
+        <nav aria-label="Información" className="mb-4 flex flex-wrap gap-x-5 text-sm text-dusk-text-soft">
+          {[
+            ["/destinos", "Destinos"],
+            ["/nosotros", "Nosotros"],
+            ["/preguntas-frecuentes", "Preguntas frecuentes"],
+          ].map(([href, label]) => (
+            <Link key={href} href={href} className="inline-flex min-h-11 items-center hover:text-dusk-text">
+              {label}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Mismos datos que el JSON-LD y el perfil de Google Business (NAP consistente). */}
+        <p className="mb-2 text-xs text-dusk-text-soft">
+          {[NEGOCIO.nombre, NEGOCIO.rif && `RIF ${NEGOCIO.rif}`, NEGOCIO.rtn && `RTN ${NEGOCIO.rtn}`, direccionLegible()]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
 
         <p className="border-t border-dusk-text/10 pt-6 text-xs text-dusk-text-soft">
           © {new Date().getFullYear()} {content.footer.copyright}

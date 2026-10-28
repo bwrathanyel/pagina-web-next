@@ -2,8 +2,9 @@ import Image from "next/image";
 import { CREDITOS_FOTOS_DESTINO } from "@/lib/promociones/creditosFotosDestino";
 
 export const metadata = {
-  title: "Créditos fotográficos | Destino y Eventos Lotus 360",
+  title: "Créditos fotográficos",
   description: "Autores, fuentes y licencias de nuestra selección de fotografías de destinos.",
+  alternates: { canonical: "/creditos-fotograficos" },
 };
 
 export default function CreditosFotograficosPage() {

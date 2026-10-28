@@ -1,6 +1,7 @@
 import { fotosDeAncho } from "@/lib/supabase/fotos";
 import { precioPorPersona, tarifaDestacada } from "@/lib/tarifas";
 import { REDES } from "@/lib/social";
+import { NEGOCIO } from "@/lib/seo/negocio";
 import type { Producto } from "@/types/supabase";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://destinoyeventoslotus360.com";
@@ -53,14 +54,32 @@ export function buildTravelAgencyJsonLd() {
         url: `${SITE_URL}/`,
         logo: `${SITE_URL}/logo-lotus360-transparent.png`,
         image: `${SITE_URL}/logo-lotus360-transparent.png`,
-        telephone: "+58-424-4634041",
+        telephone: NEGOCIO.telefono,
         email: REDES.email,
+        taxID: NEGOCIO.rif ?? undefined,
+        foundingDate: NEGOCIO.fundacion ?? undefined,
+        identifier: NEGOCIO.rtn
+          ? { "@type": "PropertyValue", propertyID: "Registro Turístico Nacional (MINTUR)", value: NEGOCIO.rtn }
+          : undefined,
         address: {
           "@type": "PostalAddress",
-          streetAddress: "Valencia",
-          addressLocality: "Valencia",
-          addressRegion: "Carabobo",
-          addressCountry: "VE",
+          streetAddress: NEGOCIO.direccion.calle ?? NEGOCIO.direccion.localidad,
+          addressLocality: NEGOCIO.direccion.localidad,
+          addressRegion: NEGOCIO.direccion.region,
+          postalCode: NEGOCIO.direccion.codigoPostal ?? undefined,
+          addressCountry: NEGOCIO.direccion.pais,
+        },
+        contactPoint: {
+          "@type": "ContactPoint",
+          telephone: NEGOCIO.telefono,
+          contactType: "reservations",
+          availableLanguage: ["es"],
+          areaServed: ["VE", "CO", "ES", "US", "PA", "CL", "AR", "PE"],
+        },
+        hasOfferCatalog: {
+          "@type": "OfferCatalog",
+          name: "Viajes y hospedaje en Venezuela",
+          url: `${SITE_URL}/catalogo`,
         },
         geo: {
           "@type": "GeoCoordinates",
@@ -85,21 +104,15 @@ export function buildTravelAgencyJsonLd() {
         openingHoursSpecification: [
           {
             "@type": "OpeningHoursSpecification",
-            dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-            opens: "08:30",
-            closes: "19:00",
-          },
-          {
-            "@type": "OpeningHoursSpecification",
-            dayOfWeek: "Sunday",
-            opens: "10:00",
-            closes: "15:00",
+            dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+            opens: "09:00",
+            closes: "16:00",
           },
         ],
         priceRange: "$$",
         currenciesAccepted: "VES, USD",
         paymentAccepted: "Transferencia, Efectivo, Pago Móvil",
-        sameAs: [REDES.facebook, REDES.instagram, REDES.tiktok],
+        sameAs: [REDES.facebook, REDES.instagram, REDES.tiktok, NEGOCIO.googleBusiness].filter(Boolean),
       },
       {
         "@type": "WebSite",
@@ -161,6 +174,92 @@ export function buildProductJsonLd(producto: Producto) {
           seller: { "@id": ORG_ID },
         }
       : undefined,
+  };
+}
+
+// Nodo Hotel aparte del Product: Product da el precio en el SERP; Hotel le dice
+// a Google/Gemini que es un alojamiento en un lugar concreto, para consultas
+// tipo "hoteles en Margarita" o "posadas en Los Roques".
+export function buildHotelJsonLd(producto: Producto) {
+  const fotos = fotosDeAncho(producto.producto_fotos, 1280);
+  return {
+    "@context": "https://schema.org",
+    "@type": "Hotel",
+    name: producto.nombre,
+    description: producto.descripcion ?? undefined,
+    image: fotos.length > 0 ? fotos : undefined,
+    url: `${SITE_URL}/producto/${producto.id}`,
+    address: producto.destino
+      ? { "@type": "PostalAddress", addressLocality: producto.destino, addressCountry: "VE" }
+      : undefined,
+  };
+}
+
+// Paquete = vuelo + hotel. Sin Offer: el precio depende de origen, pasajeros
+// y noches, y una Offer sin precio la invalida Google.
+export function buildTouristTripJsonLd(p: {
+  titulo: string;
+  descripcion: string | null;
+  slug: string;
+  incluye: string[];
+  hotel: { nombre: string; destino: string | null };
+  imagen?: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "TouristTrip",
+    name: p.titulo,
+    description: p.descripcion ?? undefined,
+    url: `${SITE_URL}/paquete/${p.slug}`,
+    image: p.imagen,
+    provider: { "@id": ORG_ID },
+    touristType: "Viajeros nacionales y venezolanos en el exterior",
+    itinerary: {
+      "@type": "ItemList",
+      itemListElement: [
+        ...(p.hotel.destino
+          ? [{ "@type": "ListItem", position: 1, item: { "@type": "TouristDestination", name: p.hotel.destino } }]
+          : []),
+        {
+          "@type": "ListItem",
+          position: p.hotel.destino ? 2 : 1,
+          item: { "@type": "Hotel", name: p.hotel.nombre },
+        },
+      ],
+    },
+    abstract: p.incluye.length > 0 ? `Incluye: ${p.incluye.join(", ")}.` : undefined,
+  };
+}
+
+export function buildFaqJsonLd(faqs: { p: string; r: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map(({ p, r }) => ({
+      "@type": "Question",
+      name: p,
+      acceptedAnswer: { "@type": "Answer", text: r },
+    })),
+  };
+}
+
+export function buildTouristDestinationJsonLd(d: {
+  slug: string;
+  nombre: string;
+  intro: string;
+  estado: string;
+  geo: { lat: number; lng: number };
+  foto: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "TouristDestination",
+    name: d.nombre,
+    description: d.intro,
+    url: `${SITE_URL}/destinos/${d.slug}`,
+    image: `${SITE_URL}${d.foto}-1280.jpg`,
+    geo: { "@type": "GeoCoordinates", latitude: d.geo.lat, longitude: d.geo.lng },
+    containedInPlace: { "@type": "AdministrativeArea", name: `${d.estado}, Venezuela` },
   };
 }
 

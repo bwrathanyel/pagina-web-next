@@ -6,7 +6,9 @@ import { GaleriaProducto } from "@/components/producto/GaleriaProducto";
 import { ProductoInfo } from "@/components/producto/ProductoInfo";
 import { ProductoAccionesOverlay, ProductoFooterMobile } from "@/components/producto/ProductoAccionesMobile";
 import { fotosDe, fotosDeAncho, ordenarFotos } from "@/lib/supabase/fotos";
-import { jsonLdScript, buildProductJsonLd, buildBreadcrumbJsonLd } from "@/lib/seo/jsonld";
+import { jsonLdScript, buildProductJsonLd, buildBreadcrumbJsonLd, buildHotelJsonLd } from "@/lib/seo/jsonld";
+import { destinoDeProducto } from "@/lib/seo/destinos";
+import Link from "next/link";
 import { CarpetaTarifas } from "@/components/producto/CarpetaTarifas";
 import { TarifasServicio } from "@/components/producto/TarifasServicio";
 import { esServicio } from "@/lib/servicios";
@@ -64,6 +66,7 @@ export default async function ProductoPage({ params }: { params: Promise<{ id: s
   if (!producto || tipoOculto(producto.tipo)) notFound();
 
   const fotos = fotosDe(producto.producto_fotos);
+  const guia = destinoDeProducto(producto.destino);
   const creditos = ordenarFotos(producto.producto_fotos).map((f) =>
     f.credito ? { texto: f.credito, url: f.credito_url ?? null } : null,
   );
@@ -75,11 +78,17 @@ export default async function ProductoPage({ params }: { params: Promise<{ id: s
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript(buildProductJsonLd(producto))}
       />
+      {producto.tipo === "hotel" ? (
+        <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(buildHotelJsonLd(producto))} />
+      ) : null}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript(
           buildBreadcrumbJsonLd([
             { name: "Inicio", url: "/" },
+            guia
+              ? { name: guia.nombre, url: `/destinos/${guia.slug}` }
+              : { name: "Hoteles", url: "/catalogo/hoteles" },
             { name: producto.nombre, url: `/producto/${producto.id}` },
           ]),
         )}
@@ -91,6 +100,14 @@ export default async function ProductoPage({ params }: { params: Promise<{ id: s
       <ProductoInfo producto={producto}>
         {esServicio(producto.tipo) ? <TarifasServicio producto={producto} /> : <CarpetaTarifas producto={producto} />}
       </ProductoInfo>
+      {guia ? (
+        <p className="mt-8 text-sm text-ink-soft">
+          ¿Primera vez en {guia.nombre}?{" "}
+          <Link href={`/destinos/${guia.slug}`} className="font-semibold text-ink underline underline-offset-4">
+            Lea nuestra guía: cómo llegar, mejor época y qué hacer
+          </Link>
+        </p>
+      ) : null}
       <ProductoFooterMobile
         cotizarHref={enlaceCotizarProducto(producto)}
         reservar={producto.tipo === "hotel" ? { productoId: producto.id, tarifaId: tarifaDestacada(producto)?.id } : undefined}

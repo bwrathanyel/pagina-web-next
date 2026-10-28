@@ -6,7 +6,7 @@ import { rutasVuelo } from "@/lib/supabase/queries";
 import { getPaquetePorSlug, getSlugsPaquetes } from "@/lib/paquetes/queries";
 import { origenesValidos } from "@/lib/paquetes/precio";
 import { fotoDerivada } from "@/lib/supabase/imageLoader";
-import { jsonLdScript, buildBreadcrumbJsonLd } from "@/lib/seo/jsonld";
+import { jsonLdScript, buildBreadcrumbJsonLd, buildTouristTripJsonLd } from "@/lib/seo/jsonld";
 
 export const dynamicParams = true;
 
@@ -42,6 +42,15 @@ export default async function PaquetePage({ params }: { params: Promise<{ slug: 
   return (
     <main className="mx-auto max-w-7xl px-5 py-6 pb-44 md:py-10 lg:pb-12">
       <FondoPaisaje destino={paquete.hotel.destino} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={jsonLdScript(
+          buildTouristTripJsonLd({
+            ...paquete,
+            imagen: paquete.hotel.fotos[0] ? fotoDerivada(paquete.hotel.fotos[0], 1280) : undefined,
+          }),
+        )}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript(

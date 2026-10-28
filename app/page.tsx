@@ -11,6 +11,10 @@ import { JuegosBanda } from "@/components/home/JuegosBanda";
 import { fotosDe } from "@/lib/supabase/fotos";
 import { getHotSales, getProductosPorCategoria } from "@/lib/supabase/queries";
 
+// El canonical vivía en el layout y lo heredaban todas las páginas sin uno
+// propio: Google las leía como duplicados del home.
+export const metadata = { alternates: { canonical: "/" } };
+
 export default async function Home() {
   // Sin .catch: si Supabase falla, la regeneración ISR lanza y Next sigue sirviendo la
   // versión anterior en vez de cachear una home vacía (sin ofertas) por 1 h (Fase 6).

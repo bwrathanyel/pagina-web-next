@@ -1,8 +1,9 @@
 import { POLITICA_CANCELACION } from "@/lib/checkout/politica";
 
 export const metadata = {
-  title: "Términos de servicio | Destino y Eventos Lotus 360",
+  title: "Términos de servicio",
   description: "Condiciones de uso del sitio web de Destino y Eventos Lotus 360.",
+  alternates: { canonical: "/terminos" },
 };
 
 // Índice de anclas: /reservar enlaza a #compra-directa y #cancelaciones. El texto de cada

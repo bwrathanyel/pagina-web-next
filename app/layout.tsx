@@ -63,7 +63,6 @@ export const metadata: Metadata = {
     template: "%s | Destino y Eventos Lotus 360",
   },
   description: DESCRIPTION,
-  alternates: { canonical: "/" },
   // Los íconos los generan las convenciones de archivo de Next (app/favicon.ico,
   // app/icon.png 192x192 múltiplo de 48 para cumplir el requisito de favicon de
   // Google, app/apple-icon.png). No declarar icons aquí para no emitir un
@@ -76,10 +75,10 @@ export const metadata: Metadata = {
     siteName: "Destino y Eventos Lotus 360",
     images: [
       {
-        url: "/logo-lotus360-transparent.png",
-        width: 1024,
-        height: 1024,
-        alt: "Logo de Destino y Eventos Lotus 360",
+        url: "/og-lotus360.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Gran Roque, Los Roques — Destino y Eventos Lotus 360, agencia de viajes en Venezuela",
       },
     ],
     locale: "es_VE",
@@ -89,7 +88,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: TITLE,
     description: DESCRIPTION,
-    images: ["/logo-lotus360-transparent.png"],
+    images: ["/og-lotus360.jpg"],
   },
   other: {
     "geo.region": "VE-G",

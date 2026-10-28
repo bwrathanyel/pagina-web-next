@@ -1,6 +1,7 @@
 export const metadata = {
-  title: "Política de privacidad | Destino y Eventos Lotus 360",
+  title: "Política de privacidad",
   description: "Cómo Destino y Eventos Lotus 360 recopila, usa y protege sus datos.",
+  alternates: { canonical: "/privacidad" },
 };
 
 export default function PrivacidadPage() {

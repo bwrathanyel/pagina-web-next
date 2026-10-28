@@ -3,6 +3,7 @@ import { VacantesYPostulacion } from "@/components/empleo/VacantesYPostulacion";
 export const metadata = {
   title: "Trabaje con nosotros",
   description: "Estamos contratando: vacantes presenciales en Naguanagua (Valencia) y posiciones freelance por turnos.",
+  alternates: { canonical: "/trabaja-con-nosotros" },
 };
 
 export default function TrabajaConNosotrosPage() {
