@@ -9,13 +9,9 @@ function calcularEstado(): { online: boolean; texto: string } {
   const ve = new Date(ahora.getTime() + ahora.getTimezoneOffset() * 60000 - 4 * 3600000);
   const dia = ve.getDay();
   const horaDecimal = ve.getHours() + ve.getMinutes() / 60;
-  const online =
-    dia >= 1 && dia <= 6 ? horaDecimal >= 8.5 && horaDecimal < 19 : dia === 0 && horaDecimal >= 10 && horaDecimal < 15;
-  const texto = online
-    ? "En línea · Respondemos pronto"
-    : dia === 0
-      ? "Domingos 10am-3pm"
-      : "Lun-Sáb 8:30am-7pm";
+  // Mismo horario que NEGOCIO/JSON-LD y la ficha de Google Business.
+  const online = dia >= 1 && dia <= 5 && horaDecimal >= 9 && horaDecimal < 16;
+  const texto = online ? "En línea · Respondemos pronto" : "Lun-Vie 9am-4pm";
   return { online, texto };
 }
 

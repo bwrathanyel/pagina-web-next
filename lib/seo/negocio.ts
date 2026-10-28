@@ -4,6 +4,7 @@
 // con el perfil de Google Business). Un campo en null no se publica.
 export const NEGOCIO = {
   nombre: "Destino y Eventos Lotus 360",
+  razonSocial: "Destino y Eventos Lotus 360, C.A.",
   rif: "J-41280131-7" as string | null,
   // Registro Turístico Nacional (MINTUR).
   rtn: "23.115" as string | null,
@@ -11,14 +12,15 @@ export const NEGOCIO = {
   fundacion: "2019" as string | null,
   telefono: "+58-424-4634041",
   direccion: {
-    calle: "C.C. Dinastía, Piso 3, Oficina 5-4" as string | null,
+    // Igual a la ficha de Google Business (NAP consistente).
+    calle: "C.C. Profesional Dinastía, Piso 3, Oficina 54, Av. 181 Valencia" as string | null,
     localidad: "Naguanagua",
     region: "Carabobo",
     codigoPostal: null as string | null,
     pais: "VE",
   },
-  // URL del perfil de Google Business cuando exista (se suma a sameAs).
-  googleBusiness: null as string | null,
+  // Perfil de Google Business (se suma a sameAs).
+  googleBusiness: "https://share.google/oeIdt5lV8qDTp68XP" as string | null,
 } as const;
 
 export function direccionLegible() {

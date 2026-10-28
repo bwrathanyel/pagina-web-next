@@ -49,6 +49,7 @@ export function buildTravelAgencyJsonLd() {
         "@id": ORG_ID,
         name: "Destino y Eventos Lotus 360",
         alternateName: ALTERNATE_NAMES,
+        legalName: NEGOCIO.razonSocial,
         description:
           "Agencia de viajes en Venezuela especializada en hospedaje, boletería aérea nacional, paquetes todo incluido y full days en Los Roques, Margarita, Canaima, Mérida y Morrocoy. Atendemos también a venezolanos en el exterior que compran viajes para sus familiares.",
         url: `${SITE_URL}/`,
