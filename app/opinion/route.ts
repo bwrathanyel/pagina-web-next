@@ -9,8 +9,18 @@ export const dynamic = "force-dynamic";
 
 const NOINDEX = { "X-Robots-Tag": "noindex, nofollow", "Cache-Control": "no-store" };
 
-function esWebviewAndroid(ua: string): boolean {
-  return /Android/i.test(ua) && (/\bwv\b/.test(ua) || /WhatsApp|FBAN|FBAV|Instagram/i.test(ua));
+// El navegador interno de WhatsApp (2026) no pone "wv" ni "WhatsApp" en el UA, sino
+// "WA4A/x.y" + x-requested-with: com.whatsapp + sec-ch-ua "Android WebView".
+function esWebviewAndroid(req: Request): boolean {
+  const ua = req.headers.get("user-agent") ?? "";
+  if (!/Android/i.test(ua)) return false;
+  const app = req.headers.get("x-requested-with") ?? "";
+  return (
+    /\bwv\b/.test(ua) ||
+    /WhatsApp|WA4A|FBAN|FBAV|Instagram/i.test(ua) ||
+    /Android WebView/i.test(req.headers.get("sec-ch-ua") ?? "") ||
+    (app !== "" && app !== "com.android.chrome")
+  );
 }
 
 function urlIntent(destino: string): string {
@@ -39,6 +49,7 @@ a.s{color:#1a73e8;font-size:.9rem}
 <h1>Gracias por viajar con nosotros</h1>
 <p>Para dejar su opinión en Google, ábrala en Chrome, donde ya tiene su cuenta iniciada.</p>
 <a class="b" href="${esc(intent)}">Abrir en Chrome</a>
+<p style="font-size:.9rem;margin-top:8px">Si no se abre, toque los tres puntos ⋮ de arriba y elija «Abrir en el navegador».</p>
 <a class="s" href="${esc(destino)}">Continuar aquí</a>
 </main>
 <script>location.href=${JSON.stringify(intent)}</script>
@@ -48,8 +59,7 @@ a.s{color:#1a73e8;font-size:.9rem}
 export async function GET(request: Request): Promise<Response> {
   const destino = NEGOCIO.googleOpiniones;
   if (!destino) return Response.redirect(new URL("/", request.url), 302);
-  const ua = request.headers.get("user-agent") ?? "";
-  if (!esWebviewAndroid(ua)) {
+  if (!esWebviewAndroid(request)) {
     return new Response(null, { status: 302, headers: { Location: destino, ...NOINDEX } });
   }
   return new Response(pagina(destino), {
