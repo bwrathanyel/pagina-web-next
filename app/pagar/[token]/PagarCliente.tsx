@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { BotonWhatsapp, Confirmada, EstadoSimple, Verificando } from "@/components/pago/EstadosPago";
+import { ElegirMetodo } from "@/components/pago/ElegirMetodo";
 import { PagoPendiente } from "@/components/pago/PagoPendiente";
 import { Boton } from "@/components/ui/Boton";
 import { Esqueleto } from "@/components/ui/Esqueleto";
@@ -133,7 +134,8 @@ export function PagarCliente({ token }: { token: string }) {
           </Angosto>
         );
       }
-      return <PagoPendiente pago={estado} token={token} onDeclarado={alDeclarar} onVencer={alVencer} />;
+      if (!estado.riel) return <ElegirMetodo pago={estado} token={token} onDeclarado={alDeclarar} onVencer={alVencer} />;
+      return <PagoPendiente pago={{ ...estado, riel: estado.riel }} token={token} onDeclarado={alDeclarar} onVencer={alVencer} />;
     case "pendiente_verificacion":
       return web ? (
         <Angosto><Verificando reserva={web} /></Angosto>

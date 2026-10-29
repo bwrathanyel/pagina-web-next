@@ -21,7 +21,7 @@ import {
   formatearMonto,
   instructivoDe,
   validarComprobante,
-  type PagoPublico,
+  type PagoConRiel,
   type RielPago,
 } from "@/lib/pago/pagar";
 import { hospedajeDe, ResumenCompra } from "./ResumenCompra";
@@ -32,7 +32,7 @@ const ETIQUETA_REFERENCIA: Partial<Record<RielPago, string>> = {
 };
 
 /** Debajo del monto: qué incluye y con qué tasa se convirtió. «EUR» es tasa, no moneda: se paga en Bs. */
-function notaMonto(pago: PagoPublico, igtf: string | null): string {
+function notaMonto(pago: PagoConRiel, igtf: string | null): string {
   const vence = fechaHoraVenezuela(pago.expira_en);
   if (pago.moneda === "VES") {
     const tasa = pago.tasa_usd_ves ? montoCentavos(Math.round(pago.tasa_usd_ves * 100), "VES") : null;
@@ -48,14 +48,16 @@ function notaMonto(pago: PagoPublico, igtf: string | null): string {
   return pago.reserva ? "" : `Link válido hasta el ${vence}.`;
 }
 
-/** Pago emitido: el boleto con el monto, los datos para pagar y el aviso «¿Ya pagó?». */
+/** Pago emitido: el boleto con el monto, los datos para pagar y el aviso «¿Ya pagó?».
+ *  `onCambiarMetodo`: link sin método fijo, donde el cliente eligió `pago.riel` y puede volver atrás. */
 export function PagoPendiente({
-  pago, token, onDeclarado, onVencer,
+  pago, token, onDeclarado, onVencer, onCambiarMetodo,
 }: {
-  pago: PagoPublico;
+  pago: PagoConRiel;
   token: string;
   onDeclarado: () => void;
   onVencer: () => void;
+  onCambiarMetodo?: () => void;
 }) {
   const ins = instructivoDe(pago.riel);
   const reserva = pago.reserva ?? null;
@@ -103,6 +105,7 @@ export function PagoPendiente({
         turnstileToken: tokenSeguridad,
         comprobanteBase64,
         comprobanteMime: archivo?.type,
+        riel: onCambiarMetodo ? pago.riel : undefined,
       });
       if (res.ok) {
         registrarEvento("pago_declarado", { meta: { token } });
@@ -267,6 +270,11 @@ export function PagoPendiente({
         <header>
           <h1 className="font-display text-3xl font-bold leading-tight text-ink">{ins.titulo}</h1>
           <p className={ROTULO + " mt-2"}>{pago.tipo === "abono" ? "Abono / reserva" : "Pago total"}</p>
+          {onCambiarMetodo ? (
+            <Boton type="button" variante="secundario" tamano="sm" className="mt-3" onClick={onCambiarMetodo}>
+              Cambiar método de pago
+            </Boton>
+          ) : null}
         </header>
         {boleto}
         {pasos}

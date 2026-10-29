@@ -38,11 +38,23 @@ export interface ReservaWeb {
   verificar_antes_de: string | null;
 }
 
+/** Link del asesor sin método fijo: el cliente elige y la página arma el monto con estos datos. */
+export interface OpcionesMetodo {
+  rieles: RielPago[];
+  /** Bs por US$ del día, con la tasa del link (dólar o euro BCV). null = no hay tasa cargada. */
+  tasa_hoy: number | null;
+  tasa_fecha: string | null;
+  bs_centavos: number | null;
+}
+
 export interface PagoPublico {
   ok: true;
   estado: EstadoPago;
   tipo: "abono" | "total";
-  riel: RielPago;
+  /** null = el cliente elige el método (ver `opciones`). */
+  riel: RielPago | null;
+  monto_usd_centavos?: number;
+  opciones?: OpcionesMetodo | null;
   monto_centavos: number;
   moneda: "USD" | "VES" | "USDT";
   tasa_usd_ves: number | null;
@@ -53,6 +65,7 @@ export interface PagoPublico {
   origen?: "web";
   reserva?: ReservaWeb;
 }
+export type PagoConRiel = PagoPublico & { riel: RielPago };
 export interface PagoError { ok: false; error: string; estado?: EstadoPago }
 export type RespuestaEstado = PagoPublico | PagoError;
 
@@ -209,6 +222,8 @@ export interface DeclararArgs {
   turnstileToken: string;
   comprobanteBase64?: string;
   comprobanteMime?: string;
+  /** Solo en el link sin método fijo. */
+  riel?: RielPago;
 }
 
 export async function declarar(args: DeclararArgs): Promise<{ ok: boolean; error?: string; estado?: string }> {
@@ -219,6 +234,7 @@ export async function declarar(args: DeclararArgs): Promise<{ ok: boolean; error
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         referencia: args.referencia,
+        riel: args.riel,
         turnstile_token: args.turnstileToken,
         comprobante_base64: args.comprobanteBase64,
         comprobante_mime: args.comprobanteMime,

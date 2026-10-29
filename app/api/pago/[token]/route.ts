@@ -9,6 +9,7 @@ import { verificarTurnstile } from "../../_shared/turnstile";
  * de anti-abuso del formulario público. */
 
 const TOKEN_RE = /^[0-9a-f]{64}$/;
+const RIELES_LINK: unknown[] = ["zelle", "pago_movil", "binance"];
 
 function config(): { url: string; apiKey: string } | null {
   const url = process.env.PAGO_PUBLICO_URL;
@@ -73,6 +74,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
     action: "declarar",
     p_token: token,
     referencia,
+    riel: typeof body.riel === "string" && RIELES_LINK.includes(body.riel) ? body.riel : undefined,
     comprobante_base64: typeof body.comprobante_base64 === "string" ? body.comprobante_base64 : undefined,
     comprobante_mime: typeof body.comprobante_mime === "string" ? body.comprobante_mime : undefined,
   });
