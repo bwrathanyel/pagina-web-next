@@ -134,6 +134,7 @@ const PASES_OTROS_DESTINOS = 2;
 export function fotosHeroDeHotSales(
   hotSales: (Promocion & { nino_gratis?: { cantidad: number } | null })[],
   limite = 20,
+  azar: () => number = Math.random,
 ): FotoHero[] {
   const grupos = new Map<string, typeof hotSales>();
   for (const p of hotSales) {
@@ -185,5 +186,12 @@ export function fotosHeroDeHotSales(
     }
   }
 
-  return deDestino.length > 0 ? deDestino : respaldo;
+  // Barajadas en el servidor en cada regeneración ISR (~1 h): así cambia también la primera, que el
+  // Hero deja fija para no cruzar a una foto sin bajar al hidratar (2026-09-25).
+  const lista = deDestino.length > 0 ? deDestino : respaldo;
+  for (let k = lista.length - 1; k > 0; k--) {
+    const j = Math.floor(azar() * (k + 1));
+    [lista[k], lista[j]] = [lista[j], lista[k]];
+  }
+  return lista;
 }
