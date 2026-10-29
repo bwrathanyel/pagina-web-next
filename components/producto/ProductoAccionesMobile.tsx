@@ -6,7 +6,7 @@ import { BotonFavorito } from "@/components/ui/BotonFavorito";
 import { Icono } from "@/components/ui/Icono";
 import { useFavoritos } from "@/lib/favoritos/useFavoritos";
 import { useCheckoutConfig } from "@/components/checkout/useCheckoutConfig";
-import { enlaceReservar } from "@/components/producto/ReservarCta";
+import { enlaceReservar, useCompraDirecta } from "@/components/producto/ReservarCta";
 import { registrarEvento } from "@/lib/analitica/eventos";
 
 /** Overlay mobile-only sobre la foto principal: volver + favorito. En
@@ -46,7 +46,7 @@ export function ProductoAccionesOverlay({
 }
 
 /** Footer sticky mobile-only con el CTA principal, arriba del bottom tab bar. En
- * hoteles con la compra directa abierta, «Reservar y pagar» pasa a ser la acción
+ * hoteles con la compra directa abierta (Margarita, sin stop sale), «Reservar y pagar» pasa a ser la acción
  * principal y Cotizar queda al lado como secundaria; mientras carga la configuración
  * (o fuera de horario) se ve solo Cotizar, sin cambiar la altura de la barra. */
 export function ProductoFooterMobile({
@@ -54,10 +54,11 @@ export function ProductoFooterMobile({
   reservar,
 }: {
   cotizarHref: string;
-  reservar?: { productoId: number; tarifaId?: number | null };
+  reservar?: { productoId: number; tarifaId?: number | null; destino: string | null | undefined };
 }) {
   const { config } = useCheckoutConfig();
-  const directa = reservar && config?.activo && config.abierto ? reservar : null;
+  const habilitado = useCompraDirecta(reservar?.productoId ?? null, reservar?.destino);
+  const directa = reservar && habilitado && config?.activo && config.abierto ? reservar : null;
   return (
     <div
       className="fixed inset-x-0 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-30 border-t border-linea bg-card px-5 py-3 lg:hidden"

@@ -3,6 +3,7 @@ import { clientKey } from "../_shared/client-key";
 import { verificarTurnstile } from "../_shared/turnstile";
 import { calcularHospedaje, fechaValida, servicioHospedaje, validarContacto, type SolicitudHospedaje } from "@/lib/checkout/calculo";
 import { bloqueosDe, hotelParaCobrar } from "@/lib/checkout/datos";
+import { esDestinoCompraDirecta } from "@/lib/checkout/destinos";
 import { POLITICA_CANCELACION } from "@/lib/checkout/politica";
 
 /** Compra directa de hospedaje (Plan 1). El navegador manda QUÉ quiere comprar (hotel, habitación, fechas,
@@ -105,6 +106,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "servicio_no_disponible" }, { status: 502 });
   }
   if (!hotel) return NextResponse.json({ ok: false, error: "hotel_no_disponible" }, { status: 404 });
+  if (!esDestinoCompraDirecta(hotel.destino)) return NextResponse.json({ ok: false, error: "destino_no_habilitado" }, { status: 403 });
 
   const calculo = calcularHospedaje(hotel, sel, bloqueos);
   if (!calculo.ok) {

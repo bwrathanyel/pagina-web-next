@@ -56,7 +56,7 @@ export function ProductoCard({ producto, prioridad = false }: { producto: Produc
   const href = `/producto/${producto.id}`;
   const key = `producto-${producto.id}`;
   const puedeEditar = rol === "admin" && modoEdicion;
-  const reservar = useReservarTarjeta(producto.tipo === "hotel" ? producto.id : null, destacada?.id, "tarjeta_hotel");
+  const reservar = useReservarTarjeta(producto.tipo === "hotel" ? producto.id : null, destacada?.id, "tarjeta_hotel", producto.destino);
 
   return (
     <>

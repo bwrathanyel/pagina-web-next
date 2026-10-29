@@ -9,6 +9,10 @@ export interface PaseHero {
   promoId: number;
   href: string;
   hotel: string;
+  /** Hotel y destino del alojamiento: con ellos el pase ofrece «Reservar y pagar ahora»
+   * (solo hoteles con compra directa). La tarifa es `promoId`, la fila de `tarifas`. */
+  productoId: number | null;
+  destino: string | null;
   plan: string | null;
   precio: ReturnType<typeof precioTarjeta>;
   /** "hasta 30 nov" (fin de venta) o el texto de vigencia del tarifario. */
@@ -63,6 +67,8 @@ function paseDe(p: Promocion, hotel: string, foto?: string): PaseHero | undefine
     promoId: p.id,
     href: `/producto/${p.producto.id}`,
     hotel,
+    productoId: p.producto.tipo === "hotel" ? p.producto.id : null,
+    destino: p.producto.destino ?? null,
     plan: p.plan?.trim() || null,
     precio: precioTarjeta(p),
     vigencia: vigenciaDe(p),

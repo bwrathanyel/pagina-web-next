@@ -30,6 +30,7 @@ import type { Tarifa } from "@/types/supabase";
 import { montoConMoneda, vendibleHoy } from "@/lib/tarifas";
 import { useCheckoutConfig } from "@/components/checkout/useCheckoutConfig";
 import { enlaceReservar } from "@/components/producto/ReservarCta";
+import { esDestinoCompraDirecta } from "@/lib/checkout/destinos";
 import { registrarEvento } from "@/lib/analitica/eventos";
 import { MAX_BEBES, MAX_PAX } from "@/lib/checkout/calculo";
 import { SolicitudLista } from "@/components/leads/SolicitudLista";
@@ -516,11 +517,12 @@ export function CotizadorViaje({
   };
   // «Reservar y pagar» solo si /reservar puede cobrar lo mismo que se ve: solo hospedaje, precio
   // exacto (estimado ok), tarifa vendible hoy, viajeros dentro del límite del checkout y la
-  // ventana de atención abierta. Si no, la única acción sigue siendo «Enviar solicitud».
+  // ventana de atención abierta, solo en destinos con compra directa (Margarita). Si no, la única
+  // acción sigue siendo «Enviar solicitud».
   const { config: checkout } = useCheckoutConfig();
   const viajeros = estado.adultos + estadia.edades.length + estado.bebes;
   const reservar =
-    estado.servicios.length === 1 && hotel && tarifaElegida && estimado?.ok && vendibleHoy(tarifaElegida) &&
+    estado.servicios.length === 1 && hotel && esDestinoCompraDirecta(hotel.destino) && tarifaElegida && estimado?.ok && vendibleHoy(tarifaElegida) &&
     checkout?.activo && checkout.abierto && viajeros <= MAX_PAX && estado.bebes <= MAX_BEBES &&
     estadia.edades.every((e) => e >= 2 && e <= 11)
       ? {

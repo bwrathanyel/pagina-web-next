@@ -103,7 +103,7 @@ export function CajaPrecio({ producto, className = "" }: { producto: Producto; c
               <Icono nombre="chevron-abajo" tamano={16} />
             </a>
           ) : null}
-          {producto.tipo === "hotel" ? <ReservarCta productoId={producto.id} tarifaId={destacada?.id} nombre={producto.nombre} /> : null}
+          {producto.tipo === "hotel" ? <ReservarCta productoId={producto.id} tarifaId={destacada?.id} nombre={producto.nombre} destino={producto.destino} /> : null}
         </div>
       </Boleto>
     </aside>

@@ -107,6 +107,7 @@ export function PromocionCard({ promocion, prioridad = false }: { promocion: Pro
     promocion.producto?.tipo === "hotel" ? promocion.producto.id : null,
     promocion.id,
     "tarjeta_promocion",
+    promocion.producto?.destino,
   );
 
   return (

@@ -110,7 +110,7 @@ export default async function ProductoPage({ params }: { params: Promise<{ id: s
       ) : null}
       <ProductoFooterMobile
         cotizarHref={enlaceCotizarProducto(producto)}
-        reservar={producto.tipo === "hotel" ? { productoId: producto.id, tarifaId: tarifaDestacada(producto)?.id } : undefined}
+        reservar={producto.tipo === "hotel" ? { productoId: producto.id, tarifaId: tarifaDestacada(producto)?.id, destino: producto.destino } : undefined}
       />
     </main>
   );

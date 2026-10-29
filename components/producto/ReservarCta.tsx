@@ -3,8 +3,10 @@
 import { Boton } from "@/components/ui/Boton";
 import { Icono } from "@/components/ui/Icono";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
+import { useBloqueadoHoy } from "@/components/checkout/useBloqueadoHoy";
 import { useCheckoutConfig, type CheckoutConfig } from "@/components/checkout/useCheckoutConfig";
 import { registrarEvento } from "@/lib/analitica/eventos";
+import { esDestinoCompraDirecta } from "@/lib/checkout/destinos";
 import { horaAmPm } from "@/lib/checkout/formato";
 import { whatsappHref } from "@/lib/whatsapp";
 
@@ -27,11 +29,26 @@ export function enlaceReservar(
   return `/reservar?${q.toString().replace(/%2C/g, ",")}`;
 }
 
+/** ¿Se puede comprar este hotel en línea? Solo destinos con compra directa (Margarita) y sin stop
+ * sale en la semana. null mientras carga. */
+export function useCompraDirecta(productoId: number | null, destino: string | null | undefined): boolean | null {
+  const habilitado = !!productoId && esDestinoCompraDirecta(destino);
+  const bloqueado = useBloqueadoHoy(habilitado ? productoId : null);
+  if (!habilitado) return false;
+  return bloqueado === null ? null : !bloqueado;
+}
+
 /** «Reservar y pagar» de las tarjetas del catálogo (hoteles y promociones): solo con el checkout
- * encendido y en horario; mientras carga o fuera de horario la tarjeta queda como siempre. */
-export function useReservarTarjeta(productoId: number | null, tarifaId: number | null | undefined, origen: string) {
+ * encendido, en horario y con compra directa; mientras carga o fuera de horario la tarjeta queda como siempre. */
+export function useReservarTarjeta(
+  productoId: number | null,
+  tarifaId: number | null | undefined,
+  origen: string,
+  destino: string | null | undefined,
+) {
   const { config } = useCheckoutConfig();
-  if (!productoId || !config?.activo || !config.abierto) return null;
+  const directa = useCompraDirecta(productoId, destino);
+  if (!productoId || !directa || !config?.activo || !config.abierto) return null;
   return {
     href: enlaceReservar(productoId, tarifaId),
     onClick: () => registrarEvento("abrir_pago", { ruta: `/producto/${productoId}`, meta: { etapa: origen, producto_id: productoId } }),
@@ -49,15 +66,19 @@ export function ReservarCta({
   productoId,
   tarifaId,
   nombre,
+  destino,
 }: {
   productoId: number;
   tarifaId?: number | null;
   nombre: string;
+  destino: string | null | undefined;
 }) {
   const { config } = useCheckoutConfig();
+  const directa = useCompraDirecta(productoId, destino);
   const ruta = `/producto/${productoId}`;
 
-  if (config === null) return <div aria-hidden="true" className="mt-4 min-h-12" />;
+  if (directa === false) return null;
+  if (config === null || directa === null) return <div aria-hidden="true" className="mt-4 min-h-12" />;
   if (!config.activo) return null;
 
   if (!config.abierto) {

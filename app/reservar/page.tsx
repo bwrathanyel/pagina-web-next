@@ -6,6 +6,7 @@ import type { Pasajeros } from "@/components/reserva/PaseFechas";
 import { MAX_BEBES, MAX_PAX } from "@/lib/checkout/calculo";
 import { Boton } from "@/components/ui/Boton";
 import { hotelParaCobrar, vitrinaDeHabitaciones, type HotelCobrable } from "@/lib/checkout/datos";
+import { esDestinoCompraDirecta } from "@/lib/checkout/destinos";
 import { getHotelCotizador } from "@/lib/supabase/queries";
 import { POLITICA_CANCELACION } from "@/lib/checkout/politica";
 import { vendibleHoy } from "@/lib/tarifas";
@@ -58,8 +59,9 @@ export default async function ReservarPage({ searchParams }: { searchParams: Pro
   if (!hotel) notFound();
 
   // Sin la política de cancelación redactada el cliente no puede aceptarla antes de pagar: no se vende.
+  // Fuera de los destinos con compra directa tampoco (el POST lo rechaza igual).
   const vendibles = hotel.tarifas.filter(vendibleHoy);
-  if (!POLITICA_CANCELACION || !vendibles.length) {
+  if (!POLITICA_CANCELACION || !vendibles.length || !esDestinoCompraDirecta(hotel.destino)) {
     return (
       <main className="mx-auto max-w-lg px-5 py-10">
         <h1 className="font-display text-3xl font-bold text-ink">Reserva directa próximamente</h1>
