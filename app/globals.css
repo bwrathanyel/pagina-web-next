@@ -59,6 +59,16 @@
   line-gap-override: 0%;
   size-adjust: 134.12%;
 }
+/* Solo el título de Hot Sales (pedido del dueño 2026-10-29: "fuente única que
+   denote exclusividad"). Sin precarga: está bajo el hero y el swap no mueve
+   nada porque el título es una sola línea corta. */
+@font-face {
+  font-family: "playfair";
+  src: url("/fonts/playfair-italic-latin-v1.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 700 900;
+  font-display: swap;
+}
 
 /* Fuera de @layer a propósito: Tailwind declara en `@layer theme` la versión
    circular (`--font-display: var(--font-display)`, por el @theme inline) y lo
@@ -1095,4 +1105,32 @@ html {
     radial-gradient(52rem 30rem at 6% 104%, color-mix(in oklab, var(--color-seafoam) 16%, transparent), transparent 70%),
     radial-gradient(color-mix(in oklab, var(--color-ink) 9%, transparent) 1px, transparent 1.5px);
   background-size: auto, auto, 22px 22px;
+}
+
+/* Título de Hot Sales en dorado: ámbar -> brillo -> acento. El brillo mezcla
+   ámbar con ink, así que sale dorado claro en oscuro y bronce en claro sin
+   colores nuevos. Un solo barrido de luz al entrar. */
+.titulo-exclusivo {
+  font-family: "playfair", Georgia, "Times New Roman", serif;
+  font-style: italic;
+  background-image: linear-gradient(
+    100deg,
+    var(--color-ambar) 0%,
+    color-mix(in oklab, var(--color-ambar) 55%, var(--color-ink)) 35%,
+    var(--color-ambar) 55%,
+    var(--color-acento) 100%
+  );
+  background-size: 200% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: barrido-dorado 2.4s var(--ease-salida) 0.3s both;
+}
+@keyframes barrido-dorado {
+  from { background-position: 0% 0; }
+  to { background-position: 100% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .titulo-exclusivo { animation: none; }
 }

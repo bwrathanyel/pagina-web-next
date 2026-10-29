@@ -8,7 +8,7 @@ import { destinosDelPool } from "@/lib/promociones/hotSales";
 import { Seccion } from "@/components/ui/Seccion";
 import { Revelar } from "@/components/ui/Revelar";
 import { Carrusel } from "@/components/ui/Carrusel";
-import { CLASE_ETIQUETA_SECCION, CLASE_TITULO_SECCION, EncabezadoSeccion } from "@/components/ui/EncabezadoSeccion";
+import { EncabezadoSeccion } from "@/components/ui/EncabezadoSeccion";
 import { Boton } from "@/components/ui/Boton";
 import { Icono } from "@/components/ui/Icono";
 import type { Promocion } from "@/types/supabase";
@@ -38,8 +38,13 @@ export function HotSalesSection({ pool }: { pool: Promocion[] }) {
   return (
     <Seccion ritmo="intro" className="fondo-hotsales">
       <EncabezadoSeccion
-        titulo={<EditableText path="home.hotSales.title" as="h2" className={CLASE_TITULO_SECCION + " text-ink"} />}
-        etiqueta={<EditableText path="home.hotSales.eyebrow" as="p" className={CLASE_ETIQUETA_SECCION + " text-acento"} />}
+        titulo={
+          <EditableText
+            path="home.hotSales.title"
+            as="h2"
+            className="titulo-exclusivo inline-block max-w-full text-balance pb-1 pr-2 text-4xl font-extrabold leading-[1.05] md:text-6xl"
+          />
+        }
         verTodasHref="/catalogo/hot-sales"
       />
 
