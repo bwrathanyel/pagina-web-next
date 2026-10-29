@@ -3,7 +3,6 @@
 import { Boton } from "@/components/ui/Boton";
 import { Icono } from "@/components/ui/Icono";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
-import { useBloqueadoHoy } from "@/components/checkout/useBloqueadoHoy";
 import { useCheckoutConfig, type CheckoutConfig } from "@/components/checkout/useCheckoutConfig";
 import { registrarEvento } from "@/lib/analitica/eventos";
 import { esDestinoCompraDirecta } from "@/lib/checkout/destinos";
@@ -29,13 +28,10 @@ export function enlaceReservar(
   return `/reservar?${q.toString().replace(/%2C/g, ",")}`;
 }
 
-/** ¿Se puede comprar este hotel en línea? Solo destinos con compra directa (Margarita) y sin stop
- * sale en la semana. null mientras carga. */
-export function useCompraDirecta(productoId: number | null, destino: string | null | undefined): boolean | null {
-  const habilitado = !!productoId && esDestinoCompraDirecta(destino);
-  const bloqueado = useBloqueadoHoy(habilitado ? productoId : null);
-  if (!habilitado) return false;
-  return bloqueado === null ? null : !bloqueado;
+/** ¿Se puede comprar este hotel en línea? Solo destinos con compra directa (Margarita). El stop sale
+ * no esconde el botón: /reservar y el POST de /api/checkout bloquean las noches al elegir fechas. */
+export function useCompraDirecta(productoId: number | null, destino: string | null | undefined): boolean {
+  return !!productoId && esDestinoCompraDirecta(destino);
 }
 
 /** «Reservar y pagar» de las tarjetas del catálogo (hoteles y promociones): solo con el checkout
@@ -77,8 +73,8 @@ export function ReservarCta({
   const directa = useCompraDirecta(productoId, destino);
   const ruta = `/producto/${productoId}`;
 
-  if (directa === false) return null;
-  if (config === null || directa === null) return <div aria-hidden="true" className="mt-4 min-h-12" />;
+  if (!directa) return null;
+  if (config === null) return <div aria-hidden="true" className="mt-4 min-h-12" />;
   if (!config.activo) return null;
 
   if (!config.abierto) {

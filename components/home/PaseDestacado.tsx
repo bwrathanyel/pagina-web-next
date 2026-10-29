@@ -56,7 +56,7 @@ function useMontoContado(texto: string | undefined, desde: string | undefined) {
 // como un boleto con el precio en el talón. Un solo árbol: en el teléfono es
 // una tira compacta (hotel + precio) bajo el titular; desde lg crece a la
 // columna derecha con plan, lo que incluye, la vigencia y "Ver oferta".
-// Con compra directa (Margarita, sin stop sale, checkout en horario) suma
+// Con compra directa (Margarita, checkout en horario) suma
 // debajo «Reservar y pagar ahora»: hermano del enlace, no hijo (nada de <a> en <a>).
 export function PaseDestacado({
   pase,

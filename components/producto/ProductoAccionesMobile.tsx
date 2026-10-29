@@ -46,7 +46,7 @@ export function ProductoAccionesOverlay({
 }
 
 /** Footer sticky mobile-only con el CTA principal, arriba del bottom tab bar. En
- * hoteles con la compra directa abierta (Margarita, sin stop sale), «Reservar y pagar» pasa a ser la acción
+ * hoteles con la compra directa abierta (Margarita), «Reservar y pagar» pasa a ser la acción
  * principal y Cotizar queda al lado como secundaria; mientras carga la configuración
  * (o fuera de horario) se ve solo Cotizar, sin cambiar la altura de la barra. */
 export function ProductoFooterMobile({
