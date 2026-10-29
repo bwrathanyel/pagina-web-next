@@ -116,7 +116,9 @@ export function fotoDelAlojamiento(p: Promocion): string | undefined {
 /** Cuántas ofertas rotan por destino en el hero. Margarita se vende por sus
  * todo incluido y sus niños gratis (pedido del dueño, 2026-09-25): rota entre
  * varios hoteles, cada uno con otra foto del lugar (`fondosDesde`). */
-const PASES_POR_DESTINO: Record<string, number> = { margarita: 4 };
+// Pases por destino: más hoteles en la rotación (el Hero los baraja en cada visita).
+const PASES_POR_DESTINO: Record<string, number> = { margarita: 12 };
+const PASES_OTROS_DESTINOS = 2;
 
 /** Fotos para el hero de la home, sacadas de las Hot Sales vigentes.
  *
@@ -131,7 +133,7 @@ const PASES_POR_DESTINO: Record<string, number> = { margarita: 4 };
  * alojamiento. */
 export function fotosHeroDeHotSales(
   hotSales: (Promocion & { nino_gratis?: { cantidad: number } | null })[],
-  limite = 10,
+  limite = 20,
 ): FotoHero[] {
   const grupos = new Map<string, typeof hotSales>();
   for (const p of hotSales) {
@@ -160,7 +162,7 @@ export function fotosHeroDeHotSales(
         : [];
       const hoteles = new Set<string>();
       for (const p of vendedoras.length > 0 ? vendedoras : ordenadas) {
-        if (hoteles.size >= (PASES_POR_DESTINO[clave] ?? 1) || deDestino.length >= limite) break;
+        if (hoteles.size >= (PASES_POR_DESTINO[clave] ?? PASES_OTROS_DESTINOS) || deDestino.length >= limite) break;
         const nombre = p.producto!.nombre;
         if (hoteles.has(nombre)) continue;
         const fondos = fondosDesde(delDestino, hoteles.size);
