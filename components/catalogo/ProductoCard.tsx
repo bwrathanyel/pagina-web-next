@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { urlLoginConRetorno } from "@/lib/utils/rutaInterna";
 import { TicketCard } from "@/components/catalogo/TicketCard";
 import { useReservarTarjeta } from "@/components/producto/ReservarCta";
 import { fotosDe, esSoloReferencial } from "@/lib/supabase/fotos";
@@ -90,7 +91,7 @@ export function ProductoCard({ producto, prioridad = false }: { producto: Produc
         favorito={esFavorito("producto", producto.id)}
         onToggleFavorito={async () => {
           const r = await toggle("producto", producto.id);
-          if (r === "login-requerido") router.push("/cuenta/login");
+          if (r === "login-requerido") router.push(urlLoginConRetorno());
         }}
         pieAdmin={
           puedeEditar ? (

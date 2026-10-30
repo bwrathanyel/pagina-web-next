@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { urlLoginConRetorno } from "@/lib/utils/rutaInterna";
 import { Boton } from "@/components/ui/Boton";
 import { BotonFavorito } from "@/components/ui/BotonFavorito";
 import { Icono } from "@/components/ui/Icono";
@@ -38,7 +39,7 @@ export function ProductoAccionesOverlay({
         nombre={nombre}
         onToggle={async () => {
           const r = await toggle(tipo, id);
-          if (r === "login-requerido") router.push("/cuenta/login");
+          if (r === "login-requerido") router.push(urlLoginConRetorno());
         }}
       />
     </div>
