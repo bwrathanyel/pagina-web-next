@@ -24,6 +24,7 @@ import {
   type PagoConRiel,
   type RielPago,
 } from "@/lib/pago/pagar";
+import { ContactoReserva } from "./EstadosPago";
 import { hospedajeDe, ResumenCompra } from "./ResumenCompra";
 
 const ETIQUETA_REFERENCIA: Partial<Record<RielPago, string>> = {
@@ -303,6 +304,7 @@ export function PagoPendiente({
             <ChipPlazo hasta={pago.expira_en} onVencer={onVencer} />
           </div>
         </header>
+        <ContactoReserva codigo={reserva.codigo} hotel={hotel} />
         {boleto}
         {pasos}
       </div>

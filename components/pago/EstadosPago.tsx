@@ -6,6 +6,7 @@ import { Boton } from "@/components/ui/Boton";
 import { Icono } from "@/components/ui/Icono";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import { registrarEvento } from "@/lib/analitica/eventos";
+import { CONTACTO_COMPRA_WEB, nombreDePila } from "@/lib/asesores";
 import { antesDeVenezuela, horaVenezuela, rangoFechas } from "@/lib/checkout/formato";
 import type { ReservaWeb } from "@/lib/pago/pagar";
 import { whatsappHref } from "@/lib/whatsapp";
@@ -33,19 +34,49 @@ export function EstadoSimple({
   );
 }
 
+const PILA_CONTACTO = nombreDePila(CONTACTO_COMPRA_WEB.nombre);
+
 /** Compra directa: cuando algo no sale, el siguiente paso es WhatsApp con el código a la mano. */
 export function BotonWhatsapp({ codigo, motivo }: { codigo: string; motivo: string }) {
   return (
     <Boton
-      href={whatsappHref(`Hola, necesito ayuda con mi reserva ${codigo}. ${motivo}`)}
+      href={whatsappHref(`Hola ${PILA_CONTACTO}, necesito ayuda con mi reserva ${codigo}. ${motivo}`, CONTACTO_COMPRA_WEB.telefono)}
       onClick={() => registrarEvento("click_whatsapp", { ruta: "/pagar", meta: { origen: "pagar", motivo, codigo } })}
       variante="whatsapp"
       tamano="lg"
       ancho
       iconoInicio={<WhatsAppIcon size={20} />}
     >
-      Escribirnos por WhatsApp
+      Escribirle a {PILA_CONTACTO} por WhatsApp
     </Boton>
+  );
+}
+
+/** Compra directa: el asesor que finaliza las reservas de la web, con el código ya en el mensaje. */
+export function ContactoReserva({ codigo, hotel }: { codigo: string; hotel?: string | null }) {
+  const mensaje = `Hola ${PILA_CONTACTO}, hice la reserva ${codigo}${hotel ? ` en ${hotel}` : ""} por la página web y quiero finalizarla.`;
+  return (
+    <section aria-labelledby="contacto-reserva" className="rounded-card border border-linea bg-card p-5">
+      <h2 id="contacto-reserva" className="font-display text-lg font-bold leading-tight text-ink">
+        Finalice su reserva con {CONTACTO_COMPRA_WEB.nombre}
+      </h2>
+      <p className="mt-1 text-sm text-ink-soft">
+        Escríbale por WhatsApp con su código <span className="font-mono font-bold text-ink">{codigo}</span>: le acompaña
+        hasta tener su reserva lista.
+      </p>
+      <p className="mt-2 font-mono text-sm font-bold tabular-nums text-ink">{CONTACTO_COMPRA_WEB.visible}</p>
+      <Boton
+        href={whatsappHref(mensaje, CONTACTO_COMPRA_WEB.telefono)}
+        onClick={() => registrarEvento("click_whatsapp", { ruta: "/pagar", meta: { origen: "pagar", motivo: "contacto_reserva", codigo } })}
+        variante="whatsapp"
+        tamano="md"
+        ancho
+        className="mt-3"
+        iconoInicio={<WhatsAppIcon size={18} />}
+      >
+        Escribirle a {PILA_CONTACTO}
+      </Boton>
+    </section>
   );
 }
 
@@ -172,6 +203,7 @@ export function Verificando({ reserva }: { reserva: ReservaWeb }) {
           ]}
         />
       </Boleto>
+      <ContactoReserva codigo={reserva.codigo} hotel={hospedajeDe(reserva)?.hotel} />
     </div>
   );
 }
@@ -188,6 +220,7 @@ export function Confirmada({ reserva }: { reserva: ReservaWeb }) {
       <Boleto tamanoTalon="7rem" talon={<TalonCodigo rotulo="Localizador" codigo={reserva.codigo} sello />}>
         <DatosViaje reserva={reserva} />
       </Boleto>
+      <ContactoReserva codigo={reserva.codigo} hotel={hospedajeDe(reserva)?.hotel} />
     </div>
   );
 }

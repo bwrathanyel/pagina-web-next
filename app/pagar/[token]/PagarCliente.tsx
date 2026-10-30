@@ -110,8 +110,8 @@ export function PagarCliente({ token }: { token: string }) {
     );
   }
 
-  // Compra directa en la web: no hay asesor de por medio, así que los mensajes hablan de la reserva y,
-  // cuando algo no sale, el siguiente paso es WhatsApp con el código de la reserva a la mano.
+  // Compra directa en la web: sin asesor del reparto; el cliente finaliza con el contacto fijo
+  // (CONTACTO_COMPRA_WEB) por WhatsApp, con el código de la reserva a la mano.
   const web = estado.origen === "web" ? estado.reserva ?? null : null;
 
   switch (estado.estado) {

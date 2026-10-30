@@ -36,5 +36,9 @@ export function asesorAsignado(
   return { nombre: nombre.trim(), telefono };
 }
 
+/** Compras directas de la web: el lead queda en la cuenta "Página Web" (sin reparto) y el cliente
+ * le escribe a este asesor para finalizar la reserva. */
+export const CONTACTO_COMPRA_WEB = { nombre: "Luis Rueda", telefono: "584244269876", visible: "+58 424-426 9876" };
+
 /** Lo que ve el cliente: solo el nombre de pila ("Ambar Arévalo" -> "Ambar"). */
 export const nombreDePila = (nombre: string) => nombre.trim().split(/\s+/)[0] ?? nombre;
