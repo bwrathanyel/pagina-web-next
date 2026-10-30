@@ -4,7 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { m } from "motion/react";
 import { Icono, type NombreIcono } from "@/components/ui/Icono";
+import { usePaneles } from "@/lib/layout/paneles";
 import { esRutaCheckout } from "@/lib/layout/rutasCheckout";
+import { esFormularioAcceso } from "@/lib/utils/rutaInterna";
 
 // Cinco pestañas: las dos de la izquierda y la de la derecha de "Cotizar" son
 // destinos de mirar; "Cotizar" va al centro, levantada, porque es lo que el
@@ -16,6 +18,8 @@ type Pestana = {
   icono: NombreIcono;
   /** Rutas que la marcan como activa; por defecto, su propio href. */
   activaEn?: (pathname: string) => boolean;
+  /** Abre el panel de cuenta (CuentaHoja) en vez de navegar. */
+  abrePanelCuenta?: boolean;
 };
 
 const empieza = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`);
@@ -37,6 +41,7 @@ const DERECHA: Pestana[] = [
     label: "Cuenta",
     icono: "usuario",
     activaEn: (p) => empieza(p, "/cuenta") && !empieza(p, "/cuenta/favoritos"),
+    abrePanelCuenta: true,
   },
 ];
 
@@ -44,11 +49,21 @@ const COTIZAR = { href: "/cotizar", label: "Cotizar" };
 
 export function BottomTabBar() {
   const pathname = usePathname();
+  const abrirCuenta = usePaneles((s) => s.abrirCuenta);
   const esActiva = ({ href, activaEn }: Pestana) => (activaEn ? activaEn(pathname) : empieza(pathname, href));
   const cotizarActiva = empieza(pathname, COTIZAR.href);
 
   const pestana = (p: Pestana) => {
     const activa = esActiva(p);
+    const clase =
+      "flex h-full min-h-16 w-full flex-col items-center justify-center gap-1 text-xs leading-none transition-colors duration-150 " +
+      (activa ? "font-bold text-acento" : "font-semibold text-ink-soft");
+    const contenido = (
+      <>
+        <Icono nombre={p.icono} tamano={22} />
+        {p.label}
+      </>
+    );
     return (
       <li key={p.href} className="relative">
         {activa ? (
@@ -59,17 +74,21 @@ export function BottomTabBar() {
             className="absolute inset-x-5 top-0 h-[3px] rounded-b-pill bg-acento"
           />
         ) : null}
-        <Link
-          href={p.href}
-          aria-current={activa ? "page" : undefined}
-          className={
-            "flex h-full min-h-16 flex-col items-center justify-center gap-1 text-xs leading-none transition-colors duration-150 " +
-            (activa ? "font-bold text-acento" : "font-semibold text-ink-soft")
-          }
-        >
-          <Icono nombre={p.icono} tamano={22} />
-          {p.label}
-        </Link>
+        {p.abrePanelCuenta && !esFormularioAcceso(pathname) ? (
+          <button
+            type="button"
+            onClick={abrirCuenta}
+            aria-haspopup="dialog"
+            aria-current={activa ? "page" : undefined}
+            className={clase}
+          >
+            {contenido}
+          </button>
+        ) : (
+          <Link href={p.href} aria-current={activa ? "page" : undefined} className={clase}>
+            {contenido}
+          </Link>
+        )}
       </li>
     );
   };

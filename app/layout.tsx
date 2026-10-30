@@ -10,6 +10,7 @@ import { ContactoFab } from "@/components/layout/ContactoFab";
 import { BottomTabBar } from "@/components/layout/BottomTabBar";
 import { BuscadorGlobal } from "@/components/layout/BuscadorGlobal";
 import { CarritoHoja } from "@/components/layout/CarritoHoja";
+import { CuentaHoja } from "@/components/layout/CuentaHoja";
 import { jsonLdScript, buildTravelAgencyJsonLd } from "@/lib/seo/jsonld";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
@@ -143,6 +144,7 @@ export default async function RootLayout({
                     <ContactoFab />
                     <BottomTabBar />
                     <CarritoHoja />
+                    <CuentaHoja />
                     <BuscadorGlobal />
                   </CromoSitio>
                   <AdminEditToggle />

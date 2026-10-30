@@ -10,6 +10,12 @@ export function rutaInterna(valor: string | null | undefined, porDefecto = "/cue
   return valor;
 }
 
+/** /auth y los formularios de acceso: ahí el panel de cuenta del header no se
+ * abre (quedarían dos formularios de login, uno encima del otro). */
+export function esFormularioAcceso(pathname: string) {
+  return SIN_RETORNO.test(pathname);
+}
+
 /** Solo en el navegador (handlers/efectos): login que vuelve a esta página. */
 export function urlLoginConRetorno() {
   return `/cuenta/login?next=${encodeURIComponent(location.pathname + location.search)}`;

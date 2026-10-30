@@ -11,6 +11,7 @@ import dynamic from "next/dynamic";
 import { BOTON_ICONO } from "@/components/layout/botonIcono";
 import { Icono } from "@/components/ui/Icono";
 import { Contador } from "@/components/ui/Insignia";
+import { esFormularioAcceso } from "@/lib/utils/rutaInterna";
 
 // Solo se monta al abrir la campana: fuera del JS inicial.
 const NotificacionesPanel = dynamic(
@@ -35,6 +36,7 @@ export function HeaderControls({
   const cantidad = useCarritoStore((s) => s.items.length);
   const abrirCarrito = usePaneles((s) => s.abrirCarrito);
   const abrirBuscador = usePaneles((s) => s.abrirBuscador);
+  const abrirCuenta = usePaneles((s) => s.abrirCuenta);
   const notif = useNotificacionesChat();
   const [panelAbierto, setPanelAbierto] = useState(false);
   const campanaRef = useRef<HTMLButtonElement>(null);
@@ -131,9 +133,24 @@ export function HeaderControls({
           anclaRef={campanaRef}
         />
       ) : null}
-      <Link href={user ? "/cuenta" : "/cuenta/login"} onClick={onNavigate} aria-label="Mi cuenta" className={BOTON_ICONO}>
-        <Icono nombre="usuario" />
-      </Link>
+      {esFormularioAcceso(pathname) ? (
+        <Link href="/cuenta" onClick={onNavigate} aria-label="Mi cuenta" className={BOTON_ICONO}>
+          <Icono nombre="usuario" />
+        </Link>
+      ) : (
+        <button
+          type="button"
+          onClick={() => {
+            onNavigate?.();
+            abrirCuenta();
+          }}
+          aria-label={user ? "Mi cuenta" : "Iniciar sesión o crear cuenta"}
+          aria-haspopup="dialog"
+          className={BOTON_ICONO}
+        >
+          <Icono nombre="usuario" />
+        </button>
+      )}
     </div>
   );
 }
