@@ -119,7 +119,7 @@ export function Navbar() {
             </button>
           </div>
         </div>
-        <HojaMas abierta={masAbierta} onCerrar={() => setMasAbierta(false)} />
+        <HojaMas abierta={masAbierta} onAbrir={() => setMasAbierta(true)} onCerrar={() => setMasAbierta(false)} />
 
         {/* Escritorio, fila 1: logo · campo de búsqueda · acciones. Nada de
             anchos fijos: el campo es el único que se estira y se encoge
