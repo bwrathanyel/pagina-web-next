@@ -10,3 +10,9 @@ export const POLITICA_CANCELACION: string[] | null = [
   "Para cambiar fechas o cancelar, escríbanos por WhatsApp o al correo con su código de reserva lo antes posible. Si el hotel acepta el cambio o la cancelación, le devolvemos lo que el hotel reembolse, descontadas las comisiones bancarias y el IGTF cuando aplique.",
   "No hay reembolso si el viaje ya se realizó, ni cuando el inconveniente que motiva la solicitud es ajeno a Lotus 360.",
 ];
+
+// Versión de las condiciones del plan de abonos que muestra /terminos#plan-abonos. Es la que acepta
+// el cliente: el Worker la manda tal cual y checkout_web_crear la rechaza si no es igual a
+// app_config.checkout_plan_tc_version (falla cerrado). Cambiar cualquier regla checkout_plan_* exige
+// cambiar el texto de /terminos, esta versión y la de app_config juntos.
+export const PLAN_ABONOS_VERSION = "2026-10-31";

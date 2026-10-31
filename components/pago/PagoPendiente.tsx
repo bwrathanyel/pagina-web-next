@@ -14,7 +14,7 @@ import { Boton } from "@/components/ui/Boton";
 import { Archivo, Campo, Entrada } from "@/components/ui/Campo";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import { registrarEvento } from "@/lib/analitica/eventos";
-import { fechaHoraVenezuela, mensajePago, montoCentavos, montoParaCopiar, porcentajeIgtf } from "@/lib/checkout/formato";
+import { fechaHoraVenezuela, mensajePago, montoCentavos, montoParaCopiar, porcentajeIgtf, usd } from "@/lib/checkout/formato";
 import {
   archivoABase64,
   declarar,
@@ -65,7 +65,16 @@ export function PagoPendiente({
   const hotel = reserva ? hospedajeDe(reserva)?.hotel ?? null : null;
   const igtf = reserva ? porcentajeIgtf(reserva.servicios) : null;
   const monto = formatearMonto(pago.monto_centavos, pago.moneda);
-  const nota = notaMonto(pago, igtf);
+  const plan = reserva?.plan ?? null;
+  // En un plan el IGTF es solo de esta cuota y todavía no es un servicio de la reserva: lo informa el plan.
+  const nota = plan && plan.igtf_usd > 0 && pago.moneda !== "VES" ? `Incluye IGTF de esta cuota: ${usd(plan.igtf_usd)}.` : notaMonto(pago, igtf);
+  const rotuloPlan = plan
+    ? plan.que === "saldo"
+      ? "Saldo del plan de abonos"
+      : plan.cuota_n
+        ? `Cuota ${plan.cuota_n} de ${plan.cuotas_total} · Plan de abonos`
+        : "Plan de abonos"
+    : null;
   const escritorio = useEsEscritorio();
 
   // ---------- formulario «¿Ya pagó?» ----------
@@ -179,6 +188,11 @@ export function PagoPendiente({
             <BotonCopiar valor={montoParaCopiar(pago.monto_centavos, pago.moneda)} que="el monto" />
           </div>
           {nota ? <p className="text-xs text-ink-soft">{nota}</p> : null}
+          {plan ? (
+            <p className="text-xs text-ink">
+              Saldo después de este pago: <span className="font-mono font-bold tabular-nums">{usd(plan.saldo_despues_usd)}</span>
+            </p>
+          ) : null}
         </div>
       }
     >
@@ -299,6 +313,7 @@ export function PagoPendiente({
               {hotel ? ` · ${hotel}` : ""}
               <span className="hidden lg:inline"> · Paso 2 de 3</span>
             </p>
+            {rotuloPlan ? <p className={ROTULO + " mt-2"}>{rotuloPlan}</p> : null}
           </div>
           <div>
             <ChipPlazo hasta={pago.expira_en} onVencer={onVencer} />

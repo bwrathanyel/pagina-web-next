@@ -7,6 +7,7 @@ import { CLAVE_RESERVA_ABIERTA } from "@/lib/checkout/reservaAbierta";
 import { Pasos } from "@/components/checkout/Pasos";
 import { useCheckoutConfig } from "@/components/checkout/useCheckoutConfig";
 import { useEsEscritorio } from "@/components/checkout/useEsEscritorio";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { TurnstileWidget } from "@/components/pago/TurnstileWidget";
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
@@ -20,12 +21,15 @@ import {
 } from "@/lib/checkout/calculo";
 import { ERROR_CAMPO, horaAmPm, mensajeReserva, plazoRestante, rangoFechas, usd } from "@/lib/checkout/formato";
 import { bloqueosEnFechas, habitacionDeTarifa, type HabitacionWeb } from "@/lib/cotizador/hotel";
+import { calcularPlan } from "@/lib/checkout/plan";
+import { PLAN_ABONOS_VERSION } from "@/lib/checkout/politica";
 import { hoyCaracas } from "@/lib/cotizador/cotizacionRapida";
+import { usePaneles } from "@/lib/layout/paneles";
 import { nochesDeEstadia, tarjetasPorHabitacion } from "@/lib/cotizador/estimado";
 import { buscarPais, PAIS_POR_DEFECTO, telefonoInternacional } from "@/lib/paises";
 import { whatsappHref } from "@/lib/whatsapp";
 import type { Tarifa } from "@/types/supabase";
-import { detalleRiel, OpcionesHabitacion, OpcionesRiel, type OpcionHabitacion } from "./Opciones";
+import { detalleRiel, OpcionesHabitacion, OpcionesModo, OpcionesRiel, type ModoPago, type OpcionHabitacion } from "./Opciones";
 import { PaseFechas, ROTULO, textoViajeros, type Pasajeros } from "./PaseFechas";
 import { PoliticaPlegable } from "./PoliticaPlegable";
 import { BarraTotalMovil, ResumenBoleto, type Totales } from "./ResumenBoleto";
@@ -120,7 +124,7 @@ function nombreDeHabitacion(t: Tarifa, hotel: string): string {
   return sinHotel.trim() || "Habitación";
 }
 
-type ClaveCampo ="fechas" | "edades" | "precio" | "riel" | "nombre" | "telefono" | "email" | "acepta";
+type ClaveCampo ="fechas" | "edades" | "precio" | "plan" | "riel" | "nombre" | "telefono" | "email" | "acepta";
 
 export function ReservarCliente({
   hotel,
@@ -143,6 +147,8 @@ export function ReservarCliente({
   const hoy = hoyCaracas();
   const esEscritorio = useEsEscritorio();
   const { config, reintentar } = useCheckoutConfig();
+  const { user } = useAuth();
+  const abrirCuenta = usePaneles((s) => s.abrirCuenta);
 
   const [f, setF] = useState<Formulario>({
     desde: inicial.desde,
@@ -158,6 +164,8 @@ export function ReservarCliente({
   const poner = useCallback((p: Partial<Formulario>) => setF((prev) => ({ ...prev, ...p })), []);
   const [base, setBase] = useState(() => crypto.randomUUID().replace(/-/g, "").slice(0, 24));
   const [acepta, setAcepta] = useState(false);
+  const [modo, setModo] = useState<ModoPago>("total");
+  const [aceptaPlan, setAceptaPlan] = useState(false);
   const [hojaViajeros, setHojaViajeros] = useState(false);
   const [abierta, setAbierta] = useState<ReservaAbierta | null>(null);
   const [mostrarErrores, setMostrarErrores] = useState(false);
@@ -284,8 +292,24 @@ export function ReservarCliente({
   const feePct = config?.fee_pct ?? 0;
   const igtfPct = config?.igtf_pct ?? 0;
   const fee = precio !== null && feePct > 0 ? Math.round(precio * feePct) / 100 : 0;
-  // IGTF: solo en pagos en divisas (Zelle, Binance), sobre el total ya con cargo; el servidor lo recalcula igual.
-  const igtf = precio !== null && igtfPct > 0 && (riel === "zelle" || riel === "binance") ? Math.round((precio + fee) * igtfPct) / 100 : 0;
+  // Plan de abonos: apagado, o con una versión de condiciones distinta de la publicada en /terminos, no
+  // se ofrece. Si deja de aplicar (cerró sesión, fechas a un viaje cercano) vuelve a pago total y hay
+  // que elegirlo y aceptarlo de nuevo: nunca se reactiva solo.
+  const plan = config
+    ? calcularPlan((precio ?? 0) + fee, desde, hoy, { ...config, plan_tc_version: config.plan_tc_version === PLAN_ABONOS_VERSION ? PLAN_ABONOS_VERSION : null })
+    : null;
+  const ofrecerPlan = Boolean(plan && (plan.disponible || plan.motivo !== "sin_config"));
+  const planElegible = Boolean(user) && plan?.disponible === true;
+  if (modo === "plan" && config && !planElegible) {
+    setModo("total");
+    setAceptaPlan(false);
+  }
+  const planListo = modo === "plan" && planElegible && precio !== null && plan?.disponible ? plan : null;
+  const usarPlan = planListo !== null;
+  // IGTF: solo en pagos en divisas (Zelle, Binance), sobre lo que se cobra hoy (el total con cargo, o
+  // la cuota 1 si es plan); el servidor lo recalcula igual.
+  const baseIgtf = planListo ? planListo.inicial : precio !== null ? precio + fee : 0;
+  const igtf = precio !== null && igtfPct > 0 && (riel === "zelle" || riel === "binance") ? Math.round(baseIgtf * igtfPct) / 100 : 0;
   const tasa = calculo?.ok ? calculo.tasa : null;
   const noches = calculo?.ok ? calculo.noches : hayFechas ? nochesDeEstadia(desde, hasta).length : null;
 
@@ -298,6 +322,9 @@ export function ReservarCliente({
           // El IGTF ya tiene su fila en el desglose (con el % de la config, que es el que cobra el servidor).
           avisos: calculo?.ok ? calculo.avisos.filter((a) => !/IGTF/.test(a)) : [],
           actualizado: precioServidor !== null,
+          plan: planListo
+            ? { pct: config?.plan_pct_inicial ?? 0, inicial: planListo.inicial, hoy: planListo.inicial + igtf, cuotas: planListo.cuotas }
+            : null,
         }
       : null;
   const sinPrecio = !hayFechas
@@ -317,18 +344,20 @@ export function ReservarCliente({
       : calculo && !calculo.ok ? mensajeReserva(calculo.error, calculo.texto)
       : !tarifaEfectiva ? "Este hotel no tiene habitaciones para compra directa. Escríbanos y le ayudamos."
       : null,
+    plan: usarPlan && !aceptaPlan ? ERROR_CAMPO.plan : null,
     riel: riel ? null : ERROR_CAMPO.riel,
     nombre: invalido({ nombre: f.nombre }) ? ERROR_CAMPO.nombre : null,
     telefono: !telefonoE164 || invalido({ telefono: telefonoE164 }) ? ERROR_CAMPO.telefono : null,
     email: invalido({ email: f.email }) ? ERROR_CAMPO.email : null,
     acepta: acepta ? null : ERROR_CAMPO.acepta,
   };
-  const ORDEN: ClaveCampo[] = ["fechas", "edades", "precio", "riel", "nombre", "telefono", "email", "acepta"];
+  const ORDEN: ClaveCampo[] = ["fechas", "edades", "precio", "plan", "riel", "nombre", "telefono", "email", "acepta"];
   const primerError = ORDEN.find((k) => errores[k]) ?? null;
   const falta =
     primerError === "fechas" ? "Falta: fechas"
     : primerError === "edades" ? "Falta: la edad de los niños"
     : primerError === "precio" ? "Pruebe otras fechas"
+    : primerError === "plan" ? "Falta: aceptar el plan"
     : primerError === "riel" ? "Falta: forma de pago"
     : primerError === "acepta" ? "Falta: aceptar la política"
     : primerError ? "Falta: sus datos"
@@ -386,7 +415,9 @@ export function ReservarCliente({
           nombre: f.nombre.trim(), telefono, email,
           riel,
           acepta_terminos: true,
-          idempotency_key: `w_${base}_${firma(JSON.stringify([tarifaEfectiva, desde, hasta, pasajeros.adultos, edades, pasajeros.bebes, riel, email.toLowerCase(), telefono.replace(/\D/g, "")]))}`,
+          // El plan cambia lo que se cobra: va en la firma, así pasar de total a plan nunca reutiliza la otra reserva.
+          ...(usarPlan ? { plan: true, acepta_plan: aceptaPlan } : {}),
+          idempotency_key: `w_${base}_${firma(JSON.stringify([tarifaEfectiva, desde, hasta, pasajeros.adultos, edades, pasajeros.bebes, riel, email.toLowerCase(), telefono.replace(/\D/g, ""), usarPlan]))}`,
           total_mostrado: precio,
           turnstile_token: token,
         }),
@@ -401,7 +432,7 @@ export function ReservarCliente({
         } catch {
           /* sin almacenamiento: el link igual queda en la barra del navegador */
         }
-        registrarEvento("abrir_pago", { ruta: "/reservar", meta: { etapa: "reserva_creada", producto_id: hotel.id, riel, tasa } });
+        registrarEvento("abrir_pago", { ruta: "/reservar", meta: { etapa: "reserva_creada", producto_id: hotel.id, riel, tasa, plan: usarPlan } });
         // replace: «atrás» desde /pagar vuelve a la ficha, no a un formulario que crearía otra reserva.
         router.replace(`/pagar/${data.token}`);
         return; // el botón sigue «cargando» mientras navega
@@ -411,7 +442,8 @@ export function ReservarCliente({
         setError({ tono: "info", texto: `El precio se actualizó a ${usd(data.precio)} según el tarifario vigente. Revise el total y toque «Reservar y pagar» de nuevo.` });
       } else {
         const codigo = data?.error as string | undefined;
-        if (codigo === "fuera_de_horario" || codigo === "checkout_desactivado") reintentar();
+        if (codigo === "fuera_de_horario" || codigo === "checkout_desactivado" || codigo === "tc_no_aceptado") reintentar();
+        if (codigo === "tc_no_aceptado") setAceptaPlan(false);
         setError({ tono: "error", texto: mensajeReserva(codigo, data?.texto as string | undefined) });
       }
     } catch {
@@ -676,6 +708,20 @@ export function ReservarCliente({
               caracteristicas={caracteristicas}
             />
           </div>
+
+          {ofrecerPlan ? (
+            <OpcionesModo
+              modo={modo}
+              onElegir={setModo}
+              plan={precio !== null || !plan?.disponible ? plan : null}
+              pct={config?.plan_pct_inicial ?? 0}
+              conSesion={Boolean(user)}
+              onIniciarSesion={abrirCuenta}
+              acepta={aceptaPlan}
+              onAcepta={setAceptaPlan}
+              error={errorDe("plan")}
+            />
+          ) : null}
 
           <OpcionesRiel
             riel={riel}

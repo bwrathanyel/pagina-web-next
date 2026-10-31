@@ -6,7 +6,8 @@ import { Hoja } from "@/components/ui/Hoja";
 import { Icono } from "@/components/ui/Icono";
 import { Etiqueta } from "@/components/ui/Insignia";
 import type { Riel, TasaBcv } from "@/lib/checkout/calculo";
-import { usd } from "@/lib/checkout/formato";
+import { fechaCorta, usd } from "@/lib/checkout/formato";
+import type { Plan } from "@/lib/checkout/plan";
 
 // Tarjetas de opción de /reservar (habitación y forma de pago): un radio nativo dentro de una
 // tarjeta entera clicable, con el estado elegido en acento suave (el design system no usa radios sueltos).
@@ -242,7 +243,7 @@ export function OpcionesRiel({
 }) {
   return (
     <fieldset data-campo="riel" className="flex flex-col gap-3" aria-describedby={error ? "r-riel-error" : undefined}>
-      <legend className={LEYENDA + " mb-3"}>¿Cómo va a pagar?</legend>
+      <legend className={LEYENDA + " mb-3"}>Método de pago</legend>
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         {RIELES.map((r) => (
           <label
@@ -275,6 +276,116 @@ export function OpcionesRiel({
           {detalle}
         </p>
       )}
+    </fieldset>
+  );
+}
+
+export type ModoPago = "total" | "plan";
+
+/** «¿Cómo quiere pagar?»: pago total o plan de abonos (requiere sesión y viaje lejano). Al elegir el
+ * plan aparece la aceptación obligatoria de sus condiciones. Las fechas de las cuotas son solo para
+ * mostrar: el servidor las recalcula al crear la reserva. */
+export function OpcionesModo({
+  modo,
+  onElegir,
+  plan,
+  pct,
+  conSesion,
+  onIniciarSesion,
+  acepta,
+  onAcepta,
+  error,
+}: {
+  modo: ModoPago;
+  onElegir: (m: ModoPago) => void;
+  /** null = todavía sin precio. */
+  plan: Plan | null;
+  pct: number;
+  conSesion: boolean;
+  onIniciarSesion: () => void;
+  acepta: boolean;
+  onAcepta: (v: boolean) => void;
+  error: string | null;
+}) {
+  const disponible = plan?.disponible === true ? plan : null;
+  const cercano = plan?.disponible === false && plan.motivo === "viaje_cercano";
+  const n = disponible?.cuotas.length ?? 0;
+  const detallePlan = cercano
+    ? `Disponible para viajes a ${plan.minDias} días o más`
+    : !conSesion
+      ? "Inicie sesión para pagar en cuotas"
+      : disponible
+        ? `Hoy ${usd(disponible.inicial)} (${pct} %) y ${n} ${n === 1 ? "cuota" : "cuotas"}${
+            disponible.cuotas.every((c) => c.monto === disponible.cuotas[0].monto) ? ` de ${usd(disponible.cuotas[0].monto)}` : ""
+          }: ${disponible.cuotas.map((c) => fechaCorta(c.fecha)).join(" · ")}`
+        : "Elija fechas y habitación para ver las cuotas";
+  const tituloPlan = <span className="text-sm font-bold text-ink sm:text-base">Plan de abonos</span>;
+
+  return (
+    <fieldset data-campo="plan" className="flex flex-col gap-3" aria-describedby={error ? "r-plan-error" : undefined}>
+      <legend className={LEYENDA + " mb-3"}>¿Cómo quiere pagar?</legend>
+      <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
+        <label className={TARJETA + " min-h-14 flex-col justify-center gap-0.5 px-4 py-3"}>
+          <input type="radio" name="modo" value="total" checked={modo === "total"} onChange={() => onElegir("total")} className="sr-only" />
+          <span className="text-sm font-bold text-ink sm:text-base">Pago total</span>
+          <span className="text-xs text-ink-soft">Paga hoy la estadía completa</span>
+        </label>
+        {!conSesion && !cercano ? (
+          <button
+            type="button"
+            onClick={onIniciarSesion}
+            className={TARJETA + " min-h-14 flex-col items-start justify-center gap-0.5 px-4 py-3 text-left"}
+          >
+            {tituloPlan}
+            <span className="text-xs font-semibold text-acento underline underline-offset-2">{detallePlan}</span>
+          </button>
+        ) : (
+          <label
+            className={
+              TARJETA +
+              " min-h-14 flex-col justify-center gap-0.5 px-4 py-3" +
+              (disponible ? "" : " cursor-not-allowed opacity-60 hover:border-linea")
+            }
+          >
+            <input
+              type="radio"
+              name="modo"
+              value="plan"
+              checked={modo === "plan"}
+              disabled={!disponible}
+              onChange={() => onElegir("plan")}
+              className="sr-only"
+            />
+            {tituloPlan}
+            <span className="text-xs text-ink-soft">{detallePlan}</span>
+          </label>
+        )}
+      </div>
+      {modo === "plan" ? (
+        <div>
+          <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={acepta}
+              onChange={(e) => onAcepta(e.target.checked)}
+              aria-invalid={error ? true : undefined}
+              className="mt-0.5 h-5 w-5 shrink-0 accent-acento"
+            />
+            <span>
+              Acepto las{" "}
+              <a className="underline underline-offset-2" href="/terminos#plan-abonos" target="_blank" rel="noopener">
+                condiciones del plan de abonos
+              </a>
+              . Si una cuota queda sin pagar después de los días de gracia, la reserva se cancela y lo abonado no se devuelve.
+            </span>
+          </label>
+          {error ? (
+            <p id="r-plan-error" role="alert" className="mt-1 text-sm font-medium text-peligro">
+              {error}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
     </fieldset>
   );
 }

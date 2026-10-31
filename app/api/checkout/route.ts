@@ -4,7 +4,8 @@ import { verificarTurnstile } from "../_shared/turnstile";
 import { calcularHospedaje, fechaValida, servicioHospedaje, validarContacto, type SolicitudHospedaje } from "@/lib/checkout/calculo";
 import { bloqueosDe, hotelParaCobrar } from "@/lib/checkout/datos";
 import { esDestinoCompraDirecta } from "@/lib/checkout/destinos";
-import { POLITICA_CANCELACION } from "@/lib/checkout/politica";
+import { PLAN_ABONOS_VERSION, POLITICA_CANCELACION } from "@/lib/checkout/politica";
+import { supabaseServerSession } from "@/lib/supabase/serverSession";
 
 /** Compra directa de hospedaje (Plan 1). El navegador manda QUÉ quiere comprar (hotel, habitación, fechas,
  * viajeros) y quién es; este route verifica Turnstile, RECALCULA el precio desde la base con las mismas
@@ -12,7 +13,11 @@ import { POLITICA_CANCELACION } from "@/lib/checkout/politica";
  * El total que mande el navegador (`total_mostrado`) nunca se cobra: solo sirve para avisar «el precio cambió».
  *
  * `idempotency_key`: la genera el navegador una vez por intento de compra (un uuid por formulario). El mismo
- * envío repetido por doble clic o reintento de red devuelve la misma reserva en vez de crear otra. */
+ * envío repetido por doble clic o reintento de red devuelve la misma reserva en vez de crear otra.
+ *
+ * Plan de abonos (`plan: true`): exige sesión. El usuario sale de la cookie verificada acá (getUser
+ * valida el JWT con Supabase), nunca del cuerpo. La versión aceptada es la del texto publicado
+ * (PLAN_ABONOS_VERSION); la RPC la rechaza si no coincide con la vigente en app_config. */
 
 const KEY_RE = /^[A-Za-z0-9:._-]{8,100}$/;
 
@@ -50,7 +55,8 @@ export async function GET() {
     return NextResponse.json({ ok: true, activo: false }, { headers: { "Cache-Control": "no-store" } });
   }
   return NextResponse.json(
-    { ok: true, activo: data.activo === true, abierto: data.abierto !== false, hora_abre: data.hora_abre, hora_cierra: data.hora_cierra, fee_pct: data.fee_pct, igtf_pct: data.igtf_pct, hold_horas_usd: data.hold_horas_usd, hold_horas_ves: data.hold_horas_ves },
+    { ok: true, activo: data.activo === true, abierto: data.abierto !== false, hora_abre: data.hora_abre, hora_cierra: data.hora_cierra, fee_pct: data.fee_pct, igtf_pct: data.igtf_pct, hold_horas_usd: data.hold_horas_usd, hold_horas_ves: data.hold_horas_ves,
+      plan_activo: data.plan_activo === true, plan_min_dias: data.plan_min_dias, plan_pct_inicial: data.plan_pct_inicial, plan_dias_cuotas: data.plan_dias_cuotas, plan_tc_version: data.plan_tc_version },
     { headers: { "Cache-Control": "no-store" } },
   );
 }
@@ -93,6 +99,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "fechas_invalidas", texto: "Elija la fecha de entrada y de salida." }, { status: 422 });
   }
 
+  const plan = body.plan === true;
+  let usuarioId: string | null = null;
+  if (plan) {
+    if (body.acepta_plan !== true) {
+      return NextResponse.json({ ok: false, error: "tc_no_aceptado" }, { status: 400 });
+    }
+    try {
+      const { data } = await (await supabaseServerSession()).auth.getUser();
+      usuarioId = data.user?.id ?? null;
+    } catch {
+      return NextResponse.json({ ok: false, error: "servicio_no_disponible" }, { status: 502 });
+    }
+    if (!usuarioId) return NextResponse.json({ ok: false, error: "sesion_requerida" }, { status: 401 });
+  }
+
   const cfg = destino();
   if (!cfg) return NextResponse.json({ ok: false, error: "no_configurado" }, { status: 503 });
 
@@ -127,6 +148,7 @@ export async function POST(request: Request) {
     client_key: clientKey(request),
     destino: hotel.destino ?? undefined,
     servicios: [servicioHospedaje(hotel, sel, calculo)],
+    ...(plan ? { plan: true, tc_version: PLAN_ABONOS_VERSION, usuario_id: usuarioId } : {}),
   });
 
   if (data.ok !== true) {

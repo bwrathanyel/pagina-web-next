@@ -151,6 +151,10 @@ const ERRORES_RESERVA: Record<string, string> = {
   tarifa_no_disponible: "Esa habitación ya no está disponible. Elija otra o escríbanos.",
   sin_disponibilidad: "El hotel no tiene cupo en esas fechas. Pruebe otras o escríbanos.",
   sujeto_a_confirmacion: "Esas fechas las confirma el hotel. Un asesor le arma la reserva por WhatsApp.",
+  sesion_requerida: "Para pagar en cuotas, inicie sesión con su cuenta.",
+  tc_no_aceptado: "Las condiciones del plan de abonos cambiaron. Revíselas y acéptelas de nuevo.",
+  plan_viaje_cercano: "El plan de abonos no está disponible para la fecha de su viaje. Elija pago total.",
+  plan_no_disponible: "El plan de abonos no está disponible por ahora. Elija pago total o escríbanos.",
 };
 
 /** Texto para el cliente de un error del cálculo o de /api/checkout. */
@@ -189,4 +193,5 @@ export const ERROR_CAMPO = {
   telefono: "Revise el número: debe tener al menos 7 dígitos.",
   email: "Revise su correo: ahí le enviaremos el localizador.",
   acepta: "Acepte la política para continuar.",
+  plan: "Acepte las condiciones del plan de abonos.",
 } as const;

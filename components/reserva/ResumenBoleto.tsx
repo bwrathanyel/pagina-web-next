@@ -7,7 +7,8 @@ import { Boleto } from "@/components/ui/Boleto";
 import { Hoja } from "@/components/ui/Hoja";
 import { Icono } from "@/components/ui/Icono";
 import type { Riel, TasaBcv } from "@/lib/checkout/calculo";
-import { rangoFechas, usd } from "@/lib/checkout/formato";
+import { fechaCorta, rangoFechas, usd } from "@/lib/checkout/formato";
+import type { CuotaPlan } from "@/lib/checkout/plan";
 import { ROTULO } from "./PaseFechas";
 
 // Resumen de /reservar: el boleto pegajoso del aside (escritorio) y la barra fija con el total
@@ -28,7 +29,13 @@ export interface Totales {
   avisos: string[];
   /** El servidor corrigió el precio: el desglose por temporada ya no aplica. */
   actualizado: boolean;
+  /** Plan de abonos elegido: hoy se paga la cuota 1 (+IGTF solo de ella) y el resto en `cuotas`. */
+  plan?: { pct: number; inicial: number; hoy: number; cuotas: CuotaPlan[] } | null;
 }
+
+/** Lo que se cobra hoy: el total, o la cuota 1 si eligió el plan. */
+const hoyDe = (t: Totales) => (t.plan ? t.plan.hoy : t.total);
+const rotuloDe = (t: Totales | null) => (t?.plan ? "Hoy paga" : "Total");
 
 export interface DatosResumen {
   hotel: string;
@@ -59,9 +66,18 @@ export function Desglose({ t }: { t: Totales }) {
           ? t.lineas.map((l) => <Fila key={l.texto} texto={l.texto} monto={usd(l.monto)} suave />)
           : null}
         {t.fee > 0 ? <Fila texto={`Gestión web (${t.feePct} %)`} monto={usd(t.fee)} /> : null}
+        {t.plan ? (
+          <>
+            <Fila texto="Total del viaje" monto={usd(t.precio + t.fee)} />
+            <Fila texto={`Cuota 1 de ${t.plan.cuotas.length + 1}, hoy (${t.plan.pct} %)`} monto={usd(t.plan.inicial)} />
+            {t.plan.cuotas.map((c) => (
+              <Fila key={c.n} texto={`Cuota ${c.n} · ${fechaCorta(c.fecha)}`} monto={usd(c.monto)} suave />
+            ))}
+          </>
+        ) : null}
         {t.igtfPct > 0 ? (
           <Fila
-            texto={`IGTF (${t.igtfPct} %)`}
+            texto={t.plan ? `IGTF de la cuota 1 (${t.igtfPct} %)` : `IGTF (${t.igtfPct} %)`}
             monto={divisas ? usd(t.igtf) : t.riel === "pago_movil" ? "No aplica" : "Según cómo pague"}
           />
         ) : null}
@@ -102,9 +118,9 @@ export function ResumenBoleto({
       tamanoTalon="3.5rem"
       talon={
         <div className="flex h-full items-center justify-between gap-3 px-4 pb-1" aria-live="polite">
-          <span className={ROTULO}>Total</span>
+          <span className={ROTULO}>{rotuloDe(totales)}</span>
           {totales ? (
-            <span className="font-mono text-2xl font-bold tabular-nums text-ink">{usd(totales.total)}</span>
+            <span className="font-mono text-2xl font-bold tabular-nums text-ink">{usd(hoyDe(totales))}</span>
           ) : (
             <span className="text-right text-sm text-ink-soft">{sinPrecio}</span>
           )}
@@ -170,8 +186,8 @@ export function BarraTotalMovil({
         >
           {totales ? (
             <span className="flex items-center gap-1 font-mono text-xl font-bold tabular-nums text-ink">
-              <span className="sr-only">Total: </span>
-              {usd(totales.total)}
+              <span className="sr-only">{rotuloDe(totales)}: </span>
+              {usd(hoyDe(totales))}
               <Icono nombre="chevron-abajo" tamano={16} className="rotate-180 text-ink-soft" />
             </span>
           ) : (
@@ -188,8 +204,8 @@ export function BarraTotalMovil({
           <div className="flex flex-col gap-4">
             <Desglose t={totales} />
             <div className="flex items-baseline justify-between border-t border-linea pt-3">
-              <span className={ROTULO}>Total</span>
-              <span className="font-mono text-2xl font-bold tabular-nums text-ink">{usd(totales.total)}</span>
+              <span className={ROTULO}>{rotuloDe(totales)}</span>
+              <span className="font-mono text-2xl font-bold tabular-nums text-ink">{usd(hoyDe(totales))}</span>
             </div>
           </div>
         </Hoja>

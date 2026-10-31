@@ -1,4 +1,4 @@
-import { POLITICA_CANCELACION } from "@/lib/checkout/politica";
+import { PLAN_ABONOS_VERSION, POLITICA_CANCELACION } from "@/lib/checkout/politica";
 
 export const metadata = {
   title: "Términos de servicio",
@@ -6,7 +6,7 @@ export const metadata = {
   alternates: { canonical: "/terminos" },
 };
 
-// Índice de anclas: /reservar enlaza a #compra-directa y #cancelaciones. El texto de cada
+// Índice de anclas: /reservar enlaza a #compra-directa, #cancelaciones y #plan-abonos. El texto de cada
 // sección es el aprobado; aquí solo cambia la presentación.
 const SECCIONES = [
   { id: "servicio", titulo: "Sobre el servicio" },
@@ -14,6 +14,7 @@ const SECCIONES = [
     ? [
         { id: "compra-directa", titulo: "Compra directa en el sitio" },
         { id: "cancelaciones", titulo: "Cambios y cancelaciones" },
+        { id: "plan-abonos", titulo: "Plan de abonos" },
       ]
     : []),
   { id: "formularios", titulo: "Formularios y contacto" },
@@ -87,6 +88,43 @@ export default function TerminosPage() {
             {POLITICA_CANCELACION.map((p) => (
               <p key={p} className="mb-3 last:mb-0">{p}</p>
             ))}
+          </section>
+        ) : null}
+
+        {POLITICA_CANCELACION ? (
+          <section id="plan-abonos" className={CLASE_SECCION}>
+            <h2 className={CLASE_H2}>Plan de abonos</h2>
+            <p>
+              En la compra directa puede pagar su reserva en cuotas si el viaje sale dentro de 65 días o más.
+              Para usarlo necesita una cuenta en el sitio y aceptar estas condiciones al reservar.
+            </p>
+            <ul className="mt-3 flex list-disc flex-col gap-2 pl-5">
+              <li>
+                Paga el 40 % al reservar y el resto en 3 cuotas de 20 % cada una, a los 15, 30 y 45 días de la
+                reserva. Las fechas exactas se le muestran antes de pagar y en «Mis planes de pago» de su cuenta.
+              </li>
+              <li>
+                El precio queda fijo en dólares (USD) desde el día de la reserva. Si paga una cuota en bolívares,
+                se convierte con la tasa del BCV del día en que paga. Las cuotas en divisas (Zelle y Binance)
+                llevan el IGTF de esa cuota.
+              </li>
+              <li>Puede adelantar cuotas o pagar todo el saldo cuando quiera, sin recargo.</li>
+              <li>
+                Le recordamos cada cuota por correo y WhatsApp antes y el día del vencimiento. Si una cuota
+                vence, tiene 5 días de gracia para pagarla. Pasado ese plazo la reserva se cancela y lo abonado
+                no se devuelve.
+              </li>
+              <li>
+                Si no puede viajar por una causa ajena a usted y a la agencia, lo abonado queda como crédito a
+                su favor por 6 meses para usarlo en otra reserva.
+              </li>
+              <li>
+                Solo nuestro equipo puede extender el vencimiento de una cuota, y nunca más allá de 20 días antes
+                del viaje.
+              </li>
+              <li>La reserva queda confirmada cuando verificamos el pago de la primera cuota.</li>
+            </ul>
+            <p className="mt-3 text-sm">Versión de estas condiciones: {PLAN_ABONOS_VERSION}.</p>
           </section>
         ) : null}
 

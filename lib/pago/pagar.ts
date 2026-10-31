@@ -25,6 +25,19 @@ export interface ServicioReserva {
   precio_usd: number;
 }
 
+/** Pago que es una cuota de un plan de abonos (lo arma pago_web_resumen con plan_estado). */
+export interface PlanPago {
+  cuota_n: number | null;
+  /** inicial = cuota 1; proxima = la siguiente pendiente; saldo = todo lo que falta. */
+  que: "inicial" | "proxima" | "saldo" | null;
+  cuotas_total: number;
+  total_usd: number;
+  saldo_usd: number;
+  /** Lo que quedará por pagar cuando se verifique este pago (sin contar su IGTF). */
+  saldo_despues_usd: number;
+  igtf_usd: number;
+}
+
 /** Resumen de la reserva detrás de un pago de compra directa en la web. */
 export interface ReservaWeb {
   codigo: string;
@@ -36,6 +49,8 @@ export interface ReservaWeb {
   disponibilidad?: "ok" | "on_request" | "sin_cupo";
   declarado_en: string | null;
   verificar_antes_de: string | null;
+  /** null o ausente = pago total, no es un plan. */
+  plan?: PlanPago | null;
 }
 
 /** Link del asesor sin método fijo: el cliente elige y la página arma el monto con estos datos. */

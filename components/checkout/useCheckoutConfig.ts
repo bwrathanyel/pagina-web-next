@@ -16,6 +16,13 @@ export interface CheckoutConfig {
   igtf_pct: number;
   hold_horas_usd: number;
   hold_horas_ves: number;
+  /** Plan de abonos: días mínimos hasta el viaje, % de la cuota 1, días de cada cuota siguiente y
+   * versión vigente de sus condiciones. Apagado, sin versión o sin cuotas, el plan no se ofrece. */
+  plan_activo: boolean;
+  plan_min_dias: number;
+  plan_pct_inicial: number;
+  plan_dias_cuotas: number[];
+  plan_tc_version: string | null;
   /** true = no se pudo consultar (red caída): se trata como apagado, pero se puede reintentar. */
   fallo?: boolean;
 }
@@ -23,6 +30,7 @@ export interface CheckoutConfig {
 const APAGADO: CheckoutConfig = {
   activo: false, abierto: false, hora_abre: 8, hora_cierra: 20,
   fee_pct: 0, igtf_pct: 0, hold_horas_usd: 24, hold_horas_ves: 2,
+  plan_activo: false, plan_min_dias: 65, plan_pct_inicial: 40, plan_dias_cuotas: [], plan_tc_version: null,
 };
 const TTL_MS = 60_000;
 
@@ -40,6 +48,13 @@ function normalizar(j: unknown): CheckoutConfig {
     igtf_pct: num(c.igtf_pct, 0),
     hold_horas_usd: num(c.hold_horas_usd, APAGADO.hold_horas_usd),
     hold_horas_ves: num(c.hold_horas_ves, APAGADO.hold_horas_ves),
+    plan_activo: c.plan_activo === true,
+    plan_min_dias: num(c.plan_min_dias, APAGADO.plan_min_dias),
+    plan_pct_inicial: num(c.plan_pct_inicial, APAGADO.plan_pct_inicial),
+    plan_dias_cuotas: Array.isArray(c.plan_dias_cuotas)
+      ? c.plan_dias_cuotas.filter((d): d is number => Number.isInteger(d) && d > 0)
+      : [],
+    plan_tc_version: typeof c.plan_tc_version === "string" && c.plan_tc_version ? c.plan_tc_version : null,
   };
 }
 
