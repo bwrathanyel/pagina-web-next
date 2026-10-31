@@ -7,6 +7,7 @@ import { Boton } from "@/components/ui/Boton";
 import { Icono, type NombreIcono } from "@/components/ui/Icono";
 import { Etiqueta } from "@/components/ui/Insignia";
 import { useCarritoStore } from "@/lib/carrito/store";
+import { contarPlanes } from "@/lib/planes/planes";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
 function FilaMenu({
@@ -58,6 +59,7 @@ export function MenuCuenta({
   const { user, rol, signOut } = useAuth();
   const cantidadCarrito = useCarritoStore((s) => s.items.length);
   const [favoritosCount, setFavoritosCount] = useState<number | null>(null);
+  const [planes, setPlanes] = useState<{ total: number; abiertos: number } | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -69,6 +71,9 @@ export function MenuCuenta({
       .then(({ count }) => {
         if (vigente) setFavoritosCount(count ?? 0);
       });
+    contarPlanes(user.id).then((n) => {
+      if (vigente) setPlanes(n);
+    });
     return () => {
       vigente = false;
     };
@@ -106,6 +111,9 @@ export function MenuCuenta({
 
       <ul className="overflow-hidden rounded-card border border-linea bg-card">
         <FilaMenu href="/cuenta/favoritos" icono="corazon" label="Mis favoritos" cuenta={favoritosCount ?? undefined} onNavegar={onNavegar} />
+        {planes?.total ? (
+          <FilaMenu href="/cuenta/planes" icono="calendario" label="Mis planes de pago" cuenta={planes.abiertos || undefined} onNavegar={onNavegar} />
+        ) : null}
         <FilaMenu href="/carrito" icono="carrito" label="Mi carrito" cuenta={cantidadCarrito} onNavegar={onNavegar} />
         <FilaMenu href="/cuenta/configuracion" icono="ajustes" label="Configuración" onNavegar={onNavegar} />
         {rol === "admin" ? (
