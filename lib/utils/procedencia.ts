@@ -17,3 +17,11 @@ export function esInstagramInApp(): boolean {
   const ua = navigator.userAgent || "";
   return ua.indexOf("Instagram") > -1 || ua.indexOf("FBAN") > -1 || ua.indexOf("FBAV") > -1;
 }
+
+/** Navegador in-app de Instagram, Facebook o TikTok: Google bloquea ahí el
+ * login OAuth (403 disallowed_useragent). Mismos patrones que /tt y /wa. */
+export function esNavegadorInApp(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  return /FBAN|FBAV|FB_IAB|FBIOS|Instagram|musical_ly|bytedancewebview|tiktok|trill|ttwebview/i.test(ua);
+}

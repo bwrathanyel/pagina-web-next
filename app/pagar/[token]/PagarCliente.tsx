@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { BotonWhatsapp, Confirmada, EstadoSimple, Verificando } from "@/components/pago/EstadosPago";
+import { BotonAsesor, BotonWhatsapp, Confirmada, EstadoSimple, Verificando } from "@/components/pago/EstadosPago";
 import { ElegirMetodo } from "@/components/pago/ElegirMetodo";
 import { PagoPendiente } from "@/components/pago/PagoPendiente";
 import { Boton } from "@/components/ui/Boton";
@@ -105,7 +105,12 @@ export function PagarCliente({ token }: { token: string }) {
     }
     return (
       <Angosto>
-        <EstadoSimple tono="malo" titulo="Link no válido" texto="Este link de pago no existe o ya no está disponible. Pídale a su asesor uno nuevo." />
+        <EstadoSimple
+          tono="malo"
+          titulo="Link no válido"
+          texto="Este link de pago no existe o ya no está disponible. Pídale a su asesor uno nuevo."
+          accion={<BotonAsesor motivo="El link no es válido." />}
+        />
       </Angosto>
     );
   }
@@ -170,7 +175,12 @@ export function PagarCliente({ token }: { token: string }) {
               accion={<BotonWhatsapp codigo={web.codigo} motivo="El tiempo para pagar venció." />}
             />
           ) : (
-            <EstadoSimple tono="malo" titulo="El link venció" texto="Este link de pago expiró. Pídale a su asesor un link nuevo para completar el pago." />
+            <EstadoSimple
+              tono="malo"
+              titulo="El link venció"
+              texto="Este link de pago expiró. Pídale a su asesor un link nuevo para completar el pago."
+              accion={<BotonAsesor motivo="El link venció y necesito uno nuevo." />}
+            />
           )}
         </Angosto>
       );
@@ -190,14 +200,23 @@ export function PagarCliente({ token }: { token: string }) {
               accion={<BotonWhatsapp codigo={web.codigo} motivo="Mi pago fue rechazado." />}
             />
           ) : (
-            <EstadoSimple tono="malo" titulo="Pago rechazado" texto="No pudimos validar este pago. Comuníquese con su asesor para resolverlo." />
+            <EstadoSimple
+              tono="malo"
+              titulo="Pago rechazado"
+              texto="No pudimos validar este pago. Comuníquese con su asesor para resolverlo."
+              accion={<BotonAsesor motivo="Mi pago fue rechazado." />}
+            />
           )}
         </Angosto>
       );
     default:
       return (
         <Angosto>
-          <EstadoSimple titulo="Pago reembolsado" texto="Este pago fue reembolsado. Si tiene dudas, escríbale a su asesor." />
+          <EstadoSimple
+            titulo="Pago reembolsado"
+            texto="Este pago fue reembolsado. Si tiene dudas, escríbale a su asesor."
+            accion={<BotonAsesor motivo="Tengo dudas sobre el reembolso." />}
+          />
         </Angosto>
       );
   }

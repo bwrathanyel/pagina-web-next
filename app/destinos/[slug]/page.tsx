@@ -3,7 +3,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { FondoPaisaje } from "@/components/layout/FondoPaisaje";
 import { ProductoCard } from "@/components/catalogo/ProductoCard";
-import { Boton } from "@/components/ui/Boton";
+import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
+import { Boton, clasesBoton } from "@/components/ui/Boton";
+import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import { getProductosPorCategoria } from "@/lib/supabase/queries";
 import { DESTINOS, destinoPorSlug } from "@/lib/seo/destinos";
 import {
@@ -114,7 +116,17 @@ export default async function DestinoPage({ params }: { params: Promise<{ slug: 
           </p>
         )}
         <div className="mt-6 flex flex-wrap gap-3">
-          <Boton href="/cotizar">Cotizar mi viaje</Boton>
+          <Boton href={`/cotizar?destino=${encodeURIComponent(destino.destinoCotizador)}`}>Cotizar mi viaje</Boton>
+          {hoteles.length === 0 ? (
+            <WhatsAppLeadButton
+              mensajeBase={`Hola, vengo de la guía de ${destino.nombre} y quiero opciones de hospedaje.`}
+              destinoInicial={destino.destinoCotizador}
+              triggerClassName={clasesBoton({ variante: "whatsapp" })}
+            >
+              <WhatsAppIcon size={20} />
+              Escribir por WhatsApp
+            </WhatsAppLeadButton>
+          ) : null}
           <Boton href="/catalogo/paquetes" variante="secundario">Ver paquetes con boleto</Boton>
         </div>
       </section>

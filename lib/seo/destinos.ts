@@ -14,6 +14,8 @@ export interface Destino {
   nombre: string;
   /** Valores de productos.destino que pertenecen a esta landing. */
   destinosDb: string[];
+  /** Valor exacto de DESTINOS del cotizador: "Cotizar mi viaje" arranca ahí. */
+  destinoCotizador: string;
   estado: string;
   geo: { lat: number; lng: number };
   foto: string;
@@ -29,6 +31,7 @@ export const DESTINOS: Destino[] = [
     slug: "los-roques",
     nombre: "Los Roques",
     destinosDb: ["Los Roques"],
+    destinoCotizador: "Los Roques",
     estado: "Dependencias Federales",
     geo: { lat: 11.95, lng: -66.67 },
     foto: "/destinos/los-roques-gran-roque",
@@ -84,6 +87,7 @@ export const DESTINOS: Destino[] = [
     slug: "margarita",
     nombre: "Isla de Margarita",
     destinosDb: ["Margarita", "Coche"],
+    destinoCotizador: "Isla de Margarita",
     estado: "Nueva Esparta",
     geo: { lat: 11.0, lng: -63.9 },
     foto: "/destinos/margarita-playa",
@@ -139,6 +143,7 @@ export const DESTINOS: Destino[] = [
     slug: "canaima",
     nombre: "Canaima y Salto Ángel",
     destinosDb: ["Canaima"],
+    destinoCotizador: "Canaima",
     estado: "Bolívar",
     geo: { lat: 6.24, lng: -62.85 },
     foto: "/destinos/canaima-salto-angel",
@@ -188,6 +193,7 @@ export const DESTINOS: Destino[] = [
     slug: "merida",
     nombre: "Mérida",
     destinosDb: ["Mérida"],
+    destinoCotizador: "Mérida",
     estado: "Mérida",
     geo: { lat: 8.59, lng: -71.14 },
     foto: "/destinos/merida-pico-bolivar",
@@ -237,6 +243,7 @@ export const DESTINOS: Destino[] = [
     slug: "morrocoy",
     nombre: "Morrocoy y Chichiriviche",
     destinosDb: ["Chichiriviche", "Morrocoy", "Tucacas"],
+    destinoCotizador: "Morrocoy",
     estado: "Falcón",
     geo: { lat: 10.87, lng: -68.27 },
     foto: "/destinos/morrocoy-sombrero",

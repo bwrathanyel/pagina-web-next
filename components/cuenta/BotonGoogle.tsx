@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Boton } from "@/components/ui/Boton";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { esNavegadorInApp } from "@/lib/utils/procedencia";
 import { COOKIE_RETORNO_AUTH } from "@/lib/utils/rutaInterna";
+
+const sinSuscripcion = () => () => {};
 
 function LogoGoogle() {
   return (
@@ -47,6 +50,40 @@ export function BotonGoogle({ siguiente, onError }: { siguiente: string; onError
     <Boton variante="secundario" tamano="lg" ancho cargando={cargando} iconoInicio={<LogoGoogle />} onClick={continuar}>
       Continuar con Google
     </Boton>
+  );
+}
+
+/** Google arriba y el formulario de correo debajo. En el navegador in-app de
+ * Instagram/Facebook/TikTok Google rechaza el login: ahí va el correo primero
+ * y, en vez del botón, cómo abrir la página en el navegador. */
+export function AccesoGoogle({
+  siguiente,
+  onError,
+  children,
+}: {
+  siguiente: string;
+  onError: (mensaje: string) => void;
+  children: ReactNode;
+}) {
+  const inApp = useSyncExternalStore(sinSuscripcion, esNavegadorInApp, () => false);
+  if (inApp) {
+    return (
+      <>
+        {children}
+        <SeparadorO />
+        <p className="text-sm text-ink-soft">
+          Para entrar con Google, abra esta página en su navegador: toque el menú ⋯ de la app y elija «Abrir en el
+          navegador».
+        </p>
+      </>
+    );
+  }
+  return (
+    <>
+      <BotonGoogle siguiente={siguiente} onError={onError} />
+      <SeparadorO />
+      {children}
+    </>
   );
 }
 

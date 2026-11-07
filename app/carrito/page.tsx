@@ -12,6 +12,7 @@ import { crearLeadCRM } from "@/lib/leads/ingestWebLead";
 import { enviarASheetMonkey } from "@/lib/leads/sheetMonkey";
 import { detectarProcedencia, esInstagramInApp } from "@/lib/utils/procedencia";
 import { SolicitudLista } from "@/components/leads/SolicitudLista";
+import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
 import { AreaTexto, Campo, Entrada } from "@/components/ui/Campo";
 import { Esqueleto } from "@/components/ui/Esqueleto";
@@ -31,6 +32,7 @@ export default function CarritoPage() {
   const [nota, setNota] = useState("");
   const [waHref, setWaHref] = useState<string | null>(null);
   const [enviados, setEnviados] = useState(0);
+  const [fallo, setFallo] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const enviandoRef = useRef(false);
 
@@ -42,13 +44,17 @@ export default function CarritoPage() {
     try {
       const resultado = armarCarrito(items, nombre, telefono, nota);
 
+      let falloCRM = false;
       const leadCRM = await crearLeadCRM({
         nombre,
         telefono,
         destino: resultado.destino,
         personas: resultado.personas,
         consulta: resultado.consulta,
-      }).catch(() => null);
+      }).catch(() => {
+        falloCRM = true;
+        return null;
+      });
       // El WhatsApp es el del asesor que el reparto del CRM asignó al lead; si el
       // CRM no respondió, el corporativo (nunca un sorteo local que no coincida).
       const asesor = asesorAsignado(leadCRM?.asesor, leadCRM?.asesor_whatsapp);
@@ -66,8 +72,10 @@ export default function CarritoPage() {
 
       const mensaje = esInstagramInApp() ? resultado.mensajeTexto : resultado.mensajeEmoji;
       setEnviados(items.length);
+      setFallo(falloCRM);
       setWaHref(`https://wa.me/${telefonoAsesor}?text=${encodeURIComponent(mensaje)}`);
-      limpiar();
+      // Con el CRM caído el carrito se queda: el pedido solo existe en el WhatsApp.
+      if (!falloCRM) limpiar();
     } finally {
       enviandoRef.current = false;
       setEnviando(false);
@@ -77,8 +85,20 @@ export default function CarritoPage() {
   if (waHref) {
     return (
       <main className="mx-auto max-w-md px-5 py-10 md:py-16">
-        <SolicitudLista nivel="h1" waHref={waHref} detalle={`${enviados} ${enviados === 1 ? "elemento" : "elementos"}`}>
-          La armamos con todo lo del carrito. Envíela por WhatsApp y un asesor le responde con los detalles.
+        <SolicitudLista
+          nivel="h1"
+          waHref={waHref}
+          detalle={`${enviados} ${enviados === 1 ? "elemento" : "elementos"}`}
+          titulo={fallo ? "Falta un paso para enviarla" : undefined}
+        >
+          {fallo ? (
+            <Aviso>
+              No pudimos registrar su solicitud en nuestro sistema. Envíela ahora por WhatsApp y un asesor la recibe
+              directamente.
+            </Aviso>
+          ) : (
+            "La armamos con todo lo del carrito. Envíela por WhatsApp y un asesor le responde con los detalles."
+          )}
         </SolicitudLista>
         <Link
           href="/catalogo/promociones"

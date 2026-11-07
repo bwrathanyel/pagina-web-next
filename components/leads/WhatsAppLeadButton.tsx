@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SolicitudLista } from "@/components/leads/SolicitudLista";
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
 import { Campo, Entrada } from "@/components/ui/Campo";
@@ -43,6 +44,9 @@ export function WhatsAppLeadButton({
   const [abierto, setAbierto] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Sin pestaña abierta (webview de Instagram/TikTok, bloqueador): el enlace
+  // queda en el modal para tocarlo, en vez de un window.open que ya no sale.
+  const [listo, setListo] = useState<{ href: string; fallo: boolean } | null>(null);
   const [nombre, setNombre] = useState("");
   const [iso, setIso] = useState(PAIS_POR_DEFECTO);
   const [telefono, setTelefono] = useState("");
@@ -92,9 +96,10 @@ export function WhatsAppLeadButton({
       const href = numero
         ? `https://wa.me/${numero}?text=${encodeURIComponent(mensajeWhatsapp)}`
         : whatsappHref(mensajeWhatsapp);
-      if (ventana) ventana.location.href = href;
-      else window.open(href, "_blank", "noopener");
-      setAbierto(false);
+      if (ventana) {
+        ventana.location.href = href;
+        setAbierto(false);
+      } else setListo({ href, fallo: false });
       setNombre("");
       setTelefono("");
       setDestino(destinoInicial);
@@ -105,9 +110,10 @@ export function WhatsAppLeadButton({
       // Nunca dejar al visitante sin salida: si el CRM falla, igual lo
       // mandamos al WhatsApp corporativo fijo en vez de trabarlo acá.
       const href = whatsappHref(mensajeWhatsapp);
-      if (ventana) ventana.location.href = href;
-      else window.open(href, "_blank", "noopener");
-      setAbierto(false);
+      if (ventana) {
+        ventana.location.href = href;
+        setAbierto(false);
+      } else setListo({ href, fallo: true });
     } finally {
       setEnviando(false);
     }
@@ -127,49 +133,69 @@ export function WhatsAppLeadButton({
       {abierto ? (
         <Modal
           titulo="Escríbanos por WhatsApp"
-          onClose={() => setAbierto(false)}
+          onClose={() => {
+            setAbierto(false);
+            setListo(null);
+          }}
           icono={<WhatsAppIcon size={22} />}
           acentoClassName="from-whatsapp to-whatsapp"
         >
-          <form onSubmit={enviar} className="flex flex-col gap-5">
-            <p className="text-ink-soft">
-              Cuéntenos un poco y lo conectamos directo con su asesor. Respuesta en minutos en horario de atención.
-            </p>
-            <Campo etiqueta="Su nombre" requerido>
-              {(a11y) => (
-                <Entrada {...a11y} autoComplete="name" value={nombre} onChange={(e) => setNombre(e.target.value)} />
+          {listo ? (
+            <SolicitudLista
+              waHref={listo.href}
+              titulo={listo.fallo ? "Falta un paso para enviarla" : undefined}
+              boton="Abrir WhatsApp"
+            >
+              {listo.fallo ? (
+                <Aviso>
+                  No pudimos registrar su solicitud en nuestro sistema. Envíela ahora por WhatsApp y un asesor la
+                  recibe directamente.
+                </Aviso>
+              ) : (
+                "Toque el botón para abrir la conversación con su asesor."
               )}
-            </Campo>
-            <Campo etiqueta="Su número de WhatsApp" requerido>
-              {(a11y) => (
-                <TelefonoPais {...a11y} iso={iso} onIso={setIso} valor={telefono} onValor={setTelefono} />
-              )}
-            </Campo>
-            <Campo etiqueta="Destino que le interesa" requerido>
-              {(a11y) => (
-                <Entrada
-                  {...a11y}
-                  placeholder="Los Roques, Mérida, Margarita…"
-                  value={destino}
-                  onChange={(e) => setDestino(e.target.value)}
-                />
-              )}
-            </Campo>
-            <fieldset>
-              <legend className="mb-1.5 text-sm font-semibold text-ink">¿Cuántos viajan?</legend>
-              <div className="grid grid-cols-3 gap-3">
-                <Cantidad etiqueta="Adultos" valor={adultos} onChange={setAdultos} />
-                <Cantidad etiqueta="Niños" valor={ninos} onChange={setNinos} />
-                <Cantidad etiqueta="Infantes" valor={infantes} onChange={setInfantes} />
-              </div>
-            </fieldset>
-            {error ? (
-              <Aviso>{error}</Aviso>
-            ) : null}
-            <Boton type="submit" variante="whatsapp" tamano="lg" ancho cargando={enviando} iconoInicio={<WhatsAppIcon size={20} />}>
-              Continuar a WhatsApp
-            </Boton>
-          </form>
+            </SolicitudLista>
+          ) : (
+            <form onSubmit={enviar} className="flex flex-col gap-5">
+              <p className="text-ink-soft">
+                Cuéntenos un poco y lo conectamos directo con su asesor. Respuesta en minutos en horario de atención.
+              </p>
+              <Campo etiqueta="Su nombre" requerido>
+                {(a11y) => (
+                  <Entrada {...a11y} autoComplete="name" value={nombre} onChange={(e) => setNombre(e.target.value)} />
+                )}
+              </Campo>
+              <Campo etiqueta="Su número de WhatsApp" requerido>
+                {(a11y) => (
+                  <TelefonoPais {...a11y} iso={iso} onIso={setIso} valor={telefono} onValor={setTelefono} />
+                )}
+              </Campo>
+              <Campo etiqueta="Destino que le interesa" requerido>
+                {(a11y) => (
+                  <Entrada
+                    {...a11y}
+                    placeholder="Los Roques, Mérida, Margarita…"
+                    value={destino}
+                    onChange={(e) => setDestino(e.target.value)}
+                  />
+                )}
+              </Campo>
+              <fieldset>
+                <legend className="mb-1.5 text-sm font-semibold text-ink">¿Cuántos viajan?</legend>
+                <div className="grid grid-cols-3 gap-3">
+                  <Cantidad etiqueta="Adultos" valor={adultos} onChange={setAdultos} />
+                  <Cantidad etiqueta="Niños" valor={ninos} onChange={setNinos} />
+                  <Cantidad etiqueta="Infantes" valor={infantes} onChange={setInfantes} />
+                </div>
+              </fieldset>
+              {error ? (
+                <Aviso>{error}</Aviso>
+              ) : null}
+              <Boton type="submit" variante="whatsapp" tamano="lg" ancho cargando={enviando} iconoInicio={<WhatsAppIcon size={20} />}>
+                Continuar a WhatsApp
+              </Boton>
+            </form>
+          )}
         </Modal>
       ) : null}
     </>

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
 import { Campo, Entrada } from "@/components/ui/Campo";
-import { BotonGoogle, SeparadorO } from "@/components/cuenta/BotonGoogle";
+import { AccesoGoogle } from "@/components/cuenta/BotonGoogle";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
 /** Google + correo. Lo usan /cuenta/login y el panel de cuenta del header;
@@ -39,9 +39,7 @@ export function FormularioLogin({
   }
 
   return (
-    <>
-      <BotonGoogle siguiente={siguiente} onError={setError} />
-      <SeparadorO />
+    <AccesoGoogle siguiente={siguiente} onError={setError}>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-5">
         <Campo etiqueta="Correo" requerido>
@@ -76,6 +74,6 @@ export function FormularioLogin({
           Entrar
         </Boton>
       </form>
-    </>
+    </AccesoGoogle>
   );
 }

@@ -52,6 +52,25 @@ export function BotonWhatsapp({ codigo, motivo }: { codigo: string; motivo: stri
   );
 }
 
+/** Link de asesor: no sabemos quién lo emitió, así que va al WhatsApp corporativo. Solo en el
+ * teléfono: en escritorio la Navbar ya tiene WhatsApp, pero en checkout el móvil no tiene otra salida. */
+export function BotonAsesor({ motivo }: { motivo: string }) {
+  return (
+    <div className="lg:hidden">
+      <Boton
+        href={whatsappHref(`Hola, necesito ayuda con mi link de pago. ${motivo}`)}
+        onClick={() => registrarEvento("click_whatsapp", { ruta: "/pagar", meta: { origen: "pagar_asesor", motivo } })}
+        variante="whatsapp"
+        tamano="lg"
+        ancho
+        iconoInicio={<WhatsAppIcon size={20} />}
+      >
+        Escribirle a un asesor
+      </Boton>
+    </div>
+  );
+}
+
 /** Compra directa: el asesor que finaliza las reservas de la web, con el código ya en el mensaje. */
 export function ContactoReserva({ codigo, hotel }: { codigo: string; hotel?: string | null }) {
   const mensaje = `Hola ${PILA_CONTACTO}, hice la reserva ${codigo}${hotel ? ` en ${hotel}` : ""} por la página web y quiero finalizarla.`;

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
 import { Campo, Entrada } from "@/components/ui/Campo";
-import { BotonGoogle, SeparadorO } from "@/components/cuenta/BotonGoogle";
+import { AccesoGoogle } from "@/components/cuenta/BotonGoogle";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
 /** Google + correo. Lo usan /cuenta/registro y el panel de cuenta del header. */
@@ -61,9 +61,7 @@ export function FormularioRegistro({
   }
 
   return (
-    <>
-      <BotonGoogle siguiente={siguiente} onError={setError} />
-      <SeparadorO />
+    <AccesoGoogle siguiente={siguiente} onError={setError}>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-5">
         <Campo etiqueta="Nombre" requerido>
@@ -93,6 +91,6 @@ export function FormularioRegistro({
           Crear cuenta
         </Boton>
       </form>
-    </>
+    </AccesoGoogle>
   );
 }
