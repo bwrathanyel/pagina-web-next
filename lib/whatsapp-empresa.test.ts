@@ -27,6 +27,15 @@ test("webview de Facebook/Instagram: página con whatsapp:// y número legible",
   }
 });
 
+test("código de puente válido: va en el prefill; inválido se ignora", () => {
+  const r = whatsappDesdeRedes(UA_CHROME, "ig", "k7q2m9xp");
+  assert.ok(r.headers.get("location")!.endsWith(encodeURIComponent("Hola, vengo del Instagram de Lotus360 (ref k7q2m9xp)")));
+  for (const malo of ["k7q2m9x", "k7q2m9xl", "<script>a"]) {
+    const r2 = whatsappDesdeRedes(UA_CHROME, "ig", malo);
+    assert.ok(r2.headers.get("location")!.endsWith(encodeURIComponent("Hola, vengo del Instagram de Lotus360")));
+  }
+});
+
 test("origen desconocido: prefill genérico", () => {
   const r = whatsappDesdeRedes(UA_CHROME, "x");
   assert.ok(r.headers.get("location")!.endsWith(encodeURIComponent("Hola, vengo de las redes de Lotus360")));

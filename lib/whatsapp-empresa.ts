@@ -42,9 +42,14 @@ const PREFILL_ORIGEN: Record<string, string> = {
   fb: "Hola, vengo del Facebook de Lotus360",
 };
 const PREFILL_GENERICO = "Hola, vengo de las redes de Lotus360";
+// Código de ia_puente_whatsapp (?c=): viaja en el prefill para que el bot de
+// WhatsApp herede la conversación del DM. Mismo alfabeto que
+// gen_codigo_contacto_directo; cualquier otra cosa se ignora.
+const CODIGO_PUENTE = /^[2-9a-km-np-z]{8}$/;
 
-export function whatsappDesdeRedes(ua: string, origen: string | null): Response {
-  const prefill = PREFILL_ORIGEN[origen ?? ""] ?? PREFILL_GENERICO;
+export function whatsappDesdeRedes(ua: string, origen: string | null, codigo: string | null = null): Response {
+  const base = PREFILL_ORIGEN[origen ?? ""] ?? PREFILL_GENERICO;
+  const prefill = codigo && CODIGO_PUENTE.test(codigo) ? `${base} (ref ${codigo})` : base;
   if (!WEBVIEW_META.test(ua) && !WEBVIEW_TIKTOK.test(ua)) return redirectWaMe(prefill);
   return paginaAbrirWhatsapp(
     prefill,
