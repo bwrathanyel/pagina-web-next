@@ -37,19 +37,27 @@ export const redirectWaMe = (prefill: string): Response =>
   new Response(null, { status: 302, headers: { Location: urlWaMe(prefill), "Cache-Control": "no-store" } });
 
 // Link que el bot pone en el DM de Instagram/Facebook (comentarios y chat).
-const PREFILL_ORIGEN: Record<string, string> = {
-  ig: "Hola, vengo del Instagram de Lotus360",
-  fb: "Hola, vengo del Facebook de Lotus360",
-};
-const PREFILL_GENERICO = "Hola, vengo de las redes de Lotus360";
+const RED_ORIGEN: Record<string, string> = { ig: "Instagram", fb: "Facebook", tt: "TikTok" };
+const MARCA = "Destino y Eventos Lotus 360";
+// Sin código no hay conversación previa: los campos guían el primer mensaje
+// para que el bot arranque con destino, fecha y personas.
+export const PLANTILLA_VIAJE = "\n\n📍 Destino: \n📅 Fecha aproximada: \n👥 Personas: ";
+// Con código el bot ya trae destino y datos del DM: repetir la plantilla vacía
+// lo haría preguntar de nuevo. El "(ref …)" lo saca el webhook antes del cerebro.
+export function prefillRedes(origen: string | null, codigo: string | null = null): string {
+  const red = RED_ORIGEN[origen ?? ""];
+  if (codigo && CODIGO_PUENTE.test(codigo)) {
+    return `¡Hola! 😊 Vengo de escribirles por ${red ?? "redes"} a ${MARCA} y quiero seguir con mi viaje por aquí. (ref ${codigo})`;
+  }
+  return `¡Hola! 😊 Los vi en ${red ? `el ${red}` : "las redes"} de ${MARCA} y quiero planear un viaje.${PLANTILLA_VIAJE}`;
+}
 // Código de ia_puente_whatsapp (?c=): viaja en el prefill para que el bot de
 // WhatsApp herede la conversación del DM. Mismo alfabeto que
 // gen_codigo_contacto_directo; cualquier otra cosa se ignora.
 const CODIGO_PUENTE = /^[2-9a-km-np-z]{8}$/;
 
 export function whatsappDesdeRedes(ua: string, origen: string | null, codigo: string | null = null): Response {
-  const base = PREFILL_ORIGEN[origen ?? ""] ?? PREFILL_GENERICO;
-  const prefill = codigo && CODIGO_PUENTE.test(codigo) ? `${base} (ref ${codigo})` : base;
+  const prefill = prefillRedes(origen, codigo);
   if (!WEBVIEW_META.test(ua) && !WEBVIEW_TIKTOK.test(ua)) return redirectWaMe(prefill);
   return paginaAbrirWhatsapp(
     prefill,
