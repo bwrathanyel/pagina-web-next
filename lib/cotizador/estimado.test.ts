@@ -155,14 +155,19 @@ test("dos juegos de precios iguales de específicos: gana la fila elegida", () =
   assert.equal(r.total, 360); // 60 x 2 x 3, por persona
 });
 
-test("cuádruple con clave cpl y ocupación sin precio", () => {
+test("cuádruple con clave cpl; más adultos que la habitación: varias habitaciones, como en Cotizaciones", () => {
   const r = estimarEstadia(VENETUR_PERSONA, VENETUR, estadia("2026-10-10", "2026-10-11", 4));
   assert.ok(r.ok);
   assert.equal(r.total, 220); // 55 x 4
+  // Caribe no publica cuádruple (cdp vacío) y llega a triple: 2 habitaciones dobles.
   const caribe4 = estimarEstadia(CARIBE[2], CARIBE, estadia("2027-02-15", "2027-02-16", 4));
-  assert.ok(!caribe4.ok && caribe4.motivo === "ocupacion"); // cdp: null
+  assert.ok(caribe4.ok);
+  assert.equal(caribe4.total, 240); // 60 x 4
+  assert.ok(caribe4.avisos.some((a) => a.includes("2 habitaciones")));
+  // Venetur llega a cuádruple: 6 adultos = 2 habitaciones triples (58 x 6).
   const seis = estimarEstadia(VENETUR_PERSONA, VENETUR, estadia("2026-10-10", "2026-10-11", 6));
-  assert.ok(!seis.ok && seis.motivo === "ocupacion");
+  assert.ok(seis.ok);
+  assert.equal(seis.total, 348);
 });
 
 test("euros y fila sin fechas: la temporada específica le gana a la abierta", () => {
@@ -199,25 +204,27 @@ test("promo niño gratis: el primero no paga, del segundo en adelante sí", () =
   assert.equal(sin.total, 315); // sin promo pagan los dos
 });
 
-test("1er niño por pareja: FREE el primero de cada pareja, el resto paga el 2do", () => {
-  const mv = (precios: Tarifa["precios"], vigencia_texto = "PROMO TEMP. BAJA (1) Niño gratis de (5-10) A partir de ocupación DBL") =>
-    fila({ id: 93515, habitacion: "STANDART", vigencia_texto, precios, ventanas: v("2026-10-01", "2026-12-20"), tarifario_bloques: BLOQUE_VENETUR });
-  const gratis = mv({ "1er_chd_5_10": null, "2do_chd_5_11": 33, dbl: 65, tpl: 65, cpl: 65 });
-  const total = (t: Tarifa, adultos: number, edades: number[]) => {
-    const r = estimarEstadia(t, [t], estadia("2026-10-10", "2026-10-13", adultos, edades));
-    assert.ok(r.ok);
+test("1er y 2do niño (Margarita Village): el chd sin orden es el primero, vacío = FREE; los demás pagan el 2do", () => {
+  const mv = (precios: Tarifa["precios"], titulo: string, ventana: [string, string] = ["2026-10-01", "2026-12-20"]) =>
+    fila({ id: 111212, titulo, plan: "TODO INCLUIDO", habitacion: "STANDART", precios, ventanas: v(...ventana), tarifario_bloques: BLOQUE_VENETUR });
+  const promo = mv({ chd_5_10: null, "2do_chd_5_10": 33, dbl: 65, sgl: 85, tpl: 65, cpl_cua: 65 }, "PROMO TEMP. BAJA");
+  const total = (t: Tarifa, adultos: number, edades: number[], desde = "2026-10-10", hasta = "2026-10-13") => {
+    const r = estimarEstadia(t, [t], estadia(desde, hasta, adultos, edades));
+    assert.ok(r.ok, JSON.stringify(r));
     return r.total;
   };
-  assert.equal(total(gratis, 2, [6]), 390); // 65 x 2 x 3: el niño no paga
-  assert.equal(total(gratis, 2, [6, 7]), 390 + 99); // el 2do paga 33 x 3
-  assert.equal(total(gratis, 4, [6, 7]), 780); // dos parejas, cada una con su niño gratis
-  assert.equal(total(gratis, 4, [6, 7, 8]), 780 + 99);
-  // Navidad: el PDF trae FREE pero sin la promo de temporada baja: no se adivina.
-  const navidad = mv({ "1er_chd_5_10": null, "2do_chd_5_11": 75, dbl: 149, tpl: 149, cpl: 149 }, "NAVIDAD Disfrute 21/12/2026 al 28/12/2026");
-  const r = estimarEstadia(navidad, [navidad], estadia("2026-10-10", "2026-10-13", 2, [6]));
-  assert.ok(!r.ok && r.motivo === "ninos");
-  const pago = mv({ "1er_chd_5_10": 43, "2do_chd_5_11": 53, dbl: 85, tpl: 85, cpl: 85 });
+  assert.equal(total(promo, 2, [6]), 390); // 65 x 2 x 3: el niño no paga
+  assert.equal(total(promo, 2, [6, 7]), 390 + 99); // el 2do paga 33 x 3
+  assert.equal(total(promo, 2, [6, 7, 8]), 390 + 99 * 2); // el 3ro paga el 2do
+  assert.equal(total(promo, 4, [6, 7]), 780 + 99); // cuádruple en una habitación
+  const pago = mv({ chd_5_10: 43, "2do_chd_5_10": 53, dbl: 85, sgl: 105, tpl: 85, cpl_cua: 85 }, "SEMANA SANTA");
   assert.equal(total(pago, 2, [6, 7]), 510 + (43 + 53) * 3);
+  // Cifra del dueño (2026-11-11): Navidad 21-25/12, 2A+2N = 149 x 2 x 4 + 0 + 75 x 4.
+  const navidad = mv({ chd_5_10: null, "2do_chd_5_10": 75, dbl: 149, tpl: 149, cpl_cua: 149 }, "NAVIDAD", ["2026-12-21", "2026-12-28"]);
+  assert.equal(total(navidad, 2, [6, 7], "2026-12-21", "2026-12-25"), 1492);
+  // Dos habitaciones: no se sabe con quién va cada niño.
+  const dos = estimarEstadia(promo, [promo], estadia("2026-10-10", "2026-10-13", 6, [6]));
+  assert.ok(!dos.ok && dos.motivo === "ninos");
 });
 
 test("tarjetas: las temporadas de una habitación van en una sola tarjeta", () => {

@@ -1,18 +1,19 @@
-// Estimado de una estadía para /cotizar (cotizador v2, etapa E2).
+// Estimado de una estadía para /cotizar y el precio de los paquetes.
 //
 // Función pura, sin alias de rutas: la prueban `node --test` y los componentes
-// de cliente por igual. La regla que manda es la del plan: nunca un número
-// inventado. Si algo no se puede calcular con lo que publica el tarifario
-// (sin tarifa para una noche, ocupación sin precio, niños sin tarifa, mínimo de
-// noches), el resultado es `ok: false` con el motivo y la web muestra "Precio a
-// confirmar por el asesor".
+// de cliente por igual. Nunca un número inventado: si algo no se puede calcular
+// con lo que publica el tarifario, el resultado es `ok: false` con el motivo y
+// la web muestra "Precio a confirmar por el asesor".
 //
-// Una fila de `tarifas` es una temporada de UNA habitación y UN plan. Una
-// estadía puede cruzar temporadas (del 23 al 28 de diciembre son noches de
-// Navidad y de Fin de Año), así que cada noche se cobra con la fila más
-// específica de la misma habitación y plan que la cubre. La fila que eligió el
-// cliente solo desempata: una fila sin fechas no le gana a la de Navidad.
+// Desde 2026-11-12 el precio del hotel sale del MISMO motor que la sección
+// Cotizaciones del CRM (`motor-crm.generado.js`, copiado de lotus-crm-preview/app.js
+// por scripts/sync-cotizador-servidor.mjs del repo CRM), igual que el bot de ventas
+// y cotizador-chat: unidad persona/habitación, temporadas noche por noche, mínimo de
+// noches, reparto en varias habitaciones y desempate por día de semana. Acá solo se
+// traducen las edades a lo que el asesor cargaría (adultos, niños, infantes) y se
+// cobran los niños.
 import type { Tarifa, TarifarioBloque } from "@/types/supabase";
+import { motorCotizacionWeb } from "./motor-crm.generado.js";
 
 export interface Estadia {
   desde: string;
@@ -45,6 +46,11 @@ export type Estimado =
       avisos: string[];
     }
   | { ok: false; motivo: MotivoSinEstimado; texto: string; minimo?: number };
+
+type Fallo = Extract<Estimado, { ok: false }>;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const m: any = motorCotizacionWeb();
 
 const DIA = 86_400_000;
 const aFecha = (iso: string) => Date.parse(`${iso}T00:00:00Z`);
@@ -105,73 +111,26 @@ function amplitud(t: Tarifa, noche: number): number | null {
   return mejor;
 }
 
-/** Misma habitación, mismo plan y misma moneda: las temporadas de una misma oferta. */
-const grupo = (t: Tarifa) => `${normalizar(t.habitacion)}|${normalizar(t.plan)}|${monedaDe(t)}`;
-
-function porHabitacion(t: Tarifa): boolean {
-  const p = t.precios ?? {};
-  const declarada = p["base"] ?? bloqueDe(t)?.base_precio ?? null;
-  if (declarada === "habitacion") return true;
-  if (declarada === "persona") return false;
-  // Mismo criterio que precioPorPersona()/montoDoble() en lib/tarifas.ts.
-  const sgl = numero(p["sgl"]);
-  const dbl = numero(p["dbl"]);
-  return sgl !== null && dbl !== null && dbl > sgl;
-}
-
-/** Lista CERRADA de claves de `precios` que son una ocupación, la misma que
- * OCUPACION_ADULTOS de `_shared/ventas-ia.ts` y TAR_OCUPACION del CRM (el script
- * `verif_fase4_capacidad.mjs` revisa el CRM contra el bot). `precios` también
- * trae claves que parecen capacidad y no lo son (`4_a_10_pasajeros`, `pax_6`,
- * `temporada_alta`, `chd_5_9`): lo que no está acá no cuenta y no se adivina. Si
- * un PDF nuevo trae otra (ver `scripts/fixtures_precios_claves.json`), se suma
- * en los tres lados. De 6 adultos para arriba el asesor arma la combinación. */
-const CLAVES_OCUPACION: Record<number, string[]> = {
-  1: ["sgl", "sencilla", "hab_sgl", "1_persona"],
-  2: ["dbl", "doble", "hab_dbl", "dbl_pax"],
-  3: ["tpl", "triple"],
-  4: ["cdp", "cpl", "cdl", "cdpl", "cua", "cuad", "cuadruple", "cpl_cua"],
-  5: ["qpl", "quin", "quint", "qtp", "qtpl", "qui", "qpl_qui"],
-};
-const NOMBRE_OCUPACION: Record<number, string> = { 1: "sencilla", 2: "doble", 3: "triple", 4: "cuádruple", 5: "quíntuple" };
-
-interface RangoNino {
-  clave: string;
+/** Claves de niño de la fila: `chd_5_10`, `2do_chd_5_10`, `1er_chd_5_10`
+ * (ordinal 0 = sin orden). Si la fila solo trae `chd`, el rango sale del bloque. */
+interface ClaveNino {
+  ordinal: number;
   desde: number;
   hasta: number;
+  precio: number | null;
 }
-
-/** Rangos de edad con precio propio: salen de las claves (`chd_4_10`), que son
- * las de cada tabla del PDF; si la fila solo trae `chd`, del bloque. */
-function rangosNinos(t: Tarifa): RangoNino[] {
+function clavesNinos(t: Tarifa): ClaveNino[] {
   const p = t.precios ?? {};
-  const out: RangoNino[] = [];
-  for (const clave of Object.keys(p)) {
-    const m = /^(?:2do_)?chd_(\d{1,2})_(\d{1,2})$/.exec(clave);
-    if (m && numero(p[clave]) !== null) out.push({ clave, desde: Number(m[1]), hasta: Number(m[2]) });
+  const out: ClaveNino[] = [];
+  for (const [clave, valor] of Object.entries(p)) {
+    const r = /^(?:(\d+)(?:er|do|to)_)?chd_(\d{1,2})_(\d{1,2})$/.exec(clave);
+    if (r) out.push({ ordinal: Number(r[1]) || 0, desde: Number(r[2]), hasta: Number(r[3]), precio: numero(valor) });
   }
   const n = bloqueDe(t)?.ninos;
   if (!out.length && numero(p["chd"]) !== null && n?.chd_desde != null && n?.chd_hasta != null) {
-    out.push({ clave: "chd", desde: n.chd_desde, hasta: n.chd_hasta });
+    out.push({ ordinal: 0, desde: n.chd_desde, hasta: n.chd_hasta, precio: numero(p["chd"]) });
   }
-  return out.sort((a, b) => a.desde - b.desde);
-}
-
-/** Hoteles que publican 1er y 2do niño (`1er_chd_5_10`, `2do_chd_5_11`): el 1er
- * niño de CADA PAREJA de adultos paga la tarifa `1er_*` (null = FREE) y los demás
- * niños la `2do_*` (regla del dueño, Margarita Village). Parejas = adultos / 2. */
-function primerNinoPorPareja(t: Tarifa): { hasta: number; precio: number | null } | null {
-  const p = t.precios ?? {};
-  for (const clave of Object.keys(p)) {
-    const m = /^1er_chd_(\d{1,2})_(\d{1,2})$/.exec(clave);
-    if (m) {
-      // FREE solo vale si la fila lo promete ("Niño gratis de (5-10)", promo de
-      // temporada baja); un null sin esa promesa es N/A y no se adivina.
-      const gratis = /gratis/i.test(t.vigencia_texto ?? "");
-      return { hasta: Number(m[2]), precio: numero(p[clave]) ?? (gratis ? 0 : null) };
-    }
-  }
-  return null;
+  return out;
 }
 
 /** Edad hasta la que el hotel no cobra al infante (`ninos.gratis_hasta` del
@@ -183,68 +142,60 @@ function infantesGratisHasta(t: Tarifa): number | null {
   return g !== null && g >= 0 && g <= 5 ? g : null;
 }
 
-type Noche = { ok: true; monto: number; adultos: number } | { ok: false; motivo: MotivoSinEstimado; texto: string };
-
-/** Precio de UNA noche con esta fila. Los niños por encima del rango pagan como
- * adultos (y cuentan para la ocupación); por debajo, no pagan, que es lo que
- * dicen todas las políticas cargadas ("infantes de 0 a 3 años sin costo"). */
-function precioNoche(t: Tarifa, e: Estadia): Noche {
-  const p = t.precios ?? {};
-  const rangos = rangosNinos(t);
-  let adultos = e.adultos;
-  let ninos = 0;
-  let gratis = e.ninosGratis ?? 0;
+/** Lo que el asesor cargaría en Cotizaciones: el niño por encima del rango de
+ * la tarifa va como adulto y el que está debajo (o dentro de la política de
+ * infantes del hotel) como infante, que no paga. */
+function pasajeros(t: Tarifa, e: Estadia): { adultos: number; ninos: number[] } | Fallo {
   const gratisHasta = infantesGratisHasta(t);
-  const primero = primerNinoPorPareja(t);
-  let primerosCupos = primero ? Math.floor(e.adultos / 2) : 0;
-  // Los bebés (menores de 2) no pagan solo si la política del hotel lo dice; sin
-  // política cargada se mantiene lo que dicen todas las demás ("0 a 3 sin costo").
   if (e.bebes > 0 && gratisHasta !== null && gratisHasta < 1) {
     return { ok: false, motivo: "ninos", texto: "Esta tarifa cobra a los bebés: el asesor lo confirma." };
   }
+  const claves = clavesNinos(t);
+  const minimo = claves.length ? Math.min(...claves.map((c) => c.desde)) : null;
+  const maximo = claves.length ? Math.max(...claves.map((c) => c.hasta)) : null;
+  let adultos = e.adultos;
+  const ninos: number[] = [];
   for (const edad of e.edades) {
-    // Infantes exentos según la política del hotel (`ninos.gratis_hasta`): no
-    // pagan aunque la tarifa no publique precio de niño.
     if (gratisHasta !== null && edad <= gratisHasta) continue;
-    if (!rangos.length) {
-      return { ok: false, motivo: "ninos", texto: "Esta tarifa no publica precio de niños: el asesor lo confirma." };
-    }
-    const r = rangos.find((x) => edad >= x.desde && edad <= x.hasta);
-    if (r) {
-      if (primero && primerosCupos > 0 && edad <= primero.hasta) {
-        if (primero.precio === null) {
-          return { ok: false, motivo: "ninos", texto: "Esta tarifa no publica el precio del primer niño: el asesor lo confirma." };
-        }
-        primerosCupos -= 1;
-        ninos += primero.precio;
-      } else if (gratis > 0) gratis -= 1;
-      else ninos += numero(p[r.clave]) as number;
-    }
-    else if (edad > rangos[rangos.length - 1].hasta) adultos += 1;
-    else if (edad >= rangos[0].desde) {
-      return { ok: false, motivo: "ninos", texto: `La tarifa no publica precio para un niño de ${edad} años.` };
-    }
+    if (maximo !== null && edad > maximo) adultos += 1;
+    else if (minimo !== null && edad < minimo) continue;
+    else ninos.push(edad);
   }
-  const clave = (CLAVES_OCUPACION[adultos] ?? []).find((k) => numero(p[k]) !== null);
-  if (!clave) {
-    return {
-      ok: false,
-      motivo: "ocupacion",
-      texto:
-        adultos > 5
-          ? `Para ${adultos} adultos hacen falta varias habitaciones: el asesor arma la combinación.`
-          : `Esta habitación no publica tarifa ${NOMBRE_OCUPACION[adultos] ?? ""} (${adultos} adultos).`,
-    };
-  }
-  const v = numero(p[clave]) as number;
-  return { ok: true, monto: (porHabitacion(t) ? v : v * adultos) + ninos, adultos };
+  return { adultos, ninos };
 }
 
-function minimoDe(t: Tarifa): number | null {
-  if (t.minimo_noches) return t.minimo_noches;
-  const tabla = bloqueDe(t)?.minimo_noches;
-  const m = tabla && t.habitacion ? tabla[t.habitacion] : null;
-  return m && m > 0 ? m : null;
+/** Precio por noche de cada niño con esta fila, en el orden de la lista; null = a confirmar.
+ * Sin claves 1ER/2DO: precio único del motor del CRM (cbTarPrecioNino) y, si no lo hay,
+ * precio por rango de edad. Con 1ER/2DO: precio por orden, como el bot de ventas (el
+ * `chd_` sin orden es el primero y vacío = FREE, regla del dueño para Margarita
+ * Village; del 3ro en adelante, el 2do), solo con una habitación porque con más no
+ * se sabe con quién va cada niño. */
+function preciosNinos(t: Tarifa, edades: number[], habitaciones: number): number[] | null {
+  if (!edades.length) return [];
+  const claves = clavesNinos(t);
+  const unico = m.cbTarPrecioNino(t, edades.length).precio as number | null;
+  // Con 1ER/2DO el precio único del motor ignora el primero vacío (FREE) y cobraría
+  // el 2do a todos: Margarita Village Navidad 2A+2N daba 1792 y el dueño fijó 1492.
+  const conOrden = claves.some((c) => c.ordinal >= 2);
+  if (unico !== null && !conOrden) return edades.map(() => unico);
+  const enRango = (c: ClaveNino, edad: number) => edad >= c.desde && edad <= c.hasta;
+  if (habitaciones === 1 && conOrden) {
+    // El 3er niño en adelante paga el último orden publicado (el 2do).
+    const porOrden = edades.map((edad, i) => {
+      const delOrden = (o: number) => claves.filter((c) => enRango(c, edad) && (o === 1 ? c.ordinal <= 1 : c.ordinal === o));
+      let orden = i + 1;
+      let aplican = delOrden(orden);
+      while (!aplican.length && orden > 2) aplican = delOrden(--orden);
+      const valores = aplican.map((c) => (c.precio === null && orden === 1 ? 0 : c.precio));
+      return valores.length && valores.every((v) => v !== null && v === valores[0]) ? valores[0] : null;
+    });
+    if (porOrden.every((p) => p !== null)) return porOrden as number[];
+  }
+  const porEdad = edades.map((edad) => {
+    const aplican = claves.filter((c) => c.ordinal === 0 && enRango(c, edad) && c.precio !== null);
+    return aplican.length && aplican.every((c) => c.precio === aplican[0].precio) ? aplican[0].precio : null;
+  });
+  return porEdad.every((p) => p !== null) ? (porEdad as number[]) : null;
 }
 
 /** Los suplementos obligatorios vienen como texto del PDF (fechas y montos
@@ -302,7 +253,6 @@ export function tarjetasPorHabitacion(tarifas: Tarifa[], desde: string): { tarif
   const entrada = desde ? aFecha(desde) : NaN;
   return [...grupos.values()].flat().map((filas) => {
     if (Number.isNaN(entrada)) return { tarifa: filas[0], filas };
-    // La más específica que cubre la entrada, como en estimarEstadia().
     let mejor: Tarifa | null = null;
     let ancho = Infinity;
     for (const t of filas) {
@@ -313,63 +263,108 @@ export function tarjetasPorHabitacion(tarifas: Tarifa[], desde: string): { tarif
   });
 }
 
+// Los textos del motor le hablan al asesor («Sube Habitaciones», «escribe la tarifa
+// manual»): el cliente ve el motivo con sus palabras.
+function falloDelMotor(texto: string): Fallo {
+  const t = normalizar(texto);
+  const minimo = /minimo (\d+) noches/.exec(t);
+  if (minimo) return { ok: false, motivo: "minimo", minimo: Number(minimo[1]), texto: `En esas fechas el hotel pide un mínimo de ${minimo[1]} noches.` };
+  if (t.includes("minimo de noches")) return { ok: false, motivo: "minimo", texto: "En esas fechas el hotel pide un mínimo de noches: el asesor lo confirma." };
+  if (t.includes("precios distintos")) {
+    return { ok: false, motivo: "sin-tarifa", texto: "El tarifario tiene dos precios para esas noches: el asesor confirma cuál aplica." };
+  }
+  if (/adulto|ocupacion|variante|habitaciones/.test(t)) {
+    return { ok: false, motivo: "ocupacion", texto: "Esta habitación no publica tarifa para esa ocupación: el asesor arma la combinación." };
+  }
+  return { ok: false, motivo: "sin-tarifa", texto: "El tarifario no publica precio para todas sus noches." };
+}
+
+const SIN_HABITACION = "Habitación";
+
+// Lo mismo que armarHotel (supabase/functions/_shared/hotel-cotizacion.ts) y que hace
+// el asesor al elegir el hotel en Cotizaciones sin tocar nada.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function armar(elegida: Tarifa, filas: Tarifa[], desde: string, hasta: string, adultos: number): { ok: true; it: any; filas: Tarifa[] } | Fallo {
+  const hoy = m.cbHoy();
+  const copias = filas.map((t) => ({ ...t, vigente: t.vigente ?? true, habitacion: t.habitacion?.trim() ? t.habitacion : SIN_HABITACION }));
+  if (!copias.some((t) => t.id === elegida.id)) {
+    copias.push({ ...elegida, vigente: elegida.vigente ?? true, habitacion: elegida.habitacion?.trim() ? elegida.habitacion : SIN_HABITACION });
+  }
+  m.cbMarcarPreventas(copias, hoy);
+  const utiles = copias.filter((t) => m.cbTarUtil(t, hoy));
+  const propia = copias.find((t) => t.id === elegida.id)!;
+  const hab = propia.habitacion as string;
+  // El plan de la fila que eligió el cliente, aunque esté vacío: con otro plan el motor
+  // descarta justo esa fila (H2otel, temporada media sin régimen cargado).
+  const plan = m.cbTarPlan(propia) || "";
+  m.cbTarAnotarUnidades(utiles);
+  const it = {
+    tipo: "hotel", ida: desde, vuelta: hasta, adultos, ninos: 0, infantes: 0, unidad: "persona_noche", habitaciones: 1,
+    infantes_gratis: true, tarifa_nino_auto: true, plan, hab, tarifa_variante: "",
+  };
+  m.cbHotelUnidad(it, utiles);
+  if (it.vuelta !== hasta) {
+    const n = nochesDeEstadia(desde, it.vuelta).length;
+    return { ok: false, motivo: "sin-tarifa", texto: `Este paquete es de ${n} ${n === 1 ? "noche" : "noches"}: el asesor ajusta la salida.` };
+  }
+  const s = m.cbTarSugerir(it, utiles, hoy, m.TAR_OCUPACION);
+  if (!s.ok) return falloDelMotor(String(s.texto ?? ""));
+  return { ok: true, it: { ...it, tramos: s.tramos }, filas: utiles };
+}
+
 /**
  * @param elegida la fila que eligió el cliente (habitación y plan).
- * @param filas todas las filas del hotel; se usan las de la misma habitación,
- *   plan y moneda para las noches que la elegida no cubre.
+ * @param filas todas las filas del hotel; el motor toma las de la misma
+ *   habitación y plan para cada noche.
  */
 export function estimarEstadia(elegida: Tarifa, filas: Tarifa[], e: Estadia): Estimado {
   const noches = nochesDeEstadia(e.desde, e.hasta);
   if (!noches.length) return { ok: false, motivo: "fechas", texto: "Elija la fecha de entrada y de salida." };
   if (e.adultos < 1) return { ok: false, motivo: "ocupacion", texto: "Indique al menos un adulto." };
 
-  const clave = grupo(elegida);
-  const hermanas = [elegida, ...filas.filter((t) => t.id !== elegida.id && grupo(t) === clave)];
+  const pax = pasajeros(elegida, e);
+  if ("ok" in pax) return pax;
+  // El checkout cobra toda la estadía a una sola tasa (EUR = bolívares a tasa euro):
+  // solo entran las temporadas de la moneda de la fila elegida.
+  filas = filas.filter((t) => monedaDe(t) === monedaDe(elegida));
 
-  const segmentos: { tarifa: Tarifa; noches: number; monto: number }[] = [];
-  for (const noche of noches) {
-    const ms = aFecha(noche);
-    const cubren = hermanas
-      .map((t) => ({ t, ancho: amplitud(t, ms) }))
-      .filter((x): x is { t: Tarifa; ancho: number } => x.ancho !== null);
-    if (!cubren.length) {
-      return { ok: false, motivo: "sin-tarifa", texto: "El tarifario no publica precio para todas sus noches." };
+  let r = armar(elegida, filas, e.desde, e.hasta, pax.adultos);
+  // Dos filas de la misma habitación que se pisan y el motor no sabe separar (Venetur
+  // por persona y por habitación; Hesperia preventa y temporada baja): en Cotizaciones
+  // el asesor elige una a mano; acá ya la eligió el cliente en la tarjeta.
+  if (!r.ok && r.motivo === "sin-tarifa") {
+    const propias = ventanas(elegida);
+    const otraTabla = (t: Tarifa) =>
+      t.id !== elegida.id &&
+      normalizar(t.habitacion) === normalizar(elegida.habitacion) &&
+      ventanas(t).some(([a, b]) => propias.some(([c, d]) => a <= d && c <= b));
+    if (filas.some(otraTabla)) {
+      const solo = armar(elegida, filas.filter((t) => !otraTabla(t)), e.desde, e.hasta, pax.adultos);
+      if (solo.ok) r = solo;
     }
-    const menor = Math.min(...cubren.map((x) => x.ancho));
-    const empatadas = cubren.filter((x) => x.ancho === menor).map((x) => x.t);
-    const tarifa = empatadas.find((t) => t.id === elegida.id) ?? empatadas[0];
-    const precio = precioNoche(tarifa, e);
-    if (!precio.ok) return precio;
-    // Dos filas igual de específicas con precios distintos y ninguna elegida:
-    // no hay forma de saber cuál aplica.
-    if (!empatadas.includes(elegida)) {
-      const otros = empatadas.slice(1).map((t) => precioNoche(t, e));
-      if (otros.some((o) => !o.ok || o.monto !== precio.monto)) {
-        return { ok: false, motivo: "sin-tarifa", texto: "El tarifario tiene dos precios para esas noches: el asesor confirma cuál aplica." };
-      }
-    }
-    const ultimo = segmentos[segmentos.length - 1];
-    if (ultimo && ultimo.tarifa.id === tarifa.id) {
-      ultimo.noches += 1;
-      ultimo.monto += precio.monto;
-    } else segmentos.push({ tarifa, noches: 1, monto: precio.monto });
   }
+  if (!r.ok) return r;
 
-  const usadas = segmentos.map((s) => s.tarifa);
-  const minimo = Math.max(0, ...usadas.map((t) => minimoDe(t) ?? 0));
-  if (minimo > noches.length) {
-    return {
-      ok: false,
-      motivo: "minimo",
-      minimo,
-      texto: `En esas fechas el hotel pide un mínimo de ${minimo} noches.`,
-    };
+  const { it } = r;
+  const habitaciones = Number(m.cbHabitaciones(it)) || 1;
+  const gratis = e.ninosGratis ?? 0;
+  const ninosGratisDe = (precios: number[]) => precios.map((p, i) => (i < gratis ? 0 : p));
+  const usadas: Tarifa[] = [];
+  const lineas: { texto: string; monto: number; titulo: string | null }[] = [];
+  for (const tr of it.tramos) {
+    const t = r.filas.find((x) => x.id === tr.tarifa_id)!;
+    usadas.push(t);
+    const adultos = m.cbTotalItems([{ ...it, tramos: [tr] }]) as number;
+    const precios = preciosNinos(t, pax.ninos, habitaciones);
+    if (!precios) return { ok: false, motivo: "ninos", texto: "Esta tarifa no publica precio de niños: el asesor lo confirma." };
+    const ninos = ninosGratisDe(precios).reduce((s, p) => s + p, 0) * (tr.paquete ? 1 : Number(tr.noches));
+    const n = Number(tr.noches);
+    lineas.push({ texto: `${n} ${n === 1 ? "noche" : "noches"}`, monto: adultos + ninos, titulo: t.titulo ?? null });
   }
 
   const avisos = avisosSuplementos(usadas, noches);
-  if (usadas.some((t) => /on request/.test(normalizar(t.habitacion)))) {
-    avisos.push("Habitación sujeta a confirmación del hotel (on request).");
-  }
+  if (habitaciones > 1) avisos.push(`Para ${pax.adultos} adultos se cotizan ${habitaciones} habitaciones.`);
+  if (/on request/i.test(String(it.hab))) avisos.push("Habitación sujeta a confirmación del hotel (on request).");
   const igtf = usadas.map((t) => bloqueDe(t)?.impuestos?.igtf_pct).find((x) => x != null);
   if (igtf != null) avisos.push(`Si paga en divisas se suma ${igtf}% de IGTF.`);
   if ((e.ninosGratis ?? 0) > 0 && e.edades.length) {
@@ -380,19 +375,16 @@ export function estimarEstadia(elegida: Tarifa, filas: Tarifa[], e: Estadia): Es
     );
   }
 
-  const variasTemporadas = segmentos.length > 1;
-  const lineas = segmentos.map((s) => ({
-    texto:
-      `${s.noches} ${s.noches === 1 ? "noche" : "noches"}` +
-      (variasTemporadas && s.tarifa.titulo ? `, ${s.tarifa.titulo.toLowerCase()}` : ""),
-    monto: redondear(s.monto),
-  }));
+  const variasTemporadas = lineas.length > 1;
   return {
     ok: true,
-    total: redondear(segmentos.reduce((a, s) => a + s.monto, 0)),
+    total: redondear(lineas.reduce((a, l) => a + l.monto, 0)),
     moneda: monedaDe(elegida),
     noches: noches.length,
-    lineas,
+    lineas: lineas.map((l) => ({
+      texto: l.texto + (variasTemporadas && l.titulo ? `, ${l.titulo.toLowerCase()}` : ""),
+      monto: redondear(l.monto),
+    })),
     avisos,
   };
 }
