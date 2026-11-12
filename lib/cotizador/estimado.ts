@@ -168,8 +168,8 @@ function pasajeros(t: Tarifa, e: Estadia): { adultos: number; ninos: number[] } 
  * Sin claves 1ER/2DO: precio único del motor del CRM (cbTarPrecioNino) y, si no lo hay,
  * precio por rango de edad. Con 1ER/2DO: precio por orden, como el bot de ventas (el
  * `chd_` sin orden es el primero y vacío = FREE, regla del dueño para Margarita
- * Village; del 3ro en adelante, el 2do), solo con una habitación porque con más no
- * se sabe con quién va cada niño. */
+ * Village; del 3ro en adelante, el 2do), solo con una habitación o un solo niño porque
+ * con más no se sabe con quién va cada niño. */
 function preciosNinos(t: Tarifa, edades: number[], habitaciones: number): number[] | null {
   if (!edades.length) return [];
   const claves = clavesNinos(t);
@@ -179,7 +179,8 @@ function preciosNinos(t: Tarifa, edades: number[], habitaciones: number): number
   const conOrden = claves.some((c) => c.ordinal >= 2);
   if (unico !== null && !conOrden) return edades.map(() => unico);
   const enRango = (c: ClaveNino, edad: number) => edad >= c.desde && edad <= c.hasta;
-  if (habitaciones === 1 && conOrden) {
+  // Un solo niño es el 1ro de su habitación aunque haya varias (5A+1N fin de año = 3799).
+  if ((habitaciones === 1 || edades.length === 1) && conOrden) {
     // El 3er niño en adelante paga el último orden publicado (el 2do).
     const porOrden = edades.map((edad, i) => {
       const delOrden = (o: number) => claves.filter((c) => enRango(c, edad) && (o === 1 ? c.ordinal <= 1 : c.ordinal === o));

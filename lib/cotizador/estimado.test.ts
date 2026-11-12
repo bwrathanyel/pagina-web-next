@@ -222,9 +222,22 @@ test("1er y 2do niño (Margarita Village): el chd sin orden es el primero, vací
   // Cifra del dueño (2026-11-11): Navidad 21-25/12, 2A+2N = 149 x 2 x 4 + 0 + 75 x 4.
   const navidad = mv({ chd_5_10: null, "2do_chd_5_10": 75, dbl: 149, tpl: 149, cpl_cua: 149 }, "NAVIDAD", ["2026-12-21", "2026-12-28"]);
   assert.equal(total(navidad, 2, [6, 7], "2026-12-21", "2026-12-25"), 1492);
-  // Dos habitaciones: no se sabe con quién va cada niño.
-  const dos = estimarEstadia(promo, [promo], estadia("2026-10-10", "2026-10-13", 6, [6]));
+  // Dos habitaciones y un solo niño: es el 1ro de la suya, no paga.
+  assert.equal(total(promo, 6, [6]), 65 * 6 * 3);
+  // Dos habitaciones y varios niños: no se sabe con quién va cada uno.
+  const dos = estimarEstadia(promo, [promo], estadia("2026-10-10", "2026-10-13", 6, [6, 7]));
   assert.ok(!dos.ok && dos.motivo === "ninos");
+});
+
+test("Margarita Village fin de año con `trpl`: 5A+1N 28/12 al 01/01 = 3799 (cifra del dueño)", () => {
+  const mv = (id: number, titulo: string, precios: Tarifa["precios"], ventana: [string, string]) =>
+    fila({ id, titulo, plan: "TODO INCLUIDO", habitacion: "STANDART", precios, ventanas: v(...ventana), tarifario_bloques: BLOQUE_VENETUR });
+  const navidad = mv(111214, "NAVIDAD", { chd_5_10: null, "2do_chd_5_10": 75, dbl: 149, sgl: null, trpl: 149, cpl_cua: 149 }, ["2026-12-21", "2026-12-28"]);
+  const finDeAno = mv(111215, "PREVENTA FIN DE AÑO", { chd_5_10: 93, "2do_chd_5_10": 93, dbl: 185, sgl: null, trpl: 185, cpl_cua: 185 }, ["2026-12-29", "2027-01-04"]);
+  // 149 x 5 + 185 x 5 x 3 + niño: Navidad FREE (1ro) + 93 x 3.
+  const r = estimarEstadia(finDeAno, [navidad, finDeAno], estadia("2026-12-28", "2027-01-01", 5, [8]));
+  assert.ok(r.ok, JSON.stringify(r));
+  assert.equal(r.total, 3799);
 });
 
 test("tarjetas: las temporadas de una habitación van en una sola tarjeta", () => {
