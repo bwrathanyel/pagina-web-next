@@ -51,6 +51,19 @@ export function buscarPais(iso: string): Pais {
   return PAISES.find((p) => p.iso === iso) ?? PAISES[0];
 }
 
+/** Parte un teléfono internacional («+584141234567» o «584141234567», como lo guarda la cuenta) en
+ * país de la lista + número nacional. Gana el código más largo; con el mismo código (los «+1»), el
+ * primero de la lista. null si ningún país calza o el resto no parece un número. */
+export function separarTelefono(internacional: string): { iso: string; numero: string } | null {
+  const digitos = internacional.replace(/\D/g, "");
+  if (digitos.length < 8 || digitos.length > 15) return null;
+  const pais = PAISES.filter((p) => digitos.startsWith(p.codigo))
+    .sort((a, b) => b.codigo.length - a.codigo.length)[0];
+  if (!pais) return null;
+  const numero = digitos.slice(pais.codigo.length);
+  return numero.length >= 6 ? { iso: pais.iso, numero } : null;
+}
+
 /** Devuelve el número en formato internacional ("+584121234567") o null si
  * no parece un teléfono. Quita el "0" de troncal que se marca en local
  * (0412… en Venezuela) porque WhatsApp/E.164 no lo lleva. */

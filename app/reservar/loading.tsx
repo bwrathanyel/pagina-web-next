@@ -8,22 +8,26 @@ export default function CargandoReservar() {
       <span className="sr-only">Cargando la reserva…</span>
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_26rem] lg:items-start xl:grid-cols-[minmax(0,1fr)_30rem] xl:gap-10">
         <div className="flex min-w-0 flex-col gap-8">
-          <div className="flex items-center gap-3">
-            <Esqueleto className="h-12 w-12 shrink-0 rounded-control lg:hidden" />
-            <div className="flex flex-1 flex-col gap-2">
-              <Esqueleto className="h-6 w-2/3 lg:h-10" />
-              <Esqueleto className="h-4 w-1/3 lg:hidden" />
+          {/* Banda de la foto del hotel (16:9 en el teléfono, 21:9 desde lg) y tramos numerados. */}
+          <Esqueleto className="aspect-video rounded-card lg:aspect-[21/9]" />
+          <div className="flex flex-col gap-3 lg:pl-6">
+            <Esqueleto className="h-8 w-1/2" />
+            <Esqueleto className="h-36 rounded-card lg:h-48" />
+          </div>
+          <div className="flex flex-col gap-3 lg:pl-6">
+            <Esqueleto className="h-8 w-1/3" />
+            <div className="grid gap-3 lg:grid-cols-2">
+              <Esqueleto className="h-16 rounded-card" />
+              <Esqueleto className="h-16 rounded-card" />
             </div>
           </div>
-          <Esqueleto className="h-36 rounded-card lg:h-48" />
-          <div className="grid gap-3 lg:grid-cols-2">
-            <Esqueleto className="h-16 rounded-card" />
-            <Esqueleto className="h-16 rounded-card" />
-          </div>
-          <div className="grid grid-cols-3 gap-2 sm:gap-3">
-            <Esqueleto className="h-14 rounded-card" />
-            <Esqueleto className="h-14 rounded-card" />
-            <Esqueleto className="h-14 rounded-card" />
+          <div className="flex flex-col gap-3 lg:pl-6">
+            <Esqueleto className="h-8 w-1/3" />
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+              <Esqueleto className="h-20 rounded-card" />
+              <Esqueleto className="h-20 rounded-card" />
+              <Esqueleto className="h-20 rounded-card" />
+            </div>
           </div>
         </div>
         <Esqueleto className="hidden h-128 rounded-card lg:block" />

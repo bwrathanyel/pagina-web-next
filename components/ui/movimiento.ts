@@ -32,3 +32,7 @@ export const escalon = (n: number): CSSProperties => ({ "--n": n }) as CSSProper
  *  tarjeta, ficha y /cotizar para que la foto viaje entre páginas: el hotel de
  *  /cotizar (`hotel=`, `OfertaHotel.hotelId`) es el id del producto. */
 export const nombreFoto = (productoId: number) => `foto-producto-${productoId}`;
+
+/** Con "reducir movimiento" el desplazamiento es instantáneo. */
+export const comportamientoScroll = (): ScrollBehavior =>
+  typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
-import { MontoTablero } from "@/components/cotizador/MontoTablero";
+import { MontoTablero } from "@/components/ui/MontoTablero";
 import { Boleto } from "@/components/ui/Boleto";
 import { Boton } from "@/components/ui/Boton";
 import { PrecioMostrado } from "@/components/ui/PrecioMostrado";

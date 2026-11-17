@@ -296,6 +296,13 @@ Un solo flujo para toda la web: el hero, `BottomTabBar`, `CajaPrecio`, las tarje
 - **Vuelo y tours:** `SeccionVuelo` copia ruta, fechas y pasajeros del viaje y permite fechas propias; `SeccionTours` lista tours del destino, que no suman al estimado.
 - **Resumen:** `ResumenViaje` en formato boleto, estimado con `aria-live`, contacto junto a Enviar. El borrador se guarda en localStorage (7 días) y se ofrece retomarlo. La confirmación es `SolicitudLista`; si el CRM falla se avisa y se ofrece WhatsApp directo.
 
+### Checkout (`/reservar`, mostrador de embarque)
+- **Cabecera:** banda con la foto real del hotel (16:9 en el teléfono, 21:9 desde `lg`), nombre con `titulo-marca` sobre el velo `dusk` y destino con `SelloDestino`. La foto lleva `<ViewTransition name={nombreFoto(hotel.id)} share="morph">`: llega volando desde `/cotizar` o la ficha.
+- **Tramos (`Tramo`):** Fechas y viajeros, Habitación, Forma de pago y (teléfono) Sus datos, numerados. Terminado = sin errores (`lib/checkout/tramos.ts`). En el teléfono el terminado se pliega a una línea de resumen con «Cambiar» (solo `max-lg:hidden`, el contenido sigue montado) y al terminar uno el foco y el scroll pasan al siguiente pendiente; reabierto, «Listo» lo pliega. Desde `lg` todos abiertos: el terminado lleva check y canto `franja-marca`.
+- **Opciones:** radio nativo `sr-only` y círculo de check (`MarcaElegida`). Habitación con foto 4:3, total en mono y precio por noche; con más de 3 con foto, carrusel con snap en el teléfono. El «+N» de fotos (`VerFotos`) va fuera del `<label>`. Rieles en `radiogroup` con moneda en mono y horas de cupo; el detalle entra con `panel-entra`.
+- **Pase:** `ResumenBoleto` con filas Fechas, Habitación y Pago que aparecen al terminarse su tramo; total con `MontoTablero convertir={false}` (siempre USD). En el teléfono, `BarraTotalMovil` abre el pase completo en una `Hoja`.
+- **Datos:** con sesión, nombre y correo de la cuenta y «No soy yo». `TelefonoPais` sin banderas: ISO y prefijo en mono sobre un `<select>` nativo.
+
 ### Arte generado
 Piezas de GPT Image (OpenRouter) hechas con `CRM/scripts/generar-arte.mjs` desde `scripts/arte/manifiesto.json` (guía de estilo, prompts y gasto en `costos.json`, tope US$ 10). Siempre compuestas con piezas propias del sistema; **nunca reemplazan fotos reales** de hoteles ni de destinos que ya tienen foto.
 - **`SelloDestino`:** sello de pasaporte por destino, tinta única sobre transparente, pintado con `mask-image` y `currentColor` de un token (`text-acento`, `text-dusk-text`), así gira con el tema. En `SelectorDestino`, el boleto de `ResumenViaje` (se estampa al cambiar destino, `estampa`, 280 ms) y `SolicitudLista`.

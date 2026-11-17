@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { m } from "motion/react";
 import { useId, useState, ViewTransition } from "react";
-import { MontoTablero } from "@/components/cotizador/MontoTablero";
+import { MontoTablero } from "@/components/ui/MontoTablero";
 import { FotoRotativa, useEncima } from "@/components/cotizador/OfertasHospedaje";
 import { Boton, clasesBoton } from "@/components/ui/Boton";
 import { Carrusel } from "@/components/ui/Carrusel";

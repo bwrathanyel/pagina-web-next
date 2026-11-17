@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { BarraViaje, BarraViajeCompacta, ChipsServicios, chip } from "@/components/cotizador/BarraViaje";
 import { AyudanteCotizar } from "@/components/cotizador/AyudanteCotizar";
+import { comportamientoScroll } from "@/components/ui/movimiento";
 import { DetalleHotel } from "@/components/cotizador/DetalleHotel";
 import { OfertasHospedaje } from "@/components/cotizador/OfertasHospedaje";
 import { RecomendacionesHospedaje, type PrecioViaje } from "@/components/cotizador/RecomendacionesHospedaje";
@@ -199,9 +200,6 @@ function Pestanas({
   );
 }
 
-/** Con "reducir movimiento" el desplazamiento es instantáneo. */
-const comportamientoScroll = (): ScrollBehavior =>
-  typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
 
 const CONTACTO_VACIO: ContactoViaje = { nombre: "", telefono: "", correo: "", notas: "" };
 

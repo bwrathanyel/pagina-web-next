@@ -9,6 +9,8 @@ import { Icono } from "@/components/ui/Icono";
 import type { Riel, TasaBcv } from "@/lib/checkout/calculo";
 import { fechaCorta, rangoFechas, usd } from "@/lib/checkout/formato";
 import type { CuotaPlan } from "@/lib/checkout/plan";
+import { MontoTablero } from "@/components/ui/MontoTablero";
+import type { TramoId } from "@/lib/checkout/tramos";
 import { ROTULO } from "./PaseFechas";
 
 // Resumen de /reservar: el boleto pegajoso del aside (escritorio) y la barra fija con el total
@@ -45,6 +47,44 @@ export interface DatosResumen {
   desde: string;
   hasta: string;
   viajeros: string;
+  /** «Pago total · Zelle». */
+  pago: string;
+  /** Qué tramos ya están terminados: cada dato del pase aparece al terminarse el suyo. */
+  completos: Record<TramoId, boolean>;
+}
+
+/** Las filas del pase. Una fila que se completa después de montar entra con `panel-entra`; las que
+ * ya venían completas (borrador, enlace desde /cotizar) no animan. */
+function FilasPase({ d }: { d: DatosResumen }) {
+  const [alMontar] = useState(d.completos);
+  const filas: { id: TramoId; rotulo: string; valor: ReactNode; falta: string }[] = [
+    {
+      id: "fechas",
+      rotulo: "Fechas",
+      valor: (
+        <>
+          <span className="font-mono font-bold">{rangoFechas(d.desde, d.hasta || null)}</span> · {d.viajeros}
+        </>
+      ),
+      falta: "Por elegir",
+    },
+    { id: "habitacion", rotulo: "Habitación", valor: [d.habitacion, d.plan].filter(Boolean).join(" · ") || d.hotel, falta: "Por elegir" },
+    { id: "pago", rotulo: "Pago", valor: d.pago, falta: "Por elegir" },
+  ];
+  return (
+    <dl className="flex flex-col gap-1.5 border-t border-linea px-4 py-3 text-sm">
+      {filas.map((f) => (
+        <div key={f.id} className="flex items-baseline gap-3">
+          <dt className={ROTULO + " w-24 shrink-0"}>{f.rotulo}</dt>
+          {d.completos[f.id] ? (
+            <dd className={"min-w-0 flex-1 text-ink " + (alMontar[f.id] ? "" : "panel-entra")}>{f.valor}</dd>
+          ) : (
+            <dd className="min-w-0 flex-1 text-ink-soft">{f.falta}</dd>
+          )}
+        </div>
+      ))}
+    </dl>
+  );
 }
 
 function Fila({ texto, monto, suave = false }: { texto: ReactNode; monto: ReactNode; suave?: boolean }) {
@@ -120,7 +160,9 @@ export function ResumenBoleto({
         <div className="flex h-full items-center justify-between gap-3 px-4 pb-1" aria-live="polite">
           <span className={ROTULO}>{rotuloDe(totales)}</span>
           {totales ? (
-            <span className="font-mono text-2xl font-bold tabular-nums text-ink">{usd(hoyDe(totales))}</span>
+            <span className="font-mono text-2xl font-bold tabular-nums text-ink">
+              <MontoTablero texto={usd(hoyDe(totales))} convertir={false} />
+            </span>
           ) : (
             <span className="text-right text-sm text-ink-soft">{sinPrecio}</span>
           )}
@@ -136,20 +178,16 @@ export function ResumenBoleto({
           </span>
         ) : null}
         <div className="min-w-0">
-          <p className="truncate font-display text-base font-bold leading-tight text-ink">{datos.habitacion ?? datos.hotel}</p>
-          {datos.plan ? <p className="truncate text-xs text-ink-soft">{datos.plan}</p> : null}
-          <p className="mt-1 text-sm text-ink">
-            <span className="font-mono font-bold">{datos.desde ? rangoFechas(datos.desde, datos.hasta || null) : "Fechas por elegir"}</span>
-            {" · "}
-            {datos.viajeros}
-          </p>
+          <p className="truncate font-display text-base font-bold leading-tight text-ink">{datos.hotel}</p>
+          <p className={ROTULO + " mt-1"}>Pase de reserva</p>
         </div>
       </div>
+      <FilasPase d={datos} />
       {totales ? (
         <details className="group border-t border-linea px-4 py-2">
           <summary className="flex min-h-8 cursor-pointer list-none items-center justify-between text-sm font-semibold text-ink-soft">
             Ver desglose
-            <span aria-hidden="true" className="transition-transform group-open:rotate-180">▾</span>
+            <Icono nombre="chevron-abajo" tamano={16} className="transition-transform duration-150 ease-salida group-open:rotate-180" />
           </summary>
           <div className="pb-2 pt-2">
             <Desglose t={totales} />
@@ -160,13 +198,15 @@ export function ResumenBoleto({
   );
 }
 
-/** Teléfono: total + acción al pie; tocar el total abre el desglose. */
+/** Teléfono: total + acción al pie; tocar el total abre el pase completo con el desglose. */
 export function BarraTotalMovil({
+  datos,
   totales,
   sinPrecio,
   falta,
   accion,
 }: {
+  datos: DatosResumen;
   totales: Totales | null;
   sinPrecio: string;
   /** «Falta: sus datos» (o null si ya está todo). */
@@ -187,21 +227,25 @@ export function BarraTotalMovil({
           {totales ? (
             <span className="flex items-center gap-1 font-mono text-xl font-bold tabular-nums text-ink">
               <span className="sr-only">{rotuloDe(totales)}: </span>
-              {usd(hoyDe(totales))}
+              <MontoTablero texto={usd(hoyDe(totales))} convertir={false} />
               <Icono nombre="chevron-abajo" tamano={16} className="rotate-180 text-ink-soft" />
             </span>
           ) : (
             <span className="text-sm font-semibold text-ink">{sinPrecio}</span>
           )}
           <span aria-live="polite" className="max-w-full truncate text-xs text-ink-soft">
-            {falta ?? (totales ? "Toque para ver el detalle" : "")}
+            {falta ?? (totales ? "Toque para ver su reserva" : "")}
           </span>
         </button>
         {accion}
       </div>
       {totales ? (
-        <Hoja abierta={abierta} onCerrar={() => setAbierta(false)} titulo="Detalle del total">
+        <Hoja abierta={abierta} onCerrar={() => setAbierta(false)} titulo="Su reserva">
           <div className="flex flex-col gap-4">
+            <div className="overflow-hidden rounded-card border border-linea bg-card">
+              <p className="truncate px-4 pt-3 font-display text-base font-bold text-ink">{datos.hotel}</p>
+              <FilasPase d={datos} />
+            </div>
             <Desglose t={totales} />
             <div className="flex items-baseline justify-between border-t border-linea pt-3">
               <span className={ROTULO}>{rotuloDe(totales)}</span>
