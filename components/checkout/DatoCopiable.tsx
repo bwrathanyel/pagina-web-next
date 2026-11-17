@@ -65,7 +65,9 @@ function copiarConTextarea(valor: string) {
 const TEXTO_MANUAL = "Mantenga presionado para copiar";
 
 /** Botón «Copiar» con texto (para el monto, donde el icono solo no se entiende). */
-export function BotonCopiar({ valor, que, className = "" }: { valor: string; que: string; className?: string }) {
+export function BotonCopiar({
+  valor, que, texto = "Copiar", className = "",
+}: { valor: string; que: string; texto?: string; className?: string }) {
   const { copiado, manual, copiar } = useCopiar();
   return (
     <>
@@ -79,7 +81,7 @@ export function BotonCopiar({ valor, que, className = "" }: { valor: string; que
         }
       >
         <Icono nombre={copiado ? "check" : "copiar"} tamano={16} className={copiado ? "text-seafoam-text" : ""} />
-        {copiado ? "Copiado" : "Copiar"}
+        {copiado ? "Copiado" : texto}
       </button>
       <span className="sr-only" aria-live="polite">{copiado ? `${que} copiado` : manual ? TEXTO_MANUAL : ""}</span>
     </>

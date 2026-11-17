@@ -303,6 +303,12 @@ Un solo flujo para toda la web: el hero, `BottomTabBar`, `CajaPrecio`, las tarje
 - **Pase:** `ResumenBoleto` con filas Fechas, Habitación y Pago que aparecen al terminarse su tramo; total con `MontoTablero convertir={false}` (siempre USD). En el teléfono, `BarraTotalMovil` abre el pase completo en una `Hoja`.
 - **Datos:** con sesión, nombre y correo de la cuenta y «No soy yo». `TelefonoPais` sin banderas: ISO y prefijo en mono sobre un `<select>` nativo.
 
+### Pago (`/pagar/[token]`, el talón)
+- **`TalonPago`:** talón arriba con el monto exacto (`MontoTablero convertir={false}`, moneda del riel), `ChipPlazo` al lado (solo compra web) y la nota con equivalente y tasa BCV; debajo de la perforación, los `DatoCopiable` del riel y «Copiar todo» (`textoCopiarTodo`). Tres pasos fijos: Pague en su banco, Suba el comprobante, Le confirmamos.
+- **`AvisoPago`:** comprobante como zona tocable con vista previa, Cambiar y Quitar. Las fotos se reducen en el cliente (`lib/pago/comprimir.ts`, WebP o JPEG ≤ 1,5 MB); el PDF va tal cual hasta 5 MB. Referencia y captura sobreviven a recargar (sessionStorage por token).
+- **Estados:** `EstadoSimple arte=` y `Encabezado arte=` ponen la ilustración (`EstadoIlustrado`) en lugar del icono; el texto no cambia. Confirmada: sello con `estampa`, «Agregar al calendario» (`.ics` de `lib/pago/ics.ts`) y «Compartir mi reserva».
+- **«Guarde este enlace»** en el teléfono va justo debajo del talón; desde `lg`, al pie del aside.
+
 ### Arte generado
 Piezas de GPT Image (OpenRouter) hechas con `CRM/scripts/generar-arte.mjs` desde `scripts/arte/manifiesto.json` (guía de estilo, prompts y gasto en `costos.json`, tope US$ 10). Siempre compuestas con piezas propias del sistema; **nunca reemplazan fotos reales** de hoteles ni de destinos que ya tienen foto.
 - **`SelloDestino`:** sello de pasaporte por destino, tinta única sobre transparente, pintado con `mask-image` y `currentColor` de un token (`text-acento`, `text-dusk-text`), así gira con el tema. En `SelectorDestino`, el boleto de `ResumenViaje` (se estampa al cambiar destino, `estampa`, 280 ms) y `SolicitudLista`.

@@ -3,13 +3,16 @@ import { Pasos } from "@/components/checkout/Pasos";
 import { ROTULO } from "@/components/reserva/PaseFechas";
 import { Boleto } from "@/components/ui/Boleto";
 import { Boton } from "@/components/ui/Boton";
+import { EstadoIlustrado } from "@/components/ui/EstadoIlustrado";
 import { Icono } from "@/components/ui/Icono";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import { registrarEvento } from "@/lib/analitica/eventos";
+import type { EstadoArte } from "@/lib/arte";
 import { CONTACTO_COMPRA_WEB, nombreDePila } from "@/lib/asesores";
 import { antesDeVenezuela, horaVenezuela, rangoFechas } from "@/lib/checkout/formato";
 import type { ReservaWeb } from "@/lib/pago/pagar";
 import { whatsappHref } from "@/lib/whatsapp";
+import { AccionesConfirmada } from "./AccionesConfirmada";
 import { hospedajeDe, viajerosDe } from "./ResumenCompra";
 
 const TONO = {
@@ -18,15 +21,20 @@ const TONO = {
   neutro: "bg-sand-2 text-ink-soft",
 } as const;
 
-/** Estado de una sola tarjeta: link no válido, sin red, vencido, rechazado, y los links de asesor. */
+/** Estado de una sola tarjeta: link no válido, sin red, vencido, rechazado, y los links de asesor.
+ *  `arte`: la ilustración del estado en lugar del icono (el texto no cambia). */
 export function EstadoSimple({
-  titulo, texto, tono = "neutro", accion,
-}: { titulo: string; texto: ReactNode; tono?: keyof typeof TONO; accion?: ReactNode }) {
+  titulo, texto, tono = "neutro", accion, arte,
+}: { titulo: string; texto: ReactNode; tono?: keyof typeof TONO; accion?: ReactNode; arte?: EstadoArte }) {
   return (
     <div className="rounded-card border border-linea bg-card p-6 md:p-8" role={tono === "malo" ? "alert" : "status"}>
-      <span className={`mb-5 flex h-12 w-12 items-center justify-center rounded-pill ${TONO[tono]}`} aria-hidden="true">
-        <Icono nombre={tono === "ok" ? "check" : "alerta"} tamano={22} />
-      </span>
+      {arte ? (
+        <EstadoIlustrado estado={arte} tamano={6} className="mb-5 ring-1 ring-dusk-text/15" />
+      ) : (
+        <span className={`mb-5 flex h-12 w-12 items-center justify-center rounded-pill ${TONO[tono]}`} aria-hidden="true">
+          <Icono nombre={tono === "ok" ? "check" : "alerta"} tamano={22} />
+        </span>
+      )}
       <h1 className="font-display text-3xl font-bold leading-tight text-ink">{titulo}</h1>
       <p className="mt-3 text-ink-soft">{texto}</p>
       {accion ? <div className="mt-6">{accion}</div> : null}
@@ -99,11 +107,14 @@ export function ContactoReserva({ codigo, hotel }: { codigo: string; hotel?: str
   );
 }
 
-function Encabezado({ paso, titulo, texto }: { paso: 2 | 3; titulo: string; texto: ReactNode }) {
+function Encabezado({ paso, titulo, texto, arte }: { paso: 2 | 3; titulo: string; texto: ReactNode; arte?: EstadoArte }) {
   return (
     <header className="flex flex-col gap-3">
       <Pasos actual={paso} />
-      <h1 className="font-display text-3xl font-bold leading-tight text-ink md:text-4xl">{titulo}</h1>
+      <div className="flex items-start gap-4">
+        <h1 className="min-w-0 flex-1 font-display text-3xl font-bold leading-tight text-ink md:text-4xl">{titulo}</h1>
+        {arte ? <EstadoIlustrado estado={arte} tamano={5} className="ring-1 ring-dusk-text/15" /> : null}
+      </div>
       <p className="text-ink-soft">{texto}</p>
     </header>
   );
@@ -183,8 +194,7 @@ function TalonCodigo({ rotulo, codigo, sello = false }: { rotulo: string; codigo
       {sello ? (
         <span
           className={
-            "shrink-0 -rotate-6 rounded-control border-2 border-current px-2.5 py-1 font-mono text-sm font-bold uppercase tracking-widest text-seafoam-text " +
-            "animate-globo-entrar motion-reduce:animate-none"
+            "estampa shrink-0 -rotate-6 rounded-control border-2 border-current px-2.5 py-1 font-mono text-sm font-bold uppercase tracking-widest text-seafoam-text"
           }
         >
           Confirmada
@@ -203,6 +213,7 @@ export function Verificando({ reserva }: { reserva: ReservaWeb }) {
     <div className="flex flex-col gap-6" role="status">
       <Encabezado
         paso={2}
+        arte="solicitud-enviada"
         titulo="Recibimos su aviso de pago"
         texto={
           <>
@@ -240,6 +251,7 @@ export function Confirmada({ reserva }: { reserva: ReservaWeb }) {
       <Boleto tamanoTalon="7rem" talon={<TalonCodigo rotulo="Localizador" codigo={reserva.codigo} sello />}>
         <DatosViaje reserva={reserva} />
       </Boleto>
+      <AccionesConfirmada reserva={reserva} />
       <ContactoReserva codigo={reserva.codigo} hotel={hospedajeDe(reserva)?.hotel} />
     </div>
   );

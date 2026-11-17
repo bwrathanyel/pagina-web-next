@@ -9,9 +9,7 @@ import { Esqueleto } from "@/components/ui/Esqueleto";
 import { registrarEvento } from "@/lib/analitica/eventos";
 import { olvidarReservaAbierta } from "@/lib/checkout/reservaAbierta";
 import { ERRORES_TRANSITORIOS, consultarEstado, type RespuestaEstado } from "@/lib/pago/pagar";
-
-const REFRESCO_MS = 60_000;
-const REFRESCO_HASTA_MS = 30 * 60_000;
+import { intervaloRefresco } from "@/lib/pago/talon";
 
 /** Estados de una sola tarjeta (y los links de asesor): columna angosta aunque la página sea ancha. */
 const Angosto = ({ children }: { children: ReactNode }) => <div className="mx-auto w-full max-w-lg">{children}</div>;
@@ -47,20 +45,26 @@ export function PagarCliente({ token }: { token: string }) {
     if (fase && fase !== "emitido") olvidarReservaAbierta(token);
   }, [fase, token]);
 
-  // Verificando: se consulta sola cada minuto con la pestaña a la vista y al volver a ella, hasta 30 min.
+  // Verificando: se consulta sola con la pestaña a la vista (1 min, luego 2, luego 5; sin corte)
+  // y al volver a ella. Oculta no consulta: el reloj sigue y al volver se pregunta enseguida.
   useEffect(() => {
     if (fase !== "pendiente_verificacion") return;
     const inicio = Date.now();
-    const tocar = () => {
-      if (document.visibilityState !== "visible") return;
-      if (Date.now() - inicio > REFRESCO_HASTA_MS) { window.clearInterval(t); return; }
-      void cargar(true);
+    let t = 0;
+    const programar = () => {
+      window.clearTimeout(t);
+      t = window.setTimeout(tocar, intervaloRefresco(Date.now() - inicio));
     };
-    const t = window.setInterval(tocar, REFRESCO_MS);
-    document.addEventListener("visibilitychange", tocar);
+    function tocar() {
+      if (document.visibilityState === "visible") void cargar(true);
+      programar();
+    }
+    const alVolver = () => { if (document.visibilityState === "visible") tocar(); };
+    programar();
+    document.addEventListener("visibilitychange", alVolver);
     return () => {
-      window.clearInterval(t);
-      document.removeEventListener("visibilitychange", tocar);
+      window.clearTimeout(t);
+      document.removeEventListener("visibilitychange", alVolver);
     };
   }, [fase, cargar]);
 
@@ -107,6 +111,7 @@ export function PagarCliente({ token }: { token: string }) {
       <Angosto>
         <EstadoSimple
           tono="malo"
+          arte="no-encontrado"
           titulo="Link no válido"
           texto="Este link de pago no existe o ya no está disponible. Pídale a su asesor uno nuevo."
           accion={<BotonAsesor motivo="El link no es válido." />}
@@ -127,6 +132,7 @@ export function PagarCliente({ token }: { token: string }) {
           <Angosto>
             <EstadoSimple
               tono="malo"
+              arte="sin-cupo"
               titulo="El hotel ya no tiene cupo en esas fechas"
               texto={
                 <>
@@ -148,6 +154,7 @@ export function PagarCliente({ token }: { token: string }) {
         <Angosto>
           <EstadoSimple
             tono="ok"
+            arte="solicitud-enviada"
             titulo="Recibimos su aviso de pago"
             texto="Estamos verificando el pago. Apenas quede confirmado, su asesor le avisa. No necesita hacer nada más."
           />
@@ -190,6 +197,7 @@ export function PagarCliente({ token }: { token: string }) {
           {web ? (
             <EstadoSimple
               tono="malo"
+              arte="error"
               titulo="No pudimos validar su pago"
               texto={
                 <>
@@ -202,6 +210,7 @@ export function PagarCliente({ token }: { token: string }) {
           ) : (
             <EstadoSimple
               tono="malo"
+              arte="error"
               titulo="Pago rechazado"
               texto="No pudimos validar este pago. Comuníquese con su asesor para resolverlo."
               accion={<BotonAsesor motivo="Mi pago fue rechazado." />}

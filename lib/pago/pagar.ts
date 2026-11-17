@@ -191,15 +191,10 @@ export function formatearMonto(centavos: number, moneda: PagoPublico["moneda"]):
 
 // ------------------------------------------------------------
 //  Comprobante — mismo límite y mimes que revalida `pago-publico`.
+//  Qué se comprime y qué se rechaza: `decidirComprobante` en comprimir.ts.
 // ------------------------------------------------------------
 export const COMPROBANTE_MIMES = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
 export const COMPROBANTE_LIMITE_BYTES = 5 * 1024 * 1024;
-
-export function validarComprobante(file: File): "formato" | "tamano" | null {
-  if (!COMPROBANTE_MIMES.includes(file.type)) return "formato";
-  if (file.size > COMPROBANTE_LIMITE_BYTES) return "tamano";
-  return null;
-}
 
 /** File -> base64 puro (sin el prefijo "data:...;base64,"). El mime viaja aparte. */
 export function archivoABase64(file: File): Promise<string> {

@@ -1,55 +1,42 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BarraFijaMovil } from "@/components/checkout/BarraFijaMovil";
-import { ChipPlazo } from "@/components/checkout/ChipPlazo";
-import { BotonCopiar, DatoCopiable } from "@/components/checkout/DatoCopiable";
+import { BotonCopiar } from "@/components/checkout/DatoCopiable";
 import { Pasos } from "@/components/checkout/Pasos";
 import { useEsEscritorio } from "@/components/checkout/useEsEscritorio";
-import { TurnstileWidget } from "@/components/pago/TurnstileWidget";
 import { ROTULO } from "@/components/reserva/PaseFechas";
-import { Aviso } from "@/components/ui/Aviso";
-import { Boleto } from "@/components/ui/Boleto";
 import { Boton } from "@/components/ui/Boton";
-import { Archivo, Campo, Entrada } from "@/components/ui/Campo";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
-import { registrarEvento } from "@/lib/analitica/eventos";
-import { fechaHoraVenezuela, mensajePago, montoCentavos, montoParaCopiar, porcentajeIgtf, usd } from "@/lib/checkout/formato";
-import {
-  archivoABase64,
-  declarar,
-  formatearMonto,
-  instructivoDe,
-  validarComprobante,
-  type PagoConRiel,
-  type RielPago,
-} from "@/lib/pago/pagar";
+import { formatearMonto, instructivoDe, type PagoConRiel } from "@/lib/pago/pagar";
+import { AvisoPago } from "./AvisoPago";
 import { ContactoReserva } from "./EstadosPago";
 import { hospedajeDe, ResumenCompra } from "./ResumenCompra";
+import { PasosPago, TalonPago } from "./TalonPago";
+import { useAvisoPago } from "./useAvisoPago";
 
-const ETIQUETA_REFERENCIA: Partial<Record<RielPago, string>> = {
-  zelle: "Número de confirmación",
-  binance: "TxID o número de orden",
-};
-
-/** Debajo del monto: qué incluye y con qué tasa se convirtió. «EUR» es tasa, no moneda: se paga en Bs. */
-function notaMonto(pago: PagoConRiel, igtf: string | null): string {
-  const vence = fechaHoraVenezuela(pago.expira_en);
-  if (pago.moneda === "VES") {
-    const tasa = pago.tasa_usd_ves ? montoCentavos(Math.round(pago.tasa_usd_ves * 100), "VES") : null;
-    const base =
-      pago.tasa_tipo === "mixta"
-        ? "Con las tasas del BCV (dólar y euro)"
-        : tasa
-          ? pago.tasa_tipo === "EUR" ? `Tasa euro del BCV: ${tasa}` : `Tasa del BCV: ${tasa} por US$ 1`
-          : "A la tasa del BCV";
-    return `${base}, válida hasta el ${vence}.`;
-  }
-  if (igtf) return `Incluye IGTF ${igtf.replace(".", ",")} %.`;
-  return pago.reserva ? "" : `Link válido hasta el ${vence}.`;
+/** «Guarde este enlace»: si el navegador de Instagram se cierra, es lo único que devuelve al pago. */
+function GuardarEnlace({ id, enlace, texto, className = "" }: { id: string; enlace: string; texto: string; className?: string }) {
+  return (
+    <section aria-labelledby={id} className={"rounded-card border border-linea bg-card p-5 " + className}>
+      <h2 id={id} className="font-display text-lg font-bold leading-tight text-ink">Guarde este enlace</h2>
+      <p className="mt-1 text-sm text-ink-soft">Si cierra esta página, con él vuelve a sus datos de pago.</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <BotonCopiar valor={enlace} que="el enlace" />
+        <Boton
+          href={`https://wa.me/?text=${encodeURIComponent(texto)}`}
+          variante="secundario"
+          tamano="sm"
+          iconoInicio={<WhatsAppIcon size={16} />}
+        >
+          Enviármelo por WhatsApp
+        </Boton>
+      </div>
+    </section>
+  );
 }
 
-/** Pago emitido: el boleto con el monto, los datos para pagar y el aviso «¿Ya pagó?».
+/** Pago emitido: el talón con el monto y los datos para pagar, y el aviso «¿Ya pagó?».
  *  `onCambiarMetodo`: link sin método fijo, donde el cliente eligió `pago.riel` y puede volver atrás. */
 export function PagoPendiente({
   pago, token, onDeclarado, onVencer, onCambiarMetodo,
@@ -63,11 +50,8 @@ export function PagoPendiente({
   const ins = instructivoDe(pago.riel);
   const reserva = pago.reserva ?? null;
   const hotel = reserva ? hospedajeDe(reserva)?.hotel ?? null : null;
-  const igtf = reserva ? porcentajeIgtf(reserva.servicios) : null;
   const monto = formatearMonto(pago.monto_centavos, pago.moneda);
   const plan = reserva?.plan ?? null;
-  // En un plan el IGTF es solo de esta cuota y todavía no es un servicio de la reserva: lo informa el plan.
-  const nota = plan && plan.igtf_usd > 0 && pago.moneda !== "VES" ? `Incluye IGTF de esta cuota: ${usd(plan.igtf_usd)}.` : notaMonto(pago, igtf);
   const rotuloPlan = plan
     ? plan.que === "saldo"
       ? "Saldo del plan de abonos"
@@ -76,83 +60,7 @@ export function PagoPendiente({
         : "Plan de abonos"
     : null;
   const escritorio = useEsEscritorio();
-
-  // ---------- formulario «¿Ya pagó?» ----------
-  const [referencia, setReferencia] = useState("");
-  const [errorReferencia, setErrorReferencia] = useState<string | null>(null);
-  const [archivo, setArchivo] = useState<File | null>(null);
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const [turnstileVuelta, setTurnstileVuelta] = useState(0);
-  const [esperandoToken, setEsperandoToken] = useState(false);
-  const [enviando, setEnviando] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const refInput = useRef<HTMLInputElement>(null);
-  const recibirTurnstile = useCallback((t: string | null) => setTurnstileToken(t), []);
-
-  function elegirArchivo(input: HTMLInputElement) {
-    setError(null);
-    const file = input.files?.[0] ?? null;
-    if (!file) { setArchivo(null); return; }
-    const problema = validarComprobante(file);
-    if (problema) {
-      // Se vacía el campo: si quedara el nombre del archivo, parecería adjunto y no lo está.
-      input.value = "";
-      setArchivo(null);
-      setError(mensajePago(problema === "formato" ? "comprobante_formato_invalido" : "comprobante_muy_grande"));
-      return;
-    }
-    setArchivo(file);
-  }
-
-  async function enviarCon(tokenSeguridad: string) {
-    setEnviando(true);
-    setError(null);
-    try {
-      const comprobanteBase64 = archivo ? await archivoABase64(archivo) : undefined;
-      const res = await declarar({
-        token,
-        referencia: referencia.trim(),
-        turnstileToken: tokenSeguridad,
-        comprobanteBase64,
-        comprobanteMime: archivo?.type,
-        riel: onCambiarMetodo ? pago.riel : undefined,
-      });
-      if (res.ok) {
-        registrarEvento("pago_declarado", { meta: { token } });
-        onDeclarado();
-        return;
-      }
-      setError(mensajePago(res.error));
-      setTurnstileToken(null); // el token de Turnstile es de un solo uso
-      setTurnstileVuelta((v) => v + 1); // y el widget no se reinicia solo: se remonta para pedir otro
-    } catch {
-      // Solo puede fallar la lectura del archivo: declarar no lanza (la red cae como error "sin_red").
-      setError("No pudimos leer el comprobante. Pruebe con otro archivo.");
-    } finally {
-      setEnviando(false);
-    }
-  }
-  const enviarRef = useRef(enviarCon);
-  enviarRef.current = enviarCon;
-
-  function alEnviar(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (enviando || esperandoToken) return;
-    if (!referencia.trim()) {
-      setErrorReferencia("Escriba el número de referencia del pago.");
-      refInput.current?.focus();
-      return;
-    }
-    // El botón nunca se apaga en silencio: sin token todavía, espera la verificación y envía solo.
-    if (!turnstileToken) { setEsperandoToken(true); return; }
-    void enviarCon(turnstileToken);
-  }
-
-  useEffect(() => {
-    if (!esperandoToken || !turnstileToken) return;
-    setEsperandoToken(false);
-    void enviarRef.current(turnstileToken);
-  }, [esperandoToken, turnstileToken]);
+  const aviso = useAvisoPago({ token, riel: pago.riel, rielElegido: Boolean(onCambiarMetodo), onDeclarado });
 
   // ---------- barra fija móvil: solo cuando «¿Ya pagó?» no está a la vista ----------
   const formRef = useRef<HTMLFormElement>(null);
@@ -168,104 +76,14 @@ export function PagoPendiente({
   function irAlFormulario() {
     const quieto = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     formRef.current?.scrollIntoView({ behavior: quieto ? "auto" : "smooth", block: "start" });
-    refInput.current?.focus({ preventScroll: true });
+    aviso.refInput.current?.focus({ preventScroll: true });
   }
 
-  // ---------- «Guarde este enlace» ----------
   const [enlace, setEnlace] = useState("");
   useEffect(() => setEnlace(window.location.href), []);
 
-  const boleto = (
-    <Boleto
-      talonArriba
-      tamanoTalon="8.5rem"
-      talon={
-        <div className="flex h-full flex-col justify-center gap-1.5 px-5 pt-1">
-          <span aria-hidden="true" className="franja-marca absolute inset-x-0 top-0 h-1" />
-          <p className={ROTULO}>Monto exacto</p>
-          <div className="flex items-center justify-between gap-3">
-            <p className="font-mono text-2xl font-bold leading-none tabular-nums text-ink sm:text-4xl">{monto}</p>
-            <BotonCopiar valor={montoParaCopiar(pago.monto_centavos, pago.moneda)} que="el monto" />
-          </div>
-          {nota ? <p className="text-xs text-ink-soft">{nota}</p> : null}
-          {plan ? (
-            <p className="text-xs text-ink">
-              Saldo después de este pago: <span className="font-mono font-bold tabular-nums">{usd(plan.saldo_despues_usd)}</span>
-            </p>
-          ) : null}
-        </div>
-      }
-    >
-      {ins.datos.length > 0 ? (
-        <dl className="flex flex-col px-5 py-2">
-          {ins.datos.map((d) => (
-            <DatoCopiable key={d.etiqueta} etiqueta={d.etiqueta} valor={d.valor} />
-          ))}
-        </dl>
-      ) : null}
-    </Boleto>
-  );
-
-  const pasos = (
-    <ol aria-label="Cómo pagar" className="flex flex-col gap-3">
-      {ins.pasos.map((p, i) => (
-        <li key={p} className="flex gap-3 text-ink-soft">
-          <span
-            aria-hidden="true"
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-pill bg-sand-2 font-mono text-xs font-bold text-ink"
-          >
-            {i + 1}
-          </span>
-          <span className="pt-0.5">{p}</span>
-        </li>
-      ))}
-    </ol>
-  );
-
-  const formulario = (
-    <form
-      ref={formRef}
-      id="avisar"
-      onSubmit={alEnviar}
-      noValidate
-      className="flex scroll-mt-20 flex-col gap-4 rounded-card border border-linea bg-card p-5"
-    >
-      <h2 className="font-display text-2xl font-bold leading-tight text-ink">¿Ya pagó? Avísenos</h2>
-      <Campo etiqueta={ETIQUETA_REFERENCIA[pago.riel] ?? "Número de referencia"} requerido error={errorReferencia}>
-        {(a11y) => (
-          <Entrada
-            {...a11y}
-            ref={refInput}
-            value={referencia}
-            onChange={(e) => { setReferencia(e.target.value); setErrorReferencia(null); setError(null); }}
-            placeholder="Ej: 001234567890"
-            // Pago Móvil da referencias numéricas; Zelle y el TxID de Binance llevan letras.
-            inputMode={pago.riel === "pago_movil" || pago.riel === "c2p" ? "numeric" : "text"}
-            autoCapitalize="characters"
-            spellCheck={false}
-            autoComplete="off"
-            className="font-mono tabular-nums"
-          />
-        )}
-      </Campo>
-
-      <Campo etiqueta="Captura del pago" ayuda="Recomendada: acelera la verificación. PDF, JPG, PNG o WebP, hasta 5 MB.">
-        {(a11y) => <Archivo {...a11y} accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={(e) => elegirArchivo(e.target)} />}
-      </Campo>
-
-      <TurnstileWidget key={turnstileVuelta} onToken={recibirTurnstile} />
-
-      {error ? <Aviso>{error}</Aviso> : null}
-
-      <Boton type="submit" tamano="lg" ancho cargando={enviando || esperandoToken}>
-        {esperandoToken ? "Verificando seguridad…" : enviando ? "Enviando…" : "Ya pagué"}
-      </Boton>
-      <p className="text-center text-sm text-ink-soft">
-        Verificamos cada pago a mano. Nunca le pediremos claves ni datos de tarjeta.
-      </p>
-    </form>
-  );
-
+  const talon = <TalonPago pago={pago} ins={ins} onVencer={onVencer} />;
+  const formulario = <AvisoPago aviso={aviso} riel={pago.riel} formRef={formRef} />;
   const barra = (
     <BarraFijaMovil etiqueta="Monto y aviso de pago" visible={!formEnVista}>
       <div className="flex items-center gap-3">
@@ -291,8 +109,8 @@ export function PagoPendiente({
             </Boton>
           ) : null}
         </header>
-        {boleto}
-        {pasos}
+        {talon}
+        <PasosPago ins={ins} />
         {formulario}
         {barra}
       </div>
@@ -315,33 +133,18 @@ export function PagoPendiente({
             </p>
             {rotuloPlan ? <p className={ROTULO + " mt-2"}>{rotuloPlan}</p> : null}
           </div>
-          <div>
-            <ChipPlazo hasta={pago.expira_en} onVencer={onVencer} />
-          </div>
         </header>
+        {talon}
+        {/* En el teléfono va antes que nada más: es lo que salva el pago si se cierra Instagram. */}
+        <GuardarEnlace id="guardar-enlace-movil" enlace={enlace} texto={textoWhatsapp} className="lg:hidden" />
+        <PasosPago ins={ins} />
         <ContactoReserva codigo={reserva.codigo} hotel={hotel} />
-        {boleto}
-        {pasos}
       </div>
 
       <aside className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-24">
-        <div className="lg:order-first">{formulario}</div>
+        {formulario}
         <ResumenCompra reserva={reserva} abierto={escritorio} />
-        <section aria-labelledby="guardar-enlace" className="rounded-card border border-linea bg-card p-5">
-          <h2 id="guardar-enlace" className="font-display text-lg font-bold leading-tight text-ink">Guarde este enlace</h2>
-          <p className="mt-1 text-sm text-ink-soft">Si cierra esta página, con él vuelve a sus datos de pago.</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <BotonCopiar valor={enlace} que="el enlace" />
-            <Boton
-              href={`https://wa.me/?text=${encodeURIComponent(textoWhatsapp)}`}
-              variante="secundario"
-              tamano="sm"
-              iconoInicio={<WhatsAppIcon size={16} />}
-            >
-              Enviármelo por WhatsApp
-            </Boton>
-          </div>
-        </section>
+        <GuardarEnlace id="guardar-enlace" enlace={enlace} texto={textoWhatsapp} className="max-lg:hidden" />
       </aside>
       {barra}
     </div>
