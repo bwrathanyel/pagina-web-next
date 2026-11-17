@@ -19,15 +19,16 @@ export interface Estadia {
   desde: string;
   hasta: string;
   adultos: number;
-  /** Edad de cada niño (2 a 11). Los bebés van aparte y no pagan. */
-  edades: number[];
+  /** Edad de cada niño (2 a 11); null = todavía nadie la eligió (B-03: sin edad no hay precio).
+   * Los bebés van aparte y no pagan. */
+  edades: readonly (number | null)[];
   bebes: number;
   /** Promo de niños gratis: cuántos niños (dentro del rango de la tarifa) no
    * pagan. Son los primeros de la lista; del siguiente en adelante pagan. */
   ninosGratis?: number;
 }
 
-export type MotivoSinEstimado = "fechas" | "sin-tarifa" | "ocupacion" | "ninos" | "minimo";
+export type MotivoSinEstimado = "fechas" | "sin-tarifa" | "ocupacion" | "ninos" | "edades" | "minimo";
 
 export interface LineaEstimado {
   /** "4 noches, Navidad" */
@@ -57,6 +58,11 @@ const aFecha = (iso: string) => Date.parse(`${iso}T00:00:00Z`);
 const aIso = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
 /** Las noches que se duermen: de la entrada al día anterior a la salida. */
+/** El IGTF sale SOLO de la config del checkout (GET /api/checkout), que es lo que cobra el
+ * servidor; el `impuestos.igtf_pct` del tarifario es lo que dice el PDF del hotel y no manda. */
+export const avisoIgtf = (pct: number | null | undefined): string | null =>
+  pct && pct > 0 ? `Si paga en divisas se suma ${pct}% de IGTF.` : null;
+
 export function nochesDeEstadia(desde: string, hasta: string): string[] {
   const a = aFecha(desde);
   const b = aFecha(hasta);
@@ -156,6 +162,7 @@ function pasajeros(t: Tarifa, e: Estadia): { adultos: number; ninos: number[] } 
   let adultos = e.adultos;
   const ninos: number[] = [];
   for (const edad of e.edades) {
+    if (edad === null) continue; // estimarEstadia ya cortó antes; esto solo calma al tipo.
     if (gratisHasta !== null && edad <= gratisHasta) continue;
     if (maximo !== null && edad > maximo) adultos += 1;
     else if (minimo !== null && edad < minimo) continue;
@@ -322,6 +329,7 @@ export function estimarEstadia(elegida: Tarifa, filas: Tarifa[], e: Estadia): Es
   const noches = nochesDeEstadia(e.desde, e.hasta);
   if (!noches.length) return { ok: false, motivo: "fechas", texto: "Elija la fecha de entrada y de salida." };
   if (e.adultos < 1) return { ok: false, motivo: "ocupacion", texto: "Indique al menos un adulto." };
+  if (e.edades.some((x) => x === null)) return { ok: false, motivo: "edades", texto: "Elija la edad de cada niño para ver el precio." };
 
   const pax = pasajeros(elegida, e);
   if ("ok" in pax) return pax;
@@ -366,8 +374,6 @@ export function estimarEstadia(elegida: Tarifa, filas: Tarifa[], e: Estadia): Es
   const avisos = avisosSuplementos(usadas, noches);
   if (habitaciones > 1) avisos.push(`Para ${pax.adultos} adultos se cotizan ${habitaciones} habitaciones.`);
   if (/on request/i.test(String(it.hab))) avisos.push("Habitación sujeta a confirmación del hotel (on request).");
-  const igtf = usadas.map((t) => bloqueDe(t)?.impuestos?.igtf_pct).find((x) => x != null);
-  if (igtf != null) avisos.push(`Si paga en divisas se suma ${igtf}% de IGTF.`);
   if ((e.ninosGratis ?? 0) > 0 && e.edades.length) {
     avisos.push(
       e.edades.length > e.ninosGratis!

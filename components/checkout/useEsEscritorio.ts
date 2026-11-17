@@ -13,6 +13,14 @@ function suscribir(avisar: () => void) {
   return () => m.removeEventListener("change", avisar);
 }
 
+const leer = () => window.matchMedia(CONSULTA).matches;
+
 export function useEsEscritorio(): boolean {
-  return useSyncExternalStore(suscribir, () => window.matchMedia(CONSULTA).matches, () => false);
+  return useSyncExternalStore(suscribir, leer, () => false);
+}
+
+/** null en el servidor y durante la hidratación (B-15): lo que vive una sola vez no se monta hasta
+ * saber dónde va, así no aparece en la columna para saltar al aside (CLS y Turnstile doble). */
+export function useEsEscritorioConocido(): boolean | null {
+  return useSyncExternalStore(suscribir, leer, () => null);
 }

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { CLAVE_RESERVA_ABIERTA } from "@/lib/checkout/reservaAbierta";
 import { Pasos } from "@/components/checkout/Pasos";
 import { useCheckoutConfig } from "@/components/checkout/useCheckoutConfig";
-import { useEsEscritorio } from "@/components/checkout/useEsEscritorio";
+import { useEsEscritorioConocido } from "@/components/checkout/useEsEscritorio";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { TurnstileWidget } from "@/components/pago/TurnstileWidget";
 import { Aviso } from "@/components/ui/Aviso";
@@ -145,7 +145,8 @@ export function ReservarCliente({
 }) {
   const router = useRouter();
   const hoy = hoyCaracas();
-  const esEscritorio = useEsEscritorio();
+  const pantalla = useEsEscritorioConocido();
+  const esEscritorio = pantalla === true;
   const { config, reintentar } = useCheckoutConfig();
   const { user } = useAuth();
   const abrirCuenta = usePaneles((s) => s.abrirCuenta);
@@ -210,7 +211,9 @@ export function ReservarCliente({
     }
   }, [f, base, hotel.id]);
 
-  const { desde, hasta, pasajeros, riel } = f;
+  const { desde, hasta, pasajeros } = f;
+  // Un riel del borrador que el servidor ya no ofrece se trata como no elegido.
+  const riel = f.riel && (!config || config.rieles.includes(f.riel)) ? f.riel : "";
   const hayFechas = Boolean(desde && hasta && hasta > desde);
   const edades = pasajeros.edades;
   const edadesListas = edades.every((e) => e !== null);
@@ -323,8 +326,8 @@ export function ReservarCliente({
           precio, fee, feePct, igtf, igtfPct, total: precio + fee + igtf, riel, tasa,
           noches: noches ?? 0,
           lineas: calculo?.ok ? calculo.lineas : [],
-          // El IGTF ya tiene su fila en el desglose (con el % de la config, que es el que cobra el servidor).
-          avisos: calculo?.ok ? calculo.avisos.filter((a) => !/IGTF/.test(a)) : [],
+          // El IGTF tiene su fila en el desglose (config del checkout); el estimado ya no lo avisa.
+          avisos: calculo?.ok ? calculo.avisos : [],
           actualizado: precioServidor !== null,
           plan: planListo
             ? { pct: config?.plan_pct_inicial ?? 0, inicial: planListo.inicial, hoy: planListo.inicial + igtf, cuotas: planListo.cuotas }
@@ -615,13 +618,13 @@ export function ReservarCliente({
         </div>
         <div data-campo="email">
           {/* En el aside la ayuda desalinea la fila Teléfono | Correo: allí va de placeholder. */}
-          <Campo etiqueta="Correo" ayuda={esEscritorio ? undefined : "Aquí le enviamos el localizador."} error={errorDe("email")} requerido>
+          <Campo etiqueta="Correo" ayuda={esEscritorio ? undefined : "Para contactarle sobre su reserva."} error={errorDe("email")} requerido>
             {(a) => (
               <Entrada
                 {...a}
                 type="email"
                 inputMode="email"
-                placeholder={esEscritorio ? "Para enviarle el localizador" : undefined}
+                placeholder={esEscritorio ? "Para contactarle sobre su reserva" : undefined}
                 value={f.email}
                 onChange={(e) => poner({ email: e.target.value })}
                 autoComplete="email"
@@ -729,15 +732,16 @@ export function ReservarCliente({
 
           <OpcionesRiel
             riel={riel}
+            rieles={config?.rieles ?? RIELES}
             onElegir={(r) => poner({ riel: r })}
             detalle={riel && config ? detalleRiel(riel, config, tasa) : null}
             error={errorDe("riel")}
           />
 
-          {esEscritorio ? null : datos}
+          {pantalla === false ? datos : null}
 
           <PoliticaPlegable parrafos={politica} />
-          {esEscritorio ? null : cierre}
+          {pantalla === false ? cierre : null}
         </div>
 
         <aside

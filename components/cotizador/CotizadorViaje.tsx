@@ -17,7 +17,7 @@ import { TelefonoPais } from "@/components/ui/TelefonoPais";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import { PAIS_POR_DEFECTO, buscarPais, telefonoInternacional } from "@/lib/paises";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
-import { estimarEstadia, type Estadia } from "@/lib/cotizador/estimado";
+import { avisoIgtf, estimarEstadia, type Estadia } from "@/lib/cotizador/estimado";
 import {
   bloqueosDelAno,
   bloqueosEnFechas,
@@ -646,10 +646,10 @@ export function CotizadorViaje({
   const reservar =
     estado.servicios.length === 1 && hotel && esDestinoCompraDirecta(hotel.destino) && tarifaElegida && estimado?.ok && vendibleHoy(tarifaElegida) &&
     checkout?.activo && checkout.abierto && viajeros <= MAX_PAX && estado.bebes <= MAX_BEBES &&
-    estadia.edades.every((e) => e >= 2 && e <= 11)
+    estadia.edades.every((e) => e !== null && e >= 2 && e <= 11)
       ? {
           href: enlaceReservar(hotel.id, tarifaElegida.id, {
-            desde: estado.desde, hasta: estado.hasta, adultos: estado.adultos, edades: estadia.edades, bebes: estado.bebes,
+            desde: estado.desde, hasta: estado.hasta, adultos: estado.adultos, edades: estadia.edades as number[], bebes: estado.bebes,
           }),
           onClick: () => {
             registrarEvento("abrir_pago", { ruta: "/cotizar", meta: { etapa: "cotizador", producto_id: hotel.id } });
@@ -1111,7 +1111,7 @@ export function CotizadorViaje({
               <p className="text-sm text-ink-soft">{notaSinTotal}</p>
             )}
             {estimado?.ok
-              ? estimado.avisos.map((a) => (
+              ? [...estimado.avisos, avisoIgtf(checkout?.igtf_pct)].filter((a): a is string => !!a).map((a) => (
                   <p key={a} className="text-xs text-ink-soft">
                     {a}
                   </p>

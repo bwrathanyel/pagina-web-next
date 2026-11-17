@@ -11,7 +11,8 @@ import { Esqueleto } from "@/components/ui/Esqueleto";
 import { Icono } from "@/components/ui/Icono";
 import { Etiqueta } from "@/components/ui/Insignia";
 import { nombreFoto } from "@/components/ui/movimiento";
-import type { Estimado } from "@/lib/cotizador/estimado";
+import { useCheckoutConfig } from "@/components/checkout/useCheckoutConfig";
+import { avisoIgtf, type Estimado } from "@/lib/cotizador/estimado";
 import type { OfertaHotel } from "@/lib/cotizador/ofertas";
 import { etiquetaMotivo, type Recomendacion } from "@/lib/cotizador/recomendar";
 import { montoConMoneda, separarMonto } from "@/lib/tarifas";
@@ -187,6 +188,7 @@ export function RecomendacionesHospedaje({
 }) {
   const grupo = useId();
   const [encima, sobre] = useEncima();
+  const igtfPct = useCheckoutConfig().config?.igtf_pct;
   // Destinos sin destacados: la primera alternativa hace de principal.
   const base = destacados.length ? destacados : alternativas.slice(0, 1);
   const otras = destacados.length ? alternativas : alternativas.slice(1);
@@ -254,7 +256,7 @@ export function RecomendacionesHospedaje({
         : precio
           ? `${precio.texto}${/asesor/i.test(precio.texto) ? "" : " El asesor le confirma el total."}`
           : null;
-  const avisos = su?.estimado?.ok && precio === su.estimado ? su.estimado.avisos : [];
+  const avisos = su?.estimado?.ok && precio === su.estimado ? [...su.estimado.avisos, avisoIgtf(igtfPct)].filter((a): a is string => !!a) : [];
   const chips = incluye(oferta, rec);
   const regalo = textoRegalo(oferta, ninos);
 

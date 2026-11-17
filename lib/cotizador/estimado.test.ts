@@ -302,3 +302,8 @@ test("bebés: gratis salvo que la política del hotel diga que se cobran", () =>
   const r = estimarEstadia(cobra, [cobra], estadia("2026-10-10", "2026-10-11", 2, [], 1));
   assert.ok(!r.ok && r.motivo === "ninos");
 });
+
+test("B-03: sin la edad de un niño no hay precio", () => {
+  const r = estimarEstadia(CARIBE[0], CARIBE, { ...estadia("2026-12-23", "2026-12-28", 2, [6]), edades: [6, null] });
+  assert.ok(!r.ok && r.motivo === "edades");
+});

@@ -45,7 +45,7 @@ export function AyudanteCotizar({
   const contexto = [
     `destino: ${estado.destino}`,
     `fechas: ${textoFechas(estado)}`,
-    `viajeros: ${textoViajeros(estado)}${estado.ninos ? ` (edades niños: ${estado.edades.slice(0, estado.ninos).join(", ")})` : ""}`,
+    `viajeros: ${textoViajeros(estado)}${estado.ninos ? ` (edades niños: ${estado.edades.slice(0, estado.ninos).map((a) => a ?? "sin indicar").join(", ")})` : ""}`,
     `servicios: ${estado.servicios.join(", ")}`,
     hotel ? `hotel elegido: ${hotel}` : "sin hotel elegido",
     estimado ? `estimado en pantalla: ${estimado}` : "",

@@ -235,11 +235,15 @@ function EdadesNinos({ estado, onCambio }: { estado: EstadoViaje; onCambio: (e: 
             <Selector
               id={`${id}-edad-${i}`}
               data-nativo
-              value={edad}
+              value={edad ?? ""}
+              aria-invalid={edad === null || undefined}
               onChange={(ev) =>
-                onCambio({ ...estado, edades: estado.edades.map((e, j) => (j === i ? Number(ev.target.value) : e)) })
+                onCambio({ ...estado, edades: estado.edades.map((e, j) => (j === i ? (ev.target.value ? Number(ev.target.value) : null) : e)) })
               }
             >
+              <option value="" disabled>
+                Elegir
+              </option>
               {Array.from({ length: EDAD_NINO_MAX - EDAD_NINO_MIN + 1 }, (_, k) => EDAD_NINO_MIN + k).map((a) => (
                 <option key={a} value={a}>
                   {a} años
@@ -261,8 +265,10 @@ const CONTROL_CELDA =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento";
 
 /** "Edad: 5 años" / "Edades: 5 y 8 años". */
-function textoEdades(edades: number[]): string {
+function textoEdades(edades: (number | null)[]): string {
   if (!edades.length) return "";
+  const faltan = edades.filter((e) => e === null).length;
+  if (faltan) return faltan === 1 && edades.length === 1 ? "Falta la edad del niño" : "Falta la edad de los niños";
   const lista = edades.length > 1 ? `${edades.slice(0, -1).join(", ")} y ${edades[edades.length - 1]}` : String(edades[0]);
   return `${edades.length === 1 ? "Edad" : "Edades"}: ${lista} años`;
 }

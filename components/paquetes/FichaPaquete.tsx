@@ -23,7 +23,8 @@ import {
   textoDuracion,
   textoRangoCorto,
 } from "@/lib/cotizador/estado";
-import { tarjetasPorHabitacion } from "@/lib/cotizador/estimado";
+import { avisoIgtf, tarjetasPorHabitacion } from "@/lib/cotizador/estimado";
+import { useCheckoutConfig } from "@/components/checkout/useCheckoutConfig";
 import {
   bloqueosDelAno,
   bloqueosEnFechas,
@@ -83,7 +84,7 @@ export function FichaPaquete({ paquete, rutas }: { paquete: Paquete; rutas: Ruta
   const [entradaElegida, setEntrada] = useState<string | null>(null);
   const [noches, setNoches] = useState(paquete.noches_default);
   const [viajeros, setViajeros] = useState<Viajeros>({ adultos: 2, ninos: 0, bebes: 0 });
-  const [edades, setEdades] = useState<number[]>([]);
+  const [edades, setEdades] = useState<(number | null)[]>([]);
   const [tarifaId, setTarifaId] = useState<number | null>(null);
   const [bloqueos, setBloqueos] = useState<Bloqueo[] | undefined>(undefined);
 
@@ -264,9 +265,13 @@ export function FichaPaquete({ paquete, rutas }: { paquete: Paquete; rutas: Ruta
                 </label>
                 <Selector
                   id={`${id}-edad-${i}`}
-                  value={edad}
-                  onChange={(ev) => setEdades((e) => e.map((x, j) => (j === i ? Number(ev.target.value) : x)))}
+                  value={edad ?? ""}
+                  aria-invalid={edad === null || undefined}
+                  onChange={(ev) => setEdades((e) => e.map((x, j) => (j === i ? (ev.target.value ? Number(ev.target.value) : null) : x)))}
                 >
+                  <option value="" disabled>
+                    Elegir
+                  </option>
                   {Array.from({ length: EDAD_NINO_MAX - EDAD_NINO_MIN + 1 }, (_, k) => EDAD_NINO_MIN + k).map((a) => (
                     <option key={a} value={a}>
                       {a} años
@@ -420,12 +425,13 @@ export function FichaPaquete({ paquete, rutas }: { paquete: Paquete; rutas: Ruta
 }
 
 function ResumenPrecio({ est, noches }: { est: EstimadoPaquete | null; noches: number }) {
+  const igtfPct = useCheckoutConfig().config?.igtf_pct;
   if (!est) {
     return <div className="h-24 animate-pulse rounded-control bg-sand-2" aria-hidden="true" />;
   }
   const { hotel, vuelo } = est;
   const avisos = [
-    ...(hotel.ok ? hotel.avisos : []),
+    ...(hotel.ok ? [...hotel.avisos, avisoIgtf(igtfPct)] : []),
     vuelo.cercano ? `Faltan ${vuelo.dias} días para el vuelo: el boleto ya está en tarifa de última hora.` : null,
   ].filter((x): x is string => !!x);
 

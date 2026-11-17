@@ -232,20 +232,24 @@ export function detalleRiel(riel: Riel, c: { igtf_pct: number; hold_horas_usd: n
 
 export function OpcionesRiel({
   riel,
+  rieles,
   onElegir,
   detalle,
   error,
 }: {
   riel: Riel | "";
+  /** Los que ofrece el servidor hoy (GET /api/checkout). */
+  rieles: readonly Riel[];
   onElegir: (r: Riel) => void;
   detalle: string | null;
   error: string | null;
 }) {
+  const visibles = RIELES.filter((r) => rieles.includes(r.id));
   return (
     <fieldset data-campo="riel" className="flex flex-col gap-3" aria-describedby={error ? "r-riel-error" : undefined}>
       <legend className={LEYENDA + " mb-3"}>Método de pago</legend>
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        {RIELES.map((r) => (
+      <div className={"grid gap-2 sm:gap-3 " + (visibles.length >= 3 ? "grid-cols-3" : visibles.length === 2 ? "grid-cols-2" : "grid-cols-1")}>
+        {visibles.map((r) => (
           <label
             key={r.id}
             className={

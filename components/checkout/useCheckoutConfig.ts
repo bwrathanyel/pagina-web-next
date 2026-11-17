@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { RIELES, type Riel } from "@/lib/checkout/calculo";
 
 // Parámetros públicos del checkout (GET /api/checkout). Una sola consulta por minuto para toda
 // la pestaña: la ficha (caja de precio + barra móvil) y /reservar la comparten, así el botón no
@@ -16,6 +17,8 @@ export interface CheckoutConfig {
   igtf_pct: number;
   hold_horas_usd: number;
   hold_horas_ves: number;
+  /** Métodos que el servidor acepta hoy. Vacío = no se vende (se trata como apagado). */
+  rieles: Riel[];
   /** Plan de abonos: días mínimos hasta el viaje, % de la cuota 1, días de cada cuota siguiente y
    * versión vigente de sus condiciones. Apagado, sin versión o sin cuotas, el plan no se ofrece. */
   plan_activo: boolean;
@@ -29,7 +32,7 @@ export interface CheckoutConfig {
 
 const APAGADO: CheckoutConfig = {
   activo: false, abierto: false, hora_abre: 8, hora_cierra: 20,
-  fee_pct: 0, igtf_pct: 0, hold_horas_usd: 24, hold_horas_ves: 2,
+  fee_pct: 0, igtf_pct: 0, hold_horas_usd: 24, hold_horas_ves: 2, rieles: [],
   plan_activo: false, plan_min_dias: 65, plan_pct_inicial: 40, plan_dias_cuotas: [], plan_tc_version: null,
 };
 const TTL_MS = 60_000;
@@ -39,8 +42,12 @@ const num = (v: unknown, def: number) => (typeof v === "number" && Number.isFini
 function normalizar(j: unknown): CheckoutConfig {
   const c = (j && typeof j === "object" ? j : {}) as Record<string, unknown>;
   if (c.ok !== true) return { ...APAGADO, fallo: true };
+  const rieles = Array.isArray(c.rieles)
+    ? RIELES.filter((r) => (c.rieles as unknown[]).includes(r))
+    : [...RIELES];
   return {
-    activo: c.activo === true,
+    activo: c.activo === true && rieles.length > 0,
+    rieles,
     abierto: c.abierto !== false,
     hora_abre: num(c.hora_abre, APAGADO.hora_abre),
     hora_cierra: num(c.hora_cierra, APAGADO.hora_cierra),

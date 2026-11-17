@@ -110,7 +110,7 @@ export function armarCotizacionViaje(
   const noches = nochesDe(e);
   const servicio = e.servicios.map((s) => SERVICIOS.find((x) => x.id === s)?.etiqueta ?? s).join(" + ");
   const viajeros = textoViajeros(e);
-  const edades = e.ninos > 0 ? e.edades.map((a) => `${a} años`).join(", ") : "";
+  const edades = e.ninos > 0 ? e.edades.map((a) => (a === null ? "edad sin indicar" : `${a} años`)).join(", ") : "";
   const fechas = e.desde
     ? e.hasta
       ? `${rangoFechas(e.desde, e.hasta)} (${noches} ${noches === 1 ? "noche" : "noches"})`

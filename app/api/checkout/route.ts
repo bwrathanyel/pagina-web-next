@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { clientKey } from "../_shared/client-key";
 import { verificarTurnstile } from "../_shared/turnstile";
-import { calcularHospedaje, fechaValida, servicioHospedaje, validarContacto, type SolicitudHospedaje } from "@/lib/checkout/calculo";
+import { calcularHospedaje, fechaValida, RIELES, servicioHospedaje, validarContacto, type SolicitudHospedaje } from "@/lib/checkout/calculo";
 import { bloqueosDe, hotelParaCobrar } from "@/lib/checkout/datos";
 import { esDestinoCompraDirecta } from "@/lib/checkout/destinos";
 import { PLAN_ABONOS_VERSION, POLITICA_CANCELACION } from "@/lib/checkout/politica";
@@ -56,6 +56,8 @@ export async function GET() {
   }
   return NextResponse.json(
     { ok: true, activo: data.activo === true, abierto: data.abierto !== false, hora_abre: data.hora_abre, hora_cierra: data.hora_cierra, fee_pct: data.fee_pct, igtf_pct: data.igtf_pct, hold_horas_usd: data.hold_horas_usd, hold_horas_ves: data.hold_horas_ves,
+      // Solo los que también valida este route; sin lista (función vieja) van todos los conocidos.
+      rieles: Array.isArray(data.rieles) ? RIELES.filter((r) => (data.rieles as unknown[]).includes(r)) : RIELES,
       plan_activo: data.plan_activo === true, plan_min_dias: data.plan_min_dias, plan_pct_inicial: data.plan_pct_inicial, plan_dias_cuotas: data.plan_dias_cuotas, plan_tc_version: data.plan_tc_version },
     { headers: { "Cache-Control": "no-store" } },
   );

@@ -9,6 +9,7 @@
 // mientras no corra vienen NULL y todo cae a `precio_texto`/`vigencia_texto`.
 import type { Producto, Tarifa, TarifarioBloque, VentanaTarifa } from "@/types/supabase";
 import { formatearPrecioCliente, formatearPrecioDesde } from "@/lib/utils/formatoPrecio";
+import { hoyCaracas } from "@/lib/cotizador/estado";
 
 const ETIQUETA_ORDEN = ["sgl", "dbl", "tpl", "cdp", "qpl", "pax_adic"];
 
@@ -257,9 +258,14 @@ export const ventaHasta = (t: Tarifa | null | undefined) => t?.venta_hasta || t?
  * tarifa_destacada() en SQL. En la web pública anónima casi todas lo son (la
  * policy `tarifas_select_publico` ya filtra por esas fechas), pero el admin del
  * sitio sí ve las apagadas: se muestran, no se esconden. */
+// Un solo parámetro a propósito: se pasa directo a `.filter()`, que manda el índice de segundo.
 export function vendibleHoy(t: Tarifa | null | undefined): boolean {
+  return vendibleEn(t, hoyCaracas());
+}
+
+/** `hoy` en Caracas, no UTC: de 20 a 24 h la fecha UTC ya es mañana y escondía las que vencen hoy. */
+export function vendibleEn(t: Tarifa | null | undefined, hoy: string): boolean {
   if (!t || t.vigente === false) return false;
-  const hoy = new Date().toISOString().slice(0, 10);
   const vh = ventaHasta(t);
   if (vh && vh < hoy) return false;
   if (t.fecha_fin && t.fecha_fin < hoy) return false;

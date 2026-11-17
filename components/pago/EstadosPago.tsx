@@ -206,8 +206,8 @@ export function Verificando({ reserva }: { reserva: ReservaWeb }) {
         titulo="Recibimos su aviso de pago"
         texto={
           <>
-            Una persona de nuestro equipo lo verifica {antes || "de 8:00 am a 8:00 pm"} (hora de Venezuela). Le enviaremos el
-            localizador al correo que indicó. No necesita hacer nada más.
+            Una persona de nuestro equipo lo verifica {antes || "de 8:00 am a 8:00 pm"} (hora de Venezuela). Cuando quede
+            verificado, el localizador aparece en esta misma página: guarde el enlace. No necesita hacer nada más.
           </>
         }
       />
@@ -218,7 +218,8 @@ export function Verificando({ reserva }: { reserva: ReservaWeb }) {
             { titulo: "Reserva creada", estado: "hecho" },
             { titulo: "Aviso de pago enviado", detalle: hora ? `${hora} (hora de Venezuela)` : undefined, estado: "hecho" },
             { titulo: "Verificación de su pago", detalle: antes ? `${antes.charAt(0).toUpperCase()}${antes.slice(1)}` : undefined, estado: "ahora" },
-            { titulo: "Localizador por correo", estado: "luego" },
+            // Hoy nadie manda correo (ni checkout-web ni pago-publico): no prometerlo hasta F3 / P4.
+            { titulo: "Localizador en esta página", estado: "luego" },
           ]}
         />
       </Boleto>
@@ -234,7 +235,7 @@ export function Confirmada({ reserva }: { reserva: ReservaWeb }) {
       <Encabezado
         paso={3}
         titulo="¡Su reserva está confirmada!"
-        texto="Le enviamos los detalles al correo que indicó. Si no ve el correo, revise Spam o Promociones."
+        texto="Este es su localizador. Guarde esta página o tómele una captura para tenerlo a mano en el hotel."
       />
       <Boleto tamanoTalon="7rem" talon={<TalonCodigo rotulo="Localizador" codigo={reserva.codigo} sello />}>
         <DatosViaje reserva={reserva} />

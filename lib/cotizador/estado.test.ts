@@ -92,8 +92,8 @@ test("enlaces viejos: servicio legado y producto", () => {
 });
 
 test("edades faltantes se completan al largo de ninos", () => {
-  assert.deepEqual(parsearEstado({ ninos: "3", edades: "7" }, HOY).edades, [7, 5, 5]);
-  assert.deepEqual(parsearEstado({ ninos: "2", edades: "1,30" }, HOY).edades, [5, 5]);
+  assert.deepEqual(parsearEstado({ ninos: "3", edades: "7" }, HOY).edades, [7, null, null]);
+  assert.deepEqual(parsearEstado({ ninos: "2", edades: "1,30" }, HOY).edades, [null, null]);
 });
 
 test("siempre queda un servicio", () => {
@@ -154,4 +154,11 @@ test("tours: se leen sin repetidos ni basura, tope de 6, y se alternan", () => {
   assert.equal(alternarTour(e, 99), e);
   // Sin el servicio de tours marcado, los ids no viajan en la URL.
   assert.ok(!serializarEstado({ ...e, servicios: ["hospedaje"] }).includes("tour="));
+});
+
+test("B-03: un niño sin edad elegida sigue sin edad al ida y vuelta por la URL", () => {
+  const e = parsearEstado({ ninos: "3", edades: "7,,9" }, HOY);
+  assert.deepEqual(e.edades, [7, null, 9]);
+  assert.deepEqual(parsearEstado(Object.fromEntries(new URLSearchParams(serializarEstado(e))), HOY).edades, [7, null, 9]);
+  assert.deepEqual(cambiarViajeros(e, { adultos: 2, ninos: 4, bebes: 0 }).edades, [7, null, 9, null]);
 });

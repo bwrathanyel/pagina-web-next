@@ -95,8 +95,8 @@ export function planMostrado(tarifas: Tarifa[], plan: string | null | undefined)
 
 export interface ViajerosPaquete {
   adultos: number;
-  /** Edad de cada niño (2 a 11): pagan asiento y lo que diga la tarifa. */
-  edades: number[];
+  /** Edad de cada niño (2 a 11); null = sin elegir, y sin edad el hotel no se estima (B-03). */
+  edades: (number | null)[];
   bebes: number;
 }
 

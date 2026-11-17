@@ -53,8 +53,6 @@ export const NINOS_MAX = 4;
 export const BEBES_MAX = 2;
 export const EDAD_NINO_MIN = 2;
 export const EDAD_NINO_MAX = 11;
-/** Edad que se muestra hasta que el cliente elija la real. */
-export const EDAD_NINO_INICIAL = 5;
 
 export interface EstadoViaje {
   servicios: Servicio[];
@@ -64,8 +62,8 @@ export interface EstadoViaje {
   adultos: number;
   ninos: number;
   bebes: number;
-  /** Una edad por niño, siempre del mismo largo que `ninos`. */
-  edades: number[];
+  /** Una edad por niño, siempre del mismo largo que `ninos`; null = sin elegir (B-03). */
+  edades: (number | null)[];
   hotel: number | null;
   tarifa: number | null;
   origen: string;
@@ -190,8 +188,9 @@ function leerServicios(sp: ParamsBusqueda): Servicio[] {
 
 const ordenarServicios = (l: Servicio[]) => SERVICIOS.map((s) => s.id).filter((id) => l.includes(id));
 
-export function ajustarEdades(edades: number[], ninos: number): number[] {
-  return Array.from({ length: ninos }, (_, i) => edades[i] ?? EDAD_NINO_INICIAL);
+/** Cada niño nuevo nace SIN edad (B-03): la edad cambia el precio y nadie la eligió. */
+export function ajustarEdades(edades: readonly (number | null)[], ninos: number): (number | null)[] {
+  return Array.from({ length: ninos }, (_, i) => edades[i] ?? null);
 }
 
 export function estadoInicial(): EstadoViaje {
@@ -229,8 +228,7 @@ export function parsearEstado(sp: ParamsBusqueda, hoy = hoyCaracas()): EstadoVia
   const ninos = entero(uno(sp.ninos), 0, NINOS_MAX) ?? 0;
   const edadesLeidas = (uno(sp.edades) ?? "")
     .split(",")
-    .map((e) => entero(e.trim(), EDAD_NINO_MIN, EDAD_NINO_MAX))
-    .map((e) => e ?? EDAD_NINO_INICIAL);
+    .map((e) => entero(e.trim(), EDAD_NINO_MIN, EDAD_NINO_MAX) ?? null);
   const origen = ORIGENES_VUELO.find((o) => o.valor === uno(sp.origen));
   const vueloDesde = uno(sp.vuelo_ida);
   const vueloDesdeValido = esFechaViaje(vueloDesde, hoy);
@@ -281,7 +279,8 @@ export function serializarEstado(e: EstadoViaje): string {
   q.set("adultos", String(e.adultos));
   if (e.ninos) {
     q.set("ninos", String(e.ninos));
-    q.set("edades", e.edades.join(","));
+    // Sin edad = hueco («7,,9»): al volver a leer sigue sin edad.
+    q.set("edades", e.edades.map((x) => x ?? "").join(","));
   }
   if (e.bebes) q.set("bebes", String(e.bebes));
   if (e.hotel) q.set("hotel", String(e.hotel));
