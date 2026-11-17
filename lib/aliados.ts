@@ -4,7 +4,7 @@ import { getHotSales } from "@/lib/supabase/queries";
 import { TARIFA_SELECT } from "@/lib/supabase/selects";
 import { fotosDe, esSoloReferencial } from "@/lib/supabase/fotos";
 import { estimarEstadia } from "@/lib/cotizador/estimado";
-import { bloqueDe, ventanasDe } from "@/lib/tarifas";
+import { unidadTarifa, ventanasDe } from "@/lib/tarifas";
 import type { HotSale, Tarifa } from "@/types/supabase";
 
 // Catálogo corporativo /aliados/<slug> (tabla `aliados`, migración
@@ -115,7 +115,7 @@ function totalPareja(t: Tarifa): Total | null {
  * doble (Terra Nostra, Lidotel): ese paquete no se arma. */
 function baseClara(t: Tarifa): boolean {
   const p = t.precios ?? {};
-  if (p["base"] === "habitacion" || p["base"] === "persona" || bloqueDe(t)?.base_precio) return true;
+  if (unidadTarifa(t).unidad && !unidadTarifa(t).deducida) return true;
   const sgl = Number(p["sgl"] ?? p["sencilla"]);
   const dbl = Number(p["dbl"] ?? p["doble"]);
   return sgl > 0 && dbl > 0 && sgl !== dbl;

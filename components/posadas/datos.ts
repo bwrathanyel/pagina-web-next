@@ -97,7 +97,7 @@ export const CANALES = ["Instagram", "Facebook", "WhatsApp", "Telegram"] as cons
    vender algo que no se puede entregar. */
 export const AVISO_WHATSAPP =
   "WhatsApp necesita un número que no sea venezolano — es un requisito de "
-  + "WhatsApp, no nuestro. Los otros tres canales funcionan con lo que ya tienes.";
+  + "WhatsApp, no nuestro. Los otros tres canales funcionan con lo que ya tiene.";
 
 export type IdPlan = "basico" | "pro";
 
@@ -115,24 +115,24 @@ export const PLANES: Plan[] = [
     gancho: "Lo necesario para que nadie se quede sin respuesta.",
     incluye: [
       "Responde a cualquier hora, todos los días",
-      "Cotiza con tus precios exactos",
+      "Cotiza con sus precios exactos",
       "Pide el teléfono y las fechas",
       "Responde qué incluye y los requisitos",
-      "Te pasa el cliente listo por WhatsApp",
+      "Le pasa el cliente listo por WhatsApp",
       "Atiende en Instagram, Facebook, WhatsApp y Telegram",
     ],
   },
   {
     id: "pro",
     nombre: "Pro",
-    gancho: "Además, atiende como si fuera alguien de tu equipo.",
+    gancho: "Además, atiende como si fuera alguien de su equipo.",
     incluye: [
       "Todo lo del Básico, en los cuatro canales",
       "Manda la foto del ambiente que le piden",
-      "Habla con el tono de tu negocio",
+      "Habla con el tono de su negocio",
       "Maneja precios distintos por temporada",
       "Reglas propias: qué ofrecer y qué callar",
-      "Soporte prioritario y ajustes cuando quieras",
+      "Soporte prioritario y ajustes cuando quiera",
     ],
   },
 ];

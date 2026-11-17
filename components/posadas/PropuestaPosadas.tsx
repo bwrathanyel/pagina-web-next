@@ -23,7 +23,7 @@ import { construirPaleta, cssPaleta, extraerColores, type ColoresMarca } from ".
    habla de él por su nombre y la página entera se viste con sus colores (si los
    reconoció). El cierre (nombre y WhatsApp) queda al final, que es donde
    corresponde pedirlo. */
-const ACTOS = ["Hola", "La noche", "Tu perfil", "Pruébala", "Ármala"] as const;
+const ACTOS = ["Hola", "La noche", "Su perfil", "Pruébela", "Ármela"] as const;
 
 /** Marca del bloque de estilos que pinta la página con los colores del cliente.
  *  Es un literal fijo, no viene de ningún dato. */
@@ -267,7 +267,7 @@ function ActoSaludo({ vista, marcarVista }: { vista: boolean; marcarVista: () =>
       {ver(2) && (
         <p className="mt-6 max-w-xl animate-[surge_.6s_ease-out] text-lg leading-relaxed text-ink-soft">
           Durante veinte días medimos cada mensaje que nos llegó por Instagram.
-          Queremos contarte lo que encontramos, porque en cualquier negocio que
+          Queremos contarle lo que encontramos, porque en cualquier negocio que
           atiende por redes está pasando exactamente lo mismo.
         </p>
       )}
@@ -413,7 +413,7 @@ function ActoNoche() {
     <section>
       <p className="text-xs font-bold uppercase tracking-[0.16em] text-acento">Lo que pasa hoy</p>
       <h2 className="mt-3 max-w-2xl text-balance font-serif text-3xl leading-tight sm:text-4xl">
-        El mensaje llega cuando tu negocio ya cerró.
+        El mensaje llega cuando su negocio ya cerró.
       </h2>
       <p className="mt-5 max-w-xl text-ink-soft">
         El cliente no escribe en horario de oficina. Escribe cuando se le ocurre.
@@ -425,7 +425,7 @@ function ActoNoche() {
         <div className="flex items-center gap-2.5 border-b border-ink/10 px-4 py-3">
           <span className="h-9 w-9 rounded-full bg-gradient-to-br from-ambar via-acento to-seafoam" />
           <span className="flex-1 text-sm font-bold leading-tight">
-            Tu negocio
+            Su negocio
             <small className="block font-normal text-ink-soft">Instagram · mensaje directo</small>
           </span>
         </div>
@@ -487,7 +487,7 @@ function ActoNoche() {
 
         {visibles >= CONVERSACION_PERDIDA.length && (
           <p className="animate-[surge_.5s_ease-out] border-t border-ink/10 bg-acento-suave px-4 py-3 text-center text-xs font-semibold text-ink">
-            Contestaste bien. Contestaste tarde.
+            Contestó bien. Contestó tarde.
           </p>
         )}
       </div>
@@ -541,7 +541,7 @@ function ActoPrueba({ perfil, chatNegocio, setChatNegocio, chatLotus, setChatLot
     });
     const data = await res.json().catch(() => null);
     return {
-      texto: data?.respuesta || "No pude responder ahora mismo. Intenta de nuevo en un momento.",
+      texto: data?.respuesta || "No pude responder ahora mismo. Intente de nuevo en un momento.",
       foto: data?.foto_1 ?? null,
       titulo: data?.opcion_titulo ?? null,
       precio: data?.opcion_precio ?? null,
@@ -563,7 +563,7 @@ function ActoPrueba({ perfil, chatNegocio, setChatNegocio, chatLotus, setChatLot
     const data = await res.json().catch(() => null);
     return {
       rol: "ia" as const,
-      texto: data?.ok ? data.respuesta : "No pude responder ahora mismo. Intenta de nuevo en un momento.",
+      texto: data?.ok ? data.respuesta : "No pude responder ahora mismo. Intente de nuevo en un momento.",
     } as MensajeChat;
   }, [perfil]);
 
@@ -580,7 +580,7 @@ function ActoPrueba({ perfil, chatNegocio, setChatNegocio, chatLotus, setChatLot
         : await enviarLotus(limpio);
       setMensajes((m) => [...m, respuesta]);
     } catch {
-      setMensajes((m) => [...m, { rol: "ia", texto: "Se cortó la conexión. Intenta de nuevo." }]);
+      setMensajes((m) => [...m, { rol: "ia", texto: "Se cortó la conexión. Intente de nuevo." }]);
     } finally {
       setCargando(false);
     }
@@ -590,13 +590,13 @@ function ActoPrueba({ perfil, chatNegocio, setChatNegocio, chatLotus, setChatLot
 
   return (
     <section>
-      <p className="text-xs font-bold uppercase tracking-[0.16em] text-acento">Pruébala ahora</p>
+      <p className="text-xs font-bold uppercase tracking-[0.16em] text-acento">Pruébela ahora</p>
       <h2 className="mt-3 max-w-2xl text-balance font-serif text-3xl leading-tight sm:text-4xl">
-        Escríbele como si fueras un cliente.
+        Escríbale como si fuera un cliente.
       </h2>
       <p className="mt-5 max-w-xl text-ink-soft">
         Esta es la asistente de verdad, no un video ni una demo grabada.
-        Pregúntale lo que te preguntaría alguien a las nueve de la noche.
+        Pregúntele lo que le preguntaría alguien a las nueve de la noche.
       </p>
 
       <div className="mt-6 inline-flex rounded-full border border-ink/15 bg-card p-1">
@@ -622,7 +622,7 @@ function ActoPrueba({ perfil, chatNegocio, setChatNegocio, chatLotus, setChatLot
       </div>
       {!hayNegocio && (
         <p className="mt-2 text-xs text-ink-soft">
-          Completa el nombre o la descripción en &ldquo;Tu perfil&rdquo; para probarla con tu negocio.
+          Complete el nombre o la descripción en &ldquo;Su perfil&rdquo; para probarla con su negocio.
         </p>
       )}
 
@@ -635,7 +635,7 @@ function ActoPrueba({ perfil, chatNegocio, setChatNegocio, chatLotus, setChatLot
           <div className="max-h-[26rem] min-h-[10rem] overflow-y-auto pr-1">
             {mensajes.length === 0 && (
               <p className="py-6 text-center text-sm text-ink-soft">
-                Toca una pregunta de abajo o escribe la tuya.
+                Toque una pregunta de abajo o escriba la suya.
               </p>
             )}
             <div className="flex flex-col gap-2 sm:gap-3">
@@ -695,8 +695,8 @@ function ActoPrueba({ perfil, chatNegocio, setChatNegocio, chatLotus, setChatLot
             <input
               value={texto}
               onChange={(e) => setTexto(e.target.value)}
-              placeholder="Escribe tu pregunta…"
-              aria-label="Escribe tu pregunta"
+              placeholder="Escriba su pregunta…"
+              aria-label="Escriba su pregunta"
               className="flex-1 rounded-xl border border-ink/15 bg-sand px-3.5 py-2.5 text-sm outline-none transition focus:border-acento"
             />
             <button
@@ -711,7 +711,7 @@ function ActoPrueba({ perfil, chatNegocio, setChatNegocio, chatLotus, setChatLot
       </div>
       <p className="mt-3 text-[11px] leading-relaxed text-ink-soft">
         {modo === "negocio"
-          ? "Responde con lo que cargaste en \"Tu perfil\". Con tu catálogo conectado, respondería igual pero con tus productos o servicios, tus fotos y tus precios."
+          ? "Responde con lo que cargó en \"Su perfil\". Con su catálogo conectado, respondería igual pero con sus productos o servicios, sus fotos y sus precios."
           : "Esta es la demo completa: catálogo real, fotos y precios de Lotus 360."}
       </p>
     </section>
@@ -730,10 +730,10 @@ function ActoPrueba({ perfil, chatNegocio, setChatNegocio, chatLotus, setChatLot
 type PasoSubida = "leyendo" | "midiendo" | "subiendo" | "pensando";
 
 const PASOS: { id: PasoSubida; texto: string; pct: number }[] = [
-  { id: "leyendo", texto: "Abriendo tu captura…", pct: 25 },
-  { id: "midiendo", texto: "Mirando los colores de tu marca…", pct: 50 },
+  { id: "leyendo", texto: "Abriendo su captura…", pct: 25 },
+  { id: "midiendo", texto: "Mirando los colores de su marca…", pct: 50 },
   { id: "subiendo", texto: "Enviándosela a la IA…", pct: 70 },
-  { id: "pensando", texto: "La IA está leyendo tu perfil…", pct: 92 },
+  { id: "pensando", texto: "La IA está leyendo su perfil…", pct: 92 },
 ];
 
 function BarraCarga({ paso }: { paso: PasoSubida }) {
@@ -807,7 +807,7 @@ function ActoPerfil({ perfil, setPerfil, vestida }: {
   const mejorarConIA = useCallback(async () => {
     const actual = (perfil?.resumen ?? "").trim();
     if (!actual) {
-      setErrorIA("Escribe primero una descripción de tu negocio.");
+      setErrorIA("Escriba primero una descripción de su negocio.");
       return;
     }
     setErrorIA("");
@@ -826,15 +826,15 @@ function ActoPerfil({ perfil, setPerfil, vestida }: {
       if (!data?.ok) {
         setErrorIA(
           data?.error === "demasiados_intentos"
-            ? "Ya lo intentaste varias veces. Espera un rato e intenta de nuevo."
-            : "No pudimos mejorar el texto. Intenta de nuevo.",
+            ? "Ya lo intentó varias veces. Espere un rato e intente de nuevo."
+            : "No pudimos mejorar el texto. Intente de nuevo.",
         );
         return;
       }
       setDescripcionPrevia(actual);
       actualizarManual({ resumen: data.descripcion });
     } catch {
-      setErrorIA("Se cortó la conexión. Intenta de nuevo.");
+      setErrorIA("Se cortó la conexión. Intente de nuevo.");
     } finally {
       setMejorando(false);
     }
@@ -854,11 +854,11 @@ function ActoPerfil({ perfil, setPerfil, vestida }: {
     // legibles. Si el navegador la puede decodificar, sirve -- y si no, se
     // entera al intentarlo, que es la única prueba que vale.
     if (file.type && !file.type.startsWith("image/")) {
-      setError("Eso no parece una imagen. Sube la captura de tu perfil.");
+      setError("Eso no parece una imagen. Suba la captura de su perfil.");
       return;
     }
     if (file.size > 25 * 1024 * 1024) {
-      setError("Esa imagen pesa demasiado. Prueba con una captura de pantalla.");
+      setError("Esa imagen pesa demasiado. Pruebe con una captura de pantalla.");
       return;
     }
     setPaso("leyendo");
@@ -885,8 +885,8 @@ function ActoPerfil({ perfil, setPerfil, vestida }: {
       if (!data?.ok) {
         setError(
           data?.error === "demasiados_intentos"
-            ? "Ya subiste varias imágenes. Espera un rato e intenta de nuevo."
-            : "No pudimos leer esa imagen. Prueba con otra captura.",
+            ? "Ya subió varias imágenes. Espere un rato e intente de nuevo."
+            : "No pudimos leer esa imagen. Pruebe con otra captura.",
         );
         return;
       }
@@ -898,7 +898,7 @@ function ActoPerfil({ perfil, setPerfil, vestida }: {
       const motivo = (err as Error)?.message;
       setError(
         motivo === "lienzo_vacio" || motivo === "imagen_ilegible"
-          ? "Tu teléfono no pudo abrir esa imagen. Prueba con una captura de pantalla del perfil (funciona siempre)."
+          ? "Su teléfono no pudo abrir esa imagen. Pruebe con una captura de pantalla del perfil (funciona siempre)."
           : "Se cortó la conexión mientras subíamos la imagen.",
       );
     } finally {
@@ -908,13 +908,13 @@ function ActoPerfil({ perfil, setPerfil, vestida }: {
 
   return (
     <section>
-      <p className="text-xs font-bold uppercase tracking-[0.16em] text-acento">Tu negocio</p>
+      <p className="text-xs font-bold uppercase tracking-[0.16em] text-acento">Su negocio</p>
       <h2 className="mt-3 max-w-2xl text-balance font-serif text-3xl leading-tight sm:text-4xl">
-        Contanos de tu negocio.
+        Cuéntenos de su negocio.
       </h2>
       <p className="mt-5 max-w-xl text-ink-soft">
-        Nombre, tipo y una descripción bastan para que veas cómo atendería la
-        asistente. Si no te sale la descripción, la IA te la deja más prolija.
+        Nombre, tipo y una descripción bastan para que vea cómo atendería la
+        asistente. Si no le sale la descripción, la IA se la deja mejor redactada.
       </p>
 
       <div className="mt-8 grid gap-5 lg:grid-cols-2">
@@ -938,14 +938,14 @@ function ActoPerfil({ perfil, setPerfil, vestida }: {
               onChange={(e) => actualizarManual({ tipo: e.target.value || null })}
               className="mt-2 w-full rounded-xl border border-ink/15 bg-sand px-3.5 py-2.5 text-sm outline-none transition focus:border-acento"
             >
-              <option value="">Elige uno…</option>
+              <option value="">Elija uno…</option>
               {TIPOS_NEGOCIO.map((t) => (
                 <option key={t} value={t}>{t}</option>
               ))}
             </select>
 
             <label className="mt-4 block text-xs font-bold uppercase tracking-[0.14em] text-ink-soft">
-              Descripción de tu negocio
+              Descripción de su negocio
             </label>
             <textarea
               value={perfil?.resumen ?? ""}
@@ -987,11 +987,11 @@ function ActoPerfil({ perfil, setPerfil, vestida }: {
                 onClick={() => setMostrarInstagram(true)}
                 className="text-sm font-semibold text-ink-soft underline decoration-dotted hover:text-ink"
               >
-                ¿Tenés Instagram? Cargá tu perfil y completamos algunos datos por vos →
+                ¿Tiene Instagram? Cargue su perfil y completamos algunos datos por usted →
               </button>
             ) : (
               <div className="flex flex-col gap-3">
-                <p className="text-sm font-bold">Subí una captura de tu perfil (opcional)</p>
+                <p className="text-sm font-bold">Suba una captura de su perfil (opcional)</p>
                 <label className="group flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-ink/20 bg-sand px-5 py-8 text-center transition hover:-translate-y-0.5 hover:border-acento hover:shadow-lg active:scale-[.99]">
                   {/* El input NO va con `display:none`: en varias versiones de
                       Safari de iPhone un input oculto así dentro de un label no
@@ -1009,13 +1009,13 @@ function ActoPerfil({ perfil, setPerfil, vestida }: {
                     onChange={(e) => {
                       const f = e.target.files?.[0];
                       if (f) subir(f);
-                      else setError("No se detectó ninguna foto. Vuelve a intentar, eligiendo desde la galería.");
+                      else setError("No se detectó ninguna foto. Vuelva a intentar, eligiendo desde la galería.");
                       e.target.value = "";
                     }}
                   />
                   <span className="animate-[flotar_3s_ease-in-out_infinite] text-3xl transition group-hover:scale-110" aria-hidden>📸</span>
-                  <span className="text-sm font-bold">Sube la captura de tu perfil</span>
-                  <span className="text-xs text-ink-soft">Desde tu galería · se achica sola</span>
+                  <span className="text-sm font-bold">Suba la captura de su perfil</span>
+                  <span className="text-xs text-ink-soft">Desde su galería · se achica sola</span>
                 </label>
 
                 {leyendo && <BarraCarga paso={paso!} />}
@@ -1038,7 +1038,7 @@ function ActoPerfil({ perfil, setPerfil, vestida }: {
                 y texto acento-- mantiene el contraste con cualquier marca. */}
             <div className="border-b border-acento/20 bg-acento-suave px-5 py-4">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-ink-soft">
-                Así se vería tu perfil
+                Así se vería su perfil
               </p>
               {perfil.nombre && (
                 <p className="mt-1 font-serif text-2xl leading-tight text-acento">{perfil.nombre}</p>
@@ -1057,10 +1057,10 @@ function ActoPerfil({ perfil, setPerfil, vestida }: {
 
               {vestida && (
                 <div className="mt-5 animate-[surge_.6s_ease-out] rounded-xl border border-acento/20 bg-acento-suave p-4">
-                  <p className="text-sm font-bold">Y le tomamos prestados tus colores.</p>
+                  <p className="text-sm font-bold">Y le tomamos prestados sus colores.</p>
                   <p className="mt-1 text-sm leading-relaxed text-ink-soft">
-                    Esta página se acaba de vestir con ellos. Así de tuya se vería
-                    la asistente atendiendo a tu gente.
+                    Esta página se acaba de vestir con ellos. Así de suya se vería
+                    la asistente atendiendo a su gente.
                   </p>
                   <div className="mt-3 flex gap-2" aria-hidden>
                     <span className="h-8 flex-1 animate-[saltar_.5s_ease-out] rounded-lg bg-acento" />
@@ -1076,10 +1076,10 @@ function ActoPerfil({ perfil, setPerfil, vestida }: {
             <p>
               <strong className="text-ink">¿Para qué sirve esto?</strong> Lo que
               escribas acá es exactamente lo que usaría la asistente para
-              atender a tus clientes. Si acierta acá, acierta con ellos.
+              atender a sus clientes. Si acierta acá, acierta con ellos.
             </p>
             <p>
-              Es opcional: puedes seguir sin completar nada y lo vemos juntos
+              Es opcional: puede seguir sin completar nada y lo vemos juntos
               después.
             </p>
           </div>
@@ -1122,20 +1122,20 @@ function ActoArmar({
 
   return (
     <section>
-      <p className="text-xs font-bold uppercase tracking-[0.16em] text-acento">Ármala a tu gusto</p>
+      <p className="text-xs font-bold uppercase tracking-[0.16em] text-acento">Ármela a su gusto</p>
       <h2 className="mt-3 max-w-2xl text-balance font-serif text-3xl leading-tight sm:text-4xl">
         {comoSeLlama
           ? <>Así atendería <span className="text-acento">{comoSeLlama}</span>.</>
-          : "Tú decides qué hace y qué no."}
+          : "Usted decide qué hace y qué no."}
       </h2>
       <p className="mt-5 max-w-xl text-ink-soft">
         {suyo
-          ? <>Ya sabemos que eres {suyo.tipo ?? "un negocio"}
-              {suyo.destino ? ` en ${suyo.destino}` : ""}. Ahora dinos cómo quieres
-              que trate a quien te escriba. Solo habla de lo tuyo: nunca ofrece
+          ? <>Ya sabemos que es {suyo.tipo ?? "un negocio"}
+              {suyo.destino ? ` en ${suyo.destino}` : ""}. Ahora díganos cómo quiere
+              que trate a quien le escriba. Solo habla de lo suyo: nunca ofrece
               otro negocio.</>
           : <>No es un robot con respuestas fijas. Las reglas se escriben en
-              palabras y se cambian cuando quieras. Solo habla de lo tuyo: nunca
+              palabras y se cambian cuando quiera. Solo habla de lo suyo: nunca
               ofrece otro negocio.</>}
       </p>
 
@@ -1149,12 +1149,12 @@ function ActoArmar({
       </div>
 
       <div className="mt-14">
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-acento">Tu plan</p>
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-acento">Su plan</p>
         <h3 className="mt-3 text-balance font-serif text-2xl leading-tight sm:text-3xl">
-          Elige cuántos mensajes al mes.
+          Elija cuántos mensajes al mes.
         </h3>
         <p className="mt-4 max-w-xl text-ink-soft">
-          Un mensaje es cada vez que alguien te escribe o la asistente le
+          Un mensaje es cada vez que alguien escribe o la asistente
           responde. Una conversación completa suele llevarse unos veinte.
         </p>
 
@@ -1195,7 +1195,7 @@ function ActoArmar({
         <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-acento/25 bg-acento-suave p-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-ink-soft">
-              Lo que pagarías
+              Lo que pagaría
             </p>
             <p className="mt-2 flex items-baseline gap-1.5">
               <span key={precio} className="animate-[rebote_.45s_cubic-bezier(.3,1.5,.5,1)] font-serif text-5xl tabular-nums text-acento">
@@ -1210,16 +1210,16 @@ function ActoArmar({
           <div className="max-w-xs text-sm leading-relaxed text-ink-soft">
             <p>
               <strong className="text-ink">${INSTALACION} de instalación, una sola vez</strong> —
-              y el primer mes va incluido. Conectamos tus canales, cargamos tus
-              habitaciones y escribimos tus reglas.
+              y el primer mes va incluido. Conectamos sus canales, cargamos sus
+              habitaciones y escribimos sus reglas.
             </p>
           </div>
         </div>
 
         <p className="mt-5 rounded-xl bg-seafoam-bg px-4 py-4 text-sm leading-relaxed text-seafoam-text">
-          <strong>Nos gusta trabajar contigo.</strong> Somos un equipo pequeño en
-          Venezuela, igual que tú, y lo armamos primero para nosotros. Si algo no
-          te encaja, se cambia — de eso se trata.
+          <strong>Nos gusta trabajar con usted.</strong> Somos un equipo pequeño en
+          Venezuela, igual que usted, y lo armamos primero para nosotros. Si algo no
+          le encaja, se cambia — de eso se trata.
         </p>
 
         <Cierre
@@ -1437,10 +1437,10 @@ function Cierre({
         }),
       });
       const data = await res.json().catch(() => null);
-      if (!data?.ok) { setError("No pudimos registrar tus datos. Intenta de nuevo."); return; }
+      if (!data?.ok) { setError("No pudimos registrar sus datos. Intente de nuevo."); return; }
       setEnviado(true);
     } catch {
-      setError("Se cortó la conexión. Intenta de nuevo.");
+      setError("Se cortó la conexión. Intente de nuevo.");
     } finally {
       setEnviando(false);
     }
@@ -1460,12 +1460,12 @@ function Cierre({
         <div className="px-6 py-10">
           <p className="animate-[rebote_.7s_cubic-bezier(.3,1.6,.5,1)] font-serif text-4xl text-acento">¡Listo!</p>
           <h3 className="mt-4 text-balance font-serif text-2xl leading-tight">
-            Te escribimos por WhatsApp.
+            Le escribimos por WhatsApp.
           </h3>
           <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-ink-soft">
-            Ya tenemos lo que armaste{comoSeLlama ? ` para ${comoSeLlama}` : ""}. Te
-            contactamos para conectar la asistente a tus canales y dejarla
-            respondiendo.
+            Ya tenemos lo que armó{comoSeLlama ? ` para ${comoSeLlama}` : ""}. Nos
+            ponemos en contacto con usted para conectar la asistente a sus canales
+            y dejarla respondiendo.
           </p>
         </div>
       </div>
@@ -1475,17 +1475,17 @@ function Cierre({
   return (
     <div className="mt-8 rounded-2xl border border-ink/10 bg-card p-5 sm:p-6">
       <p className="text-xs font-bold uppercase tracking-[0.14em] text-ink-soft">
-        ¿Dónde te escribimos?
+        ¿Dónde le escribimos?
       </p>
       <h3 className="mt-2 text-balance font-serif text-2xl leading-tight">
-        {comoSeLlama ? `Dejémosla lista para ${comoSeLlama}.` : "Dejémosla lista para ti."}
+        {comoSeLlama ? `Dejémosla lista para ${comoSeLlama}.` : "Dejémosla lista para usted."}
       </h3>
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
         <input
           value={nombre}
           onChange={(e) => setNombre(e.target.value)}
-          placeholder="Tu nombre y el de tu negocio"
-          aria-label="Tu nombre y el de tu negocio"
+          placeholder="Su nombre y el de su negocio"
+          aria-label="Su nombre y el de su negocio"
           className="rounded-xl border border-ink/15 bg-sand px-3.5 py-3 text-sm outline-none transition focus:border-acento"
         />
         <input
@@ -1493,7 +1493,7 @@ function Cierre({
           onChange={(e) => setTelefono(e.target.value)}
           placeholder="WhatsApp"
           inputMode="tel"
-          aria-label="Tu número de WhatsApp"
+          aria-label="Su número de WhatsApp"
           className="rounded-xl border border-ink/15 bg-sand px-3.5 py-3 text-sm outline-none transition focus:border-acento"
         />
       </div>
@@ -1506,8 +1506,8 @@ function Cierre({
       </button>
       {error && <p className="mt-3 text-sm font-medium text-acento">{error}</p>}
       <p className="mt-3 text-[11px] leading-relaxed text-ink-soft">
-        Te contactamos solo por esto. Nada de lo que subas se publica ni se
-        comparte con nadie.
+        Solo nos comunicamos con usted por esto. Nada de lo que suba se publica
+        ni se comparte con nadie.
       </p>
     </div>
   );

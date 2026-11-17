@@ -162,7 +162,11 @@ export function ReservarCliente({
     email: "",
   });
   const poner = useCallback((p: Partial<Formulario>) => setF((prev) => ({ ...prev, ...p })), []);
-  const [base, setBase] = useState(() => crypto.randomUUID().replace(/-/g, "").slice(0, 24));
+  // Por http:// (el navegador de Instagram abre el enlace de la bio así) no existe crypto.randomUUID;
+  // getRandomValues sí está en contextos no seguros.
+  const [base, setBase] = useState(() =>
+    Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => b.toString(16).padStart(2, "0")).join(""),
+  );
   const [acepta, setAcepta] = useState(false);
   const [modo, setModo] = useState<ModoPago>("total");
   const [aceptaPlan, setAceptaPlan] = useState(false);

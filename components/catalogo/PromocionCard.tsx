@@ -114,7 +114,11 @@ export function PromocionCard({ promocion, prioridad = false }: { promocion: Pro
   return (
     <>
       <TicketCard
+        compacta
         href={href}
+        // Sin foto viajera: las promos de un hotel conviven con su tarjeta de
+        // producto (y entre sí) en la misma grilla, el nombre se repetiría.
+        fotoTransicion={null}
         prioridad={prioridad}
         nombre={nombre}
         titulo={hotelNombre || tituloVisible}
@@ -129,7 +133,7 @@ export function PromocionCard({ promocion, prioridad = false }: { promocion: Pro
         vigenciaLabel={promocion.vigencia_texto}
         urgencia={urgencia}
         destacada={"manual" in promocion && (promocion as HotSale).manual}
-        incluye={incluye.slice(0, 3)}
+        incluye={incluye}
         ventaHasta={fechaCorta(promocion.fecha_venta_fin)}
         duracion={duracionDe(titulo, promocion.precio_texto, promocion.resumen_ia)}
         ninosGratis={promocion.ninos_gratis_cantidad}

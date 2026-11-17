@@ -7,10 +7,13 @@ import { Icono } from "@/components/ui/Icono";
 import { Etiqueta } from "@/components/ui/Insignia";
 import { MontoAjustado, PrecioMostrado } from "@/components/ui/PrecioMostrado";
 import { SelloNinoGratis } from "@/components/catalogo/SelloNinoGratis";
+import { nombreFoto } from "@/components/ui/movimiento";
 import { separarMonto, type PrecioTarjeta } from "@/lib/tarifas";
 
 export interface TicketCardProps {
   href: string | null;
+  /** Promociones: información secundaria desplegable y acciones con texto. */
+  compacta?: boolean;
   /** Etiqueta sobre la foto (tipo de producto). Las promociones no la llevan. */
   badge?: string;
   /** Nombre completo: alt de la foto y aria-labels. */
@@ -64,6 +67,10 @@ export interface TicketCardProps {
   /** Compra directa abierta (hotel, checkout en horario): «Reservar y pagar» al pie del cuerpo,
    * no en el talón, que ya no tiene lugar en la grilla de 2 columnas. */
   reservar?: { href: string; onClick: () => void } | null;
+  /** View transition de la foto hacia la ficha. `undefined` = se deduce de un
+   * `href` a `/producto/<id>`; `null` = sin nombre (dos tarjetas del mismo
+   * producto en una página repetirían el nombre y cortarían la transición). */
+  fotoTransicion?: string | null;
 }
 
 // Tarjeta de catálogo como pase de abordar: foto 3:2 (la mayoría de las fotos
@@ -79,6 +86,7 @@ export interface TicketCardProps {
 // Se eleva con borde, no con sombra: la máscara de las muescas recortaría una.
 export function TicketCard({
   href,
+  compacta = false,
   badge,
   nombre,
   titulo,
@@ -105,8 +113,12 @@ export function TicketCard({
   incluye = [],
   ventaHasta = null,
   reservar = null,
+  fotoTransicion,
 }: TicketCardProps) {
   const { monto, unidad, grande: montoGrande } = separarMonto(precio);
+  const idFicha = href?.match(/^\/producto\/(\d+)$/)?.[1];
+  const transicion =
+    fotoTransicion === null ? undefined : (fotoTransicion ?? (idFicha ? nombreFoto(Number(idFicha)) : undefined));
 
   return (
     <Boleto
@@ -118,7 +130,7 @@ export function TicketCard({
       }
       talon={
         <div className="flex h-full items-center gap-2 px-4">
-          <div className="min-w-0 flex-1">
+          <div className={compacta ? "hidden" : "min-w-0 flex-1"}>
             <p className="truncate font-mono text-xs font-bold uppercase tracking-widest text-ink">
               {destino || " "}
             </p>
@@ -153,17 +165,17 @@ export function TicketCard({
             href={cotizarHref}
             aria-label={`Cotizar ${nombre}`}
             tamano="sm"
-            className="flex-shrink-0 max-sm:gap-0 max-sm:px-3"
-            iconoFin={<Icono nombre="flecha-der" tamano={16} />}
+            className={compacta ? "min-w-0 flex-1 max-sm:gap-1 max-sm:px-2" : "flex-shrink-0 max-sm:gap-0 max-sm:px-3"}
+            iconoFin={compacta ? undefined : <Icono nombre="flecha-der" tamano={16} />}
           >
-            <span className="hidden sm:inline">Cotizar</span>
+            <span className={compacta ? "" : "hidden sm:inline"}>Cotizar</span>
           </Boton>
           <span aria-hidden="true" className="franja-marca absolute inset-x-0 bottom-0 h-1" />
         </div>
       }
     >
       <div className="flex h-full flex-col">
-        <div className="group/foto relative aspect-[3/2] overflow-hidden bg-sand-2">
+        <div className={"group/foto relative overflow-hidden bg-sand-2 " + (compacta ? "aspect-[3/2] sm:aspect-video" : "aspect-[3/2]")}>
           {/* Máximo dos sellos apilados: el principal (niño gratis / tipo /
               destacada) y la duración. Abajo no caben: ahí van los puntos. */}
           <div className="absolute left-3 top-3 z-10 flex flex-col items-start gap-1.5">
@@ -197,7 +209,13 @@ export function TicketCard({
             />
           ) : null}
           {fotos.length > 0 ? (
-            <CardPhotoGallery fotos={fotos} alt={nombre} referencial={fotosReferenciales} prioridad={prioridad} />
+            <CardPhotoGallery
+              fotos={fotos}
+              alt={nombre}
+              referencial={fotosReferenciales}
+              prioridad={prioridad}
+              nombreTransicion={transicion}
+            />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-seafoam-bg via-sand-2 to-card">
               <div className="rounded-card border border-linea bg-card/65 px-6 py-4 text-center text-ink-soft lg:backdrop-blur-sm">
@@ -213,7 +231,7 @@ export function TicketCard({
         </div>
 
         <div className="flex flex-1 flex-col px-4 pb-4 pt-3.5">
-          <h3 className="line-clamp-2 font-display text-lg font-bold leading-6 text-ink sm:h-12 sm:text-xl">
+          <h3 className={"line-clamp-2 font-display text-lg font-bold leading-6 text-ink sm:text-xl " + (compacta ? "" : "sm:h-12")}>
             {href ? (
               <Link href={href} className="transition-colors hover:text-acento">
                 {titulo ?? nombre}
@@ -222,16 +240,19 @@ export function TicketCard({
               titulo ?? nombre
             )}
           </h3>
-
-          {subtitulo !== undefined ? (
-            <p className="mt-1 h-5 truncate text-sm font-semibold leading-5 text-ink-soft">{subtitulo || " "}</p>
+          {compacta && destino ? (
+            <p className="mt-1 text-xs font-semibold text-ink-soft">{destino}</p>
           ) : null}
 
-          {resumen !== undefined ? (
+          {(compacta ? Boolean(subtitulo) : subtitulo !== undefined) ? (
+            <p className={compacta ? "mt-1 line-clamp-2 text-sm leading-5 text-ink-soft" : "mt-1 h-5 truncate text-sm font-semibold leading-5 text-ink-soft"}>{subtitulo || " "}</p>
+          ) : null}
+
+          {!compacta && resumen !== undefined ? (
             <p className="mt-2 line-clamp-2 h-8 text-xs leading-4 text-ink-soft max-sm:hidden">{resumen}</p>
           ) : null}
 
-          {vigenciaLabel || ventaHasta ? (
+          {!compacta && (vigenciaLabel || ventaHasta) ? (
             <div className="mt-3 flex flex-col gap-1 text-xs leading-4 text-ink-soft">
               {vigenciaLabel ? (
                 <p className="flex items-start gap-1.5" title={vigenciaLabel}>
@@ -250,7 +271,7 @@ export function TicketCard({
             </div>
           ) : null}
 
-          {incluye.length > 0 ? (
+          {!compacta && incluye.length > 0 ? (
             <ul aria-label="Incluye" className="mt-3 flex max-h-14 flex-wrap gap-1.5 overflow-hidden">
               {incluye.map((t) => (
                 <li
@@ -265,9 +286,41 @@ export function TicketCard({
             </ul>
           ) : null}
 
+          {compacta ? (
+            <>
+              {incluye.length > 0 ? (
+                <p className="mt-2 line-clamp-2 text-xs font-semibold leading-4 text-seafoam-text">
+                  {incluye.join(" · ")}
+                </p>
+              ) : null}
+              {urgencia || ventaHasta ? (
+                <p className="mt-2 text-xs font-semibold text-ambar">
+                  {urgencia || ("Reserva hasta el " + ventaHasta)}
+                </p>
+              ) : null}
+              {resumen || vigenciaLabel || incluye.length > 0 ? (
+                <details className="group/detalles mt-1 text-xs leading-5 text-ink-soft">
+                  <summary className="flex min-h-11 cursor-pointer items-center gap-2 font-semibold text-ink underline decoration-linea-fuerte underline-offset-4 hover:text-acento">
+                    Ver detalles
+                    <span aria-hidden="true" className="group-open/detalles:rotate-45"><Icono nombre="mas" tamano={12} /></span>
+                  </summary>
+                  <div className="space-y-2 pb-2">
+                    {resumen ? <p>{resumen}</p> : null}
+                    {vigenciaLabel ? <p><strong className="text-ink">Vigencia: </strong>{vigenciaLabel}</p> : null}
+                    {incluye.length > 0 ? (
+                      <ul aria-label="Incluye" className="list-disc space-y-1 pl-4">
+                        {incluye.map((item) => <li key={item}>{item}</li>)}
+                      </ul>
+                    ) : null}
+                  </div>
+                </details>
+              ) : null}
+            </>
+          ) : null}
+
           {/* Precio al pie: el aire que deja una tarjeta más corta que sus
               vecinas queda arriba del precio y no en medio del contenido. */}
-          <div className="mt-auto pt-4">
+          <div className={compacta ? "mt-auto pt-2" : "mt-auto pt-4"}>
             <p className="flex h-9 min-w-0 items-baseline gap-1.5 whitespace-nowrap font-mono tabular-nums">
               {precio?.desde ? <span className="text-xs font-semibold text-ink-soft">desde</span> : null}
               {precio && montoGrande ? (
@@ -284,7 +337,7 @@ export function TicketCard({
                 </span>
               )}
             </p>
-            <p className="h-4 truncate text-xs leading-4 text-ink-soft" title={unidad ?? undefined}>{unidad || " "}</p>
+            <p className={compacta ? "text-xs leading-4 text-ink-soft" : "h-4 truncate text-xs leading-4 text-ink-soft"} title={unidad ?? undefined}>{unidad || " "}</p>
           </div>
 
           {reservar ? (

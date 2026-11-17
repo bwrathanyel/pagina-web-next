@@ -58,8 +58,31 @@ export function preciosLista(t: Tarifa): { clave: string; etiqueta: string; mont
  * trae, la del bloque del plan (`tarifario_bloques.base_precio`). Sin esto, una
  * tarifa por habitación con DBL = SGL (Maloka) se leía como por persona. */
 function baseDeclarada(fila: unknown, bloque: unknown): "habitacion" | "persona" | null {
-  for (const b of [fila, bloque]) if (b === "habitacion" || b === "persona") return b;
+  for (const b of [fila, bloque]) {
+    const u = normalizarBase(b);
+    if (u) return u;
+    if (typeof b === "string" && b.trim()) return null;
+  }
   return null;
+}
+
+/** `persona` y `persona_noche` son lo mismo en hoteles (por persona POR NOCHE); igual
+ * `habitacion` y `habitacion_noche`. Otras bases (horas, unidad, grupo) no son de hotel. */
+function normalizarBase(b: unknown): "habitacion" | "persona" | null {
+  const s = typeof b === "string" ? b.trim().toLowerCase() : "";
+  return s === "habitacion" || s === "habitacion_noche" ? "habitacion" : s === "persona" || s === "persona_noche" ? "persona" : null;
+}
+
+/** Misma regla que tarUnidad() del CRM (app.js, bloque CB_TARIFAS): fila, luego bloque, y
+ * solo sin ninguna se deduce de la grilla (DBL > SGL = por habitación, DBL < SGL = por persona). */
+export function unidadTarifa(t: Tarifa | null | undefined): { unidad: "habitacion" | "persona" | null; deducida: boolean } {
+  const p = t?.precios;
+  if (!p || typeof p !== "object" || Array.isArray(p)) return { unidad: normalizarBase(bloqueDe(t)?.base_precio), deducida: false };
+  const fila = p["base"], bloque = bloqueDe(t)?.base_precio;
+  if ((typeof fila === "string" && fila.trim()) || (typeof bloque === "string" && bloque.trim())) return { unidad: baseDeclarada(fila, bloque), deducida: false };
+  const sgl = numeroDe(p["sgl"]), dbl = numeroDe(p["dbl"]);
+  if (sgl === null || dbl === null || sgl === dbl) return { unidad: null, deducida: false };
+  return { unidad: dbl > sgl ? "habitacion" : "persona", deducida: true };
 }
 
 /** Espejo en JS de precio_por_persona() (migración 20260904160000). La base

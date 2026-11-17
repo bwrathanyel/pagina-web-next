@@ -76,10 +76,10 @@ export const metadata: Metadata = {
     siteName: "Destino y Eventos Lotus 360",
     images: [
       {
-        url: "/og-lotus360.jpg",
+        url: "/og-lotus360-v2.jpg",
         width: 1200,
         height: 630,
-        alt: "Gran Roque, Los Roques — Destino y Eventos Lotus 360, agencia de viajes en Venezuela",
+        alt: "Logo de Destino y Eventos Lotus 360, agencia de viajes en Venezuela",
       },
     ],
     locale: "es_VE",
@@ -89,7 +89,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: TITLE,
     description: DESCRIPTION,
-    images: ["/og-lotus360.jpg"],
+    images: ["/og-lotus360-v2.jpg"],
   },
   other: {
     "geo.region": "VE-G",
