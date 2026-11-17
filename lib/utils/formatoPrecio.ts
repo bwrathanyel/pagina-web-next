@@ -11,9 +11,14 @@ const CODIGOS_HABITACION: Record<string, string> = {
   QPL: "quíntuple", QTP: "quíntuple", SEXT: "6 personas", CHD: "niño",
 };
 
+/** Regla del dueño (2026-11-17): al cliente todo se le muestra en $, con el mismo
+ * número que da BT aunque la tarifa venga en € (el € solo decide la tasa para
+ * Bs, ver convertirPrecio.ts). Mismo criterio que `tarTextoUsd` del CRM. */
+export const textoEnDolares = (s: string) => s.replace(/€\s?/g, "$").replace(/\bEUR\b/g, "USD");
+
 export function formatearPrecioCliente(precioTexto: string | null | undefined): string | null {
   if (!precioTexto) return precioTexto ?? null;
-  return precioTexto.replace(
+  return textoEnDolares(precioTexto).replace(
     /\b(SGL|DBL|TPL|CPL|CDP|QPL|QTP|SEXT|CHD)\b/gi,
     (m) => CODIGOS_HABITACION[m.toUpperCase()] ?? m,
   );
@@ -21,16 +26,10 @@ export function formatearPrecioCliente(precioTexto: string | null | undefined): 
 
 /** Precio corto para tarjetas donde no entra `precio_texto` (que es un parrafo
  * libre: "Paquete 4 dias / 3 noches... 2 personas $150 total | 3 personas
- * $180..."). Usa el numerico `precio_desde_usd`, pero saca el simbolo del
- * texto: la columna se llama _usd y NO siempre lo es -- la promo 274 guarda
- * 286 y su precio real es EUR286. Sin esta comprobacion la portada afirmaria
- * una moneda equivocada. Si no hay numerico, no hay precio corto: mejor
- * ninguno que uno inventado. */
-export function formatearPrecioDesde(
-  montoDesde: number | null | undefined,
-  precioTexto: string | null | undefined,
-): string | null {
+ * $180..."). Usa el numerico `precio_desde_usd`. Siempre en $ aunque la promo
+ * venga en € (promo 274: 286 = $286, regla del dueño 2026-11-17). Si no hay
+ * numerico, no hay precio corto: mejor ninguno que uno inventado. */
+export function formatearPrecioDesde(montoDesde: number | null | undefined): string | null {
   if (typeof montoDesde !== "number" || !Number.isFinite(montoDesde)) return null;
-  const simbolo = precioTexto?.includes("€") ? "€" : "$";
-  return `${simbolo}${Math.round(montoDesde).toLocaleString("es-VE")}`;
+  return `$${Math.round(montoDesde).toLocaleString("es-VE")}`;
 }

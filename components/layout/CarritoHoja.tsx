@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Boton } from "@/components/ui/Boton";
 import { Hoja } from "@/components/ui/Hoja";
 import { Icono } from "@/components/ui/Icono";
+import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
 import { useCarritoStore } from "@/lib/carrito/store";
 import { usePaneles } from "@/lib/layout/paneles";
 
@@ -64,7 +65,9 @@ export function CarritoHoja() {
                   {item.nombre}
                 </Link>
                 {item.destino ? <p className="truncate text-sm text-ink-soft">{item.destino}</p> : null}
-                <p className="font-mono text-sm text-ink">{item.precioLabel}</p>
+                <p className="font-mono text-sm text-ink">
+                  <PrecioMostrado texto={item.precioLabel} ivaEnBs={item.ivaEnBs} />
+                </p>
               </div>
               <button
                 type="button"

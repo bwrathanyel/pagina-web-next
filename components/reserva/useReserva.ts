@@ -339,12 +339,13 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial }: Entrada
   const baseIgtf = planListo ? planListo.inicial : precio !== null ? precio + fee : 0;
   const igtf = precio !== null && igtfPct > 0 && (riel === "zelle" || riel === "binance") ? Math.round(baseIgtf * igtfPct) / 100 : 0;
   const tasa = calculo?.ok ? calculo.tasa : null;
+  const ivaEnBs = calculo?.ok ? calculo.ivaEnBs : false;
   const noches = calculo?.ok ? calculo.noches : hayFechas ? nochesDeEstadia(desde, hasta).length : null;
 
   const totales: Totales | null =
     precio !== null
       ? {
-          precio, fee, feePct, igtf, igtfPct, total: precio + fee + igtf, riel, tasa,
+          precio, fee, feePct, igtf, igtfPct, total: precio + fee + igtf, riel, tasa, ivaEnBs,
           noches: noches ?? 0,
           lineas: calculo?.ok ? calculo.lineas : [],
           // El IGTF tiene su fila en el desglose (config del checkout); el estimado ya no lo avisa.

@@ -8,6 +8,14 @@ export type MonedaPago = "USD" | "VES" | "USDT";
 
 const miles = (entero: number) => String(entero).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
+/** Céntimos de Bs que cobraría hoy `usd` a la tasa BCV `tasa` (la de la tarifa: dólar o euro). Mismo
+ * redondeo que `checkout_web_crear` (round(total × tasa × 100)). Solo para mostrar en /reservar: el
+ * monto que se cobra lo fija el servidor al crear la reserva, con la tasa vigente en ese momento. */
+export function estimarBsCentavos(usd: number, tasa: number): number | null {
+  if (!(usd > 0) || !(tasa > 0)) return null;
+  return Math.round(Math.round(usd * 100) * tasa);
+}
+
 /** Centavos (o céntimos de Bs) a texto para el cliente: «US$ 1.234,56», «Bs 8.833,96», «USDT 318,27». */
 export function montoCentavos(centavos: number, moneda: MonedaPago): string {
   const abs = Math.abs(Math.round(centavos));

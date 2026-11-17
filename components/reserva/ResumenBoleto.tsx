@@ -26,6 +26,7 @@ export interface Totales {
   total: number;
   riel: Riel | "";
   tasa: TasaBcv | null;
+  ivaEnBs: boolean;
   noches: number;
   lineas: { texto: string; monto: number }[];
   avisos: string[];
@@ -132,8 +133,8 @@ export function Desglose({ t }: { t: Totales }) {
       ) : null}
       {t.riel === "pago_movil" ? (
         <p className="text-xs text-ink-soft">
-          En bolívares {t.tasa === "EUR" ? "a la tasa euro del BCV" : "a la tasa del BCV"}: el monto exacto lo verá en el
-          siguiente paso.
+          En bolívares {t.tasa === "EUR" ? "a la tasa euro del BCV" : "a la tasa del BCV"}
+          {t.ivaEnBs ? ", más 16% de IVA" : ""}: el monto exacto lo verá en el siguiente paso.
         </p>
       ) : null}
     </div>

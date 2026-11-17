@@ -17,7 +17,6 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { TelefonoPais } from "@/components/ui/TelefonoPais";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import { PAIS_POR_DEFECTO, buscarPais, telefonoInternacional } from "@/lib/paises";
-import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { avisoIgtf, estimarEstadia, type Estadia } from "@/lib/cotizador/estimado";
 import {
   bloqueosDelAno,
@@ -402,7 +401,6 @@ export function CotizadorViaje({
   rutas: RutaVuelo[];
 }) {
   const formId = useId();
-  const { tasaUSD, tasaEUR } = useCurrency();
   const [estado, setEstado] = useState(inicial);
   const [detalles, setDetalles] = useState<Record<number, HotelDetalle | "error">>({});
   const [verHotel, setVerHotel] = useState<{ id: number; nombre: string } | null>(null);
@@ -671,14 +669,12 @@ export function CotizadorViaje({
   const recomendaciones = recomendarHoteles(ofertasDestino, {
     ninos: estado.ninos,
     bloqueada: (o) => !!sinDisponibilidad(o.hotelId),
-    // EUR y USD se comparan en dólares con la tasa del día (la de PrecioMostrado);
-    // sin tasa, cada moneda va aparte.
+    // Tarifas en € y en $ se comparan por su número: al cliente todo se le
+    // cobra en $ con el monto de BT (regla del dueño 2026-11-17).
     total: (o) => {
       const p = precioDe(o);
       if (!p || p === "cargando" || !p.ok) return null;
-      return p.moneda === "EUR" && tasaUSD && tasaEUR
-        ? { monto: (p.total * tasaEUR) / tasaUSD, moneda: "USD" }
-        : { monto: p.total, moneda: p.moneda };
+      return { monto: p.total, moneda: "USD" };
     },
     destino: estado.destino,
   });
@@ -1033,7 +1029,7 @@ export function CotizadorViaje({
       tours={toursElegidos.map((t) => t.nombre)}
       vuelo={vueloViaje}
       reservar={reservar}
-      desde={ofertaElegida?.precio ? { monto: ofertaElegida.precio.monto, unidad: ofertaElegida.precio.unidad } : null}
+      desde={ofertaElegida?.precio ? { monto: ofertaElegida.precio.monto, unidad: ofertaElegida.precio.unidad, ivaEnBs: ofertaElegida.precio.ivaEnBs } : null}
       datos={<DatosContacto formId={formId} contacto={contacto} errores={errores} onCampo={campo} iso={iso} onIso={setIso} abierto={notasAbiertas} onAbrir={() => setNotasAbiertas(true)} compacto />}
     />
   );
@@ -1099,7 +1095,7 @@ export function CotizadorViaje({
               <p className="text-sm text-ink">
                 Estimado{" "}
                 <span className="font-mono font-bold tabular-nums">
-                  <PrecioMostrado texto={montoBarra} />
+                  <PrecioMostrado texto={montoBarra} ivaEnBs={estimado?.ok && estimado.ivaEnBs} />
                 </span>{" "}
                 <span className="text-ink-soft">
                   · {textoDuracion(estimado.noches)} · {textoViajeros(estado)}
@@ -1323,11 +1319,11 @@ export function CotizadorViaje({
           </span>
           <span className="block truncate font-mono text-lg font-bold tabular-nums text-ink">
             {montoBarra ? (
-              <PrecioMostrado texto={montoBarra} />
+              <PrecioMostrado texto={montoBarra} ivaEnBs={estimado?.ok && estimado.ivaEnBs} />
             ) : hospedaje && ofertaElegida?.precio ? (
               <>
                 <span className="font-sans text-xs font-normal text-ink-soft">Desde </span>
-                <PrecioMostrado texto={ofertaElegida.precio.monto} />
+                <PrecioMostrado texto={ofertaElegida.precio.monto} ivaEnBs={ofertaElegida.precio.ivaEnBs} />
               </>
             ) : (
               <span className="font-sans text-sm font-semibold text-ink-soft">Precio lo confirma el asesor</span>

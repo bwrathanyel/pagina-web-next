@@ -261,16 +261,28 @@ const RIELES: { id: Riel; titulo: string; moneda: string; enBs: boolean }[] = [
 ];
 
 /** Una línea que explica el método elegido: moneda, IGTF y cuánto se guarda el cupo. */
-export function detalleRiel(riel: Riel, c: { igtf_pct: number; hold_horas_usd: number; hold_horas_ves: number }, tasa: TasaBcv | null): string {
+export function detalleRiel(
+  riel: Riel,
+  c: { igtf_pct: number; hold_horas_usd: number; hold_horas_ves: number },
+  tasa: TasaBcv | null,
+  bs: { monto: string; tasa: string } | null = null,
+  ivaEnBs = false,
+): string {
   const horas = riel === "pago_movil" ? c.hold_horas_ves : c.hold_horas_usd;
   const cupo = horas > 0 ? ` Le guardamos el cupo ${horas} ${horas === 1 ? "hora" : "horas"}.` : "";
   const igtf = c.igtf_pct > 0 ? ` Se suma ${c.igtf_pct} % de IGTF.` : "";
   if (riel === "zelle") return `Pague en dólares desde su banco.${igtf}${cupo}`;
   if (riel === "binance") return `Pague en USDT.${igtf}${cupo}`;
   // «EUR» en el tarifario es la tasa con que se pasa a bolívares, no otra moneda.
+  const sinIgtf = c.igtf_pct > 0 ? " Sin IGTF." : "";
+  const iva = ivaEnBs ? ", más 16% de IVA" : "";
+  // Con la tasa cargada se muestra cuánto sería hoy; el monto que se cobra lo fija el servidor al reservar.
+  if (bs) {
+    const nombre = tasa === "EUR" ? "tasa euro del BCV" : "tasa del BCV";
+    return `Hoy serían ${bs.monto} (${nombre}: ${bs.tasa}${iva}). El monto exacto lo verá en el siguiente paso.${sinIgtf}${cupo}`;
+  }
   const aTasa = tasa === "EUR" ? "a la tasa euro del BCV del día" : "a la tasa del BCV del día";
-  // La tasa del día la fija el servidor al crear la reserva: acá no se estima un monto en Bs.
-  return `Pague en bolívares ${aTasa}; el monto exacto lo verá en el siguiente paso.${c.igtf_pct > 0 ? " Sin IGTF." : ""}${cupo}`;
+  return `Pague en bolívares ${aTasa}${iva}; el monto exacto lo verá en el siguiente paso.${sinIgtf}${cupo}`;
 }
 
 export function OpcionesRiel({

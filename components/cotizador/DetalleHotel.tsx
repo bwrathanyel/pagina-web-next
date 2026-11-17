@@ -126,7 +126,7 @@ export function DetalleHotel({
                         <p className="text-sm text-ink">
                           {precio.desde ? "Desde " : ""}
                           <span className="font-mono font-bold tabular-nums">
-                            <PrecioMostrado texto={precio.monto} />
+                            <PrecioMostrado texto={precio.monto} ivaEnBs={precio.ivaEnBs} />
                           </span>
                           {precio.unidad ? ` ${precio.unidad} por noche` : ""}
                         </p>
@@ -136,7 +136,7 @@ export function DetalleHotel({
                           <p className="text-sm text-ink">
                             Su estadía:{" "}
                             <span className="font-mono text-base font-bold tabular-nums">
-                              <PrecioMostrado texto={montoConMoneda(est.total, est.moneda)} />
+                              <PrecioMostrado texto={montoConMoneda(est.total, est.moneda)} ivaEnBs={est.ivaEnBs} />
                             </span>{" "}
                             <span className="text-ink-soft">
                               {est.noches} {est.noches === 1 ? "noche" : "noches"}, estimado

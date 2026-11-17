@@ -58,6 +58,8 @@ export interface TarifarioBloque {
   minimo_noches: Record<string, number> | null;
   impuestos: { iva_incluido?: boolean | null; igtf_pct?: number | null } | null;
   otras: string[] | null;
+  /** BT dice que la tarifa no incluye IVA: pagando en Bs se suma 16% (columna generada desde impuestos.iva_incluido). */
+  iva_en_bs?: boolean | null;
 }
 
 /** Una fila de `tarifas` = UNA promoción (una línea del PDF, o un flyer con
@@ -113,6 +115,8 @@ export interface Promocion {
   id: number;
   titulo: string;
   precio_texto: string | null;
+  /** Del bloque de BT de la tarifa (web_promociones): en Bs se suma 16% de IVA. */
+  iva_en_bs?: boolean | null;
   precio_desde_usd: number | null;
   vigencia_texto: string | null;
   /** Campos estructurados de la fila `tarifas` (NULL en flyers y en líneas PDF

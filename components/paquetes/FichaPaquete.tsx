@@ -9,7 +9,7 @@ import { Boton } from "@/components/ui/Boton";
 import { CLASE_CONTROL, Selector } from "@/components/ui/Campo";
 import { Icono } from "@/components/ui/Icono";
 import { Etiqueta } from "@/components/ui/Insignia";
-import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
+import { PrecioMostrado, usePrecioSuma } from "@/components/ui/PrecioMostrado";
 import { SelectorFecha } from "@/components/ui/SelectorFecha";
 import { SelectorViajeros, type Viajeros } from "@/components/ui/SelectorViajeros";
 import {
@@ -409,7 +409,7 @@ export function FichaPaquete({ paquete, rutas }: { paquete: Paquete; rutas: Ruta
         <div className="fixed inset-x-0 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-30 flex items-center gap-3 border-t border-linea bg-card px-5 py-3 lg:hidden">
           <div className="min-w-0 flex-1">
             <p className="truncate font-mono text-lg font-bold tabular-nums text-ink">
-              {est?.total != null ? <PrecioMostrado texto={usd(est.total)} /> : "Precio a confirmar"}
+              {est?.total != null ? <TotalPaquete est={est} /> : "Precio a confirmar"}
             </p>
             <p className="truncate text-xs text-ink-soft">
               {est?.total != null ? `Total estimado · ${textoBoletos(est.asientos)} + hotel` : "El asesor le cotiza"}
@@ -422,6 +422,16 @@ export function FichaPaquete({ paquete, rutas }: { paquete: Paquete; rutas: Ruta
       ) : null}
     </>
   );
+}
+
+/** Total del paquete (o por persona): en Bs el hotel va a tasa euro (+16% si
+ * BT no incluye IVA) y el vuelo a tasa dólar, cada uno antes de sumar. */
+function TotalPaquete({ est, porPersona = false }: { est: EstimadoPaquete; porPersona?: boolean }) {
+  const partes =
+    est.hotel.ok && est.vuelo.total != null
+      ? [{ monto: est.hotel.total, ivaEnBs: est.hotel.ivaEnBs }, { monto: est.vuelo.total, tasaDolar: true }]
+      : [];
+  return <>{usePrecioSuma(partes, porPersona ? (n) => usd(Math.ceil(n)) : usd, porPersona ? Math.max(1, est.asientos) : 1)}</>;
 }
 
 function ResumenPrecio({ est, noches }: { est: EstimadoPaquete | null; noches: number }) {
@@ -443,28 +453,28 @@ function ResumenPrecio({ est, noches }: { est: EstimadoPaquete | null; noches: n
             Hotel · {noches} {noches === 1 ? "noche" : "noches"}
           </dt>
           <dd className="font-mono font-bold tabular-nums text-ink">
-            {hotel.ok ? <PrecioMostrado texto={montoConMoneda(hotel.total, hotel.moneda)} /> : "A confirmar"}
+            {hotel.ok ? <PrecioMostrado texto={montoConMoneda(hotel.total, hotel.moneda)} ivaEnBs={hotel.ivaEnBs} /> : "A confirmar"}
           </dd>
         </div>
         <div className="flex items-baseline justify-between gap-3">
           <dt className="text-ink-soft">{textoBoletos(est.asientos)} ida y vuelta</dt>
           <dd className="font-mono font-bold tabular-nums text-ink">
-            {vuelo.total != null ? <PrecioMostrado texto={usd(vuelo.total)} /> : "A confirmar"}
+            {vuelo.total != null ? <PrecioMostrado texto={usd(vuelo.total)} tasaDolar /> : "A confirmar"}
           </dd>
         </div>
       </dl>
       {est.total != null ? (
         <div>
           <p className="font-mono text-3xl font-bold tabular-nums text-acento">
-            <PrecioMostrado texto={usd(est.total)} />
+            <TotalPaquete est={est} />
           </p>
           <p className="text-sm text-ink-soft">
-            Total estimado · <PrecioMostrado texto={usd(est.porPersona!)} /> por persona
+            Total estimado · <TotalPaquete est={est} porPersona /> por persona
           </p>
         </div>
       ) : (
         <p className="text-sm font-semibold text-ink">
-          {!hotel.ok ? `${hotel.texto} ` : hotel.moneda !== "USD" ? "El hotel cotiza en euros. " : ""}
+          {!hotel.ok ? `${hotel.texto} ` : ""}
           Precio a confirmar por el asesor.
         </p>
       )}
@@ -543,7 +553,7 @@ function Habitaciones({
                     <>
                       Paquete:{" "}
                       <span className="font-mono text-base font-bold tabular-nums">
-                        <PrecioMostrado texto={usd(est.total)} />
+                        <TotalPaquete est={est} />
                       </span>{" "}
                       <span className="text-ink-soft">total estimado</span>
                     </>

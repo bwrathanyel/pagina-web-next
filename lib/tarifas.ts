@@ -13,11 +13,12 @@ import { hoyCaracas } from "@/lib/cotizador/estado";
 
 const ETIQUETA_ORDEN = ["sgl", "dbl", "tpl", "cdp", "qpl", "pax_adic"];
 
-const simbolo = (moneda?: string | null) => (String(moneda || "USD").toUpperCase() === "EUR" ? "€" : "$");
-
-export function montoConMoneda(valor: number, moneda?: string | null): string {
+// Siempre $: el número de BT tal cual aunque la tarifa venga en € (regla del
+// dueño 2026-11-17). `moneda` ya no cambia el símbolo; solo decide la tasa del
+// checkout. En Bs todo va a tasa euro (ver lib/utils/convertirPrecio.ts).
+export function montoConMoneda(valor: number, _moneda?: string | null): string {
   const n = Number(valor);
-  return simbolo(moneda) + (n % 1 === 0 ? String(n) : n.toFixed(2));
+  return "$" + (n % 1 === 0 ? String(n) : n.toFixed(2));
 }
 
 // chd_5_9 -> "CHD 5-9". El guion bajo ENTRE DÍGITOS es un rango de edad, no un
@@ -166,13 +167,17 @@ export function precioTarjeta(p: {
   moneda?: string | null;
   precio_desde_usd?: number | null;
   precio_texto?: string | null;
-}): { monto: string; unidad: string | null; desde: boolean; corto: boolean } | null {
+  tarifario_bloques?: Tarifa["tarifario_bloques"];
+  /** Las promos (web_promociones) lo traen plano; las tarifas, en su bloque. */
+  iva_en_bs?: boolean | null;
+}): { monto: string; unidad: string | null; desde: boolean; corto: boolean; ivaEnBs?: boolean } | null {
+  const ivaEnBs = !!(p.iva_en_bs ?? bloqueDe(p as Tarifa)?.iva_en_bs);
   const doble = precioDobleHero({ precios: p.precios, moneda: p.moneda } as Tarifa);
-  if (doble) return { monto: doble.monto, unidad: "por persona y noche, en doble", desde: false, corto: true };
-  const desde = formatearPrecioDesde(p.precio_desde_usd, p.precio_texto);
-  if (desde) return { monto: desde, unidad: unidadDelTexto(p.precio_texto) ?? "según fechas y ocupación", desde: true, corto: true };
+  if (doble) return { monto: doble.monto, unidad: "por persona y noche, en doble", desde: false, corto: true, ivaEnBs };
+  const desde = formatearPrecioDesde(p.precio_desde_usd);
+  if (desde) return { monto: desde, unidad: unidadDelTexto(p.precio_texto) ?? "según fechas y ocupación", desde: true, corto: true, ivaEnBs };
   const texto = formatearPrecioCliente(p.precio_texto)?.trim();
-  return texto ? { monto: texto, unidad: null, desde: false, corto: texto.length <= 12 } : null;
+  return texto ? { monto: texto, unidad: null, desde: false, corto: texto.length <= 12, ivaEnBs } : null;
 }
 
 export type PrecioTarjeta = NonNullable<ReturnType<typeof precioTarjeta>>;
@@ -184,22 +189,29 @@ export type PrecioTarjeta = NonNullable<ReturnType<typeof precioTarjeta>>;
  * esta misma función para no mostrar dos precios distintos del mismo hotel. */
 export function precioDeTarifa(t: Tarifa | null | undefined): PrecioTarjeta | null {
   if (!t) return null;
+  const ivaEnBs = !!bloqueDe(t)?.iva_en_bs;
   const pp = t.precios ? precioPorPersona(t) : null;
   if (pp !== null) {
-    return { monto: montoConMoneda(Math.round(pp * 100) / 100, t.moneda), unidad: "por persona", desde: true, corto: true };
+    return { monto: montoConMoneda(Math.round(pp * 100) / 100, t.moneda), unidad: "por persona", desde: true, corto: true, ivaEnBs };
   }
   const texto = formatearPrecioCliente(t.precio_texto)?.trim();
-  return texto ? { monto: texto, unidad: null, desde: false, corto: texto.length <= 12 } : null;
+  return texto ? { monto: texto, unidad: null, desde: false, corto: texto.length <= 12, ivaEnBs } : null;
 }
 
-/** Texto libre del tarifario ("€286 por persona (paquete…)"): si arranca con
+/** Texto libre del tarifario ("$286 por persona (paquete…)"): si arranca con
  * un monto, el monto va grande y el resto baja a la línea de unidad. */
-export function separarMonto(precio: PrecioTarjeta | null): { monto: string | undefined; unidad: string | null | undefined; grande: boolean } {
+export function separarMonto(precio: PrecioTarjeta | null): {
+  monto: string | undefined;
+  unidad: string | null | undefined;
+  grande: boolean;
+  ivaEnBs: boolean;
+} {
   const partido = precio && !precio.corto ? /^([$€]\s?[\d.,]+)\s+(.+)$/.exec(precio.monto) : null;
   return {
     monto: partido ? partido[1] : precio?.monto,
     unidad: partido ? partido[2] : precio?.unidad,
     grande: partido ? true : (precio?.corto ?? false),
+    ivaEnBs: !!precio?.ivaEnBs,
   };
 }
 

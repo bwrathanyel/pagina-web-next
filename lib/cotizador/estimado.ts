@@ -41,6 +41,8 @@ export type Estimado =
       ok: true;
       total: number;
       moneda: "USD" | "EUR";
+      /** Pagando en Bs se suma 16% de IVA (el bloque de BT dice que la tarifa no lo incluye). */
+      ivaEnBs: boolean;
       noches: number;
       lineas: LineaEstimado[];
       /** Lo que el número no incluye o lo que el asesor debe confirmar. */
@@ -387,6 +389,7 @@ export function estimarEstadia(elegida: Tarifa, filas: Tarifa[], e: Estadia): Es
     ok: true,
     total: redondear(lineas.reduce((a, l) => a + l.monto, 0)),
     moneda: monedaDe(elegida),
+    ivaEnBs: !!bloqueDe(elegida)?.iva_en_bs,
     noches: noches.length,
     lineas: lineas.map((l) => ({
       texto: l.texto + (variasTemporadas && l.titulo ? `, ${l.titulo.toLowerCase()}` : ""),

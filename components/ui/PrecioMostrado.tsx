@@ -1,24 +1,56 @@
 "use client";
 
 import { useCurrency } from "@/components/providers/CurrencyProvider";
-import { convertirPrecioTexto } from "@/lib/utils/convertirPrecio";
+import { convertirPrecioTexto, IVA_BS, montoBs } from "@/lib/utils/convertirPrecio";
+import { textoEnDolares } from "@/lib/utils/formatoPrecio";
 
-/** Único punto de conversión USD/EUR -> Bs en toda la web: el texto que
- * llega acá (precioLabel, ya formateado por formatearPrecioCliente) NO se
- * toca en origen -- ni en el carrito ni en ningún estado guardado, solo acá
- * en el render, con la tasa que ya está en memoria del CurrencyProvider. Así
+export type OpcionesPrecio = {
+  /** La tarifa de BT no incluye IVA: en Bs se suma 16%. */
+  ivaEnBs?: boolean;
+  /** Montos que no son tarifas de BT (vuelos): en Bs van a tasa dólar, no euro. */
+  tasaDolar?: boolean;
+};
+
+/** Único punto de conversión $ -> Bs en toda la web: el texto que llega acá
+ * (precioLabel, ya formateado por formatearPrecioCliente) NO se toca en
+ * origen -- ni en el carrito ni en ningún estado guardado, solo acá en el
+ * render, con la tasa que ya está en memoria del CurrencyProvider. Así
  * togglear moneda nunca deja un precio "doble convertido" guardado en algún
- * lado. Si la tasa todavía no cargó, se muestra el texto nativo (USD/EUR)
- * sin bloquear el render. */
-export function PrecioMostrado({ texto }: { texto: string | null | undefined }) {
-  return <>{usePrecioMostrado(texto)}</>;
+ * lado. En divisas todo sale en $ (un € suelto se pasa a $); en Bs, a tasa
+ * euro (+16% si `ivaEnBs`). Si la tasa todavía no cargó, se muestra el texto
+ * en $ sin bloquear el render. */
+export function PrecioMostrado({ texto, ...op }: { texto: string | null | undefined } & OpcionesPrecio) {
+  return <>{usePrecioMostrado(texto, op)}</>;
+}
+
+export type ParteMonto = { monto: number } & OpcionesPrecio;
+
+/** Total de piezas con tasas distintas (hotel a tasa euro, con o sin IVA, más
+ * vuelo a tasa dólar). El texto ya sumado no se puede pasar a Bs: cada pieza se
+ * convierte por su lado y después se suma. `enDolares` da el texto en $ (el
+ * mismo formato que usaba quien llama); sin tasa cargada se queda en $. */
+export function usePrecioSuma(partes: ParteMonto[], enDolares: (n: number) => string, divisor = 1): string {
+  const { moneda, tasaUSD, tasaEUR } = useCurrency();
+  const dolares = enDolares(partes.reduce((a, p) => a + p.monto, 0) / divisor);
+  if (moneda !== "VES") return dolares;
+  let bs = 0;
+  for (const p of partes) {
+    const tasa = p.tasaDolar ? tasaUSD : tasaEUR;
+    if (!tasa) return dolares;
+    bs += p.monto * tasa * (!p.tasaDolar && p.ivaEnBs ? IVA_BS : 1);
+  }
+  return montoBs(bs / divisor);
 }
 
 /** El mismo texto que pinta PrecioMostrado, para quien necesita medirlo. */
-export function usePrecioMostrado(texto: string | null | undefined) {
+export function usePrecioMostrado(texto: string | null | undefined, op: OpcionesPrecio = {}) {
   const { moneda, tasaUSD, tasaEUR } = useCurrency();
-  if (moneda !== "VES") return texto;
-  return convertirPrecioTexto(texto, tasaUSD, tasaEUR) ?? texto;
+  if (texto == null) return texto;
+  if (moneda === "VES") {
+    const bs = convertirPrecioTexto(texto, op.tasaDolar ? tasaUSD : tasaEUR, !op.tasaDolar && !!op.ivaEnBs);
+    if (bs !== texto) return bs;
+  }
+  return textoEnDolares(texto);
 }
 
 // Monto grande que se achica hasta entrar en el ancho de su caja: en Bs
@@ -32,7 +64,8 @@ export function MontoAjustado({
   unaLinea = false,
   className = "",
   claseMonto = "",
-}: {
+  ...op
+}: OpcionesPrecio & {
   texto: string | undefined;
   tope: string;
   topeLg?: string;
@@ -41,7 +74,7 @@ export function MontoAjustado({
   className?: string;
   claseMonto?: string;
 }) {
-  const mostrado = usePrecioMostrado(texto) ?? "";
+  const mostrado = usePrecioMostrado(texto, op) ?? "";
   const largo = unaLinea ? mostrado.length : Math.max(...mostrado.split(/\s+/).map((p) => p.length));
   const vars = { "--glifos": Math.max(4, largo) * 0.62, "--tope": tope, "--tope-lg": topeLg ?? tope };
   return (

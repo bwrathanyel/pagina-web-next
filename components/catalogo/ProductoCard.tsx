@@ -85,6 +85,7 @@ export function ProductoCard({ producto, prioridad = false }: { producto: Produc
                 destino: producto.destino,
                 fotoUrl: foto,
                 precioLabel,
+                ivaEnBs: !!precio?.ivaEnBs,
                 href,
               })
         }

@@ -151,6 +151,7 @@ export function PromocionCard({ promocion, prioridad = false }: { promocion: Pro
                 destino: promocion.producto?.destino ?? null,
                 fotoUrl: foto,
                 precioLabel,
+                ivaEnBs: !!precio?.ivaEnBs,
                 href: href ?? `/carrito`,
               })
         }

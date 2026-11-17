@@ -47,7 +47,7 @@ export const PRODUCTO_SELECT =
 // vocabulario que ya habla el sitio.
 export const PROMOCION_SELECT =
   "id,titulo,precio_texto,precio_desde_usd,vigencia_texto,fecha_fin_estimada:fecha_fin,fecha_venta_fin," +
-  "precios,plan,moneda,habitacion," +
+  "precios,plan,moneda,habitacion,iva_en_bs," +
   "hot_sale_estado,hot_sale_orden,ninos_gratis_cantidad,nino_gratis,incluye_tags,resumen_ia,score," +
   "producto:productos(id,tipo,nombre,destino,producto_fotos(id,storage_path,orden,es_principal,activo,origen,habitacion_id))," +
   "promocion_fotos(id,storage_path,orden,es_principal,activo,width,height,origen)";

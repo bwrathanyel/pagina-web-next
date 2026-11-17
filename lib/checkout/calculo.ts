@@ -56,7 +56,8 @@ export type ErrorCalculo =
   | "sujeto_a_confirmacion"
   | "precio_a_confirmar";
 
-/** Tasa BCV con que se pasa a bolívares: la de la tarifa elegida. */
+/** Tasa BCV con que se pasa a bolívares. Desde 2026-11-17 siempre «EUR» (regla del
+ * dueño: todo a tasa euro, también lo que BT da en $); el servidor la fija igual. */
 export type TasaBcv = "USD" | "EUR";
 
 export type ResultadoHospedaje =
@@ -64,6 +65,8 @@ export type ResultadoHospedaje =
       ok: true;
       precio: number;
       tasa: TasaBcv;
+      /** BT no incluye IVA en la tarifa: en Bs se cobra 16% más (el servidor lo deriva del tarifario). */
+      ivaEnBs: boolean;
       noches: number;
       descripcion: string;
       habitacion: string | null;
@@ -134,8 +137,8 @@ export function calcularHospedaje(
   return {
     ok: true,
     precio,
-    // Las filas que suma estimarEstadia son de la misma habitación, plan y tasa que la elegida.
-    tasa: est.moneda,
+    tasa: "EUR",
+    ivaEnBs: est.ivaEnBs,
     noches: est.noches,
     descripcion,
     habitacion,

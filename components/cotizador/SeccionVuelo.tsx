@@ -295,14 +295,14 @@ function EstimadoVuelo({ vuelo, idaVuelta }: { vuelo: VueloViaje; idaVuelta: boo
         <div className="flex flex-col gap-0.5">
           <dt className="text-xs text-ink-soft">Por boleto</dt>
           <dd className="font-mono text-lg font-semibold tabular-nums text-ink">
-            <PrecioMostrado texto={porPersona} />
+            <PrecioMostrado texto={porPersona} tasaDolar />
           </dd>
         </div>
         {vuelo.total !== null && boletos !== null ? (
           <div className="flex flex-col gap-0.5 text-right">
             <dt className="text-xs text-ink-soft">Total, {textoBoletos(boletos)}</dt>
             <dd className="font-mono text-xl font-bold tabular-nums text-ink">
-              <PrecioMostrado texto={montoConMoneda(vuelo.total, "USD")} />
+              <PrecioMostrado texto={montoConMoneda(vuelo.total, "USD")} tasaDolar />
             </dd>
           </div>
         ) : null}

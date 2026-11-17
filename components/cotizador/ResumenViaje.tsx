@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { MontoTablero } from "@/components/ui/MontoTablero";
 import { Boleto } from "@/components/ui/Boleto";
 import { Boton } from "@/components/ui/Boton";
-import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
+import { PrecioMostrado, usePrecioSuma } from "@/components/ui/PrecioMostrado";
 import { SelloDestino } from "@/components/ui/SelloDestino";
 import { fechasVuelo, nochesDe, textoViajeros, type EstadoViaje } from "@/lib/cotizador/estado";
 import type { Estimado } from "@/lib/cotizador/estimado";
@@ -82,7 +82,7 @@ export function ResumenViaje({
   /** Nombre y WhatsApp: van en el pase, después de la lista (enviar sin ellos los enfoca). */
   datos?: ReactNode;
   /** Precio anunciado por la oferta, para mostrar mientras faltan fechas. */
-  desde?: { monto: string; unidad: string | null } | null;
+  desde?: { monto: string; unidad: string | null; ivaEnBs?: boolean } | null;
   /** Nombres de los tours agregados. */
   tours?: string[];
   /** Ruta y aproximado del vuelo; sin él, el vuelo queda "a confirmar". */
@@ -100,9 +100,15 @@ export function ResumenViaje({
   const conVuelo = estado.servicios.includes("vuelo");
   const vueloTotal = conVuelo && vuelo?.total != null ? vuelo.total : null;
   const montoVuelo = vueloTotal !== null ? montoConMoneda(vueloTotal, "USD") : null;
-  // El vuelo es en dólares: solo se suma a un hospedaje en dólares.
-  const sumable = monto && montoVuelo && estimado?.ok && (estimado.moneda ?? "USD") === "USD";
+  // Todo se muestra en $ (un hotel en € suma su mismo número). En Bs cada pieza
+  // va a su tasa: hotel euro (+16% si BT no incluye IVA), vuelo dólar.
+  const sumable = !!(monto && montoVuelo && estimado?.ok);
+  const ivaHotel = !!(estimado?.ok && estimado.ivaEnBs);
   const montoTalon = sumable && estimado?.ok ? montoConMoneda(estimado.total + (vueloTotal as number), "USD") : monto ?? montoVuelo;
+  const talonSuma = usePrecioSuma(
+    sumable && estimado?.ok ? [{ monto: estimado.total, ivaEnBs: ivaHotel }, { monto: vueloTotal as number, tasaDolar: true }] : [],
+    (n) => montoConMoneda(n, "USD"),
+  );
   const etiquetaTalon = sumable ? "Hospedaje + vuelo aprox." : !monto && montoVuelo ? "Vuelo aprox." : null;
   const pendientes = [conVuelo && !montoVuelo && "vuelo", estado.servicios.includes("tours") && "tours"].filter(Boolean) as string[];
   const destinoVuelo =
@@ -127,7 +133,12 @@ export function ResumenViaje({
             <span className="shrink-0 text-sm font-semibold text-ink-soft">{referencia ? "Desde" : (etiquetaTalon ?? "Estimado")}</span>
             <span className="min-w-0 flex-1 truncate text-right font-mono text-2xl font-bold tabular-nums text-ink" aria-live="polite">
               {/* Una sola pieza para los tres casos: así el total cae como en el tablero al cambiar. */}
-              <MontoTablero texto={montoTalon || referencia?.monto || "A confirmar"} />
+              <MontoTablero
+                texto={montoTalon || referencia?.monto || "A confirmar"}
+                mostrar={sumable ? talonSuma : undefined}
+                ivaEnBs={montoTalon ? ivaHotel : !!referencia?.ivaEnBs}
+                tasaDolar={!monto && !!montoVuelo}
+              />
             </span>
           </div>
           {reservar ? (
@@ -158,7 +169,7 @@ export function ResumenViaje({
             precio={
               unico ? null : monto ? (
                 <>
-                  Estimado <PrecioMostrado texto={monto} />
+                  Estimado <PrecioMostrado texto={monto} ivaEnBs={ivaHotel} />
                 </>
               ) : undefined
             }
@@ -175,7 +186,7 @@ export function ResumenViaje({
             precio={
               unico ? null : montoVuelo ? (
                 <>
-                  Total aprox. <PrecioMostrado texto={montoVuelo} />
+                  Total aprox. <PrecioMostrado texto={montoVuelo} tasaDolar />
                 </>
               ) : undefined
             }
@@ -190,7 +201,7 @@ export function ResumenViaje({
             {estado.flexible ? <span>Fechas flexibles</span> : null}
             {vueloTotal !== null && vuelo?.porPersona ? (
               <span>
-                <PrecioMostrado texto={montoConMoneda(vuelo.porPersona, "USD")} /> por boleto ·{" "}
+                <PrecioMostrado texto={montoConMoneda(vuelo.porPersona, "USD")} tasaDolar /> por boleto ·{" "}
                 {textoBoletos(vueloTotal / vuelo.porPersona)}
               </span>
             ) : null}

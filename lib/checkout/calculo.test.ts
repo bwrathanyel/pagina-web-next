@@ -72,20 +72,21 @@ test("noches sin tarifa no se cobran solas", () => {
   assert.ok(!sinTarifa.ok && sinTarifa.error === "precio_a_confirmar");
 });
 
-test("tarifa «EUR» se vende: mismo número que en dólares y viaja la tasa euro", () => {
+test("tarifa «EUR» se vende con el mismo número; toda tarifa viaja a tasa euro (regla 2026-11-17)", () => {
   const usd = calcularHospedaje(hotel, sel(), [], HOY);
   const euros: HotelParaCobrar = { ...hotel, tarifas: [{ ...estandar, moneda: "EUR" }] };
   const e = calcularHospedaje(euros, sel(), [], HOY);
   assert.ok(usd.ok && e.ok);
   if (!usd.ok || !e.ok) return;
-  assert.equal(usd.tasa, "USD");
+  assert.equal(usd.tasa, "EUR");
   assert.equal(e.tasa, "EUR");
   assert.equal(e.precio, usd.precio);
+  assert.equal(usd.ivaEnBs, false);
   assert.equal(servicioHospedaje(euros, sel(), e).tasa, "EUR");
-  assert.equal(servicioHospedaje(hotel, sel(), usd).tasa, "USD");
+  assert.equal(servicioHospedaje(hotel, sel(), usd).tasa, "EUR");
 });
 
-test("hotel con tarifas USD y EUR: la estadía usa solo la tasa de la fila elegida", () => {
+test("hotel con tarifas USD y EUR: la estadía suma solo las filas de la elegida y va a tasa euro", () => {
   const abrilEur = fila({ ...estandar, id: 11, moneda: "EUR", ventanas: [{ desde: "2027-04-01", hasta: "2027-04-30" }] });
   const mixto: HotelParaCobrar = { ...hotel, tarifas: [estandar, abrilEur] };
   const abril = { desde: "2027-04-10", hasta: "2027-04-12" };
@@ -94,7 +95,7 @@ test("hotel con tarifas USD y EUR: la estadía usa solo la tasa de la fila elegi
   const conEur = calcularHospedaje(mixto, sel({ ...abril, tarifaId: 11 }), [], HOY);
   assert.ok(conEur.ok && conEur.tasa === "EUR");
   const feb = calcularHospedaje(mixto, sel(), [], HOY);
-  assert.ok(feb.ok && feb.tasa === "USD");
+  assert.ok(feb.ok && feb.tasa === "EUR");
 });
 
 test("fechaValida rechaza fechas que no existen", () => {

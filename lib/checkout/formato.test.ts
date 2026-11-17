@@ -2,8 +2,15 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   antesDeVenezuela, fechaCorta, fechaHoraVenezuela, horaAmPm, horaVenezuela, mensajePago, mensajeReserva,
-  montoCentavos, montoParaCopiar, plazoRestante, porcentajeIgtf, rangoFechas, separarCargos, usd,
+  estimarBsCentavos, montoCentavos, montoParaCopiar, plazoRestante, porcentajeIgtf, rangoFechas, separarCargos, usd,
 } from "./formato.ts";
+
+test("estimarBsCentavos: total × tasa BCV en céntimos, sin tasa o sin monto no estima", () => {
+  assert.equal(estimarBsCentavos(720, 512.3456), 36888883);
+  assert.equal(estimarBsCentavos(0.1 + 0.2, 100), 3000);
+  assert.equal(estimarBsCentavos(720, 0), null);
+  assert.equal(estimarBsCentavos(0, 512), null);
+});
 
 test("montoCentavos agrupa miles y usa coma decimal en las tres monedas", () => {
   assert.equal(montoCentavos(123456, "USD"), "US$ 1.234,56");

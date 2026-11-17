@@ -103,7 +103,8 @@ export interface ViajerosPaquete {
 export interface EstimadoPaquete {
   hotel: Estimado;
   vuelo: EstimadoVuelo;
-  /** Hotel + boletos en USD; null si falta una parte o el hotel cobra en EUR. */
+  /** Hotel + boletos en $; null si falta una parte. Un hotel que BT da en € suma
+   * su mismo número en $ (regla del dueño 2026-11-17). */
   total: number | null;
   porPersona: number | null;
   asientos: number;
@@ -132,7 +133,7 @@ export function estimarPaquete(e: {
     bebes,
   });
   const asientos = Math.max(0, adultos) + edades.length;
-  const total = hotel.ok && hotel.moneda === "USD" && vuelo.total != null ? Math.round((hotel.total + vuelo.total) * 100) / 100 : null;
+  const total = hotel.ok && vuelo.total != null ? Math.round((hotel.total + vuelo.total) * 100) / 100 : null;
   return { hotel, vuelo, total, porPersona: total != null && asientos > 0 ? Math.ceil(total / asientos) : null, asientos };
 }
 

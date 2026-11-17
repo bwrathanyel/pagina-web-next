@@ -102,10 +102,9 @@ export const prioridadOferta = (p: ConNinoGratis) =>
 export const DESTINOS_TODO_INCLUIDO = new Set(["margarita"]);
 
 // Tiras de destino de la home: cuántas Hot Sales hay en cada uno, la foto de
-// la mejor rankeada (el pool llega por score) y el piso de precio. El piso
-// solo compara montos de la misma moneda: `precio_desde_usd` a veces es EUR
-// (ver formatearPrecioDesde), y un "desde" que mezcla monedas mentiría. Se
-// prefiere el piso en dólares; si el destino no tiene ninguno, el de euros.
+// la mejor rankeada (el pool llega por score) y el piso de precio. Desde
+// 2026-11-17 todo se muestra en $ con el número de BT (aunque venga en €), así
+// que el piso compara todos los montos juntos.
 export function destinosConOfertas(pool: Promocion[]): DestinoConOfertas[] {
   const conDestino = pool.filter((p) => p.producto?.destino);
   const grupos = agruparPorDestino(conDestino, (p) => p.producto!.destino);
@@ -115,17 +114,12 @@ export function destinosConOfertas(pool: Promocion[]): DestinoConOfertas[] {
     if (!foto) continue;
     const todoIncluido = DESTINOS_TODO_INCLUIDO.has(normalizar(destino).trim()) ? items.filter(esTodoIncluido) : [];
     const base = todoIncluido.length > 0 ? todoIncluido : items;
-    const pisos = { $: Infinity, "€": Infinity };
+    let piso = Infinity;
     for (const p of base) {
       if (typeof p.precio_desde_usd !== "number" || !Number.isFinite(p.precio_desde_usd)) continue;
-      const simbolo = p.precio_texto?.includes("€") ? "€" : "$";
-      pisos[simbolo] = Math.min(pisos[simbolo], p.precio_desde_usd);
+      piso = Math.min(piso, p.precio_desde_usd);
     }
-    const desde = Number.isFinite(pisos.$)
-      ? formatearPrecioDesde(pisos.$, null)
-      : Number.isFinite(pisos["€"])
-        ? formatearPrecioDesde(pisos["€"], "€")
-        : null;
+    const desde = Number.isFinite(piso) ? formatearPrecioDesde(piso) : null;
     resultado.push({ destino, ofertas: items.length, foto, desde, nota: todoIncluido.length > 0 ? "todo incluido" : undefined });
   }
   // Más ofertas primero; a igual cantidad queda el orden alfabético del grupo.

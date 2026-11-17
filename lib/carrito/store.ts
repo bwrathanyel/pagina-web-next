@@ -11,6 +11,8 @@ export interface ItemCarrito {
   destino: string | null;
   fotoUrl: string | null;
   precioLabel: string;
+  /** La tarifa de BT no incluye IVA: en Bs el precio lleva 16% más. */
+  ivaEnBs?: boolean;
   href: string;
 }
 
