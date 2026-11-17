@@ -25,7 +25,7 @@ type Props = {
   r: Accion & Pick<Reserva, "error" | "acepta" | "setAcepta" | "errorDe" | "turnstileVuelta" | "recibirTurnstile" | "avisoTurnstile" | "esEscritorio">;
 };
 
-// Aceptación + Turnstile existen UNA sola vez: en el aside (escritorio) o al final de la columna (teléfono).
+// Aceptación + Turnstile existen UNA sola vez, al final de la columna de pago.
 export function CierreReserva({ r }: Props) {
   const { error, fueraDeHorario, acepta, setAcepta } = r;
   const errorAcepta = r.errorDe("acepta");

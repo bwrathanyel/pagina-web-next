@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState, type PointerEvent } from "react";
+import { useState } from "react";
 import { Hoja } from "@/components/ui/Hoja";
 import { Icono } from "@/components/ui/Icono";
 import { Etiqueta } from "@/components/ui/Insignia";
@@ -10,7 +10,7 @@ import type { Riel, TasaBcv } from "@/lib/checkout/calculo";
 import { fechaCorta, usd } from "@/lib/checkout/formato";
 import type { Plan } from "@/lib/checkout/plan";
 
-// Tarjetas de opción de /reservar (habitación y forma de pago): un radio nativo dentro de una
+// Opciones de /reservar (habitación y forma de pago): un radio nativo dentro de una
 // tarjeta entera clicable, con el estado elegido en acento suave (el design system no usa radios sueltos).
 
 const TARJETA =
@@ -37,7 +37,23 @@ function MarcaElegida({ className = "" }: { className?: string }) {
   );
 }
 
-/** «+N»: abre el visor con todas las fotos. Va FUERA del `<label>` de la tarjeta (B-09), así tocarlo
+/** Visor con todas las fotos (Hoja centrada en escritorio). */
+function VisorFotos({ fotos, alt, abierta, onCerrar }: { fotos: string[]; alt: string; abierta: boolean; onCerrar: () => void }) {
+  const n = fotos.length;
+  return (
+    <Hoja abierta={abierta} onCerrar={onCerrar} titulo={`Fotos de ${alt}`} escritorio="centrado" anchoClassName="max-w-4xl">
+      <ul className="flex flex-col gap-3">
+        {fotos.map((foto, i) => (
+          <li key={foto} className="relative aspect-[4/3] overflow-hidden rounded-media bg-sand-2">
+            <Image src={foto} alt={`${alt}, foto ${i + 1} de ${n}`} fill sizes="(min-width: 1024px) 56rem, 100vw" loading="lazy" className="object-cover" />
+          </li>
+        ))}
+      </ul>
+    </Hoja>
+  );
+}
+
+/** «+N»: abre el visor con todas las fotos. Va FUERA del `<label>` de la opción (B-09), así tocarlo
  * nunca elige la habitación. */
 export function VerFotos({ fotos, alt, className = "" }: { fotos: string[]; alt: string; className?: string }) {
   const [visor, setVisor] = useState(false);
@@ -57,80 +73,32 @@ export function VerFotos({ fotos, alt, className = "" }: { fotos: string[]; alt:
         <Icono nombre="suma" tamano={14} />
         {n}
       </button>
-      <Hoja abierta={visor} onCerrar={() => setVisor(false)} titulo={`Fotos de ${alt}`} escritorio="centrado" anchoClassName="max-w-4xl">
-        <ul className="flex flex-col gap-3">
-          {fotos.map((foto, i) => (
-            <li key={foto} className="relative aspect-[4/3] overflow-hidden rounded-media bg-sand-2">
-              <Image src={foto} alt={`${alt}, foto ${i + 1} de ${n}`} fill sizes="(min-width: 1024px) 56rem, 100vw" loading="lazy" className="object-cover" />
-            </li>
-          ))}
-        </ul>
-      </Hoja>
+      <VisorFotos fotos={fotos} alt={alt} abierta={visor} onCerrar={() => setVisor(false)} />
     </>
   );
 }
 
-/** Fotos de una tarjeta de habitación. En escritorio, al pasar el mouse por la foto se recorren de
- * izquierda a derecha según la posición del puntero; en el teléfono se deslizan. */
-function FotosHabitacion({ fotos, alt, forma = "aspect-[4/3]" }: { fotos: string[]; alt: string; forma?: string }) {
+/** Miniatura de la fila de habitación: la primera foto, y tocarla abre el visor con todas. Queda fuera
+ * del `<label>` (B-09): mirar fotos no elige la habitación. */
+function MiniFotos({ fotos, alt }: { fotos: string[]; alt: string }) {
+  const [visor, setVisor] = useState(false);
   const n = fotos.length;
-  const [activa, setActiva] = useState(0);
-  // Las fotos 2..N solo se bajan cuando alguien las pide (primer gesto): 4-7 fotos por tarjeta.
-  const [montarTodas, setMontarTodas] = useState(false);
-  const toqueX = useRef<number | null>(null);
-
-  function alMover(e: PointerEvent<HTMLSpanElement>) {
-    if (e.pointerType !== "mouse" || n < 2) return;
-    const caja = e.currentTarget.getBoundingClientRect();
-    if (caja.width <= 0) return;
-    setMontarTodas(true);
-    setActiva(Math.min(n - 1, Math.max(0, Math.floor(((e.clientX - caja.left) / caja.width) * n))));
-  }
-
+  const foto = (
+    <Image src={fotos[0]} alt="" fill sizes="(min-width: 1024px) 7rem, 6rem" className="object-cover" />
+  );
+  const caja = "relative w-24 shrink-0 self-stretch overflow-hidden bg-sand-2 lg:w-28";
+  if (n < 2) return <span className={caja}>{foto}</span>;
   return (
-    <span
-      className={"relative block w-full overflow-hidden bg-sand-2 " + forma}
-      onPointerMove={alMover}
-      onPointerLeave={(e) => {
-        if (e.pointerType === "mouse") setActiva(0);
-      }}
-      onTouchStart={(e) => {
-        toqueX.current = e.touches[0].clientX;
-      }}
-      onTouchEnd={(e) => {
-        const x0 = toqueX.current;
-        toqueX.current = null;
-        if (x0 === null || n < 2) return;
-        const dx = e.changedTouches[0].clientX - x0;
-        if (Math.abs(dx) > 38) {
-          setMontarTodas(true);
-          setActiva((i) => (i + (dx < 0 ? 1 : -1) + n) % n);
-        }
-      }}
-    >
-      {fotos.map((foto, i) =>
-        montarTodas || i === 0 ? (
-          <Image
-            key={foto}
-            src={foto}
-            alt={i === activa ? alt : ""}
-            fill
-            sizes="(min-width: 1024px) 20rem, 90vw"
-            className={"object-cover transition-opacity duration-200 motion-reduce:transition-none " + (i === activa ? "opacity-100" : "opacity-0")}
-          />
-        ) : null,
-      )}
-      {n > 1 ? (
-        <span aria-hidden="true" className="pointer-events-none absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1">
-          {fotos.map((foto, i) => (
-            <span
-              key={foto}
-              className={"h-1.5 rounded-full shadow-sm transition-all duration-200 " + (i === activa ? "w-4 bg-white" : "w-1.5 bg-white/55")}
-            />
-          ))}
+    <>
+      <button type="button" onClick={() => setVisor(true)} aria-label={`Ver las ${n} fotos de ${alt}`} className={caja + " group/fotos"}>
+        {foto}
+        <span className="absolute bottom-1.5 right-1.5 inline-flex items-center gap-0.5 rounded-control bg-dusk/80 px-1.5 py-0.5 font-mono text-xs font-bold text-dusk-text transition-colors group-hover/fotos:bg-dusk">
+          <Icono nombre="suma" tamano={12} />
+          {n}
         </span>
-      ) : null}
-    </span>
+      </button>
+      <VisorFotos fotos={fotos} alt={alt} abierta={visor} onCerrar={() => setVisor(false)} />
+    </>
   );
 }
 
@@ -151,9 +119,10 @@ export interface OpcionHabitacion {
   nota: string | null;
 }
 
-/** Sin fotos por habitación (la mayoría de los hoteles), repetir las del hotel en cada tarjeta no
- * distingue nada: va un mini hero con las del hotel, chips con lo que traen las habitaciones y
- * tarjetas sin foto para elegir habitación/plan (pedido del dueño, 2026-10-25). */
+/** Habitaciones como filas compactas (pedido del dueño, 2026-11-18: la página entera en una vista):
+ * miniatura que abre las fotos, nombre y plan, y el precio a la derecha. Sin fotos por habitación (la
+ * mayoría de los hoteles), las del hotel ya están en la cabecera: va su visor, chips con lo que traen
+ * las habitaciones y filas sin miniatura (pedido del dueño, 2026-10-25). */
 export function OpcionesHabitacion({
   opciones,
   elegida,
@@ -173,79 +142,84 @@ export function OpcionesHabitacion({
   caracteristicas: string[];
   noches: number | null;
 }) {
-  if (!opciones.length) return null;
+  // Sin precio concreto no se ofrece nada (useReserva): con fechas puestas puede quedar vacío.
+  if (!opciones.length) {
+    return hayFechas ? (
+      <p className="rounded-card border border-linea bg-card p-4 text-sm text-ink-soft">
+        No hay habitaciones con precio confirmado para estas fechas. Pruebe otras fechas o escríbanos por WhatsApp y un asesor le consulta disponibilidad.
+      </p>
+    ) : null;
+  }
   const conFotos = opciones.some((o) => o.fotoPropia);
-  // Con más de 3 tarjetas con foto, en el teléfono pasan a un carrusel con snap.
-  const carrusel = conFotos && opciones.length > 3;
   return (
-    <fieldset className="flex flex-col gap-3">
+    <fieldset className="flex min-w-0 flex-col gap-2">
       <legend className="sr-only">Habitación</legend>
-      {/* Sin fotos por habitación, las del hotel ya están en la cabecera: aquí solo su visor. */}
-      {!conFotos && fotosHotel.length > 1 ? (
-        <VerFotos fotos={fotosHotel} alt={nombreHotel} className="self-start border border-linea bg-card text-ink hover:bg-sand-2" />
+      {!conFotos && (fotosHotel.length > 1 || caracteristicas.length) ? (
+        <div className="flex flex-wrap items-center gap-2">
+          {fotosHotel.length > 1 ? <VerFotos fotos={fotosHotel} alt={nombreHotel} className="border border-linea bg-card text-ink hover:bg-sand-2" /> : null}
+          {caracteristicas.length ? (
+            <>
+              <ul className="contents xl:hidden" aria-label="Características de las habitaciones">
+                {caracteristicas.map((c) => (
+                  <li key={c}>
+                    <Etiqueta>{c}</Etiqueta>
+                  </li>
+                ))}
+              </ul>
+              {/* xl (tres columnas): los chips ocupaban tres o cuatro renglones; una línea de texto. */}
+              <p className="hidden min-w-0 flex-1 text-xs text-ink-soft xl:line-clamp-2" title={caracteristicas.join(" · ")}>
+                <span className="sr-only">Características de las habitaciones: </span>
+                {caracteristicas.join(" · ")}
+              </p>
+            </>
+          ) : null}
+        </div>
       ) : null}
-      {!conFotos && caracteristicas.length ? (
-        <ul className="flex flex-wrap gap-2" aria-label="Características de las habitaciones">
-          {caracteristicas.map((c) => (
-            <li key={c}>
-              <Etiqueta>{c}</Etiqueta>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      <div
-        className={
-          carrusel
-            ? "-mx-5 flex snap-x snap-mandatory scroll-px-5 gap-3 overflow-x-auto px-5 py-2 lg:mx-0 lg:grid lg:grid-cols-2 lg:overflow-visible lg:p-0"
-            : "grid gap-3 lg:grid-cols-2"
-        }
-      >
+      {/* xl: la lista se desplaza por dentro para que el pago y los datos queden a la vista sin bajar. */}
+      <div className="flex flex-col gap-2 xl:-m-1 xl:max-h-[max(13rem,calc(100dvh-27rem))] xl:overflow-y-auto xl:overscroll-contain xl:p-1">
         {opciones.map((o) => {
           const fotos = conFotos && o.fotos.length ? o.fotos : null;
           const porNoche = o.precio !== null && noches ? o.precio / noches : null;
+          const detalle = o.detalles.length ? o.detalles.join(" · ") : o.descripcion;
           return (
-            <div key={o.id} className={"relative " + (carrusel ? "w-[85%] shrink-0 snap-start lg:w-auto" : "")}>
-              <label className={TARJETA + " h-full min-h-16 flex-col overflow-hidden"}>
-                {fotos ? <FotosHabitacion fotos={fotos} alt={o.titulo} /> : null}
-                <span className="flex items-start gap-3 px-4 py-3">
-                  <input
-                    type="radio"
-                    name="habitacion"
-                    value={o.id}
-                    checked={elegida === o.id}
-                    onChange={() => onElegir(o.id)}
-                    className="sr-only"
-                  />
-                  <MarcaElegida className="mt-0.5" />
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="font-semibold text-ink">{o.titulo}</span>
-                    {o.plan ? <span className="text-sm text-ink-soft">{o.plan}</span> : null}
-                  </span>
-                  {o.precio !== null ? (
-                    <span className="flex shrink-0 flex-col items-end">
-                      <span className="font-mono text-base font-bold tabular-nums text-ink">{usd(o.precio)}</span>
-                      <span className="text-xs text-ink-soft">
-                        {porNoche !== null ? (
-                          <>
-                            <span className="font-mono tabular-nums">{usd(porNoche)}</span> por noche
-                          </>
-                        ) : (
-                          "total de la estadía"
-                        )}
-                      </span>
+            <div key={o.id} className={TARJETA + " min-h-16 items-stretch overflow-hidden"}>
+              {fotos ? <MiniFotos fotos={fotos} alt={o.titulo} /> : null}
+              <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 px-3 py-2.5 sm:px-4">
+                <input
+                  type="radio"
+                  name="habitacion"
+                  value={o.id}
+                  checked={elegida === o.id}
+                  onChange={() => onElegir(o.id)}
+                  className="sr-only"
+                />
+                <MarcaElegida />
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="line-clamp-2 font-semibold leading-snug text-ink">{o.titulo}</span>
+                  {o.plan ? <span className="truncate text-sm text-ink-soft">{o.plan}</span> : null}
+                  {detalle ? (
+                    <span className="truncate text-xs text-ink-soft" title={o.descripcion ?? undefined}>
+                      {detalle}
                     </span>
-                  ) : hayFechas && o.nota ? (
-                    <span className="shrink-0 text-sm text-ink-soft">{o.nota}</span>
                   ) : null}
                 </span>
-                {o.detalles.length || o.descripcion ? (
-                  <span className="flex flex-col gap-1 px-4 pb-3 text-sm text-ink-soft">
-                    {o.detalles.length ? <span>{o.detalles.join(" · ")}</span> : null}
-                    {o.descripcion ? <span className="line-clamp-3">{o.descripcion}</span> : null}
+                {o.precio !== null ? (
+                  <span className="flex shrink-0 flex-col items-end">
+                    <span className="font-mono text-base font-bold tabular-nums text-ink">{usd(o.precio)}</span>
+                    <span className="text-xs text-ink-soft">
+                      {porNoche !== null ? (
+                        <>
+                          <span className="font-mono tabular-nums">{usd(porNoche)}</span>/noche
+                        </>
+                      ) : (
+                        "la estadía"
+                      )}
+                    </span>
                   </span>
+                ) : hayFechas && o.nota ? (
+                  <span className="shrink-0 text-sm text-ink-soft">{o.nota}</span>
                 ) : null}
               </label>
-              {fotos ? <VerFotos fotos={fotos} alt={o.titulo} className="absolute right-2 top-2" /> : null}
             </div>
           );
         })}
@@ -304,7 +278,7 @@ export function OpcionesRiel({
 }) {
   const visibles = RIELES.filter((r) => rieles.includes(r.id));
   return (
-    <fieldset data-campo="riel" className="flex flex-col gap-3" aria-describedby={error ? "r-riel-error" : undefined}>
+    <fieldset data-campo="riel" className="flex min-w-0 flex-col gap-3" aria-describedby={error ? "r-riel-error" : undefined}>
       <legend className={LEYENDA + " mb-2"}>Método de pago</legend>
       <div
         role="radiogroup"
@@ -316,7 +290,7 @@ export function OpcionesRiel({
           return (
             <label
               key={r.id}
-              className={TARJETA + " min-h-20 flex-col items-center justify-center gap-0.5 px-2 py-3 text-center" + (error ? " border-peligro" : "")}
+              className={TARJETA + " min-h-16 flex-col items-center justify-center gap-0.5 px-2 py-2.5 text-center" + (error ? " border-peligro" : "")}
             >
               <input
                 type="radio"
@@ -392,10 +366,10 @@ export function OpcionesModo({
         : "Elija fechas y habitación para ver las cuotas";
   const tituloPlan = <span className="text-base font-bold text-ink">Plan de abonos</span>;
   // Dos tarjetas grandes: el monto de hoy en mono es lo primero que se compara.
-  const CAJA = " min-h-24 flex-col justify-center gap-1 px-4 py-4";
+  const CAJA = " min-h-20 flex-col justify-center gap-1 px-4 py-3 lg:min-h-16 lg:py-2.5";
 
   return (
-    <fieldset data-campo="plan" className="flex flex-col gap-3" aria-describedby={error ? "r-plan-error" : undefined}>
+    <fieldset data-campo="plan" className="flex min-w-0 flex-col gap-3" aria-describedby={error ? "r-plan-error" : undefined}>
       <legend className={LEYENDA + " mb-2"}>¿Cómo quiere pagar?</legend>
       <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
         <label className={TARJETA + CAJA}>

@@ -1,9 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useState, type ReactNode } from "react";
 import { BarraFijaMovil } from "@/components/checkout/BarraFijaMovil";
-import { Boleto } from "@/components/ui/Boleto";
 import { Hoja } from "@/components/ui/Hoja";
 import { Icono } from "@/components/ui/Icono";
 import type { Riel, TasaBcv } from "@/lib/checkout/calculo";
@@ -13,8 +11,7 @@ import { MontoTablero } from "@/components/ui/MontoTablero";
 import type { TramoId } from "@/lib/checkout/tramos";
 import { ROTULO } from "./PaseFechas";
 
-// Resumen de /reservar: el boleto pegajoso del aside (escritorio) y la barra fija con el total
-// (teléfono). Montos SIEMPRE en dólares desde `usd`: nada de TalonPrecio/PrecioMostrado, que
+// Resumen de /reservar: el total en la cabecera (escritorio) y la barra fija con el total (teléfono). Montos SIEMPRE en dólares desde `usd`: nada de TalonPrecio/PrecioMostrado, que
 // convierten a Bs con la tasa del selector de moneda y no con la que fija el servidor.
 
 export interface Totales {
@@ -42,7 +39,6 @@ const rotuloDe = (t: Totales | null) => (t?.plan ? "Hoy paga" : "Total");
 
 export interface DatosResumen {
   hotel: string;
-  foto: string | null;
   habitacion: string | null;
   plan: string | null;
   desde: string;
@@ -141,61 +137,62 @@ export function Desglose({ t }: { t: Totales }) {
   );
 }
 
-/** Aside de escritorio: boleto con foto, la estadía, el desglose y el total en el talón. La acción va debajo, tras la verificación. */
-export function ResumenBoleto({
+/** Contenido de la Hoja «Su reserva»: el pase con sus filas, el desglose y lo que se paga hoy. */
+function DetallePase({ datos, totales }: { datos: DatosResumen; totales: Totales }) {
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="overflow-hidden rounded-card border border-linea bg-card">
+        <p className="truncate px-4 pt-3 font-display text-base font-bold text-ink">{datos.hotel}</p>
+        <FilasPase d={datos} />
+      </div>
+      <Desglose t={totales} />
+      <div className="flex items-baseline justify-between border-t border-linea pt-3">
+        <span className={ROTULO}>{rotuloDe(totales)}</span>
+        <span className="font-mono text-2xl font-bold tabular-nums text-ink">{usd(hoyDe(totales))}</span>
+      </div>
+    </div>
+  );
+}
+
+/** Escritorio: el total del pase en la cabecera (flap al cambiar); «Ver detalle» abre el pase completo.
+ * Reemplaza al aside pegajoso: así fechas, habitación, pago y datos entran en una vista (2026-11-18). */
+export function PaseCabecera({
   datos,
   totales,
   sinPrecio,
+  className = "",
 }: {
   datos: DatosResumen;
   totales: Totales | null;
   /** Qué falta para ver el precio, o por qué no lo hay. */
   sinPrecio: string;
+  className?: string;
 }) {
+  const [abierta, setAbierta] = useState(false);
   return (
-    <Boleto
-      // El aside es una columna flex con alto máximo: sin shrink-0 el boleto se encoge y el talón tapa el desglose.
-      className="shrink-0"
-      tamanoTalon="3.5rem"
-      talon={
-        <div className="flex h-full items-center justify-between gap-3 px-4 pb-1" aria-live="polite">
-          <span className={ROTULO}>{rotuloDe(totales)}</span>
-          {totales ? (
-            <span className="font-mono text-2xl font-bold tabular-nums text-ink">
-              <MontoTablero texto={usd(hoyDe(totales))} convertir={false} />
-            </span>
-          ) : (
-            <span className="text-right text-sm text-ink-soft">{sinPrecio}</span>
-          )}
-          <span aria-hidden="true" className="franja-marca absolute inset-x-0 bottom-0 h-1" />
-        </div>
-      }
-    >
-      {/* Compacto a propósito: datos del cliente, aceptación y botón tienen que entrar sin scroll debajo. */}
-      <div className="flex items-center gap-3 p-4">
-        {datos.foto ? (
-          <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-control">
-            <Image src={datos.foto} alt="" fill sizes="64px" className="object-cover" />
-          </span>
-        ) : null}
-        <div className="min-w-0">
-          <p className="truncate font-display text-base font-bold leading-tight text-ink">{datos.hotel}</p>
-          <p className={ROTULO + " mt-1"}>Pase de reserva</p>
-        </div>
-      </div>
-      <FilasPase d={datos} />
+    <div className={"flex shrink-0 flex-col items-end gap-0.5 text-right " + className} aria-live="polite">
+      <span className={ROTULO}>{rotuloDe(totales)}</span>
       {totales ? (
-        <details className="group border-t border-linea px-4 py-2">
-          <summary className="flex min-h-8 cursor-pointer list-none items-center justify-between text-sm font-semibold text-ink-soft">
-            Ver desglose
-            <Icono nombre="chevron-abajo" tamano={16} className="transition-transform duration-150 ease-salida group-open:rotate-180" />
-          </summary>
-          <div className="pb-2 pt-2">
-            <Desglose t={totales} />
-          </div>
-        </details>
-      ) : null}
-    </Boleto>
+        <>
+          <span className="font-mono text-2xl font-bold tabular-nums text-ink">
+            <MontoTablero texto={usd(hoyDe(totales))} convertir={false} />
+          </span>
+          <button
+            type="button"
+            onClick={() => setAbierta(true)}
+            aria-haspopup="dialog"
+            className="min-h-8 text-sm font-semibold text-acento underline-offset-4 hover:underline"
+          >
+            Ver detalle
+          </button>
+          <Hoja abierta={abierta} onCerrar={() => setAbierta(false)} titulo="Su reserva">
+            <DetallePase datos={datos} totales={totales} />
+          </Hoja>
+        </>
+      ) : (
+        <span className="max-w-56 text-sm text-ink-soft">{sinPrecio}</span>
+      )}
+    </div>
   );
 }
 
@@ -242,17 +239,7 @@ export function BarraTotalMovil({
       </div>
       {totales ? (
         <Hoja abierta={abierta} onCerrar={() => setAbierta(false)} titulo="Su reserva">
-          <div className="flex flex-col gap-4">
-            <div className="overflow-hidden rounded-card border border-linea bg-card">
-              <p className="truncate px-4 pt-3 font-display text-base font-bold text-ink">{datos.hotel}</p>
-              <FilasPase d={datos} />
-            </div>
-            <Desglose t={totales} />
-            <div className="flex items-baseline justify-between border-t border-linea pt-3">
-              <span className={ROTULO}>{rotuloDe(totales)}</span>
-              <span className="font-mono text-2xl font-bold tabular-nums text-ink">{usd(hoyDe(totales))}</span>
-            </div>
-          </div>
+          <DetallePase datos={datos} totales={totales} />
         </Hoja>
       ) : null}
     </BarraFijaMovil>

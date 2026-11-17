@@ -171,11 +171,11 @@ export function PaseFechas({
     <div className="flex flex-col gap-2">
       <div
         className={
-          "rounded-card border bg-card " + (errorFechas && mostrarErrores ? "border-peligro" : "border-linea")
+          "rounded-card border bg-card lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)] " + (errorFechas && mostrarErrores ? "border-peligro" : "border-linea")
         }
       >
         <div data-campo="fechas" className="grid grid-cols-2 divide-x divide-linea">
-          <div className="flex flex-col px-4 pt-3 pb-1">
+          <div className="flex flex-col px-4 pt-3 pb-1 xl:px-3">
             <span aria-hidden="true" className={ROTULO}>Entrada</span>
             <SelectorFecha
               id="r-desde"
@@ -192,7 +192,7 @@ export function PaseFechas({
               className="min-h-11 w-full text-base font-bold text-ink"
             />
           </div>
-          <div className="flex flex-col px-4 pt-3 pb-1">
+          <div className="flex flex-col px-4 pt-3 pb-1 xl:px-3">
             <span aria-hidden="true" className={ROTULO}>Salida</span>
             <SelectorFecha
               id="r-hasta"
@@ -208,12 +208,12 @@ export function PaseFechas({
           </div>
         </div>
 
-        {/* Teléfono: una fila que abre la Hoja. */}
+        {/* Una fila que abre la Hoja; desde lg va al lado de las fechas (la página entra en una vista). */}
         <button
           type="button"
           onClick={() => onHoja(true)}
           aria-haspopup="dialog"
-          className="perforacion-h flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left lg:hidden"
+          className="perforacion-h flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left lg:border-t-0 lg:perforacion-v xl:gap-2 xl:px-3"
         >
           <span className="flex min-w-0 flex-1 flex-col">
             <span aria-hidden="true" className={ROTULO}>Viajeros</span>
@@ -230,11 +230,6 @@ export function PaseFechas({
           <Icono nombre="chevron-der" tamano={18} className="text-ink-soft" />
         </button>
 
-        {/* Escritorio: los contadores en línea, dentro del pase. */}
-        <div className="perforacion-h hidden px-4 py-4 lg:block">
-          <p aria-hidden="true" className={ROTULO + " mb-3"}>Viajeros</p>
-          <ContadorViajeros valor={pasajeros} onCambio={onPasajeros} mostrarErrores={mostrarErrores} enLinea />
-        </div>
       </div>
 
       {errorFechas && mostrarErrores ? (

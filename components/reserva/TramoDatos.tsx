@@ -6,16 +6,11 @@ import type { Reserva } from "./useReserva";
 
 type Props = { r: Pick<Reserva, "f" | "poner" | "errorDe" | "esEscritorio" | "deCuenta" | "noSoyYo"> };
 
-// Existe UNA sola vez, igual que el cierre: en el aside (escritorio) o en la columna (teléfono).
-export function TramoDatos({ r, conTitulo = true }: Props & { conTitulo?: boolean }) {
+// El título lo pone su Tramo («Sus datos»).
+export function TramoDatos({ r }: Props) {
   const { f, poner, errorDe, esEscritorio } = r;
   return (
-    <section aria-labelledby={conTitulo ? "r-datos" : undefined} className="flex flex-col gap-4 lg:gap-3">
-      {conTitulo ? (
-        <h2 id="r-datos" className="sr-only">
-          Sus datos
-        </h2>
-      ) : null}
+    <div className="flex flex-col gap-4 lg:gap-3">
       {r.deCuenta ? (
         <p className="flex flex-wrap items-center gap-x-2 text-sm text-ink-soft">
           <span className="min-w-0 truncate">
@@ -31,8 +26,9 @@ export function TramoDatos({ r, conTitulo = true }: Props & { conTitulo?: boolea
           {(a) => <Entrada {...a} value={f.nombre} onChange={(e) => poner({ nombre: e.target.value })} autoComplete="name" maxLength={80} />}
         </Campo>
       </div>
-      {/* El teléfono lleva selector de país: a partes iguales su placeholder «0412 1234567» se cortaba. */}
-      <div className="grid gap-4 lg:gap-3 xl:grid-cols-[1.2fr_1fr]">
+      {/* Un campo por renglón: en xl la columna de datos es angosta (tres columnas) y el teléfono lleva
+          selector de país (a partes iguales su placeholder «0412 1234567» se cortaba). */}
+      <div className="grid gap-4 lg:gap-3">
         <div data-campo="telefono">
           <Campo etiqueta="Teléfono (WhatsApp)" error={errorDe("telefono")} requerido>
             {(a) => (
@@ -41,7 +37,7 @@ export function TramoDatos({ r, conTitulo = true }: Props & { conTitulo?: boolea
           </Campo>
         </div>
         <div data-campo="email">
-          {/* En el aside la ayuda desalinea la fila Teléfono | Correo: allí va de placeholder. */}
+          {/* En escritorio la ayuda desalinea la fila Teléfono | Correo: allí va de placeholder. */}
           <Campo etiqueta="Correo" ayuda={esEscritorio ? undefined : "Para contactarle sobre su reserva."} error={errorDe("email")} requerido>
             {(a) => (
               <Entrada
@@ -58,6 +54,6 @@ export function TramoDatos({ r, conTitulo = true }: Props & { conTitulo?: boolea
           </Campo>
         </div>
       </div>
-    </section>
+    </div>
   );
 }

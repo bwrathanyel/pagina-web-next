@@ -307,3 +307,32 @@ test("B-03: sin la edad de un niño no hay precio", () => {
   const r = estimarEstadia(CARIBE[0], CARIBE, { ...estadia("2026-12-23", "2026-12-28", 2, [6]), edades: [6, null] });
   assert.ok(!r.ok && r.motivo === "edades");
 });
+
+// Acomodación (2026-11-17): mismas filas reales y mismos totales que
+// supabase/functions/_shared/hotel-acomodacion_test.ts (bot) y Cotizaciones del CRM.
+const MIRAGUA = [fila({ id: 118594, habitacion: "CITY STANDARD", precios: { chd_4_10: 50, dbl: 220, extra_pax: 70, sgl: 220 } })];
+const MIFAFI = [
+  fila({ id: 1633, plan: "SOLO DESAYUNO", habitacion: "Matrimonial Estándar o Doble Individual", precios: { base: "habitacion", dbl: 50, paquete_3n: 150, upgrade_mat_sup_dbl: 55 } }),
+  fila({ id: 1634, plan: "SOLO DESAYUNO", habitacion: "Triple", precios: { base: "habitacion", paquete_3n: 180, tpl: 60 } }),
+  fila({ id: 1635, plan: "SOLO DESAYUNO", habitacion: "Suite Junior", precios: { base: "habitacion", paquete_3n: 225, pax_4: 75 } }),
+];
+
+test("PAX ADIC con otro nombre: 3 adultos en Miragua = DBL + extra_pax, no 2 dobles", () => {
+  const r = estimarEstadia(MIRAGUA[0], MIRAGUA, estadia("2026-12-01", "2026-12-02", 3));
+  assert.ok(r.ok);
+  assert.equal(r.total, 290);
+});
+
+test("Mifafi: 3 adultos en la Matrimonial se cotizan en la Triple", () => {
+  const r = estimarEstadia(MIFAFI[0], MIFAFI, estadia("2026-12-01", "2026-12-02", 3));
+  assert.ok(r.ok);
+  assert.equal(r.total, 60);
+  assert.ok(r.avisos.some((a) => a.includes("habitación Triple")));
+});
+
+test("Mifafi: una persona sola en tarifa por habitación paga +30%", () => {
+  const r = estimarEstadia(MIFAFI[0], MIFAFI, estadia("2026-12-01", "2026-12-02", 1));
+  assert.ok(r.ok);
+  assert.equal(r.total, 65);
+  assert.ok(r.avisos.some((a) => a.includes("30%")));
+});

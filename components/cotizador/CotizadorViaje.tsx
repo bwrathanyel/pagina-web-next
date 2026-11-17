@@ -17,7 +17,8 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { TelefonoPais } from "@/components/ui/TelefonoPais";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import { PAIS_POR_DEFECTO, buscarPais, telefonoInternacional } from "@/lib/paises";
-import { avisoIgtf, estimarEstadia, type Estadia } from "@/lib/cotizador/estimado";
+import { avisoIgtf, type Estadia } from "@/lib/cotizador/estimado";
+import { habitacionVisible } from "@/lib/cotizador/habitacionesVisibles";
 import {
   bloqueosDelAno,
   bloqueosEnFechas,
@@ -609,7 +610,7 @@ export function CotizadorViaje({
   // Sin habitación elegida se usa la tarifa que anuncia la oferta: el cliente
   // ve un precio desde que marca fechas y afina después con "Ver habitaciones".
   const tarifaBase = estado.tarifa ?? ofertaElegida?.tarifaId ?? null;
-  const tarifaElegida =
+  const tarifaCandidata =
     detalleElegido && detalleElegido !== "error" ? (detalleElegido.tarifas.find((t) => t.id === tarifaBase) ?? null) : null;
   const estadia: Estadia = {
     desde: estado.desde,
@@ -620,10 +621,13 @@ export function CotizadorViaje({
     ninosGratis: ofertaElegida?.ninosGratisCantidad || undefined,
   };
   const hotelBloqueado = hospedaje && hotel ? sinDisponibilidad(hotel.id) : null;
-  const estimado =
-    hospedaje && tarifaElegida && detalleElegido && detalleElegido !== "error" && !hotelBloqueado && !bloqueosFallo
-      ? estimarEstadia(tarifaElegida, detalleElegido.tarifas, estadia)
+  // Una URL o un borrador pueden conservar una tarifa que ya no se ofrece.
+  const opcionElegida =
+    hospedaje && tarifaCandidata && detalleElegido && detalleElegido !== "error" && !hotelBloqueado && !bloqueosFallo
+      ? habitacionVisible(tarifaCandidata, detalleElegido.tarifas, estadia)
       : null;
+  const tarifaElegida = opcionElegida?.tarifa ?? null;
+  const estimado = opcionElegida?.estimado ?? null;
   const toursElegidos = (catalogoTours && catalogoTours !== "error" ? catalogoTours : []).filter((t) => estado.tours.includes(t.id));
   const vueloViaje = estimarVueloViaje(estado, rutas, hoyCaracas());
   const habitacion = tarifaElegida?.habitacion ?? null;
@@ -664,7 +668,7 @@ export function CotizadorViaje({
     if (filas === undefined) return candidatos.includes(o.hotelId) ? "cargando" : null;
     if (filas === "error") return null;
     const anunciada = filas.find((t) => t.id === o.tarifaId);
-    return anunciada ? estimarEstadia(anunciada, filas, { ...estadia, ninosGratis: o.ninosGratisCantidad || undefined }) : null;
+    return anunciada ? (habitacionVisible(anunciada, filas, { ...estadia, ninosGratis: o.ninosGratisCantidad || undefined })?.estimado ?? null) : null;
   };
   const recomendaciones = recomendarHoteles(ofertasDestino, {
     ninos: estado.ninos,
@@ -1075,7 +1079,7 @@ export function CotizadorViaje({
       : `${
           bloqueosFallo
             ? "No pudimos verificar la disponibilidad en esas fechas. "
-            : estimado && !estimado.ok ? `${estimado.texto} ` : !tarifaBase ? "Elija la habitación para ver el estimado. " : ""
+            : estimado && !estimado.ok ? `${estimado.texto} ` : !tarifaElegida ? "Elija una habitación con precio confirmado para ver el estimado. " : ""
         }Precio a confirmar por el asesor.`;
   const panelHospedaje = (
     <>

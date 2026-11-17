@@ -24,3 +24,16 @@ export function useEsEscritorio(): boolean {
 export function useEsEscritorioConocido(): boolean | null {
   return useSyncExternalStore(suscribir, leer, () => null);
 }
+
+// Corte `xl` (80rem): /reservar pasa de dos a tres columnas y la política cambia de columna.
+const ANCHO = "(min-width: 80rem)";
+function suscribirAncho(avisar: () => void) {
+  const m = window.matchMedia(ANCHO);
+  m.addEventListener("change", avisar);
+  return () => m.removeEventListener("change", avisar);
+}
+const leerAncho = () => window.matchMedia(ANCHO).matches;
+
+export function useEsAncho(): boolean {
+  return useSyncExternalStore(suscribirAncho, leerAncho, () => false);
+}

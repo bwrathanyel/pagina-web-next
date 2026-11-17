@@ -36,19 +36,19 @@ export function Tramo({
   const idTitulo = `tramo-${id}-titulo`;
   const idPanel = `tramo-${id}-panel`;
   return (
-    <section id={`tramo-${id}`} aria-labelledby={idTitulo} className="relative flex scroll-mt-20 flex-col gap-3 lg:scroll-mt-28 lg:pl-6">
+    <section id={`tramo-${id}`} aria-labelledby={idTitulo} className="relative flex scroll-mt-20 flex-col gap-3 lg:scroll-mt-28 lg:gap-2.5 lg:pl-6 xl:pl-5">
       <span aria-hidden="true" className={"absolute inset-y-0 left-0 hidden w-1 lg:block " + (completo ? "franja-marca" : "bg-linea")} />
       <div className="flex items-center gap-3">
         <span
           aria-hidden="true"
           className={
-            "flex h-8 w-8 shrink-0 items-center justify-center rounded-pill font-mono text-sm font-bold transition-colors duration-150 ease-salida " +
+            "flex h-8 w-8 shrink-0 items-center lg:h-7 lg:w-7 justify-center rounded-pill font-mono text-sm font-bold transition-colors duration-150 ease-salida " +
             (completo ? "bg-acento text-sobre-acento" : "border border-linea-fuerte text-ink")
           }
         >
           {completo ? <Icono nombre="check" tamano={16} /> : numero}
         </span>
-        <h2 id={idTitulo} tabIndex={-1} className="min-w-0 flex-1 font-display text-xl font-bold text-ink">
+        <h2 id={idTitulo} tabIndex={-1} className="min-w-0 flex-1 font-display text-xl font-bold text-ink lg:text-lg">
           {titulo}
           {completo ? <span className="sr-only"> (listo)</span> : null}
         </h2>
@@ -69,7 +69,7 @@ export function Tramo({
         </button>
       ) : null}
 
-      <div id={idPanel} className={"flex flex-col gap-4 " + (!abierto ? "max-lg:hidden" : editando ? "panel-entra" : "")}>
+      <div id={idPanel} className={"flex flex-col gap-4 lg:gap-3 " + (!abierto ? "max-lg:hidden" : editando ? "panel-entra" : "")}>
         {children}
         {editando && abierto ? (
           <div className="lg:hidden">

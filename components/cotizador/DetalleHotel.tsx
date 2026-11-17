@@ -7,7 +7,8 @@ import { Boton } from "@/components/ui/Boton";
 import { Esqueleto } from "@/components/ui/Esqueleto";
 import { Etiqueta } from "@/components/ui/Insignia";
 import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
-import { estimarEstadia, tarjetasPorHabitacion, type Estadia } from "@/lib/cotizador/estimado";
+import type { Estadia } from "@/lib/cotizador/estimado";
+import { habitacionesVisibles } from "@/lib/cotizador/habitacionesVisibles";
 import { habitacionDeTarifa, type HotelDetalle } from "@/lib/cotizador/hotel";
 import { agruparPorPlan, bloqueDe, montoConMoneda, precioDeTarifa } from "@/lib/tarifas";
 
@@ -49,8 +50,11 @@ export function DetalleHotel({
     );
   }
 
-  const planes = agruparPorPlan(detalle.tarifas, detalle.tarifaDestacadaId);
+  const planes = sinDisponibilidad ? [] : agruparPorPlan(detalle.tarifas, detalle.tarifaDestacadaId)
+    .map(({ plan, tarifas }) => ({ plan, tarjetas: habitacionesVisibles(tarifas, detalle.tarifas, estadia) }))
+    .filter(({ tarjetas }) => tarjetas.length > 0);
   const hayFechas = !!estadia.desde && !!estadia.hasta;
+  const faltanEdades = estadia.edades.some((e) => e === null);
 
   return (
     <div className="flex flex-col gap-6 lg:p-5">
@@ -60,17 +64,15 @@ export function DetalleHotel({
         <Aviso tono="info">Elija las fechas de entrada y salida para ver el estimado de su estadía.</Aviso>
       ) : null}
 
-      {planes.length === 0 ? (
-        <div className="flex flex-col gap-3">
-          <p className="text-ink-soft">Este hotel aún no tiene tarifas publicadas. El asesor le cotiza con disponibilidad.</p>
-          <Boton onClick={() => onElegir(null)} disabled={!!sinDisponibilidad}>
-            Elegir este hotel
-          </Boton>
-        </div>
+      {hayFechas && faltanEdades ? (
+        <Aviso tono="info">Complete las edades de los niños para ver el estimado de su estadía.</Aviso>
+      ) : null}
+      {planes.length === 0 && !sinDisponibilidad ? (
+        <Aviso>No hay habitaciones con precio confirmado para esta selección. Pruebe otras fechas u otro hotel.</Aviso>
       ) : null}
 
-      {planes.map(({ plan, tarifas }) => {
-        const b = bloqueDe(tarifas[0]);
+      {planes.map(({ plan, tarjetas }) => {
+        const b = bloqueDe(tarjetas[0].tarifa);
         return (
           <section key={plan} className="flex flex-col gap-3">
             <h3 className="font-display text-2xl font-bold leading-tight text-ink lowercase first-letter:uppercase">{plan}</h3>
@@ -90,11 +92,10 @@ export function DetalleHotel({
             ) : null}
 
             <ul className="flex flex-col gap-3">
-              {tarjetasPorHabitacion(tarifas, estadia.desde).map(({ tarifa: t, filas }) => {
+              {tarjetas.map(({ tarifa: t, filas, estimado: est }) => {
                 const hab = habitacionDeTarifa(detalle.habitaciones, t);
                 const foto = hab?.fotos[0] ?? detalle.fotos[0] ?? null;
                 const precio = precioDeTarifa(t);
-                const est = hayFechas ? estimarEstadia(t, detalle.tarifas, estadia) : null;
                 const minimo = t.minimo_noches;
                 // La elegida puede ser otra temporada de esta misma habitación.
                 const elegida = filas.some((x) => x.id === tarifaElegida);
@@ -131,20 +132,16 @@ export function DetalleHotel({
                           {precio.unidad ? ` ${precio.unidad} por noche` : ""}
                         </p>
                       ) : null}
-                      {est ? (
-                        est.ok ? (
-                          <p className="text-sm text-ink">
-                            Su estadía:{" "}
-                            <span className="font-mono text-base font-bold tabular-nums">
-                              <PrecioMostrado texto={montoConMoneda(est.total, est.moneda)} ivaEnBs={est.ivaEnBs} />
-                            </span>{" "}
-                            <span className="text-ink-soft">
-                              {est.noches} {est.noches === 1 ? "noche" : "noches"}, estimado
-                            </span>
-                          </p>
-                        ) : (
-                          <p className="text-sm text-ink-soft">{est.texto} Precio a confirmar por el asesor.</p>
-                        )
+                      {est?.ok ? (
+                        <p className="text-sm text-ink">
+                          Su estadía:{" "}
+                          <span className="font-mono text-base font-bold tabular-nums">
+                            <PrecioMostrado texto={montoConMoneda(est.total, est.moneda)} ivaEnBs={est.ivaEnBs} />
+                          </span>{" "}
+                          <span className="text-ink-soft">
+                            {est.noches} {est.noches === 1 ? "noche" : "noches"}, estimado
+                          </span>
+                        </p>
                       ) : null}
                       {excede ? (
                         <p className="text-sm font-semibold text-ambar">

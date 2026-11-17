@@ -313,6 +313,9 @@ function armar(elegida: Tarifa, filas: Tarifa[], desde: string, hasta: string, a
     infantes_gratis: true, tarifa_nino_auto: true, plan, hab, tarifa_variante: "",
   };
   m.cbHotelUnidad(it, utiles);
+  // Si esta habitación no aloja al grupo y otra del plan sí, sin costar más, el motor la cambia
+  // (dueño 2026-11-17: Mifafi, 3 adultos = la Triple y no 2 Matrimoniales). Igual que el CRM y el bot.
+  m.cbHotelMejorHab(it, utiles, hoy);
   if (it.vuelta !== hasta) {
     const n = nochesDeEstadia(desde, it.vuelta).length;
     return { ok: false, motivo: "sin-tarifa", texto: `Este paquete es de ${n} ${n === 1 ? "noche" : "noches"}: el asesor ajusta la salida.` };
@@ -374,6 +377,11 @@ export function estimarEstadia(elegida: Tarifa, filas: Tarifa[], e: Estadia): Es
   }
 
   const avisos = avisosSuplementos(usadas, noches);
+  const cambio = (it as { _habCambio?: { hasta: string } })._habCambio;
+  if (cambio) avisos.push(`Para ${pax.adultos} ${pax.adultos === 1 ? "adulto" : "adultos"} le cotizamos la habitación ${cambio.hasta}, que los aloja.`);
+  if ((it.tramos as { sencilla?: number }[]).some((tr) => Number(tr.sencilla) > 0)) {
+    avisos.push("La tarifa es por habitación: con una sola persona se suma un 30% por ocupación sencilla.");
+  }
   if (habitaciones > 1) avisos.push(`Para ${pax.adultos} adultos se cotizan ${habitaciones} habitaciones.`);
   if (/on request/i.test(String(it.hab))) avisos.push("Habitación sujeta a confirmación del hotel (on request).");
   if ((e.ninosGratis ?? 0) > 0 && e.edades.length) {

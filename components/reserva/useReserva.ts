@@ -255,8 +255,6 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial }: Entrada
 
   // Una opción por habitación (con sus temporadas); la tarifa elegida es la que cubre la entrada.
   const tarjetas = useMemo(() => tarjetasPorHabitacion(hotel.tarifas, desde), [hotel.tarifas, desde]);
-  const elegida = tarjetas.find((c) => c.filas.some((x) => x.id === f.tarifaId)) ?? tarjetas[0];
-  const tarifaEfectiva = elegida?.tarifa.id ?? null;
 
   // Cada habitación muestra el total de SU estadía (nunca por noche), con el mismo cálculo que se cobra.
   const resultados = useMemo(() => {
@@ -274,15 +272,63 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial }: Entrada
     }
     return m;
   }, [hotel, tarjetas, hayFechas, edadesListas, desde, hasta, pasajeros.adultos, pasajeros.bebes, edades, bloqueos]);
+
+  // Qué se ofrece (dueño, 2026-11-18): nada sin precio concreto («A consultar», «Sin cupo», on request);
+  // si hay habitaciones con fotos propias, solo esas; si no, una opción por plan con la habitación más
+  // barata (el tipo exacto lo confirma Reservas).
+  const { visibles, porPlan } = useMemo(() => {
+    const precioDe = (id: number) => {
+      const r = resultados.get(id);
+      return r?.ok ? r.precio : Infinity;
+    };
+    const conPrecio = tarjetas.filter((c) => {
+      if (/on request/i.test(nombreDeHabitacion(c.tarifa, hotel.nombre))) return false;
+      const r = resultados.get(c.tarifa.id);
+      return !r || r.ok;
+    });
+    const conFoto = conPrecio.filter((c) => !!habitacionDeTarifa(habitaciones, c.tarifa)?.fotos.length);
+    if (conFoto.length) return { visibles: conFoto, porPlan: false };
+    const mejor = new Map<string, (typeof tarjetas)[number]>();
+    for (const c of conPrecio) {
+      const k = c.tarifa.plan?.trim().toLowerCase() ?? "";
+      const previa = mejor.get(k);
+      if (!previa || precioDe(c.tarifa.id) < precioDe(previa.tarifa.id)) mejor.set(k, c);
+    }
+    return { visibles: [...mejor.values()], porPlan: true };
+  }, [tarjetas, resultados, habitaciones, hotel.nombre]);
+
+  // La elegida es la que cubre la entrada; si quedó oculta (p. ej. al poner fechas cambió la más barata
+  // del plan), se mantiene el plan y si no, la primera visible.
+  const pedida = tarjetas.find((c) => c.filas.some((x) => x.id === f.tarifaId));
+  const planPedido = pedida?.tarifa.plan?.trim().toLowerCase() ?? "";
+  const elegida =
+    visibles.find((c) => c === pedida) ??
+    (porPlan && pedida ? visibles.find((c) => (c.tarifa.plan?.trim().toLowerCase() ?? "") === planPedido) : undefined) ??
+    visibles[0];
+  const tarifaEfectiva = elegida?.tarifa.id ?? null;
   const calculo = tarifaEfectiva ? (resultados.get(tarifaEfectiva) ?? null) : null;
 
-  const opciones: OpcionHabitacion[] = tarjetas.map((c) => {
+  const opciones: OpcionHabitacion[] = visibles.map((c) => {
     const r = resultados.get(c.tarifa.id);
-    const ficha = habitacionDeTarifa(habitaciones, c.tarifa);
+    const ficha = porPlan ? undefined : habitacionDeTarifa(habitaciones, c.tarifa);
+    const plan = c.tarifa.plan?.trim() || null;
+    if (porPlan) {
+      return {
+        id: c.tarifa.id,
+        titulo: plan ?? "Habitación",
+        plan: plan ? "Habitación base del hotel" : null,
+        fotos: fotosHotel,
+        fotoPropia: false,
+        detalles: [],
+        descripcion: "El tipo de habitación se lo confirma Reservas.",
+        precio: r?.ok ? r.precio : null,
+        nota: null,
+      };
+    }
     return {
       id: c.tarifa.id,
       titulo: nombreDeHabitacion(c.tarifa, hotel.nombre),
-      plan: c.tarifa.plan?.trim() || null,
+      plan,
       fotos: ficha?.fotos.length ? ficha.fotos : fotosHotel,
       fotoPropia: !!ficha?.fotos.length,
       detalles: [
@@ -409,7 +455,7 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial }: Entrada
   });
 
   function enfocar(clave: ClaveCampo | "error") {
-    if (clave === "edades" && !esEscritorio) {
+    if (clave === "edades") {
       setHojaViajeros(true);
       return;
     }
