@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
 import { useCheckoutConfig } from "@/components/checkout/useCheckoutConfig";
 import { Avance, Encabezado } from "@/components/cuenta/PlanesUI";
 import { RequiereSesion } from "@/components/cuenta/RequiereSesion";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Aviso } from "@/components/ui/Aviso";
-import { Boton } from "@/components/ui/Boton";
+import { Boton, clasesBoton } from "@/components/ui/Boton";
 import { Etiqueta } from "@/components/ui/Insignia";
 import type { Riel } from "@/lib/checkout/calculo";
 import { fechaCorta, usd } from "@/lib/checkout/formato";
@@ -26,6 +28,22 @@ const TEXTO_CUOTA: Record<EstadoCuota, { texto: string; tono: "acento" | "ambar"
   pendiente: { texto: "Pendiente", tono: "neutro" },
   vencida: { texto: "Vencida", tono: "acento" },
 };
+
+/** WhatsApp pasando por el CRM (reparto de asesores), con el código de la reserva. */
+function BotonWhatsAppPlan({ codigo }: { codigo: string | null }) {
+  return (
+    <span className="mt-3 block">
+      <WhatsAppLeadButton
+        mensajeBase={`Hola, necesito ayuda con mi plan de pagos${codigo ? ` de la reserva ${codigo}` : ""}.`}
+        destinoInicial={codigo ? `Reserva ${codigo}` : ""}
+        origen={codigo ? `plan:${codigo}` : "plan"}
+        triggerClassName={clasesBoton({ variante: "whatsapp" })}
+      >
+        Escribir por WhatsApp
+      </WhatsAppLeadButton>
+    </span>
+  );
+}
 
 function DetallePlan() {
   const { user } = useAuth();
@@ -115,9 +133,20 @@ function DetallePlan() {
         {(plan.estado === "atrasado" || plan.estado === "en_mora") && plan.proxima ? (
           <Aviso tono="error">
             La cuota {plan.proxima.n} venció el {fechaCorta(plan.proxima.vence_el)}.{" "}
-            {plan.estado === "atrasado" && plan.proxima.limite_gracia >= hoy
-              ? `Páguela hasta el ${fechaCorta(plan.proxima.limite_gracia)} o la reserva se cancela y lo abonado no se devuelve.`
-              : "Pasó el plazo de gracia: escríbanos por WhatsApp para revisar su reserva."}
+            {plan.estado === "atrasado" && plan.proxima.limite_gracia >= hoy ? (
+              <>
+                Páguela hasta el {fechaCorta(plan.proxima.limite_gracia)} o la reserva se cancela y lo abonado no se devuelve.{" "}
+                <Link href="/terminos#plan-abonos" className="font-semibold underline underline-offset-4">
+                  Ver los términos del plan de abonos
+                </Link>
+                .
+              </>
+            ) : (
+              <>
+                Pasó el plazo de gracia: escríbanos por WhatsApp para revisar su reserva.
+                <BotonWhatsAppPlan codigo={plan.reserva_codigo} />
+              </>
+            )}
           </Aviso>
         ) : null}
       </section>
@@ -149,7 +178,10 @@ function DetallePlan() {
       {abierto && plan.saldo_usd > 0 && !plan.propio ? (
         <Aviso tono="info">Este plan es de otro usuario: solo su dueño puede pagarlo desde la web.</Aviso>
       ) : abierto && plan.saldo_usd > 0 && config?.activo === false ? (
-        <Aviso tono="info">Los pagos en línea están pausados por ahora. Escríbanos por WhatsApp y le ayudamos.</Aviso>
+        <Aviso tono="info">
+          Los pagos en línea están pausados por ahora. Escríbanos por WhatsApp y le ayudamos.
+          <BotonWhatsAppPlan codigo={plan.reserva_codigo} />
+        </Aviso>
       ) : abierto && plan.saldo_usd > 0 ? (
         <section aria-labelledby="t-pagar" className="flex flex-col gap-4 rounded-card border border-linea bg-card p-5">
           <h2 id="t-pagar" className="font-display text-xl font-bold text-ink">Pagar</h2>

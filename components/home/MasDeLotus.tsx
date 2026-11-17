@@ -3,13 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { REDES } from "@/lib/social";
-import { whatsappHref } from "@/lib/whatsapp";
+import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
 import { EditableText } from "@/components/admin/EditableText";
 import { useSiteContent } from "@/components/providers/SiteContentProvider";
 import { Seccion } from "@/components/ui/Seccion";
 import { Carrusel } from "@/components/ui/Carrusel";
 import { Revelar } from "@/components/ui/Revelar";
-import { Boton } from "@/components/ui/Boton";
+import { Boton, clasesBoton } from "@/components/ui/Boton";
 import { Icono } from "@/components/ui/Icono";
 import { CLASE_ETIQUETA_SECCION, CLASE_TITULO_SECCION, EncabezadoSeccion } from "@/components/ui/EncabezadoSeccion";
 
@@ -34,9 +34,6 @@ const CLASE_TITULO_TARJETA =
 export function MasDeLotus() {
   const { content } = useSiteContent();
   const corporate = content.home.corporate;
-  const primaryHref = corporate.primaryHref === "whatsapp"
-    ? whatsappHref("Hola! Vengo de su página web y quiero información sobre planes corporativos.")
-    : corporate.primaryHref;
   const secondaryHref = corporate.secondaryHref === "email" ? `mailto:${REDES.email}` : corporate.secondaryHref;
   const iaNegocio = content.navigation.items.find((item) => item.id === "ia-negocio" && item.visible);
 
@@ -103,9 +100,20 @@ export function MasDeLotus() {
                   <EditableText path="home.corporate.description" as="p" multiline className="mt-4 hidden max-w-md leading-7 text-dusk-text-soft lg:block" />
                 </div>
                 <div className="mt-6 flex flex-wrap items-center gap-3">
-                  <Boton href={primaryHref} variante="firma" tamano="sm" iconoFin={<Icono nombre="externo" tamano={16} />}>
-                    {corporate.primaryLabel}
-                  </Boton>
+                  {corporate.primaryHref === "whatsapp" ? (
+                    <WhatsAppLeadButton
+                      mensajeBase="Hola! Vengo de su página web y quiero información sobre planes corporativos."
+                      origen="home:corporativo"
+                      destinoInicial="Evento corporativo"
+                      triggerClassName={clasesBoton({ variante: "firma", tamano: "sm" })}
+                    >
+                      {corporate.primaryLabel}
+                    </WhatsAppLeadButton>
+                  ) : (
+                    <Boton href={corporate.primaryHref} variante="firma" tamano="sm" iconoFin={<Icono nombre="externo" tamano={16} />}>
+                      {corporate.primaryLabel}
+                    </Boton>
+                  )}
                   <span className="hidden lg:inline-flex">
                     <Boton href={secondaryHref} variante="sobre-foto" tamano="sm">
                       {corporate.secondaryLabel}

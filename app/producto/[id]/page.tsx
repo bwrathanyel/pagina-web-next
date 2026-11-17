@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { FondoPaisaje } from "@/components/layout/FondoPaisaje";
 import type { Metadata } from "next";
 import { GaleriaProducto } from "@/components/producto/GaleriaProducto";
+import { nombreFoto } from "@/components/ui/movimiento";
 import { ProductoInfo } from "@/components/producto/ProductoInfo";
 import { ProductoAccionesOverlay, ProductoFooterMobile } from "@/components/producto/ProductoAccionesMobile";
 import { fotosDe, fotosDeAncho, ordenarFotos } from "@/lib/supabase/fotos";
@@ -95,7 +96,12 @@ export default async function ProductoPage({ params }: { params: Promise<{ id: s
       />
       <div className="relative">
         <ProductoAccionesOverlay tipo="producto" id={producto.id} nombre={producto.nombre} />
-        <GaleriaProducto fotos={fotos} creditos={creditos} alt={producto.nombre} />
+        <GaleriaProducto
+          fotos={fotos}
+          creditos={creditos}
+          alt={producto.nombre}
+          nombreTransicion={nombreFoto(producto.id)}
+        />
       </div>
       <ProductoInfo producto={producto}>
         {esServicio(producto.tipo) ? <TarifasServicio producto={producto} /> : <CarpetaTarifas producto={producto} />}

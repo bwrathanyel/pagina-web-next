@@ -346,7 +346,15 @@ export function CotizadorRapidoMovil({ ninoGratis = null }: PropsCotizador) {
                     name="fecha"
                     etiqueta={c.etiquetaInicio}
                     valor={c.entrada}
-                    onCambio={c.cambiarEntrada}
+                    onCambio={(v) => {
+                      c.cambiarEntrada(v);
+                      // Elegida la entrada, se abre la salida.
+                      if (v && c.etiquetaFin && !c.salida) {
+                        requestAnimationFrame(() =>
+                          (document.querySelector(`[id="${idForm}"] input[name="hasta"]`)?.previousElementSibling as HTMLElement | null)?.click(),
+                        );
+                      }
+                    }}
                     min={hoyCaracas()}
                     rango={c.etiquetaFin ? { desde: c.entrada, hasta: c.salida } : undefined}
                     vacio="Elegir fecha"

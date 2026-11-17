@@ -3,16 +3,32 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { usePaneles } from "@/lib/layout/paneles";
+import {
+  EVENTO_FAVORITO,
+  guardarFavoritoPendiente,
+  useAvisoFavorito,
+  type DetalleFavorito,
+  type TipoFavorito,
+} from "@/lib/favoritos/pendiente";
 
-type TipoFavorito = "producto" | "promocion";
+const ESPERA_AUTH_MAX_MS = 4000;
 type EstadoFavoritos = { usuarioId: string | null; valores: Set<string> };
 
 /** Favoritos del usuario logueado. Sin sesión, esFavorito() siempre
  * devuelve null (no false) para que el corazón se muestre "vacío" sin
- * afirmar un estado que no se puede saber, y toggle() devuelve
- * "login-requerido" para que el caller mande a /cuenta/login. */
+ * afirmar un estado que no se puede saber. toggle() espera a que termine de
+ * cargar la sesión; sin sesión abre la hoja de cuenta, deja el favorito
+ * pendiente en sessionStorage (se aplica al entrar, ver AvisoFavorito) y
+ * devuelve "pendiente"; si Supabase falla, avisa y devuelve "error".
+ * "login-requerido" queda en el tipo por los callers viejos, ya no se emite. */
 export function useFavoritos() {
-  const { user } = useAuth();
+  const { user, cargando } = useAuth();
+  // toggle() lee la sesión más reciente (no la de su closure) tras esperar a `cargando`.
+  const authRef = useRef({ user, cargando });
+  useEffect(() => {
+    authRef.current = { user, cargando };
+  }, [user, cargando]);
   const [favoritos, setFavoritos] = useState<EstadoFavoritos>({
     usuarioId: null,
     valores: new Set(),
@@ -46,6 +62,22 @@ export function useFavoritos() {
     };
   }, [user]);
 
+  // Un favorito aplicado fuera de toggle() (el pendiente al iniciar sesión).
+  useEffect(() => {
+    const alAplicar = (e: Event) => {
+      const { tipo, id, activo } = (e as CustomEvent<DetalleFavorito>).detail;
+      const actual = favoritosRef.current;
+      if (!actual.usuarioId) return;
+      const valores = new Set(actual.valores);
+      if (activo) valores.add(`${tipo}-${id}`);
+      else valores.delete(`${tipo}-${id}`);
+      favoritosRef.current = { usuarioId: actual.usuarioId, valores };
+      setFavoritos({ usuarioId: actual.usuarioId, valores: new Set(valores) });
+    };
+    window.addEventListener(EVENTO_FAVORITO, alAplicar);
+    return () => window.removeEventListener(EVENTO_FAVORITO, alAplicar);
+  }, []);
+
   const esFavorito = useCallback(
     (tipo: TipoFavorito, id: number): boolean | null => {
       if (!user || favoritos.usuarioId !== user.id) return null;
@@ -55,8 +87,21 @@ export function useFavoritos() {
   );
 
   const toggle = useCallback(
-    async (tipo: TipoFavorito, id: number): Promise<"ok" | "login-requerido"> => {
-      if (!user) return "login-requerido";
+    async (tipo: TipoFavorito, id: number): Promise<"ok" | "login-requerido" | "pendiente" | "error"> => {
+      const limite = Date.now() + ESPERA_AUTH_MAX_MS;
+      while (authRef.current.cargando && Date.now() < limite) {
+        await new Promise((r) => window.setTimeout(r, 100));
+      }
+      const user = authRef.current.user;
+      if (!user) {
+        if (authRef.current.cargando) {
+          useAvisoFavorito.getState().mostrar("error", "No pudimos comprobar su sesión. Intente de nuevo.");
+          return "error";
+        }
+        guardarFavoritoPendiente(tipo, id);
+        usePaneles.getState().abrirCuenta();
+        return "pendiente";
+      }
       const key = `${tipo}-${id}`;
       const sb = supabaseBrowser();
       const columna = tipo === "producto" ? "producto_id" : "promocion_id";
@@ -84,11 +129,13 @@ export function useFavoritos() {
         else valores.delete(key);
         favoritosRef.current = { usuarioId: user.id, valores };
         setFavoritos({ usuarioId: user.id, valores: new Set(valores) });
+        useAvisoFavorito.getState().mostrar("error", "No pudimos guardar su favorito. Intente de nuevo.");
+        return "error";
       }
 
       return "ok";
     },
-    [user],
+    [],
   );
 
   return { esFavorito, toggle };

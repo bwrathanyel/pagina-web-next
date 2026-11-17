@@ -245,10 +245,10 @@ export function EntrevistaIA() {
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), enviar())}
-          disabled={enviando}
+          readOnly={enviando}
           placeholder="Escriba su respuesta…"
           aria-label="Su respuesta para la entrevista"
-          className="min-h-11 min-w-0 flex-1 rounded-pill border border-dusk-text/15 bg-dusk px-4 text-base text-dusk-text placeholder:text-dusk-text-soft transition-[border-color,box-shadow] duration-150 focus:border-gold focus:outline-none focus:ring-4 focus:ring-gold/25 disabled:opacity-60"
+          className="min-h-11 min-w-0 flex-1 rounded-pill border border-dusk-text/15 bg-dusk px-4 text-base text-dusk-text placeholder:text-dusk-text-soft transition-[border-color,box-shadow] duration-150 focus:border-gold focus:outline-none focus:ring-4 focus:ring-gold/25 read-only:opacity-60"
         />
         <button
           type="button"

@@ -86,6 +86,8 @@ export interface HospedajeElegido {
   plan?: string | null;
   /** Estimado ya formateado ("$1118"), o null si no hubo tarifa aplicable. */
   estimado?: string | null;
+  /** El hotel lo preseleccionó la web y el cliente no lo cambió ni lo confirmó. */
+  sugerido?: boolean;
 }
 
 export function armarCotizacionViaje(
@@ -144,7 +146,8 @@ export function armarCotizacionViaje(
     .filter(Boolean)
     .join(", ");
   const toursTexto = toursElegidos.length ? toursElegidos.join("; ") : "";
-  const hotelTexto = hotel ? `${hotel.nombre} (#${hotel.id})` : "Sin hotel elegido: el asesor propone opciones";
+  const marcaSugerido = hotel && elegido.sugerido ? " (hotel sugerido)" : "";
+  const hotelTexto = hotel ? `${hotel.nombre} (#${hotel.id})${marcaSugerido}` : "Sin hotel elegido: el asesor propone opciones";
   const habitacion =
     hospedaje && hotel && elegido.habitacion ? [elegido.habitacion, elegido.plan].filter(Boolean).join(", ") : "";
   const estimado = hospedaje && hotel && elegido.estimado ? elegido.estimado : "";
@@ -200,7 +203,7 @@ export function armarCotizacionViaje(
       ["📅", `*Fechas:* ${fechas}`],
       ["👥", `*Viajeros:* ${viajeros}`],
       edades ? ["👶", `*Edades de niños:* ${edades}`] : null,
-      hospedaje ? ["🏨", `*Hotel:* ${hotel ? hotel.nombre : "sin elegir, que el asesor proponga opciones"}`] : null,
+      hospedaje ? ["🏨", `*Hotel:* ${hotel ? `${hotel.nombre}${marcaSugerido}` : "sin elegir, que el asesor proponga opciones"}`] : null,
       habitacion ? ["", habitacion] : null,
       estimado ? ["💵", `*Estimado web:* ${estimado} (sujeto a disponibilidad)`] : null,
       vuelo ? ["✈️", `*Vuelo:* ${origenVuelo} a ${destinoVuelo}`] : null,

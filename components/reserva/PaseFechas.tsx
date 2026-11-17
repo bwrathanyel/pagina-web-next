@@ -185,7 +185,10 @@ export function PaseFechas({
               min={hoy}
               rango={rango}
               vacio="Elegir"
-              onCambio={(v) => onFechas(v, hasta && hasta > v ? hasta : "")}
+              onCambio={(v) => {
+                onFechas(v, hasta && hasta <= v ? sumarDias(v, Math.max(1, noches ?? 0)) : hasta);
+                if (v) requestAnimationFrame(() => document.getElementById("r-hasta")?.click());
+              }}
               className="min-h-11 w-full text-base font-bold text-ink"
             />
           </div>

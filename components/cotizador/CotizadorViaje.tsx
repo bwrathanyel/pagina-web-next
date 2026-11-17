@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { BarraViaje, BarraViajeCompacta, ChipsServicios, chip } from "@/components/cotizador/BarraViaje";
 import { AyudanteCotizar } from "@/components/cotizador/AyudanteCotizar";
 import { DetalleHotel } from "@/components/cotizador/DetalleHotel";
@@ -11,6 +11,11 @@ import { ResumenViaje, textoFechas } from "@/components/cotizador/ResumenViaje";
 import { SeccionTours } from "@/components/cotizador/SeccionTours";
 import { SeccionVuelo } from "@/components/cotizador/SeccionVuelo";
 import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
+import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { TelefonoPais } from "@/components/ui/TelefonoPais";
+import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
+import { PAIS_POR_DEFECTO, buscarPais, telefonoInternacional } from "@/lib/paises";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { estimarEstadia, type Estadia } from "@/lib/cotizador/estimado";
 import {
@@ -26,6 +31,7 @@ import {
 } from "@/lib/cotizador/hotel";
 import type { OfertaHotel } from "@/lib/cotizador/ofertas";
 import { candidatosEstimado, recomendarHoteles } from "@/lib/cotizador/recomendar";
+import { rotarDestacados, semillaVisitante } from "@/lib/cotizador/destacados";
 import type { Tarifa } from "@/types/supabase";
 import { montoConMoneda, vendibleHoy } from "@/lib/tarifas";
 import { useCheckoutConfig } from "@/components/checkout/useCheckoutConfig";
@@ -49,7 +55,6 @@ import {
   nochesDe,
   parsearEstado,
   serializarEstado,
-  telefonoValido,
   textoDuracion,
   textoRangoCorto,
   textoViajeros,
@@ -106,6 +111,15 @@ function Pestanas({
   onActivar: (s: Servicio) => void;
   items: { id: Servicio; titulo: string; estado: EstadoPestana; panel: ReactNode }[];
 }) {
+  // El panel nuevo entra desde el lado de su pestaña; al montar, quieto.
+  const [previa, setPrevia] = useState(activa);
+  const [desde, setDesde] = useState(0);
+  if (previa !== activa) {
+    const pos = (s: Servicio) => items.findIndex((it) => it.id === s);
+    setPrevia(activa);
+    setDesde(pos(activa) > pos(previa) ? 16 : -16);
+  }
+
   if (items.length === 1) {
     const [it] = items;
     return (
@@ -175,7 +189,8 @@ function Pestanas({
           role="tabpanel"
           aria-labelledby={`${base}-tab-${it.id}`}
           hidden={it.id !== activa}
-          className="flex flex-col gap-4 p-4 md:p-5"
+          className={`flex flex-col gap-4 p-4 md:p-5 ${desde ? "panel-entra" : ""}`}
+          style={{ "--desde": `${desde}px` } as CSSProperties}
         >
           {it.panel}
         </div>
@@ -190,7 +205,62 @@ const comportamientoScroll = (): ScrollBehavior =>
 
 const CONTACTO_VACIO: ContactoViaje = { nombre: "", telefono: "", correo: "", notas: "" };
 
-function validar(e: EstadoViaje, c: ContactoViaje): Errores {
+// Semilla fija por navegador: el mismo visitante ve siempre el mismo destacado primero.
+const CLAVE_SEMILLA = "lotus:cotizar:semilla";
+// Quien quitó el hotel sugerido no lo vuelve a recibir en esta visita.
+const CLAVE_SIN_SUGERIDO = "lotus:cotizar:sin-sugerido";
+
+function leerSemilla(): number {
+  try {
+    const guardada = Number.parseInt(window.localStorage.getItem(CLAVE_SEMILLA) ?? "", 10);
+    if (Number.isFinite(guardada) && guardada >= 0) return guardada;
+    const nueva = semillaVisitante();
+    window.localStorage.setItem(CLAVE_SEMILLA, String(nueva));
+    return nueva;
+  } catch {
+    return semillaVisitante();
+  }
+}
+
+function sugeridoQuitado(): boolean {
+  try {
+    return window.sessionStorage.getItem(CLAVE_SIN_SUGERIDO) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function marcarSugeridoQuitado() {
+  try {
+    window.sessionStorage.setItem(CLAVE_SIN_SUGERIDO, "1");
+  } catch {
+    // Sin sessionStorage vale la marca en memoria del componente.
+  }
+}
+
+/** El hotel preseleccionado no viaja en la URL ni en el borrador: no lo eligió el cliente. */
+const sinHotelSugerido = (e: EstadoViaje, sugerido: boolean): EstadoViaje =>
+  sugerido ? { ...e, hotel: null, tarifa: null } : e;
+
+/** Deja nombre y teléfono en el borrador de /reservar (misma clave y forma que lee
+ * ReservarCliente), fusionado con lo que ya hubiera. Así no viajan en la URL. */
+function llevarContactoAReservar(hotelId: number, c: ContactoViaje, iso: string) {
+  try {
+    const clave = `lotus-reservar:${hotelId}`;
+    const previo = JSON.parse(window.sessionStorage.getItem(clave) ?? "null") as Record<string, unknown> | null;
+    const base = previo && typeof previo === "object" && !Array.isArray(previo) ? previo : {};
+    const nombre = c.nombre.trim().slice(0, 80);
+    const telefono = c.telefono.trim().slice(0, 30);
+    window.sessionStorage.setItem(
+      clave,
+      JSON.stringify({ ...base, ...(nombre ? { nombre } : {}), ...(telefono ? { telefono, iso } : {}) }),
+    );
+  } catch {
+    // Sin sessionStorage /reservar vuelve a pedirlos.
+  }
+}
+
+function validar(e: EstadoViaje, c: ContactoViaje, iso: string): Errores {
   const errores: Errores = {};
   const necesitaSalida = e.servicios.includes("hospedaje") || (e.servicios.includes("vuelo") && e.vuelo === "ida-vuelta");
   if (!e.desde) errores.fechas = "Elija la fecha del viaje para que el asesor confirme disponibilidad.";
@@ -199,7 +269,7 @@ function validar(e: EstadoViaje, c: ContactoViaje): Errores {
   if (e.servicios.includes("vuelo") && fv.propias && e.vuelo === "ida-vuelta" && !fv.vuelta)
     errores.vuelo = "Elija la fecha de vuelta del vuelo, o use las fechas de su viaje.";
   if (c.nombre.trim().length < 2) errores.nombre = "Escriba su nombre y apellido.";
-  if (!telefonoValido(c.telefono)) errores.telefono = "Revise el número: de 7 a 15 dígitos, por ejemplo 0412-1234567.";
+  if (!telefonoInternacional(buscarPais(iso), c.telefono)) errores.telefono = "Revise el número y el país, por ejemplo 0412 1234567.";
   if (c.correo.trim() && !correoValido(c.correo)) errores.correo = "Revise el correo, por ejemplo nombre@correo.com.";
   return errores;
 }
@@ -212,16 +282,24 @@ function DatosContacto({
   contacto,
   errores,
   onCampo,
+  iso,
+  onIso,
+  abierto,
+  onAbrir,
   compacto = false,
 }: {
   formId: string;
+  iso: string;
+  onIso: (iso: string) => void;
+  /** Correo y comentarios desplegados (los abre también «Cuéntele al asesor qué busca»). */
+  abierto: boolean;
+  onAbrir: () => void;
   /** En el resumen: menos aire y sin ayuda (el talón ya la dice). */
   compacto?: boolean;
   contacto: ContactoViaje;
   errores: Errores;
   onCampo: (clave: keyof ContactoViaje, valor: string) => void;
 }) {
-  const [abierto, setAbierto] = useState(false);
   const extra = abierto || !!errores.correo || !!contacto.correo || !!contacto.notas;
   return (
     <div className={`flex flex-col ${compacto ? "gap-3" : "gap-4"}`}>
@@ -237,21 +315,13 @@ function DatosContacto({
           />
         )}
       </Campo>
-      <Campo etiqueta="WhatsApp" requerido ayuda={compacto ? undefined : "Aquí le escribe el asesor con el precio confirmado."} error={errores.telefono}>
-        {(a11y) => (
-          <Entrada
-            {...a11y}
-            form={formId}
-            name="telefono"
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
-            placeholder="0412-1234567"
-            value={contacto.telefono}
-            onChange={(ev) => onCampo("telefono", ev.target.value)}
-          />
-        )}
-      </Campo>
+      <div data-campo="telefono">
+        <Campo etiqueta="WhatsApp" requerido ayuda={compacto ? undefined : "Aquí le escribe el asesor con el precio confirmado."} error={errores.telefono}>
+          {(a11y) => (
+            <TelefonoPais {...a11y} iso={iso} onIso={onIso} valor={contacto.telefono} onValor={(v) => onCampo("telefono", v)} />
+          )}
+        </Campo>
+      </div>
       {extra ? (
         <>
           <Campo etiqueta="Correo (opcional)" error={errores.correo}>
@@ -285,7 +355,7 @@ function DatosContacto({
       ) : (
         <button
           type="button"
-          onClick={() => setAbierto(true)}
+          onClick={onAbrir}
           className="self-start text-sm font-semibold text-acento underline underline-offset-4 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento"
         >
           Agregar correo o comentarios
@@ -294,6 +364,9 @@ function DatosContacto({
     </div>
   );
 }
+
+const ENLACE_ASESOR =
+  "font-semibold text-acento underline underline-offset-4 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento";
 
 const PASOS = ["Su viaje", "Elija", "Envíe"] as const;
 
@@ -337,6 +410,19 @@ export function CotizadorViaje({
   const [verHotel, setVerHotel] = useState<{ id: number; nombre: string } | null>(null);
   const [bloqueos, setBloqueos] = useState<{ clave: string; mapa: Map<number, Bloqueo[]>; fallo?: boolean } | null>(null);
   const [contacto, setContacto] = useState(CONTACTO_VACIO);
+  const [iso, setIso] = useState(PAIS_POR_DEFECTO);
+  const { user } = useAuth();
+  // El contacto del borrador ya se restauró: desde ahí se puede precargar el de la cuenta.
+  const [contactoListo, setContactoListo] = useState(false);
+  const cuentaAplicada = useRef(false);
+  const [notasAbiertas, setNotasAbiertas] = useState(false);
+  // Destino cambiado con hotel elegido: lo que se quitó, para deshacerlo.
+  const [quitadoPorDestino, setQuitadoPorDestino] = useState<{
+    nombre: string;
+    previo: Pick<EstadoViaje, "destino" | "hotel" | "tarifa" | "tours">;
+  } | null>(null);
+  // Autoavance: se pide solo desde una elección del cliente, nunca al montar ni al restaurar.
+  const avance = useRef<{ motivo: "destino" | "fechas" | "viajeros" | "hotel"; demora: number } | null>(null);
   const [errores, setErrores] = useState<Errores>({});
   const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState<Enviado | null>(null);
@@ -355,6 +441,13 @@ export function CotizadorViaje({
   // `enviando` y mandaría el lead dos veces.
   const enviandoRef = useRef(false);
   const primeraVez = useRef(true);
+  // null hasta leer localStorage ya montado: servidor y primer render van sin rotar.
+  const [semilla, setSemilla] = useState<number | null>(null);
+  // El hotel elegido es el que se preseleccionó solo; cae al primer cambio a mano.
+  const [sugerido, setSugerido] = useState(false);
+  // Destino en el que ya se decidió el hotel (sugerido, del enlace o del cliente).
+  const evaluado = useRef<string | null>(null);
+  const quitado = useRef(false);
 
   const hospedaje = estado.servicios.includes("hospedaje");
   const vuelo = estado.servicios.includes("vuelo");
@@ -421,7 +514,7 @@ export function CotizadorViaje({
     : undefined;
   // Tarifas de los candidatos a recomendar: una lectura por destino. No
   // dependen de las fechas, así el total aparece apenas el cliente las elige.
-  const candidatos = hospedaje ? candidatosEstimado(ofertasDestino) : [];
+  const candidatos = hospedaje ? candidatosEstimado(ofertasDestino, undefined, undefined, estado.destino) : [];
   const claveCandidatos = candidatos.filter((id) => !(id in tarifasHoteles)).join(",");
   useEffect(() => {
     if (!claveCandidatos) return;
@@ -452,26 +545,54 @@ export function CotizadorViaje({
   useEffect(() => {
     // localStorage no existe en el servidor: se lee ya montado, fuera del cuerpo síncrono del efecto.
     const t = setTimeout(() => {
-      const guardado = window.location.search === "" ? leerBorrador(almacenLocal()) : null;
-      if (guardado && borradorUtil(guardado.q, guardado.contacto)) setBorradorPendiente(guardado);
+      const guardado = leerBorrador(almacenLocal());
+      // El contacto se restaura siempre; la URL manda solo para el viaje. El
+      // guardado espera a este punto (borradorResuelto) para no pisarlo con vacío.
+      if (guardado && (guardado.contacto.nombre || guardado.contacto.telefono || guardado.contacto.correo || guardado.contacto.notas))
+        setContacto(guardado.contacto);
+      if (guardado && window.location.search === "" && borradorUtil(guardado.q, guardado.contacto)) setBorradorPendiente(guardado);
       else borradorResuelto.current = true;
+      setContactoListo(true);
     }, 0);
+    return () => clearTimeout(t);
+  }, []);
+  // Después del borrador (los timeouts corren en orden): la preselección no se
+  // adelanta a la lectura del borrador.
+  useEffect(() => {
+    const t = setTimeout(() => setSemilla(leerSemilla()), 0);
     return () => clearTimeout(t);
   }, []);
 
   useEffect(() => {
     if (!borradorResuelto.current || enviado) return;
-    const q = serializarEstado(estado);
+    const q = serializarEstado(sinHotelSugerido(estado, sugerido));
     const espera = setTimeout(() => {
       if (borradorUtil(q, contacto)) guardarBorrador(almacenLocal(), q, contacto);
     }, 500);
     return () => clearTimeout(espera);
-  }, [estado, contacto, enviado]);
+  }, [estado, contacto, enviado, sugerido]);
+
+  // Con sesión iniciada y sin contacto guardado, se precargan nombre y teléfono de la cuenta.
+  useEffect(() => {
+    if (!user || !contactoListo || cuentaAplicada.current) return;
+    const t = setTimeout(() => {
+      cuentaAplicada.current = true;
+      const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
+      const nombre = [meta.nombre, meta.full_name, meta.name].find((v): v is string => typeof v === "string" && !!v.trim()) ?? "";
+      const digitos = (user.phone ?? "").replace(/\D/g, "");
+      const telefono = digitos ? `+${digitos}` : "";
+      if (!nombre && !telefono) return;
+      setContacto((c) => ({ ...c, nombre: c.nombre.trim() ? c.nombre : nombre.trim().slice(0, 80), telefono: c.telefono.trim() ? c.telefono : telefono }));
+    }, 0);
+    return () => clearTimeout(t);
+  }, [user, contactoListo]);
 
   function retomarBorrador() {
     if (!borradorPendiente) return;
+    // Manda el borrador: si trae hotel queda ese; si no, se vuelve a evaluar el sugerido.
+    evaluado.current = null;
+    setSugerido(false);
     setEstado(parsearEstado(Object.fromEntries(new URLSearchParams(borradorPendiente.q))));
-    setContacto(borradorPendiente.contacto);
     descartarBorrador(false);
   }
 
@@ -514,6 +635,7 @@ export function CotizadorViaje({
     habitacion,
     plan: tarifaElegida?.plan ?? null,
     estimado: estimado?.ok ? montoConMoneda(estimado.total, estimado.moneda) : null,
+    sugerido: sugerido && !!hotel,
   };
   // «Reservar y pagar» solo si /reservar puede cobrar lo mismo que se ve: solo hospedaje, precio
   // exacto (estimado ok), tarifa vendible hoy, viajeros dentro del límite del checkout y la
@@ -529,7 +651,10 @@ export function CotizadorViaje({
           href: enlaceReservar(hotel.id, tarifaElegida.id, {
             desde: estado.desde, hasta: estado.hasta, adultos: estado.adultos, edades: estadia.edades, bebes: estado.bebes,
           }),
-          onClick: () => registrarEvento("abrir_pago", { ruta: "/cotizar", meta: { etapa: "cotizador", producto_id: hotel.id } }),
+          onClick: () => {
+            registrarEvento("abrir_pago", { ruta: "/cotizar", meta: { etapa: "cotizador", producto_id: hotel.id } });
+            llevarContactoAReservar(hotel.id, contacto, iso);
+          },
         }
       : null;
 
@@ -557,7 +682,38 @@ export function CotizadorViaje({
         ? { monto: (p.total * tasaEUR) / tasaUSD, moneda: "USD" }
         : { monto: p.total, moneda: p.moneda };
     },
+    destino: estado.destino,
   });
+  const destacados = rotarDestacados(recomendaciones.destacados, semilla ?? 0);
+  const principal = destacados[0];
+
+  // Preselección del principal. Con fechas espera los stop sales: sin ellos no
+  // se sabe si el principal tiene cupo.
+  const listoSugerir = hospedaje && semilla !== null && (!conFechas || (!!mapaBloqueos && !bloqueosFallo));
+  const idSugerible = listoSugerir && principal ? principal.oferta.hotelId : null;
+  const tarifaSugerible = principal?.oferta.tarifaId ?? null;
+  // El sugerido que queda sin cupo al cambiar las fechas se reemplaza solo:
+  // nadie lo eligió, y sugerir un hotel que no se puede reservar no ayuda.
+  const sugeridoSinCupo = sugerido && estado.hotel != null && !!listoSugerir && !!sinDisponibilidad(estado.hotel);
+  useEffect(() => {
+    const destino = estado.destino;
+    if (estado.hotel != null && !sugeridoSinCupo) {
+      evaluado.current = destino;
+      return;
+    }
+    if (idSugerible == null || idSugerible === estado.hotel || quitado.current || sugeridoQuitado()) return;
+    if (!sugeridoSinCupo && evaluado.current === destino) return;
+    const t = setTimeout(() => {
+      evaluado.current = destino;
+      // No cuenta como un toque del cliente: se salta la próxima escritura de
+      // la URL (igual que al montar), y como la URL omite el hotel sugerido,
+      // un enlace limpio sigue limpio y al recargar se vuelve a sugerir el mismo.
+      primeraVez.current = true;
+      setSugerido(true);
+      setEstado((e) => ({ ...e, hotel: idSugerible, tarifa: tarifaSugerible }));
+    }, 0);
+    return () => clearTimeout(t);
+  }, [estado.hotel, estado.destino, idSugerible, tarifaSugerible, sugeridoSinCupo]);
 
   // El estado vive en la URL: se reescribe sin apilar historial. La primera
   // vez no, así una URL limpia sigue limpia hasta que el cliente toca algo.
@@ -566,8 +722,8 @@ export function CotizadorViaje({
       primeraVez.current = false;
       return;
     }
-    window.history.replaceState(null, "", `?${serializarEstado(estado)}`);
-  }, [estado]);
+    window.history.replaceState(null, "", `?${serializarEstado(sinHotelSugerido(estado, sugerido))}`);
+  }, [estado, sugerido]);
 
   // El botón de envío desaparece al confirmar: el foco pasa a la confirmación,
   // si no queda en el body y el lector de pantalla no se entera.
@@ -580,9 +736,48 @@ export function CotizadorViaje({
     // Un servicio recién marcado abre su pestaña.
     const agregado = nuevo.servicios.find((s) => !estado.servicios.includes(s));
     if (agregado) setPestana(agregado);
-    // Un hotel de otro destino no sigue elegido, ni los tours del destino anterior.
-    setEstado(nuevo.destino === estado.destino ? nuevo : { ...nuevo, hotel: null, tarifa: null, tours: [] });
+    if (nuevo.hotel !== estado.hotel || nuevo.tarifa !== estado.tarifa || nuevo.destino !== estado.destino) setSugerido(false);
+    // Un hotel de otro destino no sigue elegido, ni los tours del destino anterior:
+    // se avisa y se puede deshacer.
+    const cambiaDestino = nuevo.destino !== estado.destino;
+    if (cambiaDestino && estado.hotel != null && !sugerido && hotel) {
+      setQuitadoPorDestino({
+        nombre: hotel.nombre,
+        previo: { destino: estado.destino, hotel: estado.hotel, tarifa: estado.tarifa, tours: estado.tours },
+      });
+    } else if (cambiaDestino || nuevo.hotel !== estado.hotel) setQuitadoPorDestino(null);
+    setEstado(cambiaDestino ? { ...nuevo, hotel: null, tarifa: null, tours: [] } : nuevo);
+    // Autoavance: qué eligió el cliente (los servicios marcados no cuentan).
+    const motivo =
+      cambiaDestino ? "destino"
+      : nuevo.desde !== estado.desde || nuevo.hasta !== estado.hasta ? "fechas"
+      : nuevo.hotel !== estado.hotel ? "hotel"
+      : nuevo.adultos !== estado.adultos || nuevo.ninos !== estado.ninos || nuevo.bebes !== estado.bebes || nuevo.edades.join() !== estado.edades.join() ? "viajeros"
+      : null;
+    // Los viajeros se tocan varias veces seguidas: se espera a que termine de contar.
+    if (motivo) avance.current = { motivo, demora: motivo === "viajeros" ? 1500 : 400 };
     if (errores.fechas) setErrores((e) => ({ ...e, fechas: undefined }));
+  }
+
+  // Elegido a mano, aunque sea el mismo que se sugirió: deja de ser sugerencia.
+  function elegirHotel(hotelId: number, tarifa: number | null) {
+    setSugerido(false);
+    cambiar({ ...estado, hotel: hotelId, tarifa });
+  }
+
+  function deshacerQuitado() {
+    if (!quitadoPorDestino) return;
+    const { previo } = quitadoPorDestino;
+    evaluado.current = previo.destino;
+    setSugerido(false);
+    setQuitadoPorDestino(null);
+    setEstado((e) => ({ ...e, ...previo }));
+  }
+
+  function quitarHotel() {
+    quitado.current = true;
+    marcarSugeridoQuitado();
+    cambiar({ ...estado, hotel: null, tarifa: null });
   }
 
   function campo<K extends keyof ContactoViaje>(clave: K, valor: string) {
@@ -590,10 +785,89 @@ export function CotizadorViaje({
     if (errores[clave as keyof Errores]) setErrores((e) => ({ ...e, [clave]: undefined }));
   }
 
+  // El aviso de «Quitamos …» no se queda para siempre.
+  useEffect(() => {
+    if (!quitadoPorDestino) return;
+    const t = setTimeout(() => setQuitadoPorDestino(null), 20000);
+    return () => clearTimeout(t);
+  }, [quitadoPorDestino]);
+
+  // Siguiente paso pendiente (los de GuiaPasos): fechas, un servicio por elegir o el envío.
+  const fvAvance = fechasVuelo(estado);
+  const pendienteElegir = estado.servicios.find((sv) =>
+    sv === "hospedaje" ? !hotel
+    : sv === "vuelo" ? !fvAvance.ida || (estado.vuelo === "ida-vuelta" && !fvAvance.vuelta)
+    : estado.tours.length === 0,
+  );
+  const proximo: "fechas" | "enviar" | Servicio = !(estado.desde && estado.hasta) ? "fechas" : (pendienteElegir ?? "enviar");
+  const hojaAlguna = hojaAbierta || editarViaje || verTodos || !!verHotel;
+  useEffect(() => {
+    const pedido = avance.current;
+    if (!pedido || hojaAlguna || enviado) return;
+    let intentos = 0;
+    let t = 0;
+    const mover = (el: Element | null) => {
+      if (!(el instanceof HTMLElement) || !el.getClientRects().length) return;
+      el.focus({ preventScroll: true });
+      el.scrollIntoView({ block: "center", behavior: comportamientoScroll() });
+    };
+    const ir = () => {
+      // Un calendario o selector abierto sigue en uso: se espera a que cierre.
+      let abierto = false;
+      try {
+        abierto = !!document.querySelector(":popover-open");
+      } catch {
+        // Sin :popover-open se sigue de largo.
+      }
+      if (abierto && intentos++ < 4) {
+        t = window.setTimeout(ir, 300);
+        return;
+      }
+      avance.current = null;
+      const movil = !window.matchMedia("(min-width: 64rem)").matches;
+      if (proximo === "fechas") {
+        // Solo tras elegir destino: con las fechas a medias el calendario sigue en manos del cliente.
+        if (pedido.motivo !== "destino") return;
+        mover(document.getElementById(movil ? `${formId}-viaje-movil` : `${formId}-barra-desde`));
+      } else if (proximo === "enviar") {
+        if (movil) mover(document.getElementById(`${formId}-ver-enviar`));
+        else {
+          const campos = Array.from(document.querySelectorAll('aside input[name="nombre"], aside [data-campo="telefono"] input[type="tel"]'));
+          mover(campos.find((c) => c instanceof HTMLInputElement && !c.value.trim()) ?? campos[0] ?? null);
+        }
+      } else {
+        setPestana(proximo);
+        t = window.setTimeout(() => {
+          mover(document.getElementById(`${formId}-panel-${proximo}`)?.querySelector('input:not([type="hidden"]), button, a[href], textarea, select') ?? null);
+        }, 80);
+      }
+    };
+    t = window.setTimeout(ir, pedido.demora);
+    return () => window.clearTimeout(t);
+  }, [estado, proximo, hojaAlguna, enviado, formId]);
+
+  function contarAlAsesor() {
+    setNotasAbiertas(true);
+    const movil = !window.matchMedia("(min-width: 64rem)").matches;
+    const desdeHoja = verTodos;
+    setVerTodos(false);
+    const enfocar = () => {
+      const area = Array.from(document.querySelectorAll<HTMLTextAreaElement>('textarea[name="notas"]')).find((a) => a.getClientRects().length > 0);
+      area?.focus({ preventScroll: true });
+      area?.scrollIntoView({ block: "center", behavior: comportamientoScroll() });
+    };
+    if (movil) {
+      setTimeout(() => {
+        setHojaAbierta(true);
+        setTimeout(enfocar, 340);
+      }, desdeHoja ? 280 : 0);
+    } else setTimeout(enfocar, 80);
+  }
+
   async function enviar(ev: React.FormEvent<HTMLFormElement>) {
     ev.preventDefault();
     if (enviandoRef.current) return;
-    const nuevos = validar(estado, contacto);
+    const nuevos = validar(estado, contacto, iso);
     // Decisión del dueño: no se cotiza un hospedaje en fechas con stop sale.
     const porBloqueo = !nuevos.fechas && !!hotelBloqueado;
     if (porBloqueo) nuevos.fechas = `${hotel?.nombre}: ${hotelBloqueado?.toLowerCase()}. Cambie las fechas o elija otro hotel.`;
@@ -616,7 +890,9 @@ export function CotizadorViaje({
         const destino =
           primero === "fechas" || primero === "vuelo"
             ? document.getElementById(`${formId}-${primero}`)
-            : (Array.from(form?.elements ?? []).find(
+            : primero === "telefono"
+              ? (Array.from(document.querySelectorAll<HTMLElement>('[data-campo="telefono"] input[type="tel"]')).find((el) => el.getClientRects().length > 0) ?? null)
+              : (Array.from(form?.elements ?? []).find(
                 (el): el is HTMLElement =>
                   el instanceof HTMLElement && el.getAttribute("name") === primero && el.getClientRects().length > 0,
               ) ?? null);
@@ -631,7 +907,7 @@ export function CotizadorViaje({
     try {
       const datos: ContactoViaje = {
         nombre: contacto.nombre.trim(),
-        telefono: contacto.telefono.trim(),
+        telefono: telefonoInternacional(buscarPais(iso), contacto.telefono) ?? contacto.telefono.trim(),
         correo: contacto.correo.trim(),
         notas: contacto.notas.trim(),
       };
@@ -705,6 +981,7 @@ export function CotizadorViaje({
           detalle={enviado.leadId ? `Cotización #${enviado.leadId}` : "Arme su viaje"}
           titulo={enviado.fallo ? "Falta un paso para enviarla" : "Su cotización está lista"}
           boton={enviado.asesorNombre ? `Enviar a ${enviado.asesorNombre}` : undefined}
+          destino={estado.destino}
         >
           <div className="flex flex-col gap-3">
             {enviado.fallo ? (
@@ -759,7 +1036,7 @@ export function CotizadorViaje({
       vuelo={vueloViaje}
       reservar={reservar}
       desde={ofertaElegida?.precio ? { monto: ofertaElegida.precio.monto, unidad: ofertaElegida.precio.unidad } : null}
-      datos={<DatosContacto formId={formId} contacto={contacto} errores={errores} onCampo={campo} compacto />}
+      datos={<DatosContacto formId={formId} contacto={contacto} errores={errores} onCampo={campo} iso={iso} onIso={setIso} abierto={notasAbiertas} onAbrir={() => setNotasAbiertas(true)} compacto />}
     />
   );
   const detalleVisto = verHotel ? detalles[verHotel.id] : undefined;
@@ -768,7 +1045,7 @@ export function CotizadorViaje({
   const abrirOferta = (o: OfertaHotel) =>
     o.conFotosHabitacion
       ? setVerHotel({ id: o.hotelId, nombre: o.nombre })
-      : cambiar({ ...estado, hotel: o.hotelId, tarifa: o.tarifaId });
+      : elegirHotel(o.hotelId, o.tarifaId);
   // Desde la hoja de todos los hoteles: primero se cierra, después se abre el
   // detalle; si no, la hoja que sale le devuelve el foco a su botón y se lo
   // quita a la que entra.
@@ -794,16 +1071,28 @@ export function CotizadorViaje({
     : estado.servicios.every((s) => estadoPestana[s].tono === "listo")
       ? 3
       : 2;
+  // «Su hotel» vive en la tarjeta del selector; este bloque queda de respaldo
+  // para el hotel sin oferta en el destino (llegó por enlace). El total se
+  // anuncia una sola vez, en el resumen.
+  const ofertaSuHotel = hotel ? ofertasDestino.find((o) => o.hotelId === hotel.id) : undefined;
+  const notaSinTotal =
+    hotelBloqueado || estimado?.ok
+      ? null
+      : `${
+          bloqueosFallo
+            ? "No pudimos verificar la disponibilidad en esas fechas. "
+            : estimado && !estimado.ok ? `${estimado.texto} ` : !tarifaBase ? "Elija la habitación para ver el estimado. " : ""
+        }Precio a confirmar por el asesor.`;
   const panelHospedaje = (
     <>
-      {hotel ? (
+      {hotel && !ofertaSuHotel ? (
         <div className="flex flex-col gap-3 rounded-card border border-acento bg-card p-3 sm:flex-row sm:items-center">
           {hotel.foto ? (
             <span className="relative h-20 w-28 shrink-0 overflow-hidden rounded-control bg-sand-2">
               <Image src={hotel.foto} alt="" fill sizes="112px" className="object-cover" />
             </span>
           ) : null}
-          <div className="min-w-0 flex-1" aria-live="polite" aria-atomic="true">
+          <div className="min-w-0 flex-1">
             <p className="font-semibold text-ink">{hotel.nombre}</p>
             {habitacion ? <p className="text-sm text-ink-soft">{habitacion}</p> : null}
             {hotelBloqueado ? (
@@ -819,12 +1108,7 @@ export function CotizadorViaje({
                 </span>
               </p>
             ) : (
-              <p className="text-sm text-ink-soft">
-                {bloqueosFallo
-                  ? "No pudimos verificar la disponibilidad en esas fechas. "
-                  : estimado && !estimado.ok ? `${estimado.texto} ` : !tarifaBase ? "Elija la habitación para ver el estimado. " : ""}
-                Precio a confirmar por el asesor.
-              </p>
+              <p className="text-sm text-ink-soft">{notaSinTotal}</p>
             )}
             {estimado?.ok
               ? estimado.avisos.map((a) => (
@@ -838,7 +1122,7 @@ export function CotizadorViaje({
             <Boton variante="secundario" tamano="sm" onClick={() => setVerHotel({ id: hotel.id, nombre: hotel.nombre })}>
               {estado.tarifa ? "Cambiar habitación" : "Ver habitaciones"}
             </Boton>
-            <Boton variante="fantasma" tamano="sm" onClick={() => cambiar({ ...estado, hotel: null, tarifa: null })}>
+            <Boton variante="fantasma" tamano="sm" onClick={quitarHotel}>
               Quitar
             </Boton>
           </div>
@@ -866,23 +1150,41 @@ export function CotizadorViaje({
       ) : null}
       {ofertasDestino.length ? (
         <RecomendacionesHospedaje
-          recomendaciones={recomendaciones}
+          destacados={destacados}
+          alternativas={recomendaciones.alternativas}
+          sugerido={sugerido}
+          suHotel={
+            ofertaSuHotel
+              ? {
+                  oferta: ofertaSuHotel,
+                  habitacion,
+                  estimado,
+                  tarifaId: estado.tarifa,
+                  bloqueado: hotelBloqueado,
+                  nota: notaSinTotal,
+                  onQuitar: quitarHotel,
+                }
+              : null
+          }
           precioDe={precioDe}
           onRequest={(o) => esOnRequest(mapaBloqueos?.get(o.hotelId))}
           detalle={`${textoNoches} · ${textoViajeros(estado)}`}
           detalleCorto={`por ${textoNoches}`}
           ninos={estado.ninos}
-          elegido={hotel?.id ?? null}
+          elegidoId={hotel?.id ?? null}
           totalHoteles={ofertasDestino.length}
           destino={estado.destino}
-          onElegir={(o) => cambiar({ ...estado, hotel: o.hotelId, tarifa: o.tarifaId })}
+          onElegir={(o) => elegirHotel(o.hotelId, o.tarifaId)}
           onVerHabitaciones={(o) => setVerHotel({ id: o.hotelId, nombre: o.nombre })}
           onVerTodos={() => setVerTodos(true)}
         />
       ) : (
         <p className="text-ink-soft">
-          Aún no tenemos ofertas publicadas en {estado.destino}. Escriba en los comentarios, junto al botón de envío,
-          qué busca (plan, presupuesto, zona) y un asesor le propone opciones con disponibilidad para sus fechas.
+          Aún no tenemos ofertas publicadas en {estado.destino}. Cuéntele al asesor qué busca (plan, presupuesto,
+          zona) y le propone opciones con disponibilidad para sus fechas.{" "}
+          <button type="button" onClick={contarAlAsesor} className={ENLACE_ASESOR}>
+            Cuéntele al asesor qué busca
+          </button>
         </p>
       )}
     </>
@@ -931,6 +1233,7 @@ export function CotizadorViaje({
             <GuiaPasos paso={pasoActual} />
             <button
               type="button"
+              id={`${formId}-viaje-movil`}
               aria-haspopup="dialog"
               onClick={() => setEditarViaje(true)}
               className="flex items-center gap-3 rounded-card border border-linea bg-card p-3.5 text-left"
@@ -957,6 +1260,15 @@ export function CotizadorViaje({
                 className="font-semibold underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento lg:hidden"
               >
                 Cambiar fechas
+              </button>
+            </Aviso>
+          ) : null}
+
+          {quitadoPorDestino ? (
+            <Aviso tono="info">
+              Quitamos {quitadoPorDestino.nombre} al cambiar de destino.{" "}
+              <button type="button" onClick={deshacerQuitado} className="font-semibold underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento">
+                Deshacer
               </button>
             </Aviso>
           ) : null}
@@ -1024,21 +1336,34 @@ export function CotizadorViaje({
             )}
           </span>
         </span>
-        <Boton tamano="lg" aria-haspopup="dialog" onClick={() => setHojaAbierta(true)}>
-          {reservar ? "Continuar" : pasoActual === 3 ? "Enviar" : "Revisar"}
+        <WhatsAppLeadButton
+          mensajeBase="Hola! Estoy armando mi viaje en su página web."
+          triggerAriaLabel="Escribirnos por WhatsApp"
+          triggerClassName="flex size-11 shrink-0 items-center justify-center rounded-pill bg-whatsapp text-white"
+        >
+          <WhatsAppIcon size={22} />
+        </WhatsAppLeadButton>
+        <Boton id={`${formId}-ver-enviar`} tamano="lg" aria-haspopup="dialog" onClick={() => setHojaAbierta(true)}>
+          {reservar ? "Continuar" : "Ver y enviar"}
         </Boton>
       </div>
 
       <Hoja abierta={hojaAbierta} onCerrar={() => setHojaAbierta(false)} titulo="Su cotización">
-        <div className="p-4">{resumen(false)}</div>
+        <div className="lg:p-4">{resumen(false)}</div>
       </Hoja>
 
-      <Hoja abierta={editarViaje} onCerrar={() => setEditarViaje(false)} titulo="Su viaje">
-        <div className="flex flex-col gap-6 p-4">
-          <BarraViaje estado={estado} onCambio={cambiar} conServicios={false} sinCupo={sinCupo} />
+      <Hoja
+        abierta={editarViaje}
+        onCerrar={() => setEditarViaje(false)}
+        titulo="Su viaje"
+        pie={
           <Boton tamano="lg" ancho onClick={() => setEditarViaje(false)}>
             Listo
           </Boton>
+        }
+      >
+        <div className="flex flex-col gap-6 lg:p-4">
+          <BarraViaje estado={estado} onCambio={cambiar} conServicios={false} sinCupo={sinCupo} />
         </div>
       </Hoja>
 
@@ -1060,8 +1385,10 @@ export function CotizadorViaje({
             onVer={verDesdeTodos}
           />
           <p className="text-sm text-ink-soft">
-            ¿No encontró lo que busca? Escriba su presupuesto, plan o zona en los comentarios, junto al botón de
-            envío, y un asesor le propone opciones.
+            ¿No encontró lo que busca? Cuéntele su presupuesto, plan o zona al asesor y le propone opciones.{" "}
+            <button type="button" onClick={contarAlAsesor} className={ENLACE_ASESOR}>
+              Cuéntele al asesor qué busca
+            </button>
           </p>
         </div>
       </Hoja>
@@ -1081,7 +1408,7 @@ export function CotizadorViaje({
             tarifaElegida={verHotel.id === estado.hotel ? estado.tarifa : null}
             sinDisponibilidad={sinDisponibilidad(verHotel.id)}
             onElegir={(tarifa) => {
-              cambiar({ ...estado, hotel: verHotel.id, tarifa });
+              elegirHotel(verHotel.id, tarifa);
               setVerHotel(null);
             }}
           />

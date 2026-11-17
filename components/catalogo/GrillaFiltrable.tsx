@@ -3,12 +3,16 @@
 import { useRef, useState, useSyncExternalStore } from "react";
 import { CatalogoGrid } from "@/components/catalogo/CatalogoGrid";
 import { DestinoChips } from "@/components/catalogo/DestinoChips";
+import { ENTRA_ESCALONADO, escalon } from "@/components/ui/movimiento";
+import { coincideTodas } from "@/lib/catalogo/busqueda";
 
 export type EntradaGrilla = {
   id: string | number;
   destino: string;
   /** Número de montoOrden(); null = sin precio comparable, va al final. */
   monto: number | null;
+  /** Textos donde se busca la `consulta` (además del destino). */
+  campos?: ReadonlyArray<string | null | undefined>;
   tarjeta: React.ReactNode;
 };
 
@@ -36,6 +40,7 @@ export function GrillaFiltrable({
   nombre = ["opción", "opciones"],
   ordenable = true,
   vacio,
+  consulta = "",
 }: {
   entradas: EntradaGrilla[];
   destinos: string[];
@@ -44,6 +49,8 @@ export function GrillaFiltrable({
   /** false = sin "Menor precio" (precios que se calculan en el navegador). */
   ordenable?: boolean;
   vacio: string;
+  /** Texto libre: un filtro más, junto al destino. Todas sus palabras deben coincidir. */
+  consulta?: string;
 }) {
   const desdeUrl = useSyncExternalStore(suscribirUrl, destinoDeUrl, () => null);
   const [elegido, setElegido] = useState<string | null | undefined>(undefined);
@@ -51,7 +58,11 @@ export function GrillaFiltrable({
   const destino = elegido !== undefined ? elegido : desdeUrl && destinos.includes(desdeUrl) ? desdeUrl : null;
   const raizRef = useRef<HTMLDivElement>(null);
 
-  const filtradas = destino ? entradas.filter((e) => e.destino === destino) : entradas;
+  const buscando = consulta.trim() !== "";
+  const porDestino = destino ? entradas.filter((e) => e.destino === destino) : entradas;
+  const filtradas = buscando
+    ? porDestino.filter((e) => coincideTodas([...(e.campos ?? []), e.destino], consulta))
+    : porDestino;
   const visibles =
     orden === "precio"
       ? [...filtradas].sort((a, b) => (a.monto ?? Infinity) - (b.monto ?? Infinity))
@@ -111,8 +122,12 @@ export function GrillaFiltrable({
         <p className="text-ink-soft">{vacio}</p>
       ) : (
         <CatalogoGrid>
-          {visibles.map((e) => (
-            <div key={e.id} className="h-full">
+          {visibles.map((e, i) => (
+            <div
+              key={`${destino ?? ""}|${e.id}`}
+              className={buscando ? "h-full" : `${ENTRA_ESCALONADO} h-full`}
+              style={buscando ? undefined : escalon(i)}
+            >
               {e.tarjeta}
             </div>
           ))}

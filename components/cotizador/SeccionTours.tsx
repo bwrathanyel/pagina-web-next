@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { chip } from "@/components/cotizador/BarraViaje";
 import { Aviso } from "@/components/ui/Aviso";
+import { ENTRA_ESCALONADO, escalon } from "@/components/ui/movimiento";
 import { TOURS_MAX } from "@/lib/cotizador/estado";
 import { textoPrecioTour, type TourWeb } from "@/lib/cotizador/tours";
 
@@ -38,14 +39,15 @@ export function SeccionTours({
         <Aviso>No pudimos cargar los tours. Puede enviar la solicitud igual: un asesor le propone los tours disponibles.</Aviso>
       ) : lista.length ? (
         <ul className="grid gap-4 sm:grid-cols-2">
-          {lista.map((t) => {
+          {lista.map((t, i) => {
             const activo = elegidos.includes(t.id);
             const precio = textoPrecioTour(t);
             const lleno = !activo && elegidos.length >= TOURS_MAX;
             return (
               <li
                 key={t.id}
-                className={`flex flex-col overflow-hidden rounded-card border bg-card ${activo ? "border-acento ring-2 ring-acento" : "border-linea"}`}
+                style={escalon(i)}
+                className={`${ENTRA_ESCALONADO} flex flex-col overflow-hidden rounded-card border bg-card ${activo ? "border-acento ring-2 ring-acento" : "border-linea"}`}
               >
                 {t.foto ? (
                   <span className="relative block aspect-video w-full overflow-hidden bg-sand-2">

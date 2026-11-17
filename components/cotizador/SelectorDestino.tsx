@@ -3,13 +3,15 @@
 import Image from "next/image";
 import { useId, useRef, type CSSProperties, type KeyboardEvent } from "react";
 import { Icono } from "@/components/ui/Icono";
+import { FOTO_HOVER, PRESION_TARJETA } from "@/components/ui/movimiento";
+import { SelloDestino } from "@/components/ui/SelloDestino";
 import { DESTINOS } from "@/lib/cotizador/estado";
 import { portadaDestino } from "@/lib/promociones/fotosDestino";
 
 // Destino de /cotizar: un botón con la foto y el nombre, y un popover con una
 // tarjeta con foto por destino (pedido del dueño al revisar E1, 2026-09-25).
 // Mismo patrón que SelectorViajeros: capa superior, Esc y clic afuera cierran.
-// Las tarjetas son un radiogroup: flechas mueven y eligen, Enter o clic cierran.
+// Las tarjetas son un radiogroup: las flechas mueven el foco; Enter, Espacio o clic eligen y cierran.
 // Destino sin foto propia: fondo de marca, nunca la foto de otro lugar.
 
 const nombreDe = (d: string) => (d === "Extranjero" ? "Viajar al extranjero" : d);
@@ -41,8 +43,10 @@ export function SelectorDestino({
     if (!paso) return;
     ev.preventDefault();
     const i = DESTINOS.indexOf(valor);
-    const siguiente = DESTINOS[(i + paso + DESTINOS.length) % DESTINOS.length];
-    onCambio(siguiente);
+    // Las flechas solo mueven el foco; Enter, Espacio o clic confirman.
+    const actual = (ev.target as HTMLElement).closest<HTMLElement>("[data-destino]")?.dataset.destino;
+    const desde = actual ? DESTINOS.indexOf(actual) : i;
+    const siguiente = DESTINOS[(desde + paso + DESTINOS.length) % DESTINOS.length];
     panel.current?.querySelector<HTMLButtonElement>(`[data-destino="${siguiente}"]`)?.focus();
   };
 
@@ -101,7 +105,7 @@ export function SelectorDestino({
                   onCambio(d);
                   cerrar();
                 }}
-                className={`group relative flex aspect-4/3 flex-col justify-end overflow-hidden rounded-card bg-dusk-2 text-left text-dusk-text transition-[box-shadow,scale] duration-150 ease-salida motion-reduce:transition-none motion-reduce:active:scale-100 active:scale-[0.985] ${
+                className={`group relative flex aspect-4/3 flex-col justify-end overflow-hidden rounded-card bg-dusk-2 text-left text-dusk-text ${PRESION_TARJETA} ${
                   elegido ? "ring-3 ring-acento ring-offset-2 ring-offset-card" : ""
                 }`}
               >
@@ -112,7 +116,7 @@ export function SelectorDestino({
                       alt=""
                       fill
                       sizes="(min-width: 640px) 11rem, 45vw"
-                      className="object-cover transition-[scale] duration-700 ease-salida motion-reduce:transition-none motion-reduce:group-hover:scale-100 group-hover:scale-[1.04]"
+                      className={`object-cover ${FOTO_HOVER}`}
                     />
                     <span
                       aria-hidden="true"
@@ -120,6 +124,7 @@ export function SelectorDestino({
                     />
                   </>
                 ) : null}
+                <SelloDestino destino={d} tamano={40} className="absolute right-2 top-2 -rotate-8 text-dusk-text opacity-85" />
                 <span className="relative p-3 text-balance font-display text-lg font-bold leading-tight tracking-[-0.01em]">
                   {nombreDe(d)}
                 </span>

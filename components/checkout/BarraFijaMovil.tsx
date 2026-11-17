@@ -46,11 +46,10 @@ export function BarraFijaMovil({
         aria-hidden={oculta || undefined}
         inert={oculta || undefined}
         className={
-          "fixed inset-x-0 bottom-0 z-40 border-t border-linea bg-card/95 px-4 pt-3 shadow-chrome backdrop-blur " +
+          "fixed inset-x-0 bottom-0 z-40 border-t border-linea bg-card px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-chrome " +
           "transition-transform duration-[var(--dur-media)] ease-salida motion-reduce:transition-none lg:hidden " +
           (oculta ? "translate-y-full" : "translate-y-0")
         }
-        style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
       >
         {children}
       </div>

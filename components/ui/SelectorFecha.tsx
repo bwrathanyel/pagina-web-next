@@ -37,7 +37,7 @@ function celdas(mes: string): (string | null)[] {
 }
 
 const FLECHA =
-  "flex h-9 w-9 items-center justify-center rounded-control text-ink transition-colors duration-150 ease-salida " +
+  "flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-control text-ink transition-colors duration-150 ease-salida " +
   "enabled:hover:bg-sand-2 disabled:text-ink-soft/40";
 
 export type SinCupo = { dia: (iso: string) => boolean; leyenda: string };
@@ -157,7 +157,7 @@ export function SelectorFecha({
         aria-label={etiqueta === "Fecha" ? "Elegir fecha" : `Elegir fecha de ${etiqueta.toLowerCase()}`}
         onToggle={(e) => alAbrir(e.newState === "open")}
         style={{ positionAnchor: ancla } as CSSProperties}
-        className="calendario-flotante w-[19.5rem] rounded-card bg-card p-4 text-ink shadow-chrome"
+        className="calendario-flotante w-[min(22rem,calc(100vw-1rem))] md:w-[19.5rem] rounded-card bg-card p-4 text-ink shadow-chrome"
       >
         {mes && (
           <>
@@ -202,7 +202,7 @@ export function SelectorFecha({
                     aria-label={`${LARGA.format(aFecha(iso))}${iso >= piso && sinCupo?.dia(iso) ? ", sin disponibilidad" : ""}`}
                     onClick={() => elegir(iso)}
                     className={
-                      "flex h-10 items-center justify-center rounded-control text-sm tabular-nums transition-colors duration-150 ease-salida focus-visible:outline-offset-0 disabled:text-ink-soft/35 " +
+                      "flex h-11 md:h-10 items-center justify-center rounded-control text-sm tabular-nums transition-colors duration-150 ease-salida focus-visible:outline-offset-0 disabled:text-ink-soft/35 " +
                       clasesDia(iso)
                     }
                   >
@@ -224,7 +224,7 @@ export function SelectorFecha({
                 type="button"
                 onClick={() => elegir("")}
                 disabled={!valor}
-                className="rounded-control px-2 py-1.5 text-ink-soft transition-colors enabled:hover:text-ink disabled:opacity-0"
+                className="min-h-11 md:min-h-0 rounded-control px-2 py-1.5 text-ink-soft transition-colors enabled:hover:text-ink disabled:opacity-0"
               >
                 Quitar fecha
               </button>
@@ -232,7 +232,7 @@ export function SelectorFecha({
                 <button
                   type="button"
                   onClick={() => elegir(hoy)}
-                  className="rounded-control px-2 py-1.5 text-acento transition-colors hover:bg-acento-suave"
+                  className="min-h-11 md:min-h-0 rounded-control px-2 py-1.5 text-acento transition-colors hover:bg-acento-suave"
                 >
                   Hoy
                 </button>

@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { marcarSalidaVoluntaria } from "@/lib/utils/rutaInterna";
 
 type Rol = "user" | "admin";
 
@@ -63,6 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data: sub } = sb.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) marcarSalidaVoluntaria(false);
       cargarPerfil(session?.user?.id);
       if (!session?.user) setModoEdicion(false);
     });
@@ -71,6 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [cargarPerfil]);
 
   const signOut = useCallback(async () => {
+    marcarSalidaVoluntaria(true);
     await supabaseBrowser().auth.signOut();
     setModoEdicion(false);
   }, []);

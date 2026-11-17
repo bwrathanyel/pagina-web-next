@@ -90,7 +90,7 @@ function FotosHabitacion({ fotos, alt, forma = "aspect-video" }: { fotos: string
               setVisor(true);
             }}
             aria-label={`Ver las ${n} fotos de ${alt}`}
-            className="absolute bottom-2 right-2 inline-flex min-h-8 items-center gap-1 rounded-full bg-dusk/80 px-2.5 text-sm font-semibold text-dusk-text transition-colors hover:bg-dusk lg:backdrop-blur-sm"
+            className="absolute bottom-2 right-2 inline-flex min-h-11 min-w-11 justify-center md:min-h-8 md:min-w-0 items-center gap-1 rounded-full bg-dusk/80 px-2.5 text-sm font-semibold text-dusk-text transition-colors hover:bg-dusk lg:backdrop-blur-sm"
           >
             <Icono nombre="suma" tamano={14} />
             {n}

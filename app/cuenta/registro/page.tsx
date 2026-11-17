@@ -1,8 +1,9 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { FormularioRegistro } from "@/components/cuenta/FormularioRegistro";
 import { rutaInterna } from "@/lib/utils/rutaInterna";
 
@@ -12,6 +13,11 @@ const leerNext = () => new URLSearchParams(window.location.search).get("next");
 export default function RegistroPage() {
   const router = useRouter();
   const siguiente = rutaInterna(useSyncExternalStore(sinSuscripcion, leerNext, () => null));
+  const { user } = useAuth();
+  // Con sesión abierta el formulario no sirve: se sale sin dejarlo en el historial.
+  useEffect(() => {
+    if (user) router.replace(siguiente);
+  }, [user, siguiente, router]);
   const nextLogin = `next=${encodeURIComponent(siguiente)}`;
 
   return (
@@ -22,10 +28,11 @@ export default function RegistroPage() {
       <FormularioRegistro
         siguiente={siguiente}
         onCreada={() => {
-          router.push(siguiente);
+          router.replace(siguiente);
           router.refresh();
         }}
-        onPorConfirmar={() => router.push(`/cuenta/login?confirmar=1&${nextLogin}`)}
+        onPorConfirmar={() => router.replace(`/cuenta/login?confirmar=1&${nextLogin}`)}
+        onYaExiste={() => router.replace(`/cuenta/login?${nextLogin}`)}
       />
 
       <p className="mt-8 border-t border-linea pt-6 text-ink-soft">

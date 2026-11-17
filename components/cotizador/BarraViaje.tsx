@@ -169,7 +169,10 @@ export function BarraViaje({
             name="fecha"
             etiqueta={rotuloDesde}
             valor={estado.desde}
-            onCambio={(iso) => onCambio(cambiarDesde(estado, iso))}
+            onCambio={(iso) => {
+              onCambio(cambiarDesde(estado, iso));
+              if (iso && conSegunda) requestAnimationFrame(() => document.getElementById(`${id}-hasta`)?.click());
+            }}
             rango={conSegunda ? { desde: estado.desde, hasta: estado.hasta } : undefined}
             sinCupo={hospedaje ? sinCupo : undefined}
             vacio="Elegir fecha"
@@ -208,7 +211,7 @@ export function BarraViaje({
       </div>
 
       {conSegunda && noches > 0 ? (
-        <p className="-mt-3 font-mono text-sm tabular-nums text-ink-soft" aria-live="polite">
+        <p className="-mt-3 font-mono text-sm tabular-nums text-ink-soft">
           {textoDuracion(noches)}
         </p>
       ) : null}
@@ -251,7 +254,7 @@ function EdadesNinos({ estado, onCambio }: { estado: EstadoViaje; onCambio: (e: 
   );
 }
 
-const ROTULO_CELDA = "font-mono text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-ink-soft";
+const ROTULO_CELDA = "font-mono text-xs font-bold uppercase tracking-[0.08em] text-ink-soft";
 const CONTROL_CELDA =
   "w-full min-h-10 cursor-pointer rounded-control px-2 font-semibold text-ink " +
   "transition-colors duration-150 ease-salida motion-reduce:transition-none hover:bg-sand-2 " +
@@ -309,7 +312,7 @@ export function BarraViajeCompacta({
           <p className={`${ROTULO_CELDA} px-2`}>
             {conSegunda ? "Fechas" : rotuloDesde}
             {conSegunda && noches > 0 ? (
-              <span className="font-sans font-normal normal-case tracking-normal" aria-live="polite">
+              <span className="font-sans font-normal normal-case tracking-normal">
                 {" "}
                 · {textoDuracion(noches)}
               </span>
@@ -321,7 +324,10 @@ export function BarraViajeCompacta({
               name="fecha"
               etiqueta={rotuloDesde}
               valor={estado.desde}
-              onCambio={(iso) => onCambio(cambiarDesde(estado, iso))}
+              onCambio={(iso) => {
+                onCambio(cambiarDesde(estado, iso));
+                if (iso && conSegunda) requestAnimationFrame(() => document.getElementById(`${id}-hasta`)?.click());
+              }}
               rango={conSegunda ? { desde: estado.desde, hasta: estado.hasta } : undefined}
               sinCupo={hospedaje ? sinCupo : undefined}
               vacio={conSegunda ? rotuloDesde : "Elegir fecha"}

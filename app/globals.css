@@ -716,18 +716,18 @@ html {
    sobre el fondo por varios segundos. */
 .revelar.revelar-armado { opacity: 0; transform: translateY(16px); }
 .revelar.es-visible {
-  animation: revelar-entrada 0.55s var(--ease-salida) forwards;
+  animation: revelar-entrada var(--dur-media) var(--ease-salida) forwards;
   animation-delay: var(--retraso, 0ms);
 }
 @keyframes revelar-entrada {
   to { opacity: 1; transform: none; }
 }
-/* Variante escalonada: entran los hijos, 60ms uno detrás de otro, con tope en
-   el octavo para que una grilla larga no tarde un segundo en completarse. */
+/* Variante escalonada: entran los hijos, 40ms uno detrás de otro, con tope en
+   el séptimo: la grilla entera queda puesta en menos de 300ms de retraso. */
 .revelar-escalonado.revelar-armado > * { opacity: 0; transform: translateY(16px); }
 .revelar-escalonado.es-visible > * {
-  animation: revelar-entrada 0.55s var(--ease-salida) forwards;
-  animation-delay: calc(var(--retraso, 0ms) + var(--n, 7) * 60ms);
+  animation: revelar-entrada var(--dur-media) var(--ease-salida) forwards;
+  animation-delay: calc(var(--retraso, 0ms) + var(--n, 6) * 40ms);
 }
 .revelar-escalonado > :nth-child(1) { --n: 0; }
 .revelar-escalonado > :nth-child(2) { --n: 1; }
@@ -736,6 +736,24 @@ html {
 .revelar-escalonado > :nth-child(5) { --n: 4; }
 .revelar-escalonado > :nth-child(6) { --n: 5; }
 .revelar-escalonado > :nth-child(7) { --n: 6; }
+/* Mejora progresiva: donde hay `animation-timeline: view()` la entrada la
+   maneja el propio scroll, sin JS (Revelar no arma el observer) y desde el
+   primer pintado, antes de hidratar. Lo que ya está en pantalla queda en su
+   estado final; cada hijo de una grilla tiene su propia línea de tiempo, así
+   que el escalonado sale solo de la posición y no de un retraso. */
+@keyframes revelar-vista {
+  from { opacity: 0; transform: translateY(16px); }
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .revelar,
+    .revelar-escalonado > * {
+      animation: revelar-vista linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 70%;
+    }
+  }
+}
 /* Hot Sales en el teléfono es una columna de ~40 tarjetas: animar cada una al
    entrar, con retrasos que crecen con el índice, dejaba decenas de capas
    compuestas a la vez durante un scroll rápido. Ahí entran quietas. */
@@ -748,8 +766,8 @@ html {
    venta entra solo y su punto late para llamar la mirada sin mover nada. */
 .entra-card,
 .animate-entra-card {
-  animation: surge 0.45s var(--ease-salida) both;
-  animation-delay: calc(var(--n, 0) * 55ms);
+  animation: surge var(--dur-media) var(--ease-salida) both;
+  animation-delay: calc(min(var(--n, 0), 6) * 40ms);
 }
 .punto-vivo { animation: pulso-suave 1.6s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
@@ -845,7 +863,7 @@ html {
   100% { transform: scale(1); }
 }
 .animate-carrito-rebote {
-  animation: carrito-rebote 0.42s var(--ease-salida);
+  animation: carrito-rebote var(--dur-media) var(--ease-salida);
 }
 @keyframes corazon-latido {
   0% { transform: scale(1); }
@@ -951,6 +969,36 @@ html {
   from { transform: rotateX(-88deg); filter: brightness(0.7); }
   to { transform: none; filter: none; }
 }
+/* Monto del cotizador que cambia (MontoTablero.tsx): la misma caída de paleta,
+   sobre el número entero. Sin color propio: hereda el del texto en los dos temas. */
+.monto-flap {
+  display: inline-block;
+  transform-origin: 50% 0;
+  backface-visibility: hidden;
+  animation: flap-caer var(--dur-rapida) var(--ease-entrada-salida);
+}
+/* Hotel que pasa a "Su hotel" (RecomendacionesHospedaje.tsx): el nombre sube
+   desde las opciones. Sin fill-mode: una animación que queda aplicada deja al
+   bloque en su propia capa para siempre. */
+@keyframes hotel-sube {
+  from { opacity: 0; transform: translateY(0.75rem); }
+  to { opacity: 1; transform: none; }
+}
+.hotel-sube {
+  animation: hotel-sube var(--dur-media) var(--ease-salida);
+}
+
+/* Sello del destino (SelloDestino) que se estampa en el boleto al cambiar de
+   destino. Sin `to`: termina en la opacidad que ponga la clase del sello. */
+@keyframes estampa {
+  from { opacity: 0; transform: scale(1.12); }
+}
+@keyframes estampa-suave {
+  from { opacity: 0; }
+}
+.estampa {
+  animation: estampa var(--dur-media) var(--ease-salida);
+}
 
 /* ── Boleto / talón (components/ui/Boleto.tsx) ───────────────────────────
    Las muescas de la perforación salen de una máscara sobre la propia tarjeta:
@@ -1040,6 +1088,41 @@ html {
 ::view-transition-group(.pagina) {
   animation: none;
 }
+/* Clics durante el cruce llegan a la página viva, no a la capa del cruce. */
+::view-transition {
+  pointer-events: none;
+}
+
+/* Elemento compartido (<ViewTransition name="foto-…" share="morph"
+   default="none">): la foto de la tarjeta viaja a la galería de la ficha y de
+   ahí al hotel en /cotizar. Es lo único que se mueve entre páginas; el resto
+   cruza en su lugar. Las proporciones cambian (4:3 a la grilla de la ficha):
+   recortar con cover en vez de estirar la foto. */
+::view-transition-group(.morph) {
+  animation-duration: var(--dur-media);
+  animation-timing-function: var(--ease-salida);
+  z-index: 50;
+}
+::view-transition-image-pair(.morph) {
+  overflow: clip;
+  border-radius: var(--radius-media);
+}
+::view-transition-old(.morph),
+::view-transition-new(.morph) {
+  height: 100%;
+  object-fit: cover;
+  mix-blend-mode: normal;
+}
+
+/* Paneles de pestañas del cotizador: el panel nuevo entra desde el lado de su
+   pestaña (--desde lo pone Pestanas). Reaparecer tras `hidden` reinicia la
+   animación, así que no hace falta desmontar el panel (no pierde estado). */
+@keyframes panel-entra {
+  from { opacity: 0; transform: translateX(var(--desde, 0px)); }
+}
+.panel-entra {
+  animation: panel-entra var(--dur-media) var(--ease-salida);
+}
 
 /* ── Movimiento reducido ─────────────────────────────────────────────────
    No es un apagón global a 0.01ms: los loops decorativos se quitan, las
@@ -1063,6 +1146,8 @@ html {
   .animate-corazon-latido,
   .animate-campana-balanceo,
   .hero-sube,
+  .monto-flap,
+  .hotel-sube,
   .flap-celda > span {
     animation: none !important;
   }
@@ -1081,8 +1166,15 @@ html {
   .animate-panel-abrir,
   .animate-msg-in-left,
   .animate-msg-in-right,
-  .animate-hero-fade {
+  .animate-hero-fade,
+  .panel-entra {
     animation-name: aparecer-suave !important;
+    animation-duration: var(--dur-rapida) !important;
+  }
+
+  /* Solo fundido y hasta la opacidad propia del sello (aparecer-suave la subiría a 1). */
+  .estampa {
+    animation-name: estampa-suave !important;
     animation-duration: var(--dur-rapida) !important;
   }
 

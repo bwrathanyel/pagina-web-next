@@ -9,7 +9,10 @@
 //
 // Componente de servidor: solo lee y pinta, sin estado.
 import type { Producto, Tarifa, TarifarioBloque } from "@/types/supabase";
+import Link from "next/link";
+import { clasesBoton } from "@/components/ui/Boton";
 import { Icono } from "@/components/ui/Icono";
+import { enlaceCotizarPromocion } from "@/lib/cotizador/estado";
 import { Etiqueta } from "@/components/ui/Insignia";
 import { formatearPrecioCliente } from "@/lib/utils/formatoPrecio";
 import {
@@ -35,7 +38,7 @@ function Dato({ clave, valor }: { clave: string; valor: string }) {
   );
 }
 
-function TarjetaPromocion({ tarifa, destacada }: { tarifa: Tarifa; destacada: boolean }) {
+function TarjetaPromocion({ tarifa, destacada, productoId }: { tarifa: Tarifa; destacada: boolean; productoId: number }) {
   const precios = preciosLista(tarifa);
   const hero = precios.length > 0 ? precioDobleHero(tarifa) : null;
   const preciosResto = hero ? precios.filter((p) => p.clave !== "dbl") : precios;
@@ -125,6 +128,15 @@ function TarjetaPromocion({ tarifa, destacada }: { tarifa: Tarifa; destacada: bo
             </li>
           ))}
         </ul>
+      ) : null}
+
+      {vendible ? (
+        <Link
+          href={enlaceCotizarPromocion({ id: tarifa.id, producto: { id: productoId } })}
+          className={clasesBoton({ variante: destacada ? "primario" : "secundario", ancho: true, className: "mt-auto" })}
+        >
+          Cotizar esta promoción
+        </Link>
       ) : null}
     </article>
   );
@@ -238,7 +250,7 @@ export function CarpetaTarifas({ producto }: { producto: Producto }) {
             ) : null}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {grupo.tarifas.map((tarifa) => (
-                <TarjetaPromocion key={tarifa.id} tarifa={tarifa} destacada={tarifa.id === destacadaId} />
+                <TarjetaPromocion key={tarifa.id} tarifa={tarifa} destacada={tarifa.id === destacadaId} productoId={producto.id} />
               ))}
             </div>
           </div>

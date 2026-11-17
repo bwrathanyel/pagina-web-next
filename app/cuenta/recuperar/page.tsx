@@ -1,14 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
 import { Campo, Entrada } from "@/components/ui/Campo";
+import { leerCorreo } from "@/lib/auth/errores";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
+const sinSuscripcion = () => () => {};
+
 export default function RecuperarPage() {
-  const [email, setEmail] = useState("");
+  // Correo ya escrito en el formulario de entrar (viene por sessionStorage).
+  const guardado = useSyncExternalStore(sinSuscripcion, leerCorreo, () => "");
+  const [escrito, setEmail] = useState<string | null>(null);
+  const email = escrito ?? guardado;
   const [error, setError] = useState<string | null>(null);
   const [enviado, setEnviado] = useState(false);
   const [cargando, setCargando] = useState(false);

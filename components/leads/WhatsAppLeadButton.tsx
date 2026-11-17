@@ -26,6 +26,7 @@ export function WhatsAppLeadButton({
   mensajeBase,
   destinoInicial = "",
   origen,
+  abiertoInicial = false,
   triggerClassName,
   triggerAriaLabel,
   triggerTitle,
@@ -36,12 +37,14 @@ export function WhatsAppLeadButton({
   destinoInicial?: string;
   /** "aliado:<slug>" en el catálogo corporativo; marca el lead en el CRM. */
   origen?: string;
+  /** Formulario abierto desde el primer render (el visitante ya tocó «Cotizar»). */
+  abiertoInicial?: boolean;
   triggerClassName?: string;
   triggerAriaLabel?: string;
   triggerTitle?: string;
   children: React.ReactNode;
 }) {
-  const [abierto, setAbierto] = useState(false);
+  const [abierto, setAbierto] = useState(abiertoInicial);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Sin pestaña abierta (webview de Instagram/TikTok, bloqueador): el enlace

@@ -133,7 +133,7 @@ export function SelectorViajeros({ id, valor, onCambio, maximos, className = "",
             type="button"
             popoverTarget={idPanel}
             popoverTargetAction="hide"
-            className="rounded-control px-3 py-1.5 text-sm font-semibold text-acento transition-colors hover:bg-acento-suave"
+            className="min-h-11 md:min-h-0 rounded-control px-3 py-1.5 text-sm font-semibold text-acento transition-colors hover:bg-acento-suave"
           >
             Listo
           </button>

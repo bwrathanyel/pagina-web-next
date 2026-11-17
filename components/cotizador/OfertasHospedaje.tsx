@@ -4,8 +4,10 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { chip } from "@/components/cotizador/BarraViaje";
 import { Boton } from "@/components/ui/Boton";
+import { EstadoIlustrado } from "@/components/ui/EstadoIlustrado";
 import { Etiqueta } from "@/components/ui/Insignia";
 import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
+import { ELEGIBLE, ELEGIDO, ENTRA_ESCALONADO, FOTO_HOVER, escalon } from "@/components/ui/movimiento";
 import { esOnRequest, textoSinDisponibilidad, type Bloqueo } from "@/lib/cotizador/hotel";
 import type { OfertaHotel } from "@/lib/cotizador/ofertas";
 import { separarMonto } from "@/lib/tarifas";
@@ -263,13 +265,13 @@ export function OfertasHospedaje({
 
       {visibles.length ? (
         <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {visibles.map((o) => {
+          {visibles.map((o, i) => {
             const sinDisponibilidad = desde && hasta ? textoSinDisponibilidad(bloqueos?.get(o.hotelId), desde, hasta) : null;
             const onRequest = !sinDisponibilidad && esOnRequest(bloqueos?.get(o.hotelId));
             const esElegido = o.hotelId === elegido;
             const { monto, unidad, grande } = separarMonto(o.precio);
             return (
-              <li key={o.hotelId}>
+              <li key={o.hotelId} className={ENTRA_ESCALONADO} style={escalon(i)}>
                 <button
                   type="button"
                   {...sobre(o.hotelId)}
@@ -284,8 +286,8 @@ export function OfertasHospedaje({
                           ? ". Elegido"
                           : ". Elegir este hotel"
                   }`}
-                  className={`group flex h-full w-full flex-col overflow-hidden rounded-card border bg-card text-left transition-[border-color,box-shadow] duration-150 ease-salida focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento disabled:cursor-not-allowed ${
-                    esElegido ? "border-acento ring-2 ring-acento" : "border-linea hover:border-linea-fuerte hover:shadow-chrome"
+                  className={`group flex h-full w-full flex-col overflow-hidden rounded-card border text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento disabled:cursor-not-allowed ${
+                    esElegido ? `${ELEGIDO} ring-2 ring-acento` : `${ELEGIBLE} bg-card hover:shadow-chrome`
                   }`}
                 >
                   <span className="relative block aspect-4/3 w-full overflow-hidden bg-sand-2">
@@ -304,7 +306,7 @@ export function OfertasHospedaje({
                     {sinDisponibilidad || esElegido ? null : (
                       <span
                         aria-hidden="true"
-                        className="absolute bottom-3 right-3 rounded-full bg-acento px-3.5 py-1.5 text-sm font-semibold text-sobre-acento shadow-chrome transition-transform duration-150 ease-salida group-hover:scale-105"
+                        className={`absolute bottom-3 right-3 rounded-full bg-acento px-3.5 py-1.5 text-sm font-semibold text-sobre-acento shadow-chrome ${FOTO_HOVER}`}
                       >
                         {o.conFotosHabitacion ? "Ver habitaciones" : "Elegir"}
                       </span>
@@ -353,7 +355,10 @@ export function OfertasHospedaje({
           })}
         </ul>
       ) : (
-        <p className="text-ink-soft">No hay ofertas con ese filtro en {destino}.</p>
+        <div className="flex flex-col items-center gap-5 py-6 text-center">
+          <EstadoIlustrado estado="sin-resultados" tamano={8} />
+          <p className="text-ink-soft">No hay ofertas con ese filtro en {destino}.</p>
+        </div>
       )}
 
       {ordenadas.length > VISIBLES && !todas ? (

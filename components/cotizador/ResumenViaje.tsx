@@ -1,8 +1,10 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
+import { MontoTablero } from "@/components/cotizador/MontoTablero";
 import { Boleto } from "@/components/ui/Boleto";
 import { Boton } from "@/components/ui/Boton";
 import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
+import { SelloDestino } from "@/components/ui/SelloDestino";
 import { fechasVuelo, nochesDe, textoViajeros, type EstadoViaje } from "@/lib/cotizador/estado";
 import type { Estimado } from "@/lib/cotizador/estimado";
 import { textoBoletos, type VueloViaje } from "@/lib/cotizador/vuelo";
@@ -112,7 +114,7 @@ export function ResumenViaje({
   const vueloFechas = fechasVuelo(estado);
   let n = 0;
 
-  return (
+  const boleto = (
     <Boleto
       orientacion="h"
       // El talón tiene alto fijo: solo caben el total y el envío. Va arriba para
@@ -124,7 +126,8 @@ export function ResumenViaje({
           <div className="flex items-baseline justify-between gap-3">
             <span className="shrink-0 text-sm font-semibold text-ink-soft">{referencia ? "Desde" : (etiquetaTalon ?? "Estimado")}</span>
             <span className="min-w-0 flex-1 truncate text-right font-mono text-2xl font-bold tabular-nums text-ink" aria-live="polite">
-              {montoTalon ? <PrecioMostrado texto={montoTalon} /> : referencia ? <PrecioMostrado texto={referencia.monto} /> : "A confirmar"}
+              {/* Una sola pieza para los tres casos: así el total cae como en el tablero al cambiar. */}
+              <MontoTablero texto={montoTalon || referencia?.monto || "A confirmar"} />
             </span>
           </div>
           {reservar ? (
@@ -200,12 +203,13 @@ export function ResumenViaje({
           </Linea>
         ) : null}
       </ul>
-      {datos ? (
+      {datos && conTitulo ? (
         <div className="border-t border-dashed border-linea-fuerte px-5 pb-4 pt-3">
           {datos}
         </div>
       ) : null}
-      <p className="px-5 pb-4 pt-1 text-xs text-ink-soft">
+      <div className="flex items-end gap-3 px-5 pb-4 pt-1">
+      <p className="min-w-0 flex-1 text-xs text-ink-soft">
         {referencia ? `${referencia.unidad ? `${referencia.unidad[0].toUpperCase()}${referencia.unidad.slice(1)}. ` : ""}Elija fechas para ver su total. ` : ""}
         {montoTalon && pendientes.length ? `${pendientes.join(" y ").replace(/^./, (c) => c.toUpperCase())} a confirmar. ` : ""}
         {montoVuelo ? "El vuelo es aproximado: la boletería cambia según la disponibilidad y puede salir menos. " : ""}
@@ -213,6 +217,20 @@ export function ResumenViaje({
           ? "Sujeto a disponibilidad. Puede reservar y pagar en línea ahora, o enviar la solicitud y un asesor le escribe por WhatsApp."
           : "Sujeto a disponibilidad. El asesor le escribe por WhatsApp con el precio final."}
       </p>
+      {/* key: al cambiar de destino el sello se vuelve a estampar. */}
+      <SelloDestino key={estado.destino} destino={estado.destino} tamano={72} className="estampa -rotate-8 text-acento opacity-80" />
+      </div>
     </Boleto>
+  );
+  if (conTitulo || !datos) return boleto;
+  // Hoja móvil: los datos van primero, así «Enviar solicitud» queda justo debajo de ellos.
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="rounded-card border border-linea bg-card px-4 pb-4 pt-3">
+        <p className="mb-3 font-display text-xl font-bold leading-tight text-ink">Sus datos</p>
+        {datos}
+      </div>
+      {boleto}
+    </div>
   );
 }

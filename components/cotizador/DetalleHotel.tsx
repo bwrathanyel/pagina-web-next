@@ -30,7 +30,7 @@ export function DetalleHotel({
 }) {
   if (error) {
     return (
-      <div className="flex flex-col gap-4 p-5">
+      <div className="flex flex-col gap-4 lg:p-5">
         <Aviso>No pudimos cargar las habitaciones de este hotel. Puede elegirlo igual y el asesor le cotiza.</Aviso>
         <Boton onClick={() => onElegir(null)} disabled={!!sinDisponibilidad}>
           Elegir este hotel
@@ -40,7 +40,7 @@ export function DetalleHotel({
   }
   if (!detalle) {
     return (
-      <div className="flex flex-col gap-4 p-5" aria-busy="true">
+      <div className="flex flex-col gap-4 lg:p-5" aria-busy="true">
         <Esqueleto className="aspect-4/3 w-full" />
         <Esqueleto className="h-6 w-2/3" />
         <Esqueleto className="h-28 w-full" />
@@ -53,7 +53,7 @@ export function DetalleHotel({
   const hayFechas = !!estadia.desde && !!estadia.hasta;
 
   return (
-    <div className="flex flex-col gap-6 p-5">
+    <div className="flex flex-col gap-6 lg:p-5">
       {detalle.fotos.length ? <GaleriaProducto fotos={detalle.fotos} alt={detalle.nombre} /> : null}
       {sinDisponibilidad ? <Aviso>{sinDisponibilidad}. Pruebe otras fechas u otro hotel.</Aviso> : null}
       {!hayFechas ? (

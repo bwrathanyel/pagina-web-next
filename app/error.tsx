@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Boton } from "@/components/ui/Boton";
-import { Icono } from "@/components/ui/Icono";
+import { EstadoIlustrado } from "@/components/ui/EstadoIlustrado";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import { whatsappHref } from "@/lib/whatsapp";
 
@@ -41,9 +41,7 @@ export default function Error({
   return (
     <section className="px-5 py-16 md:py-28">
       <div className="mx-auto max-w-[var(--ancho-medio)]">
-        <span className="flex h-12 w-12 items-center justify-center rounded-pill bg-peligro-suave text-peligro">
-          <Icono nombre="alerta" tamano={24} />
-        </span>
+        <EstadoIlustrado estado="error" tamano={8} />
         <h1 className="mt-6 max-w-[18ch] font-display text-4xl font-extrabold leading-[1.02] tracking-tight text-balance text-ink md:text-5xl">
           Esta página no terminó de cargar
         </h1>

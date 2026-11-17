@@ -57,7 +57,7 @@ export function RegistroEvento({ evento }: { evento: string }) {
     event.preventDefault();
     if (enviando) return;
     if (!telefonoPareceValido(telefono)) {
-      setError("Escribe tu número completo, por ejemplo 0414-1234567.");
+      setError("Escriba su número completo, por ejemplo 0414-1234567.");
       return;
     }
     setEnviando(true);
@@ -86,10 +86,10 @@ export function RegistroEvento({ evento }: { evento: string }) {
       const codigo = submitError instanceof Error ? submitError.message : "";
       setError(
         codigo === "datos_invalidos"
-          ? "Revisa tu nombre y teléfono para continuar."
+          ? "Revise su nombre y teléfono para continuar."
           : codigo === "evento_cerrado"
             ? "El registro para este evento está cerrado."
-            : "No pudimos registrarte. Revisa tu conexión e intenta de nuevo.",
+            : "No pudimos registrarlo. Revise su conexión e inténtelo de nuevo.",
       );
     } finally {
       setEnviando(false);
@@ -107,14 +107,14 @@ export function RegistroEvento({ evento }: { evento: string }) {
   if (registro) {
     return (
       <div ref={tarjetaRef} className="scroll-mt-6 rounded-[28px] border border-gold/30 bg-dusk-2 p-7 text-center">
-        <p className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-gold">Tu código para jugar</p>
+        <p className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-gold">Su código para jugar</p>
         <p className="mt-5 select-all font-mono text-6xl font-bold tracking-[0.22em] text-dusk-text" aria-live="polite">
           {registro.codigo}
         </p>
         <p className="mt-3 font-mono text-lg text-dusk-text-soft">{telefonoLegible(registro.telefono)}</p>
         <p className="mt-6 leading-7 text-dusk-text-soft">
-          {registro.nombre.split(" ")[0]}, muestra esta pantalla en el stand de <span className="text-dusk-text">Lotus 360</span> para
-          jugar. Tómale captura por si pierdes la señal.
+          {registro.nombre.split(" ")[0]}, muestre esta pantalla en el stand de <span className="text-dusk-text">Lotus 360</span> para
+          jugar. Tome una captura por si pierde la señal.
         </p>
         <button
           type="button"
@@ -137,7 +137,7 @@ export function RegistroEvento({ evento }: { evento: string }) {
       <div className="grid gap-4">
         <label className="text-sm font-bold text-dusk-text">
           Nombre y apellido
-          <input required autoComplete="name" value={nombre} onChange={(e) => setNombre(e.target.value)} className={inputClass} placeholder="Tu nombre completo" />
+          <input required autoComplete="name" value={nombre} onChange={(e) => setNombre(e.target.value)} className={inputClass} placeholder="Su nombre completo" />
         </label>
         <label className="text-sm font-bold text-dusk-text">
           Teléfono (WhatsApp)
@@ -154,8 +154,8 @@ export function RegistroEvento({ evento }: { evento: string }) {
       </button>
 
       <p className="mt-3 text-xs leading-5 text-dusk-text-soft">
-        Al continuar aceptas las bases: una participación por persona y por teléfono; premios de hospedaje para
-        mayores de edad, con cédula, intransferibles y sujetos a disponibilidad. También aceptas recibir
+        Al continuar acepta las bases: una participación por persona y por teléfono; premios de hospedaje para
+        mayores de edad, con cédula, intransferibles y sujetos a disponibilidad. También acepta recibir
         promociones de Lotus 360 por WhatsApp.
       </p>
     </form>

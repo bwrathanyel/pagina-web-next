@@ -12,6 +12,7 @@ import { useSiteContent } from "@/components/providers/SiteContentProvider";
 import { SocialIcon, ICONS } from "@/components/layout/SocialIcon";
 import { clasesBoton } from "@/components/ui/Boton";
 import { CLASE_ETIQUETA_SECCION } from "@/components/ui/EncabezadoSeccion";
+import { FondoDusk } from "@/components/ui/FondoDusk";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 
 function CaretIcon() {
@@ -76,8 +77,9 @@ export function Footer() {
   const { content } = useSiteContent();
   const navItems = content.navigation.items.filter(itemMenuPublico);
   return (
-    <footer className="sobre-dusk relative bg-dusk">
-      <div className="mx-auto max-w-[var(--ancho-contenido)] px-5 py-9 md:py-16">
+    <footer className="sobre-dusk relative overflow-hidden bg-dusk">
+      <FondoDusk fondo="costa-dusk" />
+      <div className="relative mx-auto max-w-[var(--ancho-contenido)] px-5 py-9 md:py-16">
         <div className="mb-8 grid gap-7 border-b-2 border-dashed border-dusk-text/15 pb-8 md:grid-cols-[1fr_auto] md:items-end">
           <div>
             <EditableText path="footer.headline" as="p" multiline className="max-w-[15ch] text-balance font-display text-3xl font-bold leading-[1.02] tracking-[-0.015em] text-white md:text-5xl" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, ViewTransition } from "react";
 import Image from "next/image";
 import { Boton } from "@/components/ui/Boton";
 import { Hoja } from "@/components/ui/Hoja";
@@ -55,10 +55,14 @@ export function GaleriaProducto({
   fotos,
   alt,
   creditos,
+  nombreTransicion,
 }: {
   fotos: string[];
   alt: string;
   creditos?: CreditoFoto[];
+  /** View transition (`nombreFoto`) de la foto principal: solo la primera, ni
+   * las chicas ni el visor, porque el nombre debe ser único en la página. */
+  nombreTransicion?: string;
 }) {
   const pista = useRef<HTMLDivElement>(null);
   const [activa, setActiva] = useState(0);
@@ -99,7 +103,8 @@ export function GaleriaProducto({
             disposicion(n)
           }
         >
-          {fotos.map((foto, i) => (
+          {fotos.map((foto, i) => {
+            const boton = (
             <button
               key={foto}
               type="button"
@@ -120,7 +125,15 @@ export function GaleriaProducto({
                 className="object-cover transition-transform duration-[var(--dur-lenta)] ease-salida motion-reduce:transition-none lg:group-hover/foto:scale-[1.03]"
               />
             </button>
-          ))}
+            );
+            return i === 0 && nombreTransicion ? (
+              <ViewTransition key={foto} name={nombreTransicion} share="morph" default="none">
+                {boton}
+              </ViewTransition>
+            ) : (
+              boton
+            );
+          })}
         </div>
 
         {n > 1 ? (

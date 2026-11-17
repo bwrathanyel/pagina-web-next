@@ -21,6 +21,7 @@ export function SolicitudAliado({ slug, nombre, descuento }: { slug: string; nom
         key={destino}
         origen={`aliado:${slug}`}
         destinoInicial={destino}
+        abiertoInicial={Boolean(destino)}
         mensajeBase={`Hola, vengo del catálogo corporativo de ${nombre} (descuento de aliado ${descuento}%).`}
         triggerClassName={clasesBoton({ variante: "whatsapp", tamano: "lg", className: "w-full sm:w-auto" })}
       >

@@ -216,7 +216,7 @@ export function Hoja({
               (esLateralMovil ? " touch-pan-y" : "")
             }
             {...MOVIMIENTO[modo]}
-            transition={{ duration: 0.32, ease: EASE_SALIDA }}
+            transition={{ duration: 0.28, ease: EASE_SALIDA }}
             drag={esMovil ? "y" : esLateralMovil ? "x" : false}
             dragControls={arrastre}
             dragListener={esLateralMovil}

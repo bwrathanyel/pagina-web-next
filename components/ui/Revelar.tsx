@@ -37,6 +37,8 @@ export function Revelar({
     const el = ref.current;
     if (!el || typeof IntersectionObserver === "undefined") return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Con scroll-driven animations la entrada es CSS puro (globals.css).
+    if (CSS.supports("animation-timeline: view()")) return;
     if (el.getBoundingClientRect().top < window.innerHeight * 0.92) return;
     setArmado(true);
   }, []);

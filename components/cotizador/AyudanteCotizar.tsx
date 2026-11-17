@@ -62,7 +62,7 @@ export function AyudanteCotizar({
   const tarjeta = (
     <div className="flex items-center gap-3 rounded-card border border-linea bg-card p-3">
       <Solcito mood={abierto ? "happy" : mood} size={variante === "movil" ? 48 : 56} gestos={!abierto} />
-      <p className="min-w-0 flex-1 text-sm leading-snug text-ink" aria-live="polite">
+      <p className="min-w-0 flex-1 text-sm leading-snug text-ink">
         {pista}
       </p>
       <button

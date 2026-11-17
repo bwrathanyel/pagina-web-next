@@ -6,6 +6,7 @@ import { m } from "motion/react";
 import { Icono, type NombreIcono } from "@/components/ui/Icono";
 import { usePaneles } from "@/lib/layout/paneles";
 import { esRutaCheckout } from "@/lib/layout/rutasCheckout";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { esFormularioAcceso } from "@/lib/utils/rutaInterna";
 
 // Cinco pestañas: las dos de la izquierda y la de la derecha de "Cotizar" son
@@ -20,6 +21,8 @@ type Pestana = {
   activaEn?: (pathname: string) => boolean;
   /** Abre el panel de cuenta (CuentaHoja) en vez de navegar. */
   abrePanelCuenta?: boolean;
+  /** Sin sesión abre la hoja de cuenta en vez de navegar al login. */
+  requiereSesion?: boolean;
 };
 
 const empieza = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`);
@@ -35,7 +38,7 @@ const IZQUIERDA: Pestana[] = [
 ];
 
 const DERECHA: Pestana[] = [
-  { href: "/cuenta/favoritos", label: "Favoritos", icono: "corazon" },
+  { href: "/cuenta/favoritos", label: "Favoritos", icono: "corazon", requiereSesion: true },
   {
     href: "/cuenta",
     label: "Cuenta",
@@ -50,6 +53,7 @@ const COTIZAR = { href: "/cotizar", label: "Cotizar" };
 export function BottomTabBar() {
   const pathname = usePathname();
   const abrirCuenta = usePaneles((s) => s.abrirCuenta);
+  const { user } = useAuth();
   const esActiva = ({ href, activaEn }: Pestana) => (activaEn ? activaEn(pathname) : empieza(pathname, href));
   const cotizarActiva = empieza(pathname, COTIZAR.href);
 
@@ -74,7 +78,7 @@ export function BottomTabBar() {
             className="absolute inset-x-5 top-0 h-[3px] rounded-b-pill bg-acento"
           />
         ) : null}
-        {p.abrePanelCuenta && !esFormularioAcceso(pathname) ? (
+        {(p.abrePanelCuenta || (p.requiereSesion && !user)) && !esFormularioAcceso(pathname) ? (
           <button
             type="button"
             onClick={abrirCuenta}

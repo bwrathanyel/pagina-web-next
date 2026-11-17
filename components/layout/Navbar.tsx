@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { m } from "motion/react";
@@ -9,12 +9,14 @@ import { HeaderControls } from "@/components/layout/HeaderControls";
 import { HojaMas } from "@/components/layout/HojaMas";
 import { PreferenciasPopover } from "@/components/layout/PreferenciasPopover";
 import { BOTON_ICONO } from "@/components/layout/botonIcono";
+import { AvisoFavorito } from "@/components/layout/AvisoFavorito";
 import { BrandMark } from "@/components/layout/BrandMark";
 import { Wordmark } from "@/components/layout/Wordmark";
 import { Icono } from "@/components/ui/Icono";
 import { useHeaderAutoHide } from "@/lib/layout/useHeaderAutoHide";
 import { useBarraSobreFoto } from "@/lib/layout/barraSobreFoto";
 import { usePaneles } from "@/lib/layout/paneles";
+import { registrarNavegacion, volverOIr } from "@/lib/navegacion";
 import { useSiteContent } from "@/components/providers/SiteContentProvider";
 import { itemMenuPublico } from "@/lib/catalogo/ocultas";
 
@@ -66,13 +68,18 @@ export function Navbar() {
 
   // Sin historial propio (llegó desde una red social a esta página) "atrás"
   // llevaría fuera del sitio o no haría nada: en ese caso va al inicio.
+  // El Navbar vive en el layout: cuenta aquí cada ruta propia visitada.
+  useEffect(() => {
+    registrarNavegacion(pathname);
+  }, [pathname]);
+
   function volver() {
-    if (window.history.length > 1) router.back();
-    else router.push("/");
+    volverOIr(router, "/");
   }
 
   return (
     <>
+      <AvisoFavorito />
       <header
         {...propsContenedor}
         className={

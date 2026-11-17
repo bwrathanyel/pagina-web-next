@@ -1,9 +1,10 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Aviso } from "@/components/ui/Aviso";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { FormularioLogin } from "@/components/cuenta/FormularioLogin";
 import { rutaInterna } from "@/lib/utils/rutaInterna";
 
@@ -17,7 +18,13 @@ export default function LoginPage() {
   const query = new URLSearchParams(useSyncExternalStore(sinSuscripcion, leerQuery, () => ""));
   const porConfirmar = query.has("confirmar");
   const falloGoogle = query.get("error") === "google";
+  const sesionVencida = query.get("aviso") === "vencida";
   const siguiente = rutaInterna(query.get("next"));
+  const { user } = useAuth();
+  // Con sesión abierta el formulario no sirve: se sale sin dejarlo en el historial.
+  useEffect(() => {
+    if (user) router.replace(siguiente);
+  }, [user, siguiente, router]);
 
   return (
     <main className="mx-auto max-w-md px-5 py-10 md:py-16">
@@ -30,6 +37,12 @@ export default function LoginPage() {
         </Aviso>
       ) : null}
 
+      {sesionVencida ? (
+        <Aviso tono="info" className="mb-6">
+          Su sesión venció. Inicie sesión para continuar.
+        </Aviso>
+      ) : null}
+
       {falloGoogle ? (
         <Aviso className="mb-6">No pudimos iniciar sesión con Google. Inténtelo de nuevo o entre con su correo.</Aviso>
       ) : null}
@@ -37,7 +50,7 @@ export default function LoginPage() {
       <FormularioLogin
         siguiente={siguiente}
         onEntrar={() => {
-          router.push(siguiente);
+          router.replace(siguiente);
           router.refresh();
         }}
       />

@@ -2,20 +2,26 @@
 
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { urlLoginConRetorno } from "@/lib/utils/rutaInterna";
+import { huboSalidaVoluntaria, marcarSalidaVoluntaria, urlLoginConRetorno } from "@/lib/utils/rutaInterna";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Esqueleto } from "@/components/ui/Esqueleto";
 
 export function RequiereSesion({ children }: { children: React.ReactNode }) {
   const { user, cargando } = useAuth();
   const router = useRouter();
-  // Tras cerrar sesión no se guarda el retorno: en un equipo compartido el
-  // siguiente usuario caería en la página del anterior.
   const huboSesion = useRef(false);
 
   useEffect(() => {
-    if (user) huboSesion.current = true;
-    if (!cargando && !user) router.replace(huboSesion.current ? "/cuenta/login" : urlLoginConRetorno());
+    if (user) {
+      huboSesion.current = true;
+      marcarSalidaVoluntaria(false);
+      return;
+    }
+    if (cargando) return;
+    // Cerrar sesión: quien cierra ya navega (a la home); aquí no se navega
+    // otra vez. Si la sesión venció, login con retorno y aviso.
+    if (huboSalidaVoluntaria()) return;
+    router.replace(urlLoginConRetorno(huboSesion.current ? "vencida" : undefined));
   }, [cargando, user, router]);
 
   if (cargando || !user) {

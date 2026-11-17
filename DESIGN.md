@@ -115,7 +115,7 @@ components:
 
 Cada oferta se lee como un boleto: destino arriba, fecha y detalle al centro, precio en el talón. El sitio toma la señalética de aeropuerto (titulares condensados y en negrita, un tablero de salidas, códigos en mono) y la pone sobre bandas `dusk` con foto a sangre, alternadas con arena y crema mate. La marca evoluciona en proporción, no en color: los hex del logo y el mate calibrado por el dueño se conservan.
 
-La pantalla es de un viajero en el teléfono que llegó desde redes. Densidad media, un solo momento orquestado (el tablero del hero), el resto es CSS quieto y respuesta táctil. El degradado del logo (`#FC7300` a `#FBC000`) queda reservado para el elemento firma: el canto del talón y el indicador activo, nunca detrás de texto.
+La pantalla es de un viajero en el teléfono que llegó desde redes. Densidad media, un momento de firma (el tablero del hero) y movimiento con propósito en el resto: cada animación explica un cambio de estado, una relación o una continuidad (ver Motion). El degradado del logo (`#FC7300` a `#FBC000`) queda reservado para el elemento firma: el canto del talón y el indicador activo, nunca detrás de texto.
 
 Rechazos confirmados: la landing genérica de agencia (foto, serif y tarjetas crema), el grano `feTurbulence`, los emoji y glifos unicode como iconos, los eyebrows sobre los títulos, y la elevación con borde y sombra a la vez.
 
@@ -123,7 +123,7 @@ Rechazos confirmados: la landing genérica de agencia (foto, serif y tarjetas cr
 - Bandas `dusk` con foto a sangre contra contenido en `sand`/`card` mate.
 - Titulares en Archivo condensado bold; precios, códigos y fechas en Space Mono.
 - Ofertas como boletos perforados con talón de tamaño fijo.
-- Un solo momento animado: el tablero split-flap del hero, que sigue a la foto rotativa.
+- Movimiento con propósito: el tablero split-flap del hero es la firma; el resto son respuestas cortas (≤ 300 ms) que explican qué cambió.
 - Claro por defecto; oscuro y automático desde el selector de tema.
 - Voz "usted", cercana y respetuosa.
 
@@ -194,6 +194,33 @@ Superficies planas en reposo: la elevación es un borde `linea` **o** una sombra
 ## Shapes
 
 Radios de 12 a 16px: `card` 16px, `media` y `control` 12px, `pill` 999px solo para contadores e insignias. Nada de `rounded-md` suelto ni radios arbitrarios. La forma recurrente es el boleto: rectángulo con muesca semicircular en el corte (`boleto-v`, `boleto-h`, muesca 0.6rem) y talón separado por una perforación de 2px punteada.
+
+## Motion
+
+**Movimiento con propósito** (decisión del dueño, 16-nov-2026). Una animación se queda solo si quitarla hace perder información: qué se tocó, qué cambió, de dónde viene lo nuevo. Decorar no es un propósito.
+
+### Presupuesto
+- **Duración:** ≤ 300 ms por animación (`--dur-rapida` 160 ms para respuesta, `--dur-media` 280 ms para cambios de estado y entradas). La salida es más corta que la entrada. `--dur-lenta` (600 ms) queda solo para la entrada del hero.
+- **Escalonado:** 40 ms entre hermanos, con tope en el séptimo (≤ 240 ms de retraso total).
+- **Propiedades:** solo `transform` y `opacity` (y `box-shadow` en el hover de tarjeta). Nada de animar `width`, `height`, `top`, `margin`: sin layout thrash.
+- **Curvas:** `--ease-salida` para llegar, `--ease-entrada-salida` para lo que va y vuelve (flap). Nunca `cubic-bezier` en línea; en `motion` las mismas curvas como arreglo (`EASE_SALIDA` en `Hoja`).
+- **Loops:** solo los del hero (Ken Burns, barra de segmentos) y se pausan fuera de pantalla o con la pestaña oculta (`.en-pausa`).
+- **Movimiento reducido:** sin desplazamiento ni escala; las entradas quedan como fundido corto (`aparecer-suave`), los loops se quitan, lo que se revela al hacer scroll ya está en su lugar y las view transitions no animan.
+
+### Momentos permitidos
+1. **Firma:** tablero split-flap del hero (110 ms por celda, solo las que cambian), `.hero-sube` y el efecto tablero en montos (`flap-caer`: `MontoTablero`, `.monto-flap`).
+2. **Respuesta al tocar:** `active:scale-[0.97]` en botones; `PRESION_TARJETA` (0.985) en tarjetas; latido del favorito y rebote del carrito solo tras la acción.
+3. **Estado:** hover de tarjeta (`ELEVA_HOVER`, `FOTO_HOVER`), opción elegida (`ELEGIDO` / `ELEGIBLE`), indicador activo con `layoutId` (pestañas, chips, barra inferior), el sello del destino que se estampa en el boleto del resumen al cambiar de destino (`estampa`).
+4. **Continuidad en la página:** hojas y modales con entrada y salida (`Hoja`, 280 ms entrada, 220 ms salida); paneles de pestañas del cotizador entran desde el lado de su pestaña (`.panel-entra`); el hotel elegido sube a «Su hotel» (`.hotel-sube`).
+5. **Continuidad entre páginas:** el contenido cruza en su lugar (`.pagina`, el cromo queda quieto y `root` no anima). Lo único que viaja es la foto del producto u hotel: tarjeta → galería de la ficha → `/cotizar`, con `<ViewTransition name={nombreFoto(...)} share="morph" default="none">` y el grupo `.morph` en `globals.css`.
+6. **Listas:** entrada escalonada (`ENTRA_ESCALONADO` + `escalon(i)`, keyframe `surge`) cuando una lista aparece como lista (cambio de destino, resultados). Nunca en cada tecla.
+7. **Scroll:** `Revelar` con `animation-timeline: view()` donde el navegador lo soporta (CSS puro, sin esperar a hidratar); donde no, cae al `IntersectionObserver`. El hero y lo que ya está en pantalla nunca se revelan.
+
+Las constantes viven en `components/ui/movimiento.ts`: usarlas en vez de escribir duraciones y escalas a mano.
+
+### Named Rules
+**The Purpose Rule.** Si al quitar una animación no se pierde nada, se quita.
+**The 300ms Rule.** Ninguna animación de interfaz pasa de 300 ms; la firma del hero es la única excepción.
 
 ## Components
 
@@ -268,6 +295,15 @@ Un solo flujo para toda la web: el hero, `BottomTabBar`, `CajaPrecio`, las tarje
 - **Hospedaje:** `OfertasHospedaje` (tarjetas por `prioridadOferta`; con stop sale en las fechas, "Sin disponibilidad" y no se elige) y `DetalleHotel` (galería, planes, habitaciones con foto). El estimado sale de `estimarEstadia()`; sin tarifa aplicable, "Precio a confirmar por el asesor", nunca un número.
 - **Vuelo y tours:** `SeccionVuelo` copia ruta, fechas y pasajeros del viaje y permite fechas propias; `SeccionTours` lista tours del destino, que no suman al estimado.
 - **Resumen:** `ResumenViaje` en formato boleto, estimado con `aria-live`, contacto junto a Enviar. El borrador se guarda en localStorage (7 días) y se ofrece retomarlo. La confirmación es `SolicitudLista`; si el CRM falla se avisa y se ofrece WhatsApp directo.
+
+### Arte generado
+Piezas de GPT Image (OpenRouter) hechas con `CRM/scripts/generar-arte.mjs` desde `scripts/arte/manifiesto.json` (guía de estilo, prompts y gasto en `costos.json`, tope US$ 10). Siempre compuestas con piezas propias del sistema; **nunca reemplazan fotos reales** de hoteles ni de destinos que ya tienen foto.
+- **`SelloDestino`:** sello de pasaporte por destino, tinta única sobre transparente, pintado con `mask-image` y `currentColor` de un token (`text-acento`, `text-dusk-text`), así gira con el tema. En `SelectorDestino`, el boleto de `ResumenViaje` (se estampa al cambiar destino, `estampa`, 280 ms) y `SolicitudLista`.
+- **`EstadoIlustrado`:** ilustración en una ventanilla `dusk` fija (igual en claro y oscuro): sin resultados, sin cupo, error, 404 y solicitud enviada. Siempre decorativa (`alt=""`); el texto del estado sigue diciendo todo.
+- **Fondos `dusk`:** panorámicas de bajo contraste detrás de bandas `dusk` (footer, cabecera del catálogo) con velo en degradado desde `dusk` sobre el lado del texto y capa `[contain:strict]`.
+- **Portadas:** solo para destinos sin ninguna foto real, marcadas `generada: true` en el manifiesto y aprobadas por el dueño antes de publicar. Hoy todos los destinos tienen foto: no hay ninguna.
+
+**The Real-Photo Rule.** Lo que se vende (hotel, habitación, destino con foto) se muestra con foto real. El arte generado acompaña; nunca representa un producto.
 
 ## Do's and Don'ts
 

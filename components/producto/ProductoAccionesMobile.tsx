@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { urlLoginConRetorno } from "@/lib/utils/rutaInterna";
 import { Boton } from "@/components/ui/Boton";
 import { BotonFavorito } from "@/components/ui/BotonFavorito";
 import { Icono } from "@/components/ui/Icono";
@@ -9,6 +8,7 @@ import { useFavoritos } from "@/lib/favoritos/useFavoritos";
 import { useCheckoutConfig } from "@/components/checkout/useCheckoutConfig";
 import { enlaceReservar, useCompraDirecta } from "@/components/producto/ReservarCta";
 import { registrarEvento } from "@/lib/analitica/eventos";
+import { volverOIr } from "@/lib/navegacion";
 
 /** Overlay mobile-only sobre la foto principal: volver + favorito. En
  * desktop ya hay Navbar para volver, no se duplica. */
@@ -28,9 +28,9 @@ export function ProductoAccionesOverlay({
     <div className="absolute inset-x-4 top-4 z-10 flex items-center justify-between lg:hidden">
       <button
         type="button"
-        onClick={() => router.back()}
+        onClick={() => volverOIr(router, "/catalogo/hoteles")}
         aria-label="Volver"
-        className="flex h-11 w-11 items-center justify-center rounded-pill bg-dusk/85 text-dusk-text backdrop-blur-sm transition-colors duration-150 hover:text-coral-bright"
+        className="flex h-11 w-11 items-center justify-center rounded-pill bg-dusk/85 text-dusk-text transition-colors duration-[var(--dur-rapida)] hover:text-coral-bright"
       >
         <Icono nombre="flecha-izq" tamano={20} />
       </button>
@@ -38,8 +38,7 @@ export function ProductoAccionesOverlay({
         activo={esFavorito(tipo, id)}
         nombre={nombre}
         onToggle={async () => {
-          const r = await toggle(tipo, id);
-          if (r === "login-requerido") router.push(urlLoginConRetorno());
+          await toggle(tipo, id);
         }}
       />
     </div>

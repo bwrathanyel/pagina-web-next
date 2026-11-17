@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { prioridadProducto } from "./busqueda.ts";
+import { coincide, coincideTodas, prioridadProducto } from "./busqueda.ts";
 import type { Producto } from "@/types/supabase";
 
 const producto = (id: number, nombre: string, plan: string | null): Producto =>
@@ -34,4 +34,23 @@ test("todo incluido en el nombre del producto también cuenta (paquetes sin plan
 test("sin niño gratis ni todo incluido queda al final", () => {
   const p = producto(4, "Hotel Cualquiera", "Solo desayuno");
   assert.equal(prioridadProducto(p, new Set()), 2);
+});
+
+test("coincide ignora acentos y mayúsculas en ambos lados", () => {
+  assert.equal(coincide("Mérida", "merida"), true);
+  assert.equal(coincide("Merida", "MÉRIDA"), true);
+  assert.equal(coincide(null, "x"), false);
+  assert.equal(coincide("Los Roques", "caracas"), false);
+});
+
+test("coincideTodas exige todas las palabras, repartidas entre los campos", () => {
+  const campos = ["Hotel Costa Linda", "Isla de Margarita"];
+  assert.equal(coincideTodas(campos, "margarita costa"), true);
+  assert.equal(coincideTodas(campos, "costa canaima"), false);
+  assert.equal(coincideTodas(campos, "  costa   LINDA "), true);
+});
+
+test("coincideTodas: consulta vacía coincide y campos nulos se ignoran", () => {
+  assert.equal(coincideTodas(["x"], "  "), true);
+  assert.equal(coincideTodas([null, undefined, "Mérida"], "merida"), true);
 });

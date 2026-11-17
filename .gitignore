@@ -53,3 +53,6 @@ next-env.d.ts
 
 # Capturas de mocks de diseno (regenerables, pesan ~40MB)
 .impeccable/mocks/**/*.png
+
+# Originales del arte generado (F4); public/arte/ lleva los WebP
+/scripts/arte/originales/

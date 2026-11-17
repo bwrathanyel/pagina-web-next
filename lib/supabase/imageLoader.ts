@@ -62,7 +62,13 @@ function anchoDerivado(pedido: number): AnchoDerivado {
 const ANCHOS_DESTINO = [828, 1280, 1920, 2560] as const;
 const FOTO_DESTINO = /^\/destinos\/([a-z-]+)\.jpg$/;
 
+/** Panorámicas de `public/arte/fondos/`: `<clave>-<ancho>.webp` en 828 y 1536.
+ * Se pide `/arte/fondos/<clave>.webp` y el loader elige el ancho. */
+const FONDO_ARTE = /^\/arte\/fondos\/([a-z-]+)\.webp$/;
+
 export default function supabaseImageLoader({ src, width }: { src: string; width: number; quality?: number }): string {
+  const fondo = FONDO_ARTE.exec(src);
+  if (fondo) return `/arte/fondos/${fondo[1]}-${width <= 828 ? 828 : 1536}.webp`;
   const destino = FOTO_DESTINO.exec(src);
   if (destino) {
     const ancho = ANCHOS_DESTINO.find((a) => a >= width) ?? 2560;

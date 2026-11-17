@@ -1,0 +1,95 @@
+{
+  "total_usd": 0.61831,
+  "registros": [
+    {
+      "pieza": "sellos/margarita",
+      "costo_usd": 0.04468,
+      "real": true,
+      "fecha": "2026-11-17T00:38:03.083Z"
+    },
+    {
+      "pieza": "estados/sin-resultados",
+      "costo_usd": 0.044535,
+      "real": true,
+      "fecha": "2026-11-17T00:38:33.073Z"
+    },
+    {
+      "pieza": "sellos/morrocoy",
+      "costo_usd": 0.044655,
+      "real": true,
+      "fecha": "2026-11-17T00:39:21.451Z"
+    },
+    {
+      "pieza": "sellos/los-roques",
+      "costo_usd": 0.044645,
+      "real": true,
+      "fecha": "2026-11-17T00:39:47.576Z"
+    },
+    {
+      "pieza": "sellos/merida",
+      "costo_usd": 0.04465,
+      "real": true,
+      "fecha": "2026-11-17T00:40:35.430Z"
+    },
+    {
+      "pieza": "sellos/canaima",
+      "costo_usd": 0.044685,
+      "real": true,
+      "fecha": "2026-11-17T00:41:03.484Z"
+    },
+    {
+      "pieza": "sellos/catatumbo",
+      "costo_usd": 0.044645,
+      "real": true,
+      "fecha": "2026-11-17T00:41:41.488Z"
+    },
+    {
+      "pieza": "sellos/colonia-tovar",
+      "costo_usd": 0.04465,
+      "real": true,
+      "fecha": "2026-11-17T00:42:07.323Z"
+    },
+    {
+      "pieza": "sellos/extranjero",
+      "costo_usd": 0.04466,
+      "real": true,
+      "fecha": "2026-11-17T00:42:43.097Z"
+    },
+    {
+      "pieza": "estados/sin-cupo",
+      "costo_usd": 0.044595,
+      "real": true,
+      "fecha": "2026-11-17T00:43:12.275Z"
+    },
+    {
+      "pieza": "estados/error",
+      "costo_usd": 0.04457,
+      "real": true,
+      "fecha": "2026-11-17T00:43:49.578Z"
+    },
+    {
+      "pieza": "estados/no-encontrado",
+      "costo_usd": 0.04456,
+      "real": true,
+      "fecha": "2026-11-17T00:44:35.015Z"
+    },
+    {
+      "pieza": "estados/solicitud-enviada",
+      "costo_usd": 0.044585,
+      "real": true,
+      "fecha": "2026-11-17T00:45:07.831Z"
+    },
+    {
+      "pieza": "fondos/cielo-dusk",
+      "costo_usd": 0.0191,
+      "real": true,
+      "fecha": "2026-11-17T00:45:34.421Z"
+    },
+    {
+      "pieza": "fondos/costa-dusk",
+      "costo_usd": 0.019095,
+      "real": true,
+      "fecha": "2026-11-17T00:45:52.281Z"
+    }
+  ]
+}

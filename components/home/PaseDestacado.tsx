@@ -9,6 +9,7 @@ import { Boton } from "@/components/ui/Boton";
 import { Icono } from "@/components/ui/Icono";
 import { useReservarTarjeta } from "@/components/producto/ReservarCta";
 import { MontoAjustado, PrecioMostrado } from "@/components/ui/PrecioMostrado";
+import { FOTO_HOVER, PRESION_TARJETA } from "@/components/ui/movimiento";
 import type { PaseHero } from "@/lib/promociones/fotosHero";
 import { separarMonto, type PrecioTarjeta } from "@/lib/tarifas";
 
@@ -79,7 +80,7 @@ export function PaseDestacado({
       <Link
         href={pase.href}
         aria-label={`Ver oferta: ${pase.hotel}`}
-        className="group block rounded-card transition-transform duration-150 ease-salida active:scale-[0.985]"
+        className={`group block rounded-card ${PRESION_TARJETA}`}
       >
         <Boleto
           orientacion="v"
@@ -133,7 +134,7 @@ export function PaseDestacado({
                   alt=""
                   fill
                   sizes="(min-width: 1024px) 18rem, 4.5rem"
-                  className="object-cover transition-transform duration-300 ease-salida motion-safe:group-hover:scale-[1.04]"
+                  className={`object-cover ${FOTO_HOVER}`}
                 />
               </div>
             ) : null}

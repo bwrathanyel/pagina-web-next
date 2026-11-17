@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Boton } from "@/components/ui/Boton";
+import { EstadoIlustrado } from "@/components/ui/EstadoIlustrado";
 import { Icono } from "@/components/ui/Icono";
 
 export const metadata: Metadata = {
@@ -14,6 +15,7 @@ export default function NotFound() {
   return (
     <section className="sobre-dusk bg-dusk px-5 py-16 text-dusk-text md:py-28">
       <div className="mx-auto max-w-[var(--ancho-medio)]">
+        <EstadoIlustrado estado="no-encontrado" tamano={8} className="mb-6 ring-1 ring-dusk-text/15" />
         <h1 className="max-w-[16ch] font-display text-4xl font-extrabold leading-[1.02] tracking-tight text-balance md:text-6xl">
           No encontramos esta página
         </h1>

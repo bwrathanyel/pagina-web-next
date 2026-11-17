@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, ViewTransition } from "react";
 
 const CURVA = [0.22, 1, 0.36, 1] as const;
 
@@ -17,6 +18,8 @@ export function CardPhotoGallery({
   alt,
   referencial = false,
   prioridad = false,
+  nombreTransicion,
+  href,
 }: {
   fotos: string[];
   alt: string;
@@ -27,7 +30,16 @@ export function CardPhotoGallery({
    * pantallazo). Antes cada tarjeta pedía su portada con `priority`: una lista
    * de 40 bajaba 40 fotos con prioridad alta antes que nada. */
   prioridad?: boolean;
+  /** View transition de la foto (`nombreFoto`): va en el contenedor, no en
+   * cada foto, para que el carrusel viaje como una sola pieza. */
+  nombreTransicion?: string;
+  /** Ficha a la que lleva el toque sobre la foto. Si no llega, sale del
+   * nombre de la transición (`foto-producto-<id>`); sin ninguno, el toque pasa de foto. */
+  href?: string | null;
 }) {
+  const router = useRouter();
+  const idFicha = nombreTransicion?.match(/^foto-producto-(d+)$/)?.[1];
+  const destinoToque = href ?? (idFicha ? `/producto/${idFicha}` : null);
   const carga = (esPortada: boolean) =>
     prioridad && esPortada ? ({ loading: "eager", fetchPriority: "high" } as const) : {};
   const [activa, setActiva] = useState(0);
@@ -89,10 +101,11 @@ export function CardPhotoGallery({
     setActiva((indice) => (indice + sentido + fotos.length) % fotos.length);
   }
 
-  return (
+  // overflow-hidden: la foto viaja recortada a la caja aunque tenga el zoom del hover.
+  const carrusel = (
     <div
       ref={caja}
-      className="absolute inset-0 touch-pan-y"
+      className="absolute inset-0 touch-pan-y overflow-hidden"
       role="group"
       aria-roledescription="carrusel de fotografías"
       aria-label={`${alt}: foto ${activa + 1} de ${fotos.length}`}
@@ -110,15 +123,22 @@ export function CardPhotoGallery({
         toque.current = { x: punto.clientX, y: punto.clientY };
       }}
       onTouchEnd={(event) => {
-        if (!toque.current || fotos.length < 2) return;
+        const inicio = toque.current;
+        // Los puntos son botones: su toque lo maneja su onClick, no la foto.
+        if (event.target instanceof Element && event.target.closest("button")) { toque.current = null; return; }
+        if (!inicio || (fotos.length < 2 && !destinoToque)) return;
         const punto = event.changedTouches[0];
-        const dx = punto.clientX - toque.current.x;
-        const dy = punto.clientY - toque.current.y;
+        const dx = punto.clientX - inicio.x;
+        const dy = punto.clientY - inicio.y;
         toque.current = null;
         // Solo un deslizamiento o un toque sobre la foto montan todas: un
         // scroll vertical que empieza encima de la tarjeta no cuenta.
-        if (Math.abs(dx) > 38 && Math.abs(dx) > Math.abs(dy)) { setMontarTodas(true); mover(dx < 0 ? 1 : -1); }
-        else if (Math.abs(dx) < 10 && Math.abs(dy) < 10) { setMontarTodas(true); mover(1); }
+        if (fotos.length > 1 && Math.abs(dx) > 38 && Math.abs(dx) > Math.abs(dy)) { setMontarTodas(true); mover(dx < 0 ? 1 : -1); }
+        else if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
+          // Tocar la foto abre la ficha; deslizar sigue cambiando de foto.
+          if (destinoToque) router.push(destinoToque);
+          else { setMontarTodas(true); mover(1); }
+        }
       }}
     >
       {/* El zoom al hover vive en este wrapper, no en cada <Image>: si el
@@ -207,5 +227,12 @@ export function CardPhotoGallery({
         </>
       ) : null}
     </div>
+  );
+  return nombreTransicion ? (
+    <ViewTransition name={nombreTransicion} share="morph" default="none">
+      {carrusel}
+    </ViewTransition>
+  ) : (
+    carrusel
   );
 }

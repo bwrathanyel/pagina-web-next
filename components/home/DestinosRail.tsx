@@ -4,6 +4,7 @@ import { Seccion } from "@/components/ui/Seccion";
 import { Carrusel } from "@/components/ui/Carrusel";
 import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
 import { CLASE_ETIQUETA_SECCION, CLASE_TITULO_SECCION, EncabezadoSeccion } from "@/components/ui/EncabezadoSeccion";
+import { FOTO_HOVER, PRESION_TARJETA } from "@/components/ui/movimiento";
 import type { DestinoConOfertas } from "@/lib/promociones/hotSales";
 
 /** Tiras por destino (reemplaza a la vitrina de 4 ofertas): foto a sangre,
@@ -34,14 +35,14 @@ export function DestinosRail({ destinos }: { destinos: DestinoConOfertas[] }) {
           <Link
             key={d.destino}
             href={`/catalogo/hot-sales?destino=${encodeURIComponent(d.destino)}`}
-            className="group relative flex aspect-3/4 flex-col justify-end overflow-hidden rounded-card bg-dusk-2 text-dusk-text transition-transform duration-150 ease-salida active:scale-[0.985]"
+            className={`group relative flex aspect-3/4 flex-col justify-end overflow-hidden rounded-card bg-dusk-2 text-dusk-text ${PRESION_TARJETA}`}
           >
             <Image
               src={d.foto}
               alt=""
               fill
               sizes="(min-width: 640px) 252px, 62vw"
-              className="object-cover transition-[scale] duration-700 ease-salida group-hover:scale-[1.04]"
+              className={`object-cover ${FOTO_HOVER}`}
             />
             <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-dusk from-20% via-dusk/70 to-transparent" />
             <span className="relative p-4">

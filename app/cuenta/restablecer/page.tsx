@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Aviso } from "@/components/ui/Aviso";
-import { Boton } from "@/components/ui/Boton";
+import { Boton, clasesBoton } from "@/components/ui/Boton";
 import { Campo, Entrada } from "@/components/ui/Campo";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { Esqueleto } from "@/components/ui/Esqueleto";
+import { tomarRetorno } from "@/lib/utils/rutaInterna";
 
 export default function RestablecerPage() {
   const router = useRouter();
@@ -17,6 +18,8 @@ export default function RestablecerPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
+  // Ruta de origen (cookie de retorno) una vez guardada la contraseña nueva.
+  const [retorno, setRetorno] = useState<string | null>(null);
 
   useEffect(() => {
     const sb = supabaseBrowser();
@@ -42,8 +45,22 @@ export default function RestablecerPage() {
       setError("No se pudo actualizar la contraseña. Inténtelo de nuevo.");
       return;
     }
-    router.push("/cuenta");
+    setRetorno(tomarRetorno());
     router.refresh();
+  }
+
+  if (retorno !== null) {
+    return (
+      <main className="mx-auto max-w-md px-5 py-10 md:py-16">
+        <h1 className="font-display text-4xl font-bold leading-none text-ink">Contraseña actualizada</h1>
+        <Aviso tono="ok" className="mt-6">
+          Ya puede usar su contraseña nueva. Su sesión sigue abierta.
+        </Aviso>
+        <Link href={retorno} replace className={clasesBoton({ tamano: "lg", ancho: true, className: "mt-8" })}>
+          Continuar
+        </Link>
+      </main>
+    );
   }
 
   if (estado === "verificando") {

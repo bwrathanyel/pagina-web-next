@@ -5,6 +5,7 @@ import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
 import { Campo, Entrada } from "@/components/ui/Campo";
 import { AccesoGoogle } from "@/components/cuenta/BotonGoogle";
+import { guardarCorreo, MENSAJE_LIMITE, MENSAJE_RED, tipoErrorAuth } from "@/lib/auth/errores";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
 /** Google + correo. Lo usan /cuenta/registro y el panel de cuenta del header. */
@@ -12,22 +13,32 @@ export function FormularioRegistro({
   siguiente,
   onCreada,
   onPorConfirmar,
+  onYaExiste,
 }: {
   siguiente: string;
   /** Cuenta creada y con sesión abierta. */
   onCreada: () => void;
   /** Cuenta creada, pero Supabase pide confirmar el correo antes de entrar. */
   onPorConfirmar: () => void;
+  /** El correo ya tiene cuenta: pasa a «Entrar» con el correo cargado. */
+  onYaExiste?: () => void;
 }) {
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
+  const [yaExiste, setYaExiste] = useState(false);
+
+  function irAEntrar() {
+    guardarCorreo(email);
+    onYaExiste?.();
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setYaExiste(false);
     setCargando(true);
     const sb = supabaseBrowser();
 
@@ -43,11 +54,18 @@ export function FormularioRegistro({
     });
     if (signUpError) {
       setCargando(false);
-      setError(
-        signUpError.message.includes("already registered")
-          ? "Ese correo ya tiene una cuenta. Inicie sesión."
-          : "No se pudo crear la cuenta. Inténtelo de nuevo.",
-      );
+      const tipo = tipoErrorAuth(signUpError);
+      if (tipo === "ya_existe") setYaExiste(true);
+      else if (tipo === "limite") setError(MENSAJE_LIMITE);
+      else if (tipo === "red") setError(MENSAJE_RED);
+      else setError("No se pudo crear la cuenta. Inténtelo de nuevo.");
+      return;
+    }
+    // Con confirmación por correo activa, un correo ya registrado no da error:
+    // Supabase devuelve un usuario sin identidades (y no manda ningún correo).
+    if (data.user && data.user.identities?.length === 0) {
+      setCargando(false);
+      setYaExiste(true);
       return;
     }
 
@@ -86,6 +104,25 @@ export function FormularioRegistro({
         </Campo>
 
         {error ? <Aviso>{error}</Aviso> : null}
+        {yaExiste ? (
+          <Aviso tono="info">
+            Ese correo ya tiene una cuenta.
+            {onYaExiste ? (
+              <>
+                {" "}
+                <button
+                  type="button"
+                  onClick={irAEntrar}
+                  className="inline-flex min-h-11 items-center font-semibold text-acento underline-offset-4 hover:underline"
+                >
+                  Entrar con este correo
+                </button>
+              </>
+            ) : (
+              " Inicie sesión."
+            )}
+          </Aviso>
+        ) : null}
 
         <Boton type="submit" tamano="lg" ancho cargando={cargando}>
           Crear cuenta

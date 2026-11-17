@@ -59,6 +59,7 @@ function SinSesion({ alEntrar }: { alEntrar: () => void }) {
         <FormularioRegistro
           siguiente={siguiente}
           onCreada={alEntrar}
+          onYaExiste={() => setPestana("entrar")}
           onPorConfirmar={() => {
             setPorConfirmar(true);
             setPestana("entrar");

@@ -5,8 +5,21 @@ import type { Producto } from "@/types/supabase";
 export const DESTINOS_SUGERIDOS = ["Canaima", "Chichiriviche", "Los Roques", "Margarita", "Mérida"];
 
 // Nullable: hay promociones sin título cargado y un null acá tumbaba /buscar.
+/** Minúsculas y sin acentos: "merida" encuentra "Mérida". */
+export const normalizarBusqueda = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
 export function coincide(texto: string | null | undefined, query: string): boolean {
-  return (texto ?? "").toLowerCase().includes(query.toLowerCase());
+  return normalizarBusqueda(texto ?? "").includes(normalizarBusqueda(query));
+}
+
+/** Todas las palabras de la consulta deben aparecer, cada una en cualquiera de
+ * los campos: "margarita todo incluido" coincide aunque el destino y el plan
+ * estén en campos distintos. */
+export function coincideTodas(campos: ReadonlyArray<string | null | undefined>, query: string): boolean {
+  const palabras = normalizarBusqueda(query).split(/\s+/).filter(Boolean);
+  if (palabras.length === 0) return true;
+  const pajar = normalizarBusqueda(campos.filter(Boolean).join(" "));
+  return palabras.every((p) => pajar.includes(p));
 }
 
 /** Prioridad de un producto suelto (hotel/paquete) en resultados de búsqueda,
