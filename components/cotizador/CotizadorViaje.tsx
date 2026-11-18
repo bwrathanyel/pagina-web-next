@@ -11,7 +11,7 @@ import { RecomendacionesHospedaje, type PrecioViaje } from "@/components/cotizad
 import { ResumenViaje, textoFechas } from "@/components/cotizador/ResumenViaje";
 import { SeccionTours } from "@/components/cotizador/SeccionTours";
 import { SeccionVuelo } from "@/components/cotizador/SeccionVuelo";
-import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
+import { PrecioMostrado, usePrecioSuma } from "@/components/ui/PrecioMostrado";
 import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { TelefonoPais } from "@/components/ui/TelefonoPais";
@@ -630,6 +630,15 @@ export function CotizadorViaje({
   const estimado = opcionElegida?.estimado ?? null;
   const toursElegidos = (catalogoTours && catalogoTours !== "error" ? catalogoTours : []).filter((t) => estado.tours.includes(t.id));
   const vueloViaje = estimarVueloViaje(estado, rutas, hoyCaracas());
+  // Barra móvil: hospedaje + vuelo (aprox.) cuando ambos tienen monto; en Bs cada pieza a su tasa.
+  const vueloTotalBarra = estado.servicios.includes("vuelo") && vueloViaje?.total != null ? vueloViaje.total : null;
+  const sumaBarra = !!(estado.servicios.includes("hospedaje") && estimado?.ok && vueloTotalBarra !== null);
+  const totalSumaBarra = usePrecioSuma(
+    sumaBarra && estimado?.ok
+      ? [{ monto: estimado.total, ivaEnBs: estimado.ivaEnBs }, { monto: vueloTotalBarra as number, tasaDolar: true }]
+      : [],
+    (n) => montoConMoneda(n, "USD"),
+  );
   const habitacion = tarifaElegida?.habitacion ?? null;
   const elegido: HospedajeElegido = {
     habitacion,
@@ -1322,8 +1331,18 @@ export function CotizadorViaje({
             {nochesDe(estado) > 0 && hospedaje ? ` · ${textoDuracion(nochesDe(estado))}` : ""}
           </span>
           <span className="block truncate font-mono text-lg font-bold tabular-nums text-ink">
-            {montoBarra ? (
+            {sumaBarra ? (
+              <>
+                {totalSumaBarra}
+                <span className="font-sans text-xs font-normal text-ink-soft"> aprox.</span>
+              </>
+            ) : montoBarra ? (
               <PrecioMostrado texto={montoBarra} ivaEnBs={estimado?.ok && estimado.ivaEnBs} />
+            ) : vueloTotalBarra !== null && !hospedaje ? (
+              <>
+                <PrecioMostrado texto={montoConMoneda(vueloTotalBarra, "USD")} tasaDolar />
+                <span className="font-sans text-xs font-normal text-ink-soft"> aprox.</span>
+              </>
             ) : hospedaje && ofertaElegida?.precio ? (
               <>
                 <span className="font-sans text-xs font-normal text-ink-soft">Desde </span>

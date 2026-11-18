@@ -45,6 +45,15 @@ export function PagarCliente({ token }: { token: string }) {
     if (fase && fase !== "emitido") olvidarReservaAbierta(token);
   }, [fase, token]);
 
+  // Al cambiar de fase («Ya pagué» → Verificando, o la verificación llega) la pantalla
+  // nueva es más corta: sin esto queda el scroll del formulario y se ve el pie de página.
+  const faseVista = useRef<string | null>(null);
+  useEffect(() => {
+    if (!fase) return;
+    if (faseVista.current && faseVista.current !== fase) window.scrollTo({ top: 0, behavior: "auto" });
+    faseVista.current = fase;
+  }, [fase]);
+
   // Verificando: se consulta sola con la pestaña a la vista (1 min, luego 2, luego 5; sin corte)
   // y al volver a ella. Oculta no consulta: el reloj sigue y al volver se pregunta enseguida.
   useEffect(() => {

@@ -12,6 +12,7 @@ import { ChipPlazo } from "@/components/checkout/ChipPlazo";
 import type { HabitacionWeb } from "@/lib/cotizador/hotel";
 import { AccionReserva, CierreReserva } from "./CierreReserva";
 import { textoViajeros, type Pasajeros } from "./PaseFechas";
+import { OtrosHoteles, type HotelAlternativo } from "./OtrosHoteles";
 import { PoliticaPlegable } from "./PoliticaPlegable";
 import { Tramo } from "./Tramo";
 import { SelloDestino } from "@/components/ui/SelloDestino";
@@ -37,6 +38,7 @@ export function ReservarCliente({
   fotosHotel,
   inicial,
   politica,
+  otrosHoteles,
 }: {
   hotel: HotelParaCobrar;
   destino: string | null;
@@ -45,6 +47,7 @@ export function ReservarCliente({
   fotosHotel: string[];
   inicial: { tarifaId: number | null; desde: string; hasta: string; pasajeros: Pasajeros | null };
   politica: string[];
+  otrosHoteles: HotelAlternativo[];
 }) {
   const r = useReserva({ hotel, habitaciones, fotosHotel, inicial });
   const { config, pantalla, esEscritorio, fueraDeHorario, abierta, segundosAbierta, wa } = r;
@@ -170,6 +173,7 @@ export function ReservarCliente({
 
           <Tramo {...propsTramo("habitacion", 2, "Habitación")}>
             <TramoHabitacion r={r} nombreHotel={hotel.nombre} fotosHotel={fotosHotel} />
+            <OtrosHoteles hoteles={otrosHoteles} destino={destino} desde={r.desde} hasta={r.hasta} pasajeros={r.pasajeros} />
           </Tramo>
 
           {/* En lg la política llena el hueco bajo las habitaciones; en xl va bajo el pago; en el teléfono, antes del cierre. */}

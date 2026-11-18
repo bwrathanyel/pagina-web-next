@@ -7,7 +7,9 @@ import { MAX_BEBES, MAX_PAX } from "@/lib/checkout/calculo";
 import { Boton } from "@/components/ui/Boton";
 import { hotelParaCobrar, vitrinaDeHabitaciones, type HotelCobrable } from "@/lib/checkout/datos";
 import { esDestinoCompraDirecta } from "@/lib/checkout/destinos";
-import { getHotelCotizador } from "@/lib/supabase/queries";
+import type { HotelAlternativo } from "@/components/reserva/OtrosHoteles";
+import { ofertasHoteles } from "@/lib/cotizador/ofertas";
+import { getHotelCotizador, hotSalesCotizar, promocionesCotizar } from "@/lib/supabase/queries";
 import { POLITICA_CANCELACION } from "@/lib/checkout/politica";
 import { vendibleHoy } from "@/lib/tarifas";
 import { whatsappHref } from "@/lib/whatsapp";
@@ -51,12 +53,23 @@ export default async function ReservarPage({ searchParams }: { searchParams: Pro
 
   // La foto y el destino público van en una consulta aparte: `hotelParaCobrar` es la que usa el POST
   // de /api/checkout y no debe cargar nada que no se cobre.
-  const [hotel, vitrina, fichas] = await Promise.all([
+  // Otros hoteles del destino: las mismas ofertas de /cotizar (Hot Sales delante). Si falla, no se muestran.
+  const [hotel, vitrina, fichas, ofertas] = await Promise.all([
     hotelParaCobrar(productoId).catch((): HotelCobrable | null => null),
     getHotelCotizador(productoId).catch(() => null),
     vitrinaDeHabitaciones(productoId).catch(() => ({ habitaciones: [], fotosHotel: [] })),
+    Promise.all([hotSalesCotizar().catch(() => []), promocionesCotizar()])
+      .then(([hot, promos]) => {
+        const ids = new Set(hot.map((h) => h.id));
+        return ofertasHoteles([...hot, ...promos.filter((p) => !ids.has(p.id))]);
+      })
+      .catch(() => []),
   ]);
   if (!hotel) notFound();
+  const propio = ofertas.find((o) => o.hotelId === hotel.id)?.destino;
+  const otrosHoteles: HotelAlternativo[] = ofertas
+    .filter((o) => o.hotelId !== hotel.id && esDestinoCompraDirecta(o.destino) && (!propio || o.destino === propio))
+    .map(({ hotelId, nombre, foto, precio }) => ({ hotelId, nombre, foto, precio }));
 
   // Sin la política de cancelación redactada el cliente no puede aceptarla antes de pagar: no se vende.
   // Fuera de los destinos con compra directa tampoco (el POST lo rechaza igual).
@@ -76,7 +89,10 @@ export default async function ReservarPage({ searchParams }: { searchParams: Pro
   return (
     <main className="mx-auto max-w-[var(--ancho-contenido)] px-4 py-4 sm:px-5 md:py-6 lg:pt-4 lg:pb-12">
       <FondoPaisaje destino={vitrina?.destino ?? hotel.destino} />
+      {/* El key rearma el formulario al pasar a otro hotel desde «¿Prefiere otro hotel?». */}
       <ReservarCliente
+        key={hotel.id}
+        otrosHoteles={otrosHoteles}
         hotel={{ id: hotel.id, nombre: hotel.nombre, tarifas: vendibles }}
         destino={vitrina?.destino ?? hotel.destino}
         foto={vitrina?.foto ?? null}

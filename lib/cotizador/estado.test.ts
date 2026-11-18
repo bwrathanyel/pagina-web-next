@@ -162,3 +162,12 @@ test("B-03: un niño sin edad elegida sigue sin edad al ida y vuelta por la URL"
   assert.deepEqual(parsearEstado(Object.fromEntries(new URLSearchParams(serializarEstado(e))), HOY).edades, [7, null, 9]);
   assert.deepEqual(cambiarViajeros(e, { adultos: 2, ninos: 4, bebes: 0 }).edades, [7, null, 9, null]);
 });
+
+test("combinar: segundo destino conocido y distinto del principal; ida y vuelta", () => {
+  const e = parsearEstado({ destino: "Morrocoy", combinar: "Los Roques" }, HOY);
+  assert.equal(e.combinar, "Los Roques");
+  assert.deepEqual(parsearEstado(Object.fromEntries(new URLSearchParams(serializarEstado(e))), HOY), e);
+  assert.equal(parsearEstado({ destino: "Morrocoy", combinar: "Morrocoy" }, HOY).combinar, "");
+  assert.equal(parsearEstado({ destino: "Morrocoy", combinar: "Narnia" }, HOY).combinar, "");
+  assert.ok(!serializarEstado({ ...e, combinar: "" }).includes("combinar="));
+});

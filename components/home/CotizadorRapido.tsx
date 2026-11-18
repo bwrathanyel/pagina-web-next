@@ -5,7 +5,8 @@ import Form from "next/form";
 import { Boton, clasesBoton } from "@/components/ui/Boton";
 import { CLASE_CONTROL, Campo, Selector } from "@/components/ui/Campo";
 import { Hoja } from "@/components/ui/Hoja";
-import { Icono } from "@/components/ui/Icono";
+import { Icono, type NombreIcono } from "@/components/ui/Icono";
+import { SelloDestino } from "@/components/ui/SelloDestino";
 import { SelectorFecha } from "@/components/ui/SelectorFecha";
 import { SelectorViajeros, type Viajeros } from "@/components/ui/SelectorViajeros";
 import {
@@ -21,6 +22,7 @@ import {
   sumarDias,
   textoDuracion,
 } from "@/lib/cotizador/cotizacionRapida";
+import type { Servicio } from "@/lib/cotizador/estado";
 import type { HotelNinoGratis } from "@/lib/promociones/ninosGratis";
 
 // Cotizador rápido del hero. Es un formulario GET de verdad (next/form): sin
@@ -31,19 +33,107 @@ const DESTINO = "/cotizar";
 
 const MAXIMOS: Viajeros = { adultos: ADULTOS_MAX, ninos: NINOS_MAX, bebes: BEBES_MAX };
 const SERVICIOS_CON_HOTEL = new Set(["hospedaje", "paquete"]);
+/** Servicio combinable -> slug del cotizador rápido (de ahí salen las fechas). */
+const SLUG_DE_SERVICIO: Record<Servicio, string> = { hospedaje: "hospedaje", vuelo: "vuelos", tours: "fullday" };
+/** Sellos de servicio de la hoja. «Paquete» es atajo: marca hospedaje y vuelo. */
+const SELLOS_SERVICIO: readonly { id: Servicio | "paquete"; etiqueta: string; icono: NombreIcono }[] = [
+  { id: "hospedaje", etiqueta: "Hospedaje", icono: "hotel" },
+  { id: "tours", etiqueta: "Full Day", icono: "sol" },
+  { id: "vuelo", etiqueta: "Vuelos", icono: "avion" },
+  { id: "paquete", etiqueta: "Paquete", icono: "maletin" },
+];
+const ORDEN_SERVICIOS: Servicio[] = ["hospedaje", "vuelo", "tours"];
+const ordenar = (l: Servicio[]) => ORDEN_SERVICIOS.filter((s) => l.includes(s));
+const esPaquete = (l: Servicio[]) => l.includes("hospedaje") && l.includes("vuelo");
+
+/** Marca o desmarca un sello de servicio; siempre queda al menos uno. */
+function alternar(lista: Servicio[], id: Servicio | "paquete"): Servicio[] {
+  if (id === "paquete") {
+    return esPaquete(lista) ? (lista.length > 2 ? ordenar(lista.filter((s) => s !== "vuelo")) : ["hospedaje"]) : ordenar([...lista, "hospedaje", "vuelo"]);
+  }
+  if (lista.includes(id)) return lista.length === 1 ? lista : lista.filter((s) => s !== id);
+  return ordenar([...lista, id]);
+}
+
+const CLASE_SELLO =
+  "relative flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-card border px-1.5 py-2.5 text-center text-xs font-semibold leading-tight text-balance " +
+  "transition-[background-color,border-color,color] duration-150 ease-salida motion-reduce:transition-none " +
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento";
+
+/** Opción con forma de sello de pasaporte (como SelloDestino en /reservar):
+ * marcada, el sello se estampa en tinta de acento y lleva un check. */
+function Sello({
+  activo,
+  onClick,
+  etiqueta,
+  destino,
+  icono,
+}: {
+  activo: boolean;
+  onClick: () => void;
+  etiqueta: string;
+  destino?: string;
+  icono?: NombreIcono;
+}) {
+  // La key cambia al marcar: así la animación `estampa` vuelve a correr.
+  const tinta = activo ? "estampa -rotate-8 text-acento" : "-rotate-8 opacity-60";
+  return (
+    <button
+      type="button"
+      aria-pressed={activo}
+      onClick={onClick}
+      className={`${CLASE_SELLO} ${
+        activo ? "border-acento bg-acento-suave text-ink" : "border-linea-fuerte bg-card text-ink-soft hover:border-ink/40 hover:text-ink"
+      }`}
+    >
+      {activo ? (
+        <span aria-hidden="true" className="absolute right-1 top-1 grid size-5 place-items-center rounded-full bg-acento text-sobre-acento">
+          <Icono nombre="check" tamano={12} />
+        </span>
+      ) : null}
+      {destino ? (
+        <SelloDestino key={String(activo)} destino={destino} tamano={36} className={tinta} />
+      ) : icono ? (
+        <span key={String(activo)} aria-hidden="true" className={`inline-flex ${tinta}`}>
+          <Icono nombre={icono} tamano={28} />
+        </span>
+      ) : null}
+      <span>{etiqueta}</span>
+    </button>
+  );
+}
+
+function Rotulo({ id, children }: { id: string; children: ReactNode }) {
+  return (
+    <p id={id} className="mb-1.5 text-sm font-semibold text-ink">
+      {children}
+    </p>
+  );
+}
 
 /** Hotel con niño gratis que la home destaca (el que vence primero). */
 type PropsCotizador = { ninoGratis?: HotelNinoGratis | null };
 
 /** Estado que comparten la barra y la hoja: el servicio decide cómo se llaman
  * las fechas y si hay segunda fecha (el full day es de un solo día). */
-function useCotizacionRapida(ninoGratis: HotelNinoGratis | null) {
-  const [servicio, setServicio] = useState<string>(INICIAL.servicio);
-  const [destino, setDestino] = useState<string>(INICIAL.destino);
+function useCotizacionRapida(ninoGratis: HotelNinoGratis | null, multiple = false) {
+  // La barra de escritorio elige un servicio (`servicio`); la hoja del
+  // teléfono marca varios (`servicios`) y las fechas se llaman como el primero.
+  const [servicioUnico, setServicio] = useState<string>(INICIAL.servicio);
+  const [servicios, setServicios] = useState<Servicio[]>(["hospedaje"]);
+  const [destino, setDestinoPropio] = useState<string>(INICIAL.destino);
+  const [combinar, setCombinar] = useState("");
   const [entrada, setEntrada] = useState("");
   const [salida, setSalida] = useState("");
   const [viajeros, setViajeros] = useState<Viajeros>({ adultos: INICIAL.adultos, ninos: 0, bebes: 0 });
+  const servicio = multiple ? SLUG_DE_SERVICIO[servicios[0]] : servicioUnico;
   const [etiquetaInicio, etiquetaFin] = fechasDelServicio(servicio);
+  const conHotel = multiple ? servicios.includes("hospedaje") : SERVICIOS_CON_HOTEL.has(servicio);
+
+  function setDestino(v: string) {
+    setDestinoPropio(v);
+    if (v === combinar) setCombinar("");
+  }
 
   // Si la entrada nueva alcanza a la salida, la salida se corre y conserva
   // las noches que ya tenía (una, si no había).
@@ -58,12 +148,16 @@ function useCotizacionRapida(ninoGratis: HotelNinoGratis | null) {
   return {
     servicio,
     setServicio,
+    servicios,
+    setServicios,
     destino,
     setDestino,
+    combinar,
+    setCombinar,
     promoNinos,
     // Si el servicio lleva hotel, /cotizar abre con el de niño gratis ya
     // elegido (pedido del dueño, 2026-10-16); el cliente puede cambiarlo allá.
-    hotelNinos: promoNinos && SERVICIOS_CON_HOTEL.has(servicio) ? ninoGratis : null,
+    hotelNinos: promoNinos && conHotel ? ninoGratis : null,
     entrada,
     cambiarEntrada,
     salida,
@@ -286,8 +380,11 @@ export function CotizadorRapidoBarra({ ninoGratis = null, brillo = false }: Prop
 /** Teléfono: un botón con forma de campo que abre la hoja con los datos. */
 export function CotizadorRapidoMovil({ ninoGratis = null }: PropsCotizador) {
   const [abierta, setAbierta] = useState(false);
+  const [conOtro, setConOtro] = useState(false);
   const idForm = useId();
-  const c = useCotizacionRapida(ninoGratis);
+  const idRotulo = useId();
+  const c = useCotizacionRapida(ninoGratis, true);
+  const n = c.servicios.length;
   const cambiarViajeros = (clave: keyof Viajeros) => (e: { target: { value: string } }) =>
     c.setViajeros({ ...c.viajeros, [clave]: Number(e.target.value) });
 
@@ -316,26 +413,72 @@ export function CotizadorRapidoMovil({ ninoGratis = null }: PropsCotizador) {
         escritorio="centrado"
         pie={
           <button type="submit" form={idForm} className={clasesBoton({ variante: "firma", tamano: "lg", ancho: true })}>
-            Cotizar
+            Cotizar {n} {n === 1 ? "servicio" : "servicios"}
             <Icono nombre="flecha-der" tamano={20} />
           </button>
         }
       >
         <Form id={idForm} action={DESTINO} className="flex flex-col gap-4 pb-2">
-          <Campo etiqueta="Servicio">
-            {(a11y) => (
-              <Selector {...a11y} name="servicio" value={c.servicio} onChange={(e) => c.setServicio(e.target.value)}>
-                <OpcionesServicio />
-              </Selector>
-            )}
-          </Campo>
-          <Campo etiqueta="Destino">
-            {(a11y) => (
-              <Selector {...a11y} name="destino" value={c.destino} onChange={(e) => c.setDestino(e.target.value)}>
-                <OpcionesDestino />
-              </Selector>
-            )}
-          </Campo>
+          <div>
+            <Rotulo id={`${idRotulo}-servicio`}>Servicio · puede marcar varios</Rotulo>
+            <div role="group" aria-labelledby={`${idRotulo}-servicio`} className="grid grid-cols-4 gap-2">
+              {SELLOS_SERVICIO.map((s) => (
+                <Sello
+                  key={s.id}
+                  activo={s.id === "paquete" ? esPaquete(c.servicios) : c.servicios.includes(s.id)}
+                  onClick={() => c.setServicios(alternar(c.servicios, s.id))}
+                  etiqueta={s.etiqueta}
+                  icono={s.icono}
+                />
+              ))}
+            </div>
+            <input type="hidden" name="servicios" value={c.servicios.join(",")} />
+          </div>
+
+          <div>
+            <Rotulo id={`${idRotulo}-destino`}>Destino</Rotulo>
+            <div role="group" aria-labelledby={`${idRotulo}-destino`} className="grid grid-cols-4 gap-2">
+              {DESTINOS_RAPIDOS.map((d) => (
+                <Sello
+                  key={d.valor}
+                  activo={c.destino === d.valor}
+                  onClick={() => c.setDestino(d.valor)}
+                  etiqueta={d.label}
+                  destino={d.valor}
+                />
+              ))}
+            </div>
+            <input type="hidden" name="destino" value={c.destino} />
+            {conOtro ? (
+              <div className="mt-3">
+                <Rotulo id={`${idRotulo}-combinar`}>¿Con qué otro destino?</Rotulo>
+                <div role="group" aria-labelledby={`${idRotulo}-combinar`} className="grid grid-cols-4 gap-2">
+                  {DESTINOS_RAPIDOS.filter((d) => d.valor !== c.destino).map((d) => (
+                    <Sello
+                      key={d.valor}
+                      activo={c.combinar === d.valor}
+                      onClick={() => c.setCombinar(c.combinar === d.valor ? "" : d.valor)}
+                      etiqueta={d.label}
+                      destino={d.valor}
+                    />
+                  ))}
+                </div>
+                {c.combinar ? <input type="hidden" name="combinar" value={c.combinar} /> : null}
+              </div>
+            ) : null}
+            <button
+              type="button"
+              aria-expanded={conOtro}
+              onClick={() => {
+                if (conOtro) c.setCombinar("");
+                setConOtro(!conOtro);
+              }}
+              className="mt-2 inline-flex min-h-11 items-center gap-1.5 rounded-control text-sm font-semibold text-acento outline-offset-2 hover:underline"
+            >
+              <Icono nombre={conOtro ? "menos" : "suma"} tamano={18} />
+              {conOtro ? "Solo un destino" : "Combinar con otro destino"}
+            </button>
+          </div>
 
           <div>
             <div className={c.etiquetaFin ? "grid grid-cols-2 gap-3" : ""}>

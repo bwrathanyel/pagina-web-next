@@ -57,6 +57,8 @@ export const EDAD_NINO_MAX = 11;
 export interface EstadoViaje {
   servicios: Servicio[];
   destino: string;
+  /** Segundo destino que el cliente quiere sumar (cotizador rápido); vacío = ninguno. */
+  combinar: string;
   desde: string;
   hasta: string;
   adultos: number;
@@ -197,6 +199,7 @@ export function estadoInicial(): EstadoViaje {
   return {
     servicios: ["hospedaje"],
     destino: DESTINO_INICIAL,
+    combinar: "",
     desde: "",
     hasta: "",
     adultos: 2,
@@ -222,6 +225,7 @@ export function parsearEstado(sp: ParamsBusqueda, hoy = hoyCaracas()): EstadoVia
   const base = estadoInicial();
   const servicios = leerServicios(sp);
   const destino = DESTINOS.find((d) => d === uno(sp.destino));
+  const combinar = DESTINOS.find((d) => d === uno(sp.combinar) && d !== (destino ?? base.destino));
   const desde = uno(sp.fecha);
   const hasta = uno(sp.hasta);
   const fechaValida = esFechaViaje(desde, hoy);
@@ -246,6 +250,7 @@ export function parsearEstado(sp: ParamsBusqueda, hoy = hoyCaracas()): EstadoVia
   return {
     servicios: servicios.length > 0 ? servicios : base.servicios,
     destino: destino ?? base.destino,
+    combinar: combinar ?? "",
     desde: fechaValida ? desde : "",
     hasta: fechaValida && esFechaViaje(hasta, hoy) && hasta > desde ? hasta : "",
     adultos: entero(uno(sp.adultos), 1, ADULTOS_MAX) ?? base.adultos,
@@ -274,6 +279,7 @@ export function serializarEstado(e: EstadoViaje): string {
   const q = new URLSearchParams();
   q.set("servicios", e.servicios.join(","));
   q.set("destino", e.destino);
+  if (e.combinar && e.combinar !== e.destino) q.set("combinar", e.combinar);
   if (e.desde) q.set("fecha", e.desde);
   if (e.hasta) q.set("hasta", e.hasta);
   q.set("adultos", String(e.adultos));

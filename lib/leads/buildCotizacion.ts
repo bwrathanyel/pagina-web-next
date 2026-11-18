@@ -160,12 +160,14 @@ export function armarCotizacionViaje(
         ? "Precio: vuelo aproximado (ver arriba), sujeto a disponibilidad"
         : "Precio: vuelo aproximado (ver arriba); el resto a confirmar por el asesor"
       : "Precio: a confirmar por el asesor";
+  const combinar = e.combinar && e.combinar !== e.destino ? e.combinar : "";
   const destino = soloVuelo ? `${e.origen} a ${vueloInfo?.destino ? destinoVuelo : e.destino}` : e.destino;
 
   const consulta = [
     "Cotización web: Arme su viaje",
     `Servicios: ${servicio}${hospedaje && vuelo ? " (hospedaje con vuelo)" : ""}`,
     `Destino: ${soloVuelo ? destinoVuelo : e.destino}`,
+    combinar ? `También quiere: ${combinar}` : "",
     `Fechas: ${fechas}`,
     `Viajeros: ${viajeros}`,
     edades ? `Edades de niños: ${edades}` : "",
@@ -200,6 +202,7 @@ export function armarCotizacionViaje(
       ["👤", `*Nombre:* ${c.nombre}`],
       ["📋", `*Servicios:* ${servicio}`],
       ["📍", `*Destino:* ${e.destino}`],
+      combinar ? ["", `También quiere: ${combinar}`] : null,
       ["📅", `*Fechas:* ${fechas}`],
       ["👥", `*Viajeros:* ${viajeros}`],
       edades ? ["👶", `*Edades de niños:* ${edades}`] : null,

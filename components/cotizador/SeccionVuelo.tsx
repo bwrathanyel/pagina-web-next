@@ -314,7 +314,7 @@ function EstimadoVuelo({ vuelo, idaVuelta }: { vuelo: VueloViaje; idaVuelta: boo
       {vuelo.cercano && vuelo.dias !== null ? (
         <Aviso tono="info">
           {vuelo.dias === 0 ? "Su vuelo sale hoy" : `Su vuelo sale en ${vuelo.dias} ${vuelo.dias === 1 ? "día" : "días"}`}: con tan poca
-          anticipación suele costar más.
+          anticipación la tarifa y el cupo cambian rápido, se los confirma un asesor.
         </Aviso>
       ) : null}
     </div>
