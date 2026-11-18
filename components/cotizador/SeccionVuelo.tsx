@@ -23,6 +23,8 @@ import {
   type EstadoViaje,
 } from "@/lib/cotizador/estado";
 import { destinosDeRutas, textoBoletos, type RutaVuelo, type VueloViaje } from "@/lib/cotizador/vuelo";
+import { recomendacionDia, textoRecomendacion, type RutaAerea } from "@/lib/cotizador/guiaRutas";
+import { GuiaRutas } from "@/components/cotizador/GuiaRutas";
 import { montoConMoneda } from "@/lib/tarifas";
 
 const CONTROL_BOTON = `${CLASE_CONTROL} min-h-12 py-2.5 cursor-pointer`;
@@ -38,9 +40,15 @@ export function SeccionVuelo({
   error,
   errorId,
   onCambio,
+  guia = [],
+  ayudaFechas = "Las fechas de ida y vuelta se eligen arriba, en Su viaje.",
 }: {
   estado: EstadoViaje;
   rutas: readonly RutaVuelo[];
+  /** Aerolíneas y días por ruta (orientativo); vacío = sin guía ni recomendación. */
+  guia?: readonly RutaAerea[];
+  /** Vuelo solo: dónde se eligen las fechas (en /reservar, arriba en la misma hoja). */
+  ayudaFechas?: string;
   vuelo: VueloViaje;
   error?: string;
   errorId: string;
@@ -60,6 +68,7 @@ export function SeccionVuelo({
   const fechas = textoFechas({ ...estado, desde: fv.ida, hasta: fv.vuelta });
   // Fechas propias, equipaje y flexibilidad van plegados con sus valores a la
   // vista; se abren solos si el cliente ya los cambió o si hay un error ahí.
+  const recomendaciones = recomendacionesVuelo(guia, vuelo.origenIata, otro ? undefined : vuelo.destino, fv.ida, idaVuelta ? fv.vuelta : "");
   const [mas, setMas] = useState(fv.propias || estado.flexible || estado.equipaje !== EQUIPAJE_INICIAL);
   const abierto = mas || !!error;
 
@@ -144,6 +153,20 @@ export function SeccionVuelo({
 
       <EstimadoVuelo vuelo={vuelo} idaVuelta={idaVuelta} />
 
+      {recomendaciones.alerta ? (
+        <Aviso tono="info">
+          {recomendaciones.lineas.map((l) => (
+            <span key={l} className="block">
+              {l}
+            </span>
+          ))}
+        </Aviso>
+      ) : recomendaciones.lineas.length ? (
+        <p className="text-sm text-ink-soft">{recomendaciones.lineas.join(" ")}</p>
+      ) : null}
+
+      <GuiaRutas rutas={guia} destinoIata={otro ? undefined : vuelo.destino || undefined} origenIata={vuelo.origenIata} />
+
       {error ? (
         <Aviso>
           <span id={errorId} tabIndex={-1}>
@@ -216,7 +239,7 @@ export function SeccionVuelo({
             ) : null}
           </div>
         ) : (
-          <p className="text-sm text-ink-soft">Las fechas de ida y vuelta se eligen arriba, en Su viaje.</p>
+          <p className="text-sm text-ink-soft">{ayudaFechas}</p>
         )}
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -251,6 +274,27 @@ export function SeccionVuelo({
       <p className="text-sm text-ink-soft">La cédula no se pide ahora: el asesor la solicita al confirmar.</p>
     </>
   );
+}
+
+/** Días habituales contra las fechas del vuelo (ida y, si hay, vuelta). Con algún tramo en un día
+ * sin vuelos conocidos va como aviso; si todo cuadra, una línea neutra. */
+function recomendacionesVuelo(
+  guia: readonly RutaAerea[],
+  origen: string | undefined,
+  destino: string | undefined,
+  ida: string,
+  vuelta: string,
+): { alerta: boolean; lineas: string[] } {
+  const r = [
+    { tramo: "la ida", rec: recomendacionDia(guia, origen, destino, ida) },
+    { tramo: "la vuelta", rec: vuelta ? recomendacionDia(guia, destino, origen, vuelta) : null },
+  ].filter((x) => x.rec !== null);
+  const dos = r.length > 1;
+  const alerta = r.some((x) => x.rec?.tipo === "no");
+  const lineas = r
+    .filter((x) => !alerta || x.rec?.tipo === "no")
+    .map((x) => textoRecomendacion(x.rec!, dos ? x.tramo : undefined));
+  return { alerta, lineas };
 }
 
 /** Línea de ruta con aviones que la recorren: uno de ida y, si es ida y vuelta, otro de regreso. */

@@ -7,6 +7,7 @@ import type { Categoria, HotSale, Producto, Promocion, ProductoTipo } from "@/ty
 import { CATEGORIA_A_TIPO } from "@/types/supabase";
 import { ninoGratisVigente } from "@/lib/promociones/ninosGratis";
 import type { RutaVuelo } from "@/lib/cotizador/vuelo";
+import type { RutaAerea } from "@/lib/cotizador/guiaRutas";
 
 // "Casa Vacacional Playa del Sur" vive así en productos.destino a propósito
 // (pedido real 2026-07-22) -- el bot de ventas de ManyChat lo usa como gate
@@ -219,3 +220,15 @@ const DATOS_COTIZAR = { revalidate: 300, tags: [TAG_DATOS_WEB] };
 export const hotSalesCotizar = unstable_cache(() => getHotSales(), ["cotizar-hot-sales"], DATOS_COTIZAR);
 export const promocionesCotizar = unstable_cache(() => getPromociones(), ["cotizar-promociones"], DATOS_COTIZAR);
 export const rutasVueloCotizar = unstable_cache(() => rutasVuelo(), ["cotizar-rutas-vuelo"], DATOS_COTIZAR);
+/** Guía orientativa de aerolíneas y días por ruta (vista `web_rutas_aereas`, carga de
+ * boletería en el CRM). Sin datos o con la consulta caída la guía no se muestra. */
+export const rutasAereas = cache(async (): Promise<RutaAerea[]> => {
+  const sb = supabaseServer();
+  const { data, error } = await sb
+    .from("web_rutas_aereas")
+    .select("origen_iata,origen_nombre,destino_iata,destino_nombre,aerolinea,dias_operacion,verificado_en,nota")
+    .order("aerolinea");
+  if (error) throw error;
+  return (data ?? []) as RutaAerea[];
+});
+export const rutasAereasGuia = unstable_cache(() => rutasAereas(), ["cotizar-rutas-aereas"], DATOS_COTIZAR);

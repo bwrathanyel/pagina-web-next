@@ -4,7 +4,7 @@ import { CotizadorViaje } from "@/components/cotizador/CotizadorViaje";
 import { FondoDestino } from "@/components/cotizador/FondoDestino";
 import { DESTINOS, parsearEstado } from "@/lib/cotizador/estado";
 import { ofertasHoteles } from "@/lib/cotizador/ofertas";
-import { getHotelCotizador, hotSalesCotizar, promocionesCotizar, rutasVueloCotizar } from "@/lib/supabase/queries";
+import { getHotelCotizador, hotSalesCotizar, promocionesCotizar, rutasAereasGuia, rutasVueloCotizar } from "@/lib/supabase/queries";
 
 const DESCRIPCION =
   "Arme su viaje en un solo lugar: hospedaje, vuelo, full day y tours. Indique destino, fechas y viajeros, y un asesor le responde por WhatsApp con el precio confirmado.";
@@ -27,7 +27,7 @@ export default async function CotizarPage({
   // chicas): el destino se cambia en el cliente sin recargar. Si la consulta
   // falla, /cotizar sigue funcionando sin grilla y el asesor propone.
   // Sin rutas (consulta caída) el vuelo vuelve a ser solo solicitud: "a confirmar".
-  const [hotel, ofertas, rutas] = await Promise.all([
+  const [hotel, ofertas, rutas, guia] = await Promise.all([
     estado.hotel ? getHotelCotizador(estado.hotel).catch(() => null) : null,
     // Las Hot Sales van delante: traen el regalo de niño gratis que
     // web_promociones no tiene (lo lee tarifa_nino_gratis() del PDF).
@@ -38,6 +38,7 @@ export default async function CotizarPage({
       })
       .catch(() => []),
     rutasVueloCotizar().catch(() => []),
+    rutasAereasGuia().catch(() => []),
   ]);
   // Un hotel que no existe (o ya no está activo) se descarta; si el enlace no
   // traía destino, el del hotel manda.
@@ -60,7 +61,7 @@ export default async function CotizarPage({
       </div>
       {/* El key rearma el cotizador si llega otra URL con la página ya abierta
           (otra búsqueda desde el hero o un enlace nuevo). */}
-      <CotizadorViaje key={JSON.stringify(estado)} inicial={estado} hotel={hotel} ofertas={ofertas} rutas={rutas} />
+      <CotizadorViaje key={JSON.stringify(estado)} inicial={estado} hotel={hotel} ofertas={ofertas} rutas={rutas} guia={guia} />
     </main>
   );
 }

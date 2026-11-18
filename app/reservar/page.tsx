@@ -9,7 +9,7 @@ import { hotelParaCobrar, vitrinaDeHabitaciones, type HotelCobrable } from "@/li
 import { esDestinoCompraDirecta } from "@/lib/checkout/destinos";
 import type { HotelAlternativo } from "@/components/reserva/OtrosHoteles";
 import { ofertasHoteles } from "@/lib/cotizador/ofertas";
-import { getHotelCotizador, hotSalesCotizar, promocionesCotizar } from "@/lib/supabase/queries";
+import { getHotelCotizador, hotSalesCotizar, promocionesCotizar, rutasAereasGuia, rutasVueloCotizar } from "@/lib/supabase/queries";
 import { POLITICA_CANCELACION } from "@/lib/checkout/politica";
 import { vendibleHoy } from "@/lib/tarifas";
 import { whatsappHref } from "@/lib/whatsapp";
@@ -54,7 +54,7 @@ export default async function ReservarPage({ searchParams }: { searchParams: Pro
   // La foto y el destino público van en una consulta aparte: `hotelParaCobrar` es la que usa el POST
   // de /api/checkout y no debe cargar nada que no se cobre.
   // Otros hoteles del destino: las mismas ofertas de /cotizar (Hot Sales delante). Si falla, no se muestran.
-  const [hotel, vitrina, fichas, ofertas] = await Promise.all([
+  const [hotel, vitrina, fichas, ofertas, rutasVuelo, guiaRutas] = await Promise.all([
     hotelParaCobrar(productoId).catch((): HotelCobrable | null => null),
     getHotelCotizador(productoId).catch(() => null),
     vitrinaDeHabitaciones(productoId).catch(() => ({ habitaciones: [], fotosHotel: [] })),
@@ -64,6 +64,9 @@ export default async function ReservarPage({ searchParams }: { searchParams: Pro
         return ofertasHoteles([...hot, ...promos.filter((p) => !ids.has(p.id))]);
       })
       .catch(() => []),
+    // Boleto aparte (BoletoAereo): sin rutas el vuelo queda «a confirmar» y sin guía no se muestra.
+    rutasVueloCotizar().catch(() => []),
+    rutasAereasGuia().catch(() => []),
   ]);
   if (!hotel) notFound();
   const propio = ofertas.find((o) => o.hotelId === hotel.id)?.destino;
@@ -89,10 +92,12 @@ export default async function ReservarPage({ searchParams }: { searchParams: Pro
   return (
     <main className="mx-auto max-w-[var(--ancho-contenido)] px-4 py-4 sm:px-5 md:py-6 lg:pt-4 lg:pb-12">
       <FondoPaisaje destino={vitrina?.destino ?? hotel.destino} />
-      {/* El key rearma el formulario al pasar a otro hotel desde «¿Prefiere otro hotel?». */}
+      {/* El key rearma el formulario al pasar a otro hotel desde «Otros hoteles en {destino}». */}
       <ReservarCliente
         key={hotel.id}
         otrosHoteles={otrosHoteles}
+        rutasVuelo={rutasVuelo}
+        guiaRutas={guiaRutas}
         hotel={{ id: hotel.id, nombre: hotel.nombre, tarifas: vendibles }}
         destino={vitrina?.destino ?? hotel.destino}
         foto={vitrina?.foto ?? null}
