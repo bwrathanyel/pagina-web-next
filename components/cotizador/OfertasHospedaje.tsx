@@ -41,6 +41,7 @@ export function FotoRotativa({
   apagada,
   encima,
   prioridad = false,
+  pasoMs = PASO_FOTO_MS,
 }: {
   fotos: string[];
   sizes: string;
@@ -49,6 +50,8 @@ export function FotoRotativa({
   encima: boolean;
   /** Foto grande a la vista al abrir: baja ya y antes que el resto, no en diferido. */
   prioridad?: boolean;
+  /** Cada cuánto pasa a la siguiente (la cabecera de /reservar rota sola, más lento que el hover). */
+  pasoMs?: number;
 }) {
   const [indice, setIndice] = useState(0);
   const [montadas, setMontadas] = useState(1);
@@ -60,12 +63,12 @@ export function FotoRotativa({
     const reloj = setInterval(() => {
       setIndice((i) => (i + 1) % fotos.length);
       setMontadas((m) => Math.min(fotos.length, Math.max(m, 2) + 1));
-    }, PASO_FOTO_MS);
+    }, pasoMs);
     return () => {
       clearInterval(reloj);
       setIndice(0);
     };
-  }, [activo, fotos.length]);
+  }, [activo, fotos.length, pasoMs]);
 
   if (!fotos.length) return null;
   const visibles = Math.max(montadas, activo ? 2 : 1);

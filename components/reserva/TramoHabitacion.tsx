@@ -5,11 +5,9 @@ import type { Reserva } from "./useReserva";
 
 type Props = {
   r: Pick<Reserva, "opciones" | "tarifaEfectiva" | "poner" | "hayFechas" | "caracteristicas" | "noches" | "editando" | "cerrarTramo">;
-  nombreHotel: string;
-  fotosHotel: string[];
 };
 
-export function TramoHabitacion({ r, nombreHotel, fotosHotel }: Props) {
+export function TramoHabitacion({ r }: Props) {
   return (
     <div data-campo="precio" className="flex flex-col gap-3">
       <OpcionesHabitacion
@@ -22,8 +20,6 @@ export function TramoHabitacion({ r, nombreHotel, fotosHotel }: Props) {
         }}
         noches={r.noches}
         hayFechas={r.hayFechas}
-        nombreHotel={nombreHotel}
-        fotosHotel={fotosHotel}
         caracteristicas={r.caracteristicas}
       />
     </div>

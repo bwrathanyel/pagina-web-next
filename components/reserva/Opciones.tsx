@@ -38,7 +38,7 @@ function MarcaElegida({ className = "" }: { className?: string }) {
 }
 
 /** Visor con todas las fotos (Hoja centrada en escritorio). */
-function VisorFotos({ fotos, alt, abierta, onCerrar }: { fotos: string[]; alt: string; abierta: boolean; onCerrar: () => void }) {
+export function VisorFotos({ fotos, alt, abierta, onCerrar }: { fotos: string[]; alt: string; abierta: boolean; onCerrar: () => void }) {
   const n = fotos.length;
   return (
     <Hoja abierta={abierta} onCerrar={onCerrar} titulo={`Fotos de ${alt}`} escritorio="centrado" anchoClassName="max-w-4xl">
@@ -50,31 +50,6 @@ function VisorFotos({ fotos, alt, abierta, onCerrar }: { fotos: string[]; alt: s
         ))}
       </ul>
     </Hoja>
-  );
-}
-
-/** «+N»: abre el visor con todas las fotos. Va FUERA del `<label>` de la opción (B-09), así tocarlo
- * nunca elige la habitación. */
-export function VerFotos({ fotos, alt, className = "" }: { fotos: string[]; alt: string; className?: string }) {
-  const [visor, setVisor] = useState(false);
-  const n = fotos.length;
-  if (n < 2) return null;
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => setVisor(true)}
-        aria-label={`Ver las ${n} fotos de ${alt}`}
-        className={
-          "inline-flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-control bg-dusk/80 px-2.5 text-sm font-semibold text-dusk-text transition-colors hover:bg-dusk md:min-h-8 md:min-w-0 lg:backdrop-blur-sm " +
-          className
-        }
-      >
-        <Icono nombre="suma" tamano={14} />
-        {n}
-      </button>
-      <VisorFotos fotos={fotos} alt={alt} abierta={visor} onCerrar={() => setVisor(false)} />
-    </>
   );
 }
 
@@ -120,16 +95,14 @@ export interface OpcionHabitacion {
 }
 
 /** Habitaciones como filas compactas (pedido del dueño, 2026-11-18: la página entera en una vista):
- * miniatura que abre las fotos, nombre y plan, y el precio a la derecha. Sin fotos por habitación (la
- * mayoría de los hoteles), las del hotel ya están en la cabecera: va su visor, chips con lo que traen
- * las habitaciones y filas sin miniatura (pedido del dueño, 2026-10-25). */
+ * miniatura que abre las fotos, nombre y plan, y el precio a la derecha. Solo lleva miniatura la
+ * habitación con fotos propias: las del hotel viven en la cabecera (pedido del dueño, 2026-11-17), así
+ * que sin fotos por habitación la fila es solo texto, con chips de lo que traen las habitaciones. */
 export function OpcionesHabitacion({
   opciones,
   elegida,
   onElegir,
   hayFechas,
-  nombreHotel,
-  fotosHotel,
   caracteristicas,
   noches,
 }: {
@@ -137,8 +110,6 @@ export function OpcionesHabitacion({
   elegida: number | null;
   onElegir: (id: number) => void;
   hayFechas: boolean;
-  nombreHotel: string;
-  fotosHotel: string[];
   caracteristicas: string[];
   noches: number | null;
 }) {
@@ -154,31 +125,26 @@ export function OpcionesHabitacion({
   return (
     <fieldset className="flex min-w-0 flex-col gap-2">
       <legend className="sr-only">Habitación</legend>
-      {!conFotos && (fotosHotel.length > 1 || caracteristicas.length) ? (
+      {!conFotos && caracteristicas.length ? (
         <div className="flex flex-wrap items-center gap-2">
-          {fotosHotel.length > 1 ? <VerFotos fotos={fotosHotel} alt={nombreHotel} className="border border-linea bg-card text-ink hover:bg-sand-2" /> : null}
-          {caracteristicas.length ? (
-            <>
-              <ul className="contents xl:hidden" aria-label="Características de las habitaciones">
-                {caracteristicas.map((c) => (
-                  <li key={c}>
-                    <Etiqueta>{c}</Etiqueta>
-                  </li>
-                ))}
-              </ul>
-              {/* xl (tres columnas): los chips ocupaban tres o cuatro renglones; una línea de texto. */}
-              <p className="hidden min-w-0 flex-1 text-xs text-ink-soft xl:line-clamp-2" title={caracteristicas.join(" · ")}>
-                <span className="sr-only">Características de las habitaciones: </span>
-                {caracteristicas.join(" · ")}
-              </p>
-            </>
-          ) : null}
+          <ul className="contents xl:hidden" aria-label="Características de las habitaciones">
+            {caracteristicas.map((c) => (
+              <li key={c}>
+                <Etiqueta>{c}</Etiqueta>
+              </li>
+            ))}
+          </ul>
+          {/* xl (tres columnas): los chips ocupaban tres o cuatro renglones; una línea de texto. */}
+          <p className="hidden min-w-0 flex-1 text-xs text-ink-soft xl:line-clamp-2" title={caracteristicas.join(" · ")}>
+            <span className="sr-only">Características de las habitaciones: </span>
+            {caracteristicas.join(" · ")}
+          </p>
         </div>
       ) : null}
       {/* xl: la lista se desplaza por dentro para que el pago y los datos queden a la vista sin bajar. */}
       <div className="flex flex-col gap-2 xl:-m-1 xl:max-h-[max(13rem,calc(100dvh-27rem))] xl:overflow-y-auto xl:overscroll-contain xl:p-1">
         {opciones.map((o) => {
-          const fotos = conFotos && o.fotos.length ? o.fotos : null;
+          const fotos = o.fotoPropia && o.fotos.length ? o.fotos : null;
           const porNoche = o.precio !== null && noches ? o.precio / noches : null;
           const detalle = o.detalles.length ? o.detalles.join(" · ") : o.descripcion;
           return (

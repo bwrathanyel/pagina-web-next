@@ -62,12 +62,14 @@ export function OtrosHoteles({
   return (
     <section aria-label="Otros hoteles" className="flex flex-col gap-3 border-t border-dashed border-linea-fuerte pt-4">
       <p className="text-sm font-semibold text-ink">¿Prefiere otro hotel?</p>
-      <ul className="grid grid-cols-2 gap-3">
-        {hoteles.slice(0, 2).map((h) => (
-          <li key={h.hotelId} className="flex min-w-0">
-            <Link href={enlace(h.hotelId)} className={`${TARJETA} flex-1 flex-col`}>
-              <span className="relative block aspect-4/3 bg-sand-2">
-                {h.foto ? <Image src={h.foto} alt="" fill sizes="(min-width: 1024px) 12rem, 45vw" className="object-cover" /> : null}
+      {/* Teléfono: tira que se desliza de lado con todos, en renglones bajos (menos scroll). Desde lg: dos
+          tarjetas con foto 4:3 y el resto en la hoja. */}
+      <ul className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto overscroll-x-contain px-4 pb-1 sm:-mx-5 sm:scroll-px-5 sm:px-5 lg:mx-0 lg:grid lg:grid-cols-2 lg:overflow-visible lg:px-0 lg:pb-0">
+        {hoteles.map((h, i) => (
+          <li key={h.hotelId} className={"flex w-[78%] min-w-0 shrink-0 snap-start sm:w-[45%] lg:w-auto" + (i >= 2 ? " lg:hidden" : "")}>
+            <Link href={enlace(h.hotelId)} className={`${TARJETA} flex-1 items-center lg:flex-col lg:items-stretch`}>
+              <span className="relative block aspect-4/3 w-24 shrink-0 self-stretch bg-sand-2 lg:w-auto lg:self-auto">
+                {h.foto ? <Image src={h.foto} alt="" fill sizes="(min-width: 1024px) 12rem, 6rem" className="object-cover" /> : null}
               </span>
               <span className="flex min-w-0 flex-col gap-1 p-3">
                 <span className="line-clamp-2 text-sm font-semibold leading-tight text-ink">{h.nombre}</span>
@@ -78,7 +80,7 @@ export function OtrosHoteles({
         ))}
       </ul>
       {hoteles.length > 2 ? (
-        <Boton type="button" variante="fantasma" className="self-start" aria-haspopup="dialog" onClick={() => setTodos(true)}>
+        <Boton type="button" variante="fantasma" className="self-start max-lg:hidden" aria-haspopup="dialog" onClick={() => setTodos(true)}>
           Ver todos los hoteles{lugar}
         </Boton>
       ) : null}
