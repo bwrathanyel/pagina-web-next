@@ -70,11 +70,10 @@ export function CierreReserva({ r, boleto = null }: Props) {
           </div>
           <p className="text-sm text-ink-soft">Aún no se le cobra nada: en el siguiente paso verá los datos para pagar.</p>
           {boleto ? (
-            <p className="flex items-start gap-2 text-sm text-ink">
-              <Icono nombre="avion" tamano={16} className="mt-0.5 shrink-0 text-ink-soft" />
-              <span>
-                Con su reserva pedimos también el boleto aéreo ({boleto}): un asesor de boletería se lo cotiza por WhatsApp.
-              </span>
+            // Una línea: el detalle del vuelo ya está en la franja de arriba; con 4 líneas el botón quedaba bajo el pliegue (1366×695, dueño 2026-11-18).
+            <p className="flex items-center gap-2 text-xs text-ink-soft" title={boleto}>
+              <Icono nombre="avion" tamano={14} className="shrink-0" />
+              <span className="truncate">Boleto aéreo incluido en el pedido: se lo cotiza boletería por WhatsApp.</span>
             </p>
           ) : null}
         </>
