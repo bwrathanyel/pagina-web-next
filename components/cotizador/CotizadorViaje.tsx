@@ -46,7 +46,6 @@ import { Boton } from "@/components/ui/Boton";
 import { AreaTexto, Campo, Entrada } from "@/components/ui/Campo";
 import { Hoja } from "@/components/ui/Hoja";
 import { Icono } from "@/components/ui/Icono";
-import { asesorAsignado, nombreDePila } from "@/lib/asesores";
 import {
   alternarTour,
   atajosFinde,
@@ -64,13 +63,11 @@ import {
 import { almacenLocal, borradorUtil, borrarBorrador, guardarBorrador, leerBorrador, type Borrador } from "@/lib/cotizador/borrador";
 import type { TourWeb } from "@/lib/cotizador/tours";
 import { estimarVueloViaje, type RutaVuelo } from "@/lib/cotizador/vuelo";
+import type { RutaAerea } from "@/lib/cotizador/guiaRutas";
 import { toursDelCatalogo } from "@/lib/cotizador/toursWeb";
-import { armarCotizacionViaje, type ContactoViaje, type HospedajeElegido } from "@/lib/leads/buildCotizacion";
-import { crearLeadCRM } from "@/lib/leads/ingestWebLead";
-import { enviarASheetMonkey } from "@/lib/leads/sheetMonkey";
+import type { ContactoViaje, HospedajeElegido } from "@/lib/leads/buildCotizacion";
+import { enviarCotizacionViaje } from "@/lib/leads/enviarCotizacionViaje";
 import type { HotelCotizador } from "@/lib/supabase/queries";
-import { detectarProcedencia, esInstagramInApp } from "@/lib/utils/procedencia";
-import { NUMERO_CORPORATIVO } from "@/lib/whatsapp";
 
 interface Errores {
   fechas?: string;
@@ -395,11 +392,14 @@ export function CotizadorViaje({
   hotel: hotelInicial,
   ofertas,
   rutas,
+  guia = [],
 }: {
   inicial: EstadoViaje;
   hotel: HotelCotizador | null;
   ofertas: OfertaHotel[];
   rutas: RutaVuelo[];
+  /** Guía orientativa de aerolíneas y días (web_rutas_aereas). */
+  guia?: RutaAerea[];
 }) {
   const formId = useId();
   const [estado, setEstado] = useState(inicial);
@@ -628,6 +628,9 @@ export function CotizadorViaje({
       : null;
   const tarifaElegida = opcionElegida?.tarifa ?? null;
   const estimado = opcionElegida?.estimado ?? null;
+  // Sin la edad de un niño no se calcula (B-03): el cliente tiene que saber que le falta
+  // eso, no leer «a confirmar por el asesor» cuando la tarifa sí tiene precio.
+  const faltaEdad = estadia.edades.some((e) => e === null);
   const toursElegidos = (catalogoTours && catalogoTours !== "error" ? catalogoTours : []).filter((t) => estado.tours.includes(t.id));
   const vueloViaje = estimarVueloViaje(estado, rutas, hoyCaracas());
   // Barra móvil: hospedaje + vuelo (aprox.) cuando ambos tienen monto; en Bs cada pieza a su tasa.
@@ -912,66 +915,19 @@ export function CotizadorViaje({
     enviandoRef.current = true;
     setEnviando(true);
     try {
-      const datos: ContactoViaje = {
-        nombre: contacto.nombre.trim(),
-        telefono: telefonoInternacional(buscarPais(iso), contacto.telefono) ?? contacto.telefono.trim(),
-        correo: contacto.correo.trim(),
-        notas: contacto.notas.trim(),
-      };
-      const nombresTours = toursElegidos.map((t) => t.nombre);
-      const base = armarCotizacionViaje(estado, datos, hotel, undefined, elegido, nombresTours, vueloViaje);
-
-      let leadId: number | null = null;
-      // Siempre el asesor que asignó el reparto del CRM (también en vuelo solo):
-      // el WhatsApp tiene que coincidir con el dueño del lead en el CRM.
-      let asesor: { nombre: string; telefono: string } | null = null;
-      let fallo = false;
-      try {
-        const lead = await crearLeadCRM({
-          nombre: datos.nombre,
-          telefono: datos.telefono,
-          destino: base.destino,
-          personas: base.personas,
-          consulta: base.consulta,
-        });
-        leadId = lead.lead_id ?? null;
-        asesor = asesorAsignado(lead.asesor, lead.asesor_whatsapp);
-      } catch {
-        fallo = true;
-      }
-      const telefonoAsesor = asesor?.telefono ?? NUMERO_CORPORATIVO;
-      const asesorNombre = asesor ? nombreDePila(asesor.nombre) : null;
-
-      // Después del lead: el reporte lleva al asesor que de verdad recibe el WhatsApp.
-      enviarASheetMonkey({
-        destino: base.destino,
-        servicio: base.servicio,
-        pagina: "Arme su viaje",
-        nombre: datos.nombre,
-        procedencia: detectarProcedencia(),
-        telefono: datos.telefono,
-        asesor: telefonoAsesor,
-      });
-
-      const final = armarCotizacionViaje(
+      const envio = await enviarCotizacionViaje({
         estado,
-        datos,
+        contacto,
+        iso,
         hotel,
-        leadId ?? undefined,
         elegido,
-        nombresTours,
+        nombresTours: toursElegidos.map((t) => t.nombre),
         vueloViaje,
-        asesorNombre,
-      );
-      // Con el CRM caído el borrador se queda: el cliente puede reintentar.
-      if (!fallo) borrarBorrador(almacenLocal());
-      const mensaje = esInstagramInApp() ? final.mensajeTexto : final.mensajeEmoji;
-      setEnviado({
-        waHref: `https://wa.me/${telefonoAsesor}?text=${encodeURIComponent(mensaje)}`,
-        leadId,
-        fallo,
-        asesorNombre,
+        pagina: "Arme su viaje",
       });
+      // Con el CRM caído el borrador se queda: el cliente puede reintentar.
+      if (!envio.fallo) borrarBorrador(almacenLocal());
+      setEnviado(envio);
       setHojaAbierta(false);
       window.scrollTo({ top: 0 });
     } finally {
@@ -1036,6 +992,7 @@ export function CotizadorViaje({
       hotel={hotel}
       habitacion={habitacion}
       estimado={estimado}
+      faltaEdad={faltaEdad}
       formId={formId}
       enviando={enviando}
       conTitulo={conTitulo}
@@ -1085,7 +1042,9 @@ export function CotizadorViaje({
   const notaSinTotal =
     hotelBloqueado || estimado?.ok
       ? null
-      : `${
+      : faltaEdad && !bloqueosFallo
+        ? "Elija la edad de cada niño para ver el total."
+        : `${
           bloqueosFallo
             ? "No pudimos verificar la disponibilidad en esas fechas. "
             : estimado && !estimado.ok ? `${estimado.texto} ` : !tarifaElegida ? "Elija una habitación con precio confirmado para ver el estimado. " : ""
@@ -1196,7 +1155,7 @@ export function CotizadorViaje({
       )}
     </>
   );
-  const panelVuelo = <SeccionVuelo estado={estado} rutas={rutas} vuelo={vueloViaje} error={errores.vuelo} errorId={`${formId}-vuelo`} onCambio={cambiar} />;
+  const panelVuelo = <SeccionVuelo estado={estado} rutas={rutas} guia={guia} vuelo={vueloViaje} error={errores.vuelo} errorId={`${formId}-vuelo`} onCambio={cambiar} />;
   const panelTours = (
     <SeccionTours
       destino={estado.destino}

@@ -63,6 +63,7 @@ export function ResumenViaje({
   hotel,
   habitacion,
   estimado,
+  faltaEdad = false,
   formId,
   enviando,
   conTitulo = true,
@@ -76,6 +77,8 @@ export function ResumenViaje({
   hotel: Pick<HotelCotizador, "nombre" | "foto"> | null;
   habitacion?: string | null;
   estimado?: Estimado | null;
+  /** Hay un niño sin edad: el precio existe pero no se puede calcular todavía. */
+  faltaEdad?: boolean;
   formId: string;
   enviando: boolean;
   conTitulo?: boolean;
@@ -134,7 +137,7 @@ export function ResumenViaje({
             <span className="min-w-0 flex-1 truncate text-right font-mono text-2xl font-bold tabular-nums text-ink" aria-live="polite">
               {/* Una sola pieza para los tres casos: así el total cae como en el tablero al cambiar. */}
               <MontoTablero
-                texto={montoTalon || referencia?.monto || "A confirmar"}
+                texto={montoTalon || referencia?.monto || (faltaEdad && hospedaje ? "Falta edad" : "A confirmar")}
                 mostrar={sumable ? talonSuma : undefined}
                 ivaEnBs={montoTalon ? ivaHotel : !!referencia?.ivaEnBs}
                 tasaDolar={!monto && !!montoVuelo}
@@ -171,6 +174,8 @@ export function ResumenViaje({
                 <>
                   Estimado <PrecioMostrado texto={monto} ivaEnBs={ivaHotel} />
                 </>
+              ) : faltaEdad && hospedaje ? (
+                "Elija la edad de cada niño para ver el precio"
               ) : undefined
             }
           >
