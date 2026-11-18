@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, type ReactNode } from "react";
+import { useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import Form from "next/form";
 import { Boton, clasesBoton } from "@/components/ui/Boton";
 import { CLASE_CONTROL, Campo, Selector } from "@/components/ui/Campo";
@@ -18,7 +18,6 @@ import {
   fechasDelServicio,
   hoyCaracas,
   NINOS_MAX,
-  SERVICIOS_RAPIDOS,
   sumarDias,
   textoDuracion,
 } from "@/lib/cotizador/cotizacionRapida";
@@ -32,7 +31,6 @@ import type { HotelNinoGratis } from "@/lib/promociones/ninosGratis";
 const DESTINO = "/cotizar";
 
 const MAXIMOS: Viajeros = { adultos: ADULTOS_MAX, ninos: NINOS_MAX, bebes: BEBES_MAX };
-const SERVICIOS_CON_HOTEL = new Set(["hospedaje", "paquete"]);
 /** Servicio combinable -> slug del cotizador rápido (de ahí salen las fechas). */
 const SLUG_DE_SERVICIO: Record<Servicio, string> = { hospedaje: "hospedaje", vuelo: "vuelos", tours: "fullday" };
 /** Sellos de servicio de la hoja. «Paquete» es atajo: marca hospedaje y vuelo. */
@@ -59,6 +57,11 @@ const CLASE_SELLO =
   "relative flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-card border px-1.5 py-2.5 text-center text-xs font-semibold leading-tight text-balance " +
   "transition-[background-color,border-color,color] duration-150 ease-salida motion-reduce:transition-none " +
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento";
+/** Variante pestaña: los sellos de servicio sobre la barra de escritorio. */
+const CLASE_PESTANA =
+  "relative flex h-10 items-center gap-2 rounded-t-card border border-b-0 px-4 text-sm font-semibold " +
+  "transition-[background-color,border-color,color] duration-150 ease-salida motion-reduce:transition-none " +
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento";
 
 /** Opción con forma de sello de pasaporte (como SelloDestino en /reservar):
  * marcada, el sello se estampa en tinta de acento y lleva un check. */
@@ -68,12 +71,14 @@ function Sello({
   etiqueta,
   destino,
   icono,
+  compacto = false,
 }: {
   activo: boolean;
   onClick: () => void;
   etiqueta: string;
   destino?: string;
   icono?: NombreIcono;
+  compacto?: boolean;
 }) {
   // La key cambia al marcar: así la animación `estampa` vuelve a correr.
   const tinta = activo ? "estampa -rotate-8 text-acento" : "-rotate-8 opacity-60";
@@ -82,11 +87,11 @@ function Sello({
       type="button"
       aria-pressed={activo}
       onClick={onClick}
-      className={`${CLASE_SELLO} ${
+      className={`${compacto ? CLASE_PESTANA : CLASE_SELLO} ${
         activo ? "border-acento bg-acento-suave text-ink" : "border-linea-fuerte bg-card text-ink-soft hover:border-ink/40 hover:text-ink"
       }`}
     >
-      {activo ? (
+      {activo && !compacto ? (
         <span aria-hidden="true" className="absolute right-1 top-1 grid size-5 place-items-center rounded-full bg-acento text-sobre-acento">
           <Icono nombre="check" tamano={12} />
         </span>
@@ -95,10 +100,11 @@ function Sello({
         <SelloDestino key={String(activo)} destino={destino} tamano={36} className={tinta} />
       ) : icono ? (
         <span key={String(activo)} aria-hidden="true" className={`inline-flex ${tinta}`}>
-          <Icono nombre={icono} tamano={28} />
+          <Icono nombre={icono} tamano={compacto ? 18 : 28} />
         </span>
       ) : null}
       <span>{etiqueta}</span>
+      {activo && compacto ? <Icono nombre="check" tamano={14} className="text-acento" /> : null}
     </button>
   );
 }
@@ -114,21 +120,17 @@ function Rotulo({ id, children }: { id: string; children: ReactNode }) {
 /** Hotel con niño gratis que la home destaca (el que vence primero). */
 type PropsCotizador = { ninoGratis?: HotelNinoGratis | null };
 
-/** Estado que comparten la barra y la hoja: el servicio decide cómo se llaman
- * las fechas y si hay segunda fecha (el full day es de un solo día). */
-function useCotizacionRapida(ninoGratis: HotelNinoGratis | null, multiple = false) {
-  // La barra de escritorio elige un servicio (`servicio`); la hoja del
-  // teléfono marca varios (`servicios`) y las fechas se llaman como el primero.
-  const [servicioUnico, setServicio] = useState<string>(INICIAL.servicio);
+/** Estado que comparten la barra y la hoja: se marcan varios servicios y las
+ * fechas se llaman como el primero (el full day es de un solo día). */
+function useCotizacionRapida(ninoGratis: HotelNinoGratis | null) {
   const [servicios, setServicios] = useState<Servicio[]>(["hospedaje"]);
   const [destino, setDestinoPropio] = useState<string>(INICIAL.destino);
   const [combinar, setCombinar] = useState("");
   const [entrada, setEntrada] = useState("");
   const [salida, setSalida] = useState("");
   const [viajeros, setViajeros] = useState<Viajeros>({ adultos: INICIAL.adultos, ninos: 0, bebes: 0 });
-  const servicio = multiple ? SLUG_DE_SERVICIO[servicios[0]] : servicioUnico;
-  const [etiquetaInicio, etiquetaFin] = fechasDelServicio(servicio);
-  const conHotel = multiple ? servicios.includes("hospedaje") : SERVICIOS_CON_HOTEL.has(servicio);
+  const [etiquetaInicio, etiquetaFin] = fechasDelServicio(SLUG_DE_SERVICIO[servicios[0]]);
+  const conHotel = servicios.includes("hospedaje");
 
   function setDestino(v: string) {
     setDestinoPropio(v);
@@ -146,8 +148,6 @@ function useCotizacionRapida(ninoGratis: HotelNinoGratis | null, multiple = fals
   // Margarita con niños: hay hoteles con el primer niño gratis (ver OfertasHospedaje).
   const promoNinos = /margarita/i.test(destino) && viajeros.ninos > 0;
   return {
-    servicio,
-    setServicio,
     servicios,
     setServicios,
     destino,
@@ -201,22 +201,6 @@ function CamposHotelNinos({ hotel }: { hotel: HotelNinoGratis | null }) {
   );
 }
 
-function OpcionesServicio() {
-  return SERVICIOS_RAPIDOS.map((s) => (
-    <option key={s.slug} value={s.slug}>
-      {s.label}
-    </option>
-  ));
-}
-
-function OpcionesDestino() {
-  return DESTINOS_RAPIDOS.map((d) => (
-    <option key={d.valor} value={d.valor}>
-      {d.label}
-    </option>
-  ));
-}
-
 function OpcionesNumero({ desde, hasta }: { desde: number; hasta: number }) {
   return Array.from({ length: hasta - desde + 1 }, (_, k) => desde + k).map((n) => (
     <option key={n} value={n}>
@@ -256,13 +240,114 @@ function Tramo({
 
 const CONTROL_TRAMO =
   "w-full min-w-0 cursor-pointer rounded-control bg-transparent py-1 text-base font-semibold text-ink outline-offset-4 xl:text-lg";
-// Solo la barra de escritorio: en el teléfono la lista nativa (rueda o
-// diálogo a pantalla completa) se toca mejor que un menú flotante.
-const SELECTOR_TRAMO = `selector-marca ${CONTROL_TRAMO}`;
+const etiquetaDestino = (valor: string) => DESTINOS_RAPIDOS.find((d) => d.valor === valor)?.label ?? valor;
+
+/** Escritorio: el destino abre un popover ancho con los 8 sellos (opción
+ * única) y «Combinar con otro destino». Esc y clic afuera lo cierra el
+ * navegador (popover="auto"); elegir destino también lo cierra. */
+function DestinoBarra({
+  id,
+  destino,
+  setDestino,
+  combinar,
+  setCombinar,
+}: {
+  id: string;
+  destino: string;
+  setDestino: (v: string) => void;
+  combinar: string;
+  setCombinar: (v: string) => void;
+}) {
+  const idPanel = useId();
+  const panel = useRef<HTMLDivElement>(null);
+  const [conOtro, setConOtro] = useState(false);
+  const ancla = `--destino-${idPanel.replace(/[^a-zA-Z0-9]/g, "")}`;
+  const texto = combinar ? `${etiquetaDestino(destino)} + ${etiquetaDestino(combinar)}` : etiquetaDestino(destino);
+  const cerrar = () => panel.current?.hidePopover();
+
+  return (
+    <>
+      <button
+        id={id}
+        type="button"
+        popoverTarget={idPanel}
+        aria-label={`Destino: ${texto}`}
+        style={{ anchorName: ancla } as CSSProperties}
+        className={`flex items-center gap-2 text-left ${CONTROL_TRAMO}`}
+      >
+        <SelloDestino destino={destino} tamano={24} className="-rotate-8 shrink-0 text-acento" />
+        <span className="min-w-0 truncate">{texto}</span>
+        <Icono nombre="chevron-abajo" tamano={18} className="ml-auto shrink-0 text-ink-soft" />
+      </button>
+      <input type="hidden" name="destino" value={destino} />
+      {combinar ? <input type="hidden" name="combinar" value={combinar} /> : null}
+
+      <div
+        ref={panel}
+        id={idPanel}
+        popover="auto"
+        role="dialog"
+        aria-label="Elegir destino"
+        onToggle={(e) => {
+          if (e.newState === "open") panel.current?.querySelector<HTMLButtonElement>('button[aria-pressed="true"]')?.focus();
+        }}
+        style={{ positionAnchor: ancla } as CSSProperties}
+        className="calendario-flotante w-[min(36rem,calc(100vw-2rem))] rounded-card bg-card p-4 text-ink shadow-chrome"
+      >
+        <div className="grid grid-cols-4 gap-2">
+          {DESTINOS_RAPIDOS.map((d) => (
+            <Sello
+              key={d.valor}
+              activo={destino === d.valor}
+              onClick={() => {
+                setDestino(d.valor);
+                cerrar();
+              }}
+              etiqueta={d.label}
+              destino={d.valor}
+            />
+          ))}
+        </div>
+        {conOtro ? (
+          <div className="mt-3 border-t border-linea pt-3">
+            <p className="mb-1.5 text-sm font-semibold text-ink">¿Con qué otro destino?</p>
+            <div className="grid grid-cols-4 gap-2">
+              {DESTINOS_RAPIDOS.filter((d) => d.valor !== destino).map((d) => (
+                <Sello
+                  key={d.valor}
+                  activo={combinar === d.valor}
+                  onClick={() => {
+                    setCombinar(combinar === d.valor ? "" : d.valor);
+                    cerrar();
+                  }}
+                  etiqueta={d.label}
+                  destino={d.valor}
+                />
+              ))}
+            </div>
+          </div>
+        ) : null}
+        <button
+          type="button"
+          aria-expanded={conOtro}
+          onClick={() => {
+            if (conOtro) setCombinar("");
+            setConOtro(!conOtro);
+          }}
+          className="mt-2 inline-flex min-h-11 items-center gap-1.5 rounded-control text-sm font-semibold text-acento outline-offset-2 hover:underline md:min-h-0 md:py-1.5"
+        >
+          <Icono nombre={conOtro ? "menos" : "suma"} tamano={18} />
+          {conOtro ? "Solo un destino" : "Combinar con otro destino"}
+        </button>
+      </div>
+    </>
+  );
+}
 
 /** Escritorio: barra ancha estilo buscador de viajes, con "Cotizar" como CTA. */
 export function CotizadorRapidoBarra({ ninoGratis = null, brillo = false }: PropsCotizador & { brillo?: boolean }) {
   const c = useCotizacionRapida(ninoGratis);
+  const n = c.servicios.length;
   const idSalida = useId();
   const fin = c.etiquetaFin;
   const rango = fin ? { desde: c.entrada, hasta: c.salida } : undefined;
@@ -275,30 +360,31 @@ export function CotizadorRapidoBarra({ ninoGratis = null, brillo = false }: Prop
 
   return (
     <div className="flex flex-col gap-2">
+    <div>
+    {/* Pestañas del pase de abordar: servicios, varios a la vez («Paquete» =
+        hospedaje + vuelo). Viajan en el hidden `servicios` del formulario. */}
+    <div role="group" aria-label="Servicios, puede marcar varios" className="sobre-claro flex gap-1.5 px-3">
+      {SELLOS_SERVICIO.map((s) => (
+        <Sello
+          key={s.id}
+          compacto
+          activo={s.id === "paquete" ? esPaquete(c.servicios) : c.servicios.includes(s.id)}
+          onClick={() => c.setServicios(alternar(c.servicios, s.id))}
+          etiqueta={s.etiqueta}
+          icono={s.icono}
+        />
+      ))}
+    </div>
     <Form
       action={DESTINO}
       aria-label="Cotizar un viaje"
       className="sobre-claro flex items-stretch rounded-card border border-linea bg-card p-2"
     >
-      <div className="grid min-w-0 flex-1 grid-cols-[0.95fr_1.4fr_2fr_1.65fr] divide-x divide-linea">
-        <Tramo etiqueta="Servicio">
-          {(id) => (
-            <select
-              id={id}
-              name="servicio"
-              value={c.servicio}
-              onChange={(e) => c.setServicio(e.target.value)}
-              className={SELECTOR_TRAMO}
-            >
-              <OpcionesServicio />
-            </select>
-          )}
-        </Tramo>
+      <input type="hidden" name="servicios" value={c.servicios.join(",")} />
+      <div className="grid min-w-0 flex-1 grid-cols-[2.35fr_2fr_1.65fr] divide-x divide-linea">
         <Tramo etiqueta="Destino">
           {(id) => (
-            <select id={id} name="destino" value={c.destino} onChange={(e) => c.setDestino(e.target.value)} className={SELECTOR_TRAMO}>
-              <OpcionesDestino />
-            </select>
+            <DestinoBarra id={id} destino={c.destino} setDestino={c.setDestino} combinar={c.combinar} setCombinar={c.setCombinar} />
           )}
         </Tramo>
 
@@ -369,9 +455,10 @@ export function CotizadorRapidoBarra({ ninoGratis = null, brillo = false }: Prop
             className="animate-fab-shine pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 bg-gradient-to-r from-transparent via-white/60 to-transparent motion-reduce:animate-none"
           />
         ) : null}
-        <span className="relative">Cotizar</span>
+        <span className="relative">{n === 1 ? "Cotizar" : `Cotizar ${n} servicios`}</span>
       </Boton>
     </Form>
+    </div>
     {c.promoNinos ? <AvisoNinosGratis ninos={c.viajeros.ninos} hotel={c.hotelNinos} /> : null}
     </div>
   );
@@ -383,7 +470,7 @@ export function CotizadorRapidoMovil({ ninoGratis = null }: PropsCotizador) {
   const [conOtro, setConOtro] = useState(false);
   const idForm = useId();
   const idRotulo = useId();
-  const c = useCotizacionRapida(ninoGratis, true);
+  const c = useCotizacionRapida(ninoGratis);
   const n = c.servicios.length;
   const cambiarViajeros = (clave: keyof Viajeros) => (e: { target: { value: string } }) =>
     c.setViajeros({ ...c.viajeros, [clave]: Number(e.target.value) });
