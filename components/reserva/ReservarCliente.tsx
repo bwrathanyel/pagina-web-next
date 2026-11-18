@@ -198,14 +198,15 @@ export function ReservarCliente({
 
             {pantalla === false ? politicaNodo : null}
             {pantalla !== null ? <CierreReserva r={r} /> : null}
-            {/* Boleto aparte y después del cierre: no empuja el pago (su formulario va en una Hoja). Con la
-                misma condición que el cierre, para no aparecer arriba y saltar cuando este se monta. */}
-            {pantalla !== null ? (
-              <BoletoAereo r={r} destino={destino} hotelNombre={hotel.nombre} rutas={rutasVuelo} guia={guiaRutas} />
-            ) : null}
           </div>
         </div>
       </div>
+
+      {/* Boleto: apartado propio a todo el ancho, bajo el mostrador; no empuja el pago (su formulario va en
+          una Hoja). Con la misma condición que el cierre, para no aparecer arriba y saltar cuando este se monta. */}
+      {pantalla !== null ? (
+        <BoletoAereo r={r} destino={destino} hotelNombre={hotel.nombre} rutas={rutasVuelo} guia={guiaRutas} />
+      ) : null}
 
       <BarraTotalMovil datos={datosPase} totales={r.totales} sinPrecio={r.sinPrecio} falta={fueraDeHorario ? null : r.falta} accion={<AccionReserva r={r} ancho={false} />} />
     </form>

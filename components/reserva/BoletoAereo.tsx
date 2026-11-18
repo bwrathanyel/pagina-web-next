@@ -6,6 +6,7 @@ import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
 import { CLASE_CONTROL, Campo, Entrada } from "@/components/ui/Campo";
 import { Hoja } from "@/components/ui/Hoja";
+import { Icono } from "@/components/ui/Icono";
 import { SelectorFecha } from "@/components/ui/SelectorFecha";
 import { TelefonoPais } from "@/components/ui/TelefonoPais";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
@@ -131,15 +132,26 @@ export function BoletoAereo({
   }
 
   return (
-    <section aria-labelledby={`${id}-titulo`} className="flex flex-col gap-2 rounded-card border border-dashed border-linea-fuerte p-4">
-      <h2 id={`${id}-titulo`} className="font-display text-base font-bold text-ink">
-        ¿Necesita también el boleto aéreo?
-      </h2>
-      <p className="text-sm text-ink-soft">Pague su hospedaje ahora; el boleto se lo cotiza un asesor de boletería.</p>
-      {avance ? <p className="text-sm text-ink-soft">{avance}</p> : null}
-      <Boton type="button" variante="secundario" className="self-start" aria-haspopup="dialog" onClick={abrir}>
-        {enviado ? "Ver solicitud del boleto" : "Cotizar boleto aéreo"}
-      </Boton>
+    <section aria-labelledby={`${id}-titulo`} className="relative flex flex-col gap-3 lg:gap-2.5 lg:pl-6 xl:pl-5">
+      <span aria-hidden="true" className="absolute inset-y-0 left-0 hidden w-1 bg-linea lg:block" />
+      <div className="flex items-center gap-3">
+        <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-pill border border-linea-fuerte text-ink lg:h-7 lg:w-7">
+          <Icono nombre="avion" tamano={16} />
+        </span>
+        <h2 id={`${id}-titulo`} className="min-w-0 flex-1 font-display text-xl font-bold text-ink lg:text-lg">
+          Boleto aéreo
+        </h2>
+      </div>
+      <div className="flex flex-col gap-3 rounded-card border border-linea p-4 md:flex-row md:items-center md:justify-between md:gap-6 md:p-5">
+        <div className="flex min-w-0 flex-col gap-1">
+          <p className="text-sm font-semibold text-ink">¿Necesita también el boleto aéreo?</p>
+          <p className="text-sm text-ink-soft">Pague su hospedaje ahora; el boleto se lo cotiza un asesor de boletería.</p>
+          {avance ? <p className="text-sm text-ink-soft">{avance}</p> : null}
+        </div>
+        <Boton type="button" variante="secundario" className="shrink-0 self-start md:self-center" aria-haspopup="dialog" onClick={abrir}>
+          {enviado ? "Ver solicitud del boleto" : "Cotizar boleto aéreo"}
+        </Boton>
+      </div>
 
       <Hoja abierta={abierta} onCerrar={() => setAbierta(false)} titulo="Boleto aéreo" anchoClassName="lg:max-w-lg">
         {enviado ? (
