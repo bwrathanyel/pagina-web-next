@@ -442,7 +442,7 @@ function ResumenPrecio({ est, noches }: { est: EstimadoPaquete | null; noches: n
   const { hotel, vuelo } = est;
   const avisos = [
     ...(hotel.ok ? [...hotel.avisos, avisoIgtf(igtfPct)] : []),
-    vuelo.cercano ? `Faltan ${vuelo.dias} días para el vuelo: el boleto ya está en tarifa de última hora.` : null,
+    vuelo.cercano ? `Faltan ${vuelo.dias} días para el vuelo: con poca anticipación la tarifa y el cupo cambian rápido, se los confirma un asesor.` : null,
   ].filter((x): x is string => !!x);
 
   return (

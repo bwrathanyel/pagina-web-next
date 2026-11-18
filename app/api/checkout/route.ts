@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { clientKey } from "../_shared/client-key";
-import { verificarTurnstile } from "../_shared/turnstile";
 import { calcularHospedaje, fechaValida, RIELES, servicioHospedaje, validarContacto, type SolicitudHospedaje } from "@/lib/checkout/calculo";
 import { bloqueosDe, hotelParaCobrar } from "@/lib/checkout/datos";
 import { esDestinoCompraDirecta } from "@/lib/checkout/destinos";
@@ -73,9 +72,6 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body || Array.isArray(body)) return NextResponse.json({ ok: false, error: "body_invalido" }, { status: 400 });
 
-  if (!(await verificarTurnstile(body.turnstile_token, request))) {
-    return NextResponse.json({ ok: false, error: "captcha_invalido" }, { status: 403 });
-  }
   if (body.acepta_terminos !== true) return NextResponse.json({ ok: false, error: "terminos_no_aceptados" }, { status: 400 });
 
   const errContacto = validarContacto({ nombre: body.nombre, telefono: body.telefono, email: body.email, riel: body.riel });

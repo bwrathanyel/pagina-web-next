@@ -2,14 +2,14 @@
 // (`vuelos_referencia`, USD por persona, ida y vuelta). Las mismas constantes
 // viven en `_shared/ventas-ia.ts` del repo CRM: si cambian acá, cambian allá.
 //
-// Decisiones del dueño (2026-09-25): +20% siempre; a 20 días o menos del vuelo,
-// x1,15 sobre eso; solo ida = mitad de la tarifa con los mismos recargos; niños
-// pagan asiento completo; bebés no suman. Sin tarifa (ruta "Otro") no hay número.
+// Decisión del dueño (2026-11-17): la tarifa "Desde" ya trae el fee, sin recargos.
+// Los de antes (+20 % y x1,15 a ≤20 días) dejaban la web 13-90 % sobre las
+// cotizaciones reales de boletería. Solo ida = mitad de la tarifa; niños pagan
+// asiento completo; bebés no suman. Sin tarifa (ruta "Otro") no hay número.
+// `cercano` queda como dato para el asesor, no cambia el precio.
 
 import { fechasVuelo, ORIGENES_VUELO, type EstadoViaje } from "./estado.ts";
 
-export const RECARGO_BASE = 1.2;
-export const RECARGO_CERCANO = 1.15;
 export const DIAS_CERCANO = 20;
 
 const DIA = 86_400_000;
@@ -39,8 +39,8 @@ export type EstimadoVuelo = {
   bebesSinCosto: boolean;
 };
 
-// Redondea a centavos antes del techo: 155 * 1.2 da 186.00000000000003 en
-// coma flotante y un ceil directo lo subiría a 187.
+// Redondea a centavos antes del techo: un producto en coma flotante como
+// 186.00000000000003 no debe subir a 187.
 const techo = (x: number) => Math.ceil(Math.round(x * 100) / 100);
 
 export function diasHasta(fecha: string | null, hoy: string): number | null {
@@ -61,7 +61,7 @@ export function estimarVuelo(e: EntradaVuelo): EstimadoVuelo {
   if (aConfirmar.length) return { porPersona: null, total: null, cercano, dias, aConfirmar, bebesSinCosto };
 
   const base = (e.desdeUsd as number) / (e.idaVuelta ? 1 : 2);
-  const porPersona = techo(base * RECARGO_BASE * (cercano ? RECARGO_CERCANO : 1));
+  const porPersona = techo(base);
   const asientos = Math.max(0, e.adultos) + Math.max(0, e.ninos);
   return { porPersona, total: asientos > 0 ? porPersona * asientos : null, cercano, dias, aConfirmar, bebesSinCosto };
 }

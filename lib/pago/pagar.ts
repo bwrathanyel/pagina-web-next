@@ -229,7 +229,6 @@ export async function consultarEstado(token: string): Promise<RespuestaEstado> {
 export interface DeclararArgs {
   token: string;
   referencia: string;
-  turnstileToken: string;
   comprobanteBase64?: string;
   comprobanteMime?: string;
   /** Solo en el link sin método fijo. */
@@ -245,7 +244,6 @@ export async function declarar(args: DeclararArgs): Promise<{ ok: boolean; error
       body: JSON.stringify({
         referencia: args.referencia,
         riel: args.riel,
-        turnstile_token: args.turnstileToken,
         comprobante_base64: args.comprobanteBase64,
         comprobante_mime: args.comprobanteMime,
       }),

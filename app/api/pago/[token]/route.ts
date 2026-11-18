@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { verificarTurnstile } from "../../_shared/turnstile";
 
 /** Proxy server-to-server a la Edge Function `pago-publico` del CRM -- mismo
  * patrón que /api/lead y /api/postular-empleo: el navegador nunca llama a
@@ -56,10 +55,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body || Array.isArray(body)) {
     return NextResponse.json({ ok: false, error: "body_invalido" }, { status: 400 });
-  }
-
-  if (!(await verificarTurnstile(body.turnstile_token, request))) {
-    return NextResponse.json({ ok: false, error: "captcha_invalido" }, { status: 403 });
   }
 
   const referencia = typeof body.referencia === "string" ? body.referencia.trim().slice(0, 120) : "";

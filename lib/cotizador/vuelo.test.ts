@@ -7,19 +7,19 @@ import { diasHasta, estimarVuelo, type EntradaVuelo } from "./vuelo.ts";
 const HOY = "2026-10-01";
 const base: EntradaVuelo = { desdeUsd: 299, idaVuelta: true, fechaIda: "2026-10-31", hoy: HOY, adultos: 2, ninos: 0, bebes: 0 };
 
-test("+20% sobre la tarifa, por persona y total", () => {
+test("la tarifa ya trae el fee: sin recargo, por persona y total", () => {
   const r = estimarVuelo(base);
-  assert.equal(r.porPersona, 359);
-  assert.equal(r.total, 718);
+  assert.equal(r.porPersona, 299);
+  assert.equal(r.total, 598);
   assert.equal(r.cercano, false);
   assert.deepEqual(r.aConfirmar, []);
 });
 
-test("a 20 días o menos suma x1,15 sobre el +20%", () => {
+test("a 20 días o menos marca cercano sin cambiar el precio", () => {
   const r = estimarVuelo({ ...base, fechaIda: "2026-10-11" });
   assert.equal(r.dias, 10);
   assert.equal(r.cercano, true);
-  assert.equal(r.porPersona, 413);
+  assert.equal(r.porPersona, 299);
 });
 
 test("borde: 20 días es cercano, 21 no", () => {
@@ -31,9 +31,9 @@ test("vuelo hoy es cercano", () => {
   assert.equal(estimarVuelo({ ...base, fechaIda: HOY }).cercano, true);
 });
 
-test("solo ida: mitad de la tarifa con los mismos recargos", () => {
-  assert.equal(estimarVuelo({ ...base, idaVuelta: false }).porPersona, 180);
-  assert.equal(estimarVuelo({ ...base, idaVuelta: false, fechaIda: "2026-10-11" }).porPersona, 207);
+test("solo ida: mitad de la tarifa, redondeada hacia arriba", () => {
+  assert.equal(estimarVuelo({ ...base, idaVuelta: false }).porPersona, 150);
+  assert.equal(estimarVuelo({ ...base, idaVuelta: false, fechaIda: "2026-10-11" }).porPersona, 150);
 });
 
 test("ruta sin tarifa u Otro: a confirmar, nunca un número", () => {
@@ -53,12 +53,12 @@ test("sin fecha: tarifa base, no cercano", () => {
   const r = estimarVuelo({ ...base, fechaIda: null });
   assert.equal(r.dias, null);
   assert.equal(r.cercano, false);
-  assert.equal(r.porPersona, 359);
+  assert.equal(r.porPersona, 299);
 });
 
 test("niños pagan asiento completo; bebés no suman", () => {
   const r = estimarVuelo({ ...base, adultos: 2, ninos: 1, bebes: 1 });
-  assert.equal(r.total, 359 * 3);
+  assert.equal(r.total, 299 * 3);
   assert.equal(r.bebesSinCosto, true);
 });
 
@@ -66,11 +66,9 @@ test("sin pasajeros con asiento no hay total", () => {
   assert.equal(estimarVuelo({ ...base, adultos: 0, ninos: 0 }).total, null);
 });
 
-test("redondeo: sin error de coma flotante en montos exactos", () => {
-  // 155 * 1.2 = 186 exacto; un ceil ingenuo daría 187.
-  assert.equal(estimarVuelo({ ...base, desdeUsd: 155 }).porPersona, 186);
-  // 299 * 1.2 = 358.8, sube a 359.
-  assert.equal(estimarVuelo({ ...base, desdeUsd: 299 }).porPersona, 359);
+test("redondeo: montos exactos no suben, centavos sí", () => {
+  assert.equal(estimarVuelo({ ...base, desdeUsd: 155 }).porPersona, 155);
+  assert.equal(estimarVuelo({ ...base, desdeUsd: 185.57 }).porPersona, 186);
 });
 
 test("diasHasta ignora fechas inválidas", () => {
@@ -95,12 +93,12 @@ const ruta = (o: string, d: string, nombre: string, desde: number, ambito: RutaV
 const RUTAS = [ruta("CCS", "BOG", "Bogotá", 299), ruta("CCS", "PMV", "Margarita", 109, "nacional"), ruta("VLN", "PMV", "Margarita", 160, "nacional")];
 const viaje = (e: Partial<EstadoViaje>): EstadoViaje => ({ ...estadoInicial(), servicios: ["vuelo"], ...e });
 
-test("verificación del plan: CCS-Bogotá, 2 adultos, a 30 días $359 c/u ($718); a 10 días $413", () => {
+test("CCS-Bogotá, 2 adultos: $299 c/u a 30 o a 10 días", () => {
   const lejos = estimarVueloViaje(viaje({ origen: "Caracas", vueloDestino: "BOG", desde: "2026-10-31" }), RUTAS, HOY);
-  assert.equal(lejos.porPersona, 359);
-  assert.equal(lejos.total, 718);
+  assert.equal(lejos.porPersona, 299);
+  assert.equal(lejos.total, 598);
   const cerca = estimarVueloViaje(viaje({ origen: "Caracas", vueloDestino: "BOG", desde: "2026-10-11" }), RUTAS, HOY);
-  assert.equal(cerca.porPersona, 413);
+  assert.equal(cerca.porPersona, 299);
   assert.equal(cerca.cercano, true);
 });
 
@@ -116,7 +114,7 @@ test("Otro destino y ruta sin tarifa desde ese origen: a confirmar", () => {
 test("el destino del viaje preselecciona la ruta; un IATA sin ruta se ignora", () => {
   const margarita = estimarVueloViaje(viaje({ origen: "Caracas", destino: "Isla de Margarita" }), RUTAS, HOY);
   assert.equal(margarita.destino, "PMV");
-  assert.equal(margarita.porPersona, 131);
+  assert.equal(margarita.porPersona, 109);
   assert.equal(estimarVueloViaje(viaje({ vueloDestino: "XYZ", destino: "Mérida" }), RUTAS, HOY).destino, "");
   assert.equal(estimarVueloViaje(viaje({ vueloDestino: "BOG" }), [], HOY).destino, "");
 });
@@ -144,9 +142,9 @@ test("temporada alta (Navidad): la fecha de ida elige la tarifa", () => {
   assert.equal(rutaParaFecha(conTemporada, "VLN", "PMV", "2026-12-23"), null);
   // La ficha del cotizador usa la temporada cuando la ida cae adentro.
   const navidad = estimarVueloViaje(viaje({ origen: "Caracas", vueloDestino: "PMV", desde: "2026-12-23", hasta: "2026-12-26" }), conTemporada, HOY);
-  assert.equal(navidad.porPersona, 474);
+  assert.equal(navidad.porPersona, 395);
   const baja = estimarVueloViaje(viaje({ origen: "Caracas", vueloDestino: "PMV", desde: "2026-11-13", hasta: "2026-11-16" }), conTemporada, HOY);
-  assert.equal(baja.porPersona, 228);
+  assert.equal(baja.porPersona, 190);
   // El selector de destinos no duplica la ruta por tener dos tarifas.
   assert.deepEqual(destinosDeRutas(conTemporada).map((d) => d.iata), ["PMV"]);
 });

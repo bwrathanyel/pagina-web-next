@@ -11,9 +11,12 @@ export async function verificarTurnstile(token: unknown, request: Request): Prom
   if (ip) cuerpo.set("remoteip", ip);
   try {
     const res = await fetch(VERIFY_URL, { method: "POST", body: cuerpo, signal: AbortSignal.timeout(8_000) });
-    const data = await res.json().catch(() => null) as { success?: boolean; hostname?: string } | null;
-    return Boolean(res.ok && data?.success && data.hostname === "destinoyeventoslotus360.com");
-  } catch {
+    const data = await res.json().catch(() => null) as { success?: boolean; hostname?: string; "error-codes"?: string[] } | null;
+    const ok = Boolean(res.ok && data?.success && data.hostname === "destinoyeventoslotus360.com");
+    if (!ok) console.warn("turnstile rechazado", { http: res.status, success: data?.success, hostname: data?.hostname, codigos: data?.["error-codes"] });
+    return ok;
+  } catch (e) {
+    console.warn("turnstile siteverify falló", e instanceof Error ? e.name : "error");
     return false;
   }
 }

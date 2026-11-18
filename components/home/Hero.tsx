@@ -110,13 +110,20 @@ export function Hero({ fotos, ninoGratis = null }: { fotos: FotoHero[]; ninoGrat
   // la foto que el servidor ya pintó justo al hidratar, y el cruce iba hacia
   // una que nadie había bajado (fondo oscuro en el teléfono en cada carga,
   // 2026-09-25).
+  // Se reinicia por CONTENIDO, no por identidad del array: al tocar el logo (o
+  // cualquier navegación a «/») Next entrega `fotos` como un array nuevo con las
+  // mismas fotos; reiniciar ahí vaciaba `cargadas` (la próxima foto ya estaba
+  // bajada y su onLoad no vuelve a disparar) y el hero quedaba congelado en la
+  // primera, con un salto visible.
+  const claveFotos = fotos.map((f) => f.url + (f.fondos?.map((x) => x.url).join(",") ?? "")).join("|");
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setOrden(fotos.length > 1 ? [fotos[0], ...barajar(fotos.slice(1))] : fotos);
     setI(0);
     setCiclo(0);
     cargadas.current = new Set(fotos[0] ? [fotos[0].url] : []);
-  }, [fotos]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [claveFotos]);
 
   useEffect(() => {
     const alCambiar = () => setPestanaVisible(document.visibilityState === "visible");

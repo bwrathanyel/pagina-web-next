@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { registrarEvento } from "@/lib/analitica/eventos";
 import { mensajePago } from "@/lib/checkout/formato";
 import { comprimirImagen, decidirComprobante } from "@/lib/pago/comprimir";
@@ -47,7 +47,7 @@ function deBase64({ nombre, mime, base64 }: NonNullable<Borrador["archivo"]>): F
   }
 }
 
-/** Estado y envío del aviso «¿Ya pagó?»: referencia, comprobante comprimido, Turnstile y borrador. */
+/** Estado y envío del aviso «¿Ya pagó?»: referencia, comprobante comprimido y borrador. */
 export function useAvisoPago({
   token, riel, rielElegido, onDeclarado,
 }: {
@@ -65,13 +65,9 @@ export function useAvisoPago({
   const [archivo, setArchivo] = useState<File | null>(() => (inicial?.archivo ? deBase64(inicial.archivo) : null));
   const [achicado, setAchicado] = useState(false);
   const [procesando, setProcesando] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const [turnstileVuelta, setTurnstileVuelta] = useState(0);
-  const [esperandoToken, setEsperandoToken] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const refInput = useRef<HTMLInputElement>(null);
-  const recibirTurnstile = useCallback((t: string | null) => setTurnstileToken(t), []);
 
   // base64 del archivo actual: se calcula una vez y sirve al borrador y al envío.
   const base64 = useRef<{ file: File; valor: string } | null>(
@@ -139,7 +135,7 @@ export function useAvisoPago({
     setError(null);
   }
 
-  async function enviarCon(tokenSeguridad: string) {
+  async function enviarCon() {
     setEnviando(true);
     setError(null);
     try {
@@ -147,7 +143,6 @@ export function useAvisoPago({
       const res = await declarar({
         token,
         referencia: referencia.trim(),
-        turnstileToken: tokenSeguridad,
         comprobanteBase64,
         comprobanteMime: archivo?.type,
         riel: rielElegido ? riel : undefined,
@@ -159,8 +154,6 @@ export function useAvisoPago({
         return;
       }
       setError(mensajePago(res.error));
-      setTurnstileToken(null); // el token de Turnstile es de un solo uso
-      setTurnstileVuelta((v) => v + 1); // y el widget no se reinicia solo: se remonta para pedir otro
     } catch {
       // Solo puede fallar la lectura del archivo: declarar no lanza (la red cae como error "sin_red").
       setError("No pudimos leer el comprobante. Pruebe con otro archivo.");
@@ -168,32 +161,21 @@ export function useAvisoPago({
       setEnviando(false);
     }
   }
-  const enviarRef = useRef(enviarCon);
-  enviarRef.current = enviarCon;
-
   function alEnviar(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (enviando || esperandoToken || procesando) return;
+    if (enviando || procesando) return;
     if (!referencia.trim()) {
       setErrorReferencia("Escriba el número de referencia del pago.");
       refInput.current?.focus();
       return;
     }
-    // El botón nunca se apaga en silencio: sin token todavía, espera la verificación y envía solo.
-    if (!turnstileToken) { setEsperandoToken(true); return; }
-    void enviarCon(turnstileToken);
+    void enviarCon();
   }
-
-  useEffect(() => {
-    if (!esperandoToken || !turnstileToken) return;
-    setEsperandoToken(false);
-    void enviarRef.current(turnstileToken);
-  }, [esperandoToken, turnstileToken]);
 
   return {
     referencia, setReferencia, errorReferencia, refInput,
     archivo, achicado, procesando, elegirArchivo, quitarArchivo,
-    turnstileVuelta, recibirTurnstile, esperandoToken, enviando, error, alEnviar,
+    enviando, error, alEnviar,
     restaurado: Boolean(inicial?.referencia || inicial?.archivo),
   };
 }

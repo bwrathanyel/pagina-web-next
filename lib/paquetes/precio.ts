@@ -1,5 +1,5 @@
 // Precio de un paquete = estadía del hotel (estimarEstadia, la misma de /cotizar)
-// + boleto ida y vuelta (estimarVuelo, tarifa "Desde" con los recargos del dueño).
+// + boleto ida y vuelta (estimarVuelo, tarifa "Desde", ya con fee).
 // Funciones puras: las usan la tarjeta, la ficha y `node --test`. Nunca un número
 // inventado: si una de las dos partes no se puede calcular, no hay total.
 import type { Tarifa } from "@/types/supabase";
@@ -52,7 +52,7 @@ export function limitarNoches(p: ConFechas, n: number): number {
 }
 
 /** Entrada por defecto: la fija, o el primer viernes a más de DIAS_CERCANO días
- * (así el primer precio que ve el cliente no trae el recargo de vuelo cercano). */
+ * (así el primer precio que ve el cliente no cae en fecha de última hora). */
 export function entradaInicial(p: ConFechas, hoy: string): string {
   if (esFijo(p)) return p.fecha_entrada!;
   let d = sumarDias(hoy, DIAS_CERCANO + 1);

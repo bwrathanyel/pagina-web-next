@@ -112,17 +112,18 @@ test("total = hotel + boletos, con la habitación más barata por defecto", () =
   assert.equal(t?.id, 2);
   const e = estimarPaquete({ tarifa: t, tarifas: plan, ...f, viajeros: DOS, ruta: RUTAS[0], hoy: HOY });
   assert.ok(e.hotel.ok);
-  // 109 * 1,2 = 131 por persona (más de 20 días: sin recargo de cercanía).
-  assert.equal(e.vuelo.porPersona, 131);
-  assert.equal(e.total, (e.hotel.ok ? e.hotel.total : 0) + 262);
+  // La tarifa ya trae el fee: 109 por persona.
+  assert.equal(e.vuelo.porPersona, 109);
+  assert.equal(e.total, (e.hotel.ok ? e.hotel.total : 0) + 218);
   assert.equal(e.porPersona, Math.ceil(e.total! / 2));
 });
 
-test("vuelo cercano lleva recargo; bebés no suman asiento", () => {
+test("vuelo cercano sin recargo; bebés no suman asiento", () => {
   const plan = tarifasDelPlan(TARIFAS, "TODO INCLUIDO");
   const v = { adultos: 2, edades: [], bebes: 1 };
   const e = estimarPaquete({ tarifa: plan[1], tarifas: plan, desde: "2026-10-30", hasta: "2026-11-02", viajeros: v, ruta: RUTAS[0], hoy: HOY });
-  assert.equal(e.vuelo.porPersona, Math.ceil(109 * 1.2 * 1.15));
+  assert.equal(e.vuelo.porPersona, 109);
+  assert.equal(e.vuelo.cercano, true);
   assert.equal(e.asientos, 2);
   assert.equal(e.vuelo.bebesSinCosto, true);
 });
@@ -134,8 +135,8 @@ test("sin ruta no hay total; un hotel en euros suma su número en $", () => {
   const eur = [hab(9, "SUPERIOR", 100, { moneda: "EUR" })];
   const e = estimarPaquete({ tarifa: eur[0], tarifas: eur, ...f, viajeros: DOS, ruta: RUTAS[0], hoy: HOY });
   assert.ok(e.hotel.ok);
-  assert.equal(e.vuelo.total, 262);
-  assert.equal(e.total, e.hotel.ok ? Math.round((e.hotel.total + 262) * 100) / 100 : NaN);
+  assert.equal(e.vuelo.total, 218);
+  assert.equal(e.total, e.hotel.ok ? Math.round((e.hotel.total + 218) * 100) / 100 : NaN);
 });
 
 test("destino de /cotizar", () => {

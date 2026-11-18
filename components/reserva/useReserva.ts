@@ -166,10 +166,6 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial }: Entrada
   const [hojaViajeros, setHojaViajeros] = useState(false);
   const [abierta, setAbierta] = useState<ReservaAbierta | null>(null);
   const [mostrarErrores, setMostrarErrores] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  // Cada token de Turnstile sirve una sola vez: tras un envío fallido se remonta el widget para pedir otro.
-  const [turnstileVuelta, setTurnstileVuelta] = useState(0);
-  const [esperaToken, setEsperaToken] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<{ tono: "error" | "info"; texto: string } | null>(null);
   const [ajuste, setAjuste] = useState<{ clave: string; precio: number } | null>(null);
@@ -470,10 +466,7 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial }: Entrada
     control?.focus({ preventScroll: true });
   }
 
-  // El setter de useState ya es estable: TurnstileWidget no se re-monta por un onToken nuevo.
-  const recibirTurnstile: (t: string | null) => void = setTurnstileToken;
-
-  async function crear(token: string) {
+  async function crear() {
     if (precio === null || !riel) return;
     setEnviando(true);
     setError(null);
@@ -495,7 +488,6 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial }: Entrada
           ...(usarPlan ? { plan: true, acepta_plan: aceptaPlan } : {}),
           idempotency_key: `w_${base}_${firma(JSON.stringify([tarifaEfectiva, desde, hasta, pasajeros.adultos, edades, pasajeros.bebes, riel, email.toLowerCase(), telefono.replace(/\D/g, ""), usarPlan]))}`,
           total_mostrado: precio,
-          turnstile_token: token,
         }),
       });
       const data = (await res.json().catch(() => null)) as Record<string, unknown> | null;
@@ -525,30 +517,8 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial }: Entrada
     } catch {
       setError({ tono: "error", texto: "No pudimos conectar con el servidor. Sus datos siguen aquí: inténtelo de nuevo en un momento." });
     }
-    setTurnstileToken(null); // el token de Turnstile es de un solo uso
-    setTurnstileVuelta((v) => v + 1);
     setEnviando(false);
   }
-
-  // Botón tocado antes de que Turnstile entregue el token: se envía solo cuando llega.
-  const crearRef = useRef(crear);
-  useEffect(() => {
-    crearRef.current = crear;
-  });
-  useEffect(() => {
-    if (!esperaToken || !turnstileToken || enviando) return;
-    setEsperaToken(false);
-    void crearRef.current(turnstileToken);
-  }, [esperaToken, turnstileToken, enviando]);
-
-  // Si Turnstile pide la casilla, el token no llega solo: tras un instante se avisa qué falta (sin parpadeo si llega rápido).
-  const [pedirTurnstile, setPedirTurnstile] = useState(false);
-  useEffect(() => {
-    if (!esperaToken || turnstileToken) return;
-    const t = setTimeout(() => setPedirTurnstile(true), 1200);
-    return () => clearTimeout(t);
-  }, [esperaToken, turnstileToken]);
-  const avisoTurnstile = pedirTurnstile && esperaToken && !turnstileToken;
 
   // Al fallar, el aviso queda al final de la columna en el teléfono: se lleva a la vista.
   useEffect(() => {
@@ -564,13 +534,7 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial }: Entrada
       enfocar(primerError);
       return;
     }
-    if (!turnstileToken) {
-      setEsperaToken(true);
-      setPedirTurnstile(false);
-      document.querySelector('[data-campo="turnstile"]')?.scrollIntoView({ block: "center", behavior: "smooth" });
-      return;
-    }
-    void crear(turnstileToken);
+    void crear();
   }
 
   const segundosAbierta = abierta ? Math.floor((Date.parse(abierta.expira_en) - Date.now()) / 1000) : 0;
@@ -616,8 +580,7 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial }: Entrada
     hoy, pantalla, esEscritorio, config, reintentar, user, abrirCuenta,
     f, poner, desde, hasta, pasajeros, riel, hayFechas,
     acepta, setAcepta, modo, setModo, aceptaPlan, setAceptaPlan, hojaViajeros, setHojaViajeros,
-    abierta, segundosAbierta, mostrarErrores, error, enviando, esperaToken,
-    turnstileVuelta, recibirTurnstile, avisoTurnstile,
+    abierta, segundosAbierta, mostrarErrores, error, enviando,
     elegida, tarifaEfectiva, habitacion, opciones, caracteristicas,
     precio, plan, ofrecerPlan, tasa, noches, totales, sinPrecio,
     errores, errorDe, falta, fueraDeHorario, wa, alEnviar,

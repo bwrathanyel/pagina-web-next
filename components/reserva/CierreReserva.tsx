@@ -1,12 +1,11 @@
 "use client";
 
-import { TurnstileWidget } from "@/components/pago/TurnstileWidget";
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import type { Reserva } from "./useReserva";
 
-type Accion = Pick<Reserva, "fueraDeHorario" | "wa" | "enviando" | "esperaToken" | "config">;
+type Accion = Pick<Reserva, "fueraDeHorario" | "wa" | "enviando" | "config">;
 
 /** Botón de crear (o WhatsApp fuera de horario): ancho al final del cierre en escritorio, compacto en la barra móvil. */
 export function AccionReserva({ r, ancho }: { r: Accion; ancho: boolean }) {
@@ -15,17 +14,17 @@ export function AccionReserva({ r, ancho }: { r: Accion; ancho: boolean }) {
       Reservar por WhatsApp
     </Boton>
   ) : (
-    <Boton type="submit" ancho={ancho} className={ancho ? "" : "shrink-0"} cargando={r.enviando || r.esperaToken || !r.config}>
-      {r.esperaToken ? "Verificando seguridad…" : "Reservar y pagar"}
+    <Boton type="submit" ancho={ancho} className={ancho ? "" : "shrink-0"} cargando={r.enviando || !r.config}>
+      Reservar y pagar
     </Boton>
   );
 }
 
 type Props = {
-  r: Accion & Pick<Reserva, "error" | "acepta" | "setAcepta" | "errorDe" | "turnstileVuelta" | "recibirTurnstile" | "avisoTurnstile" | "esEscritorio">;
+  r: Accion & Pick<Reserva, "error" | "acepta" | "setAcepta" | "errorDe" | "esEscritorio">;
 };
 
-// Aceptación + Turnstile existen UNA sola vez, al final de la columna de pago.
+// La aceptación existe UNA sola vez, al final de la columna de pago.
 export function CierreReserva({ r }: Props) {
   const { error, fueraDeHorario, acepta, setAcepta } = r;
   const errorAcepta = r.errorDe("acepta");
@@ -63,14 +62,6 @@ export function CierreReserva({ r }: Props) {
             {errorAcepta ? (
               <p id="r-acepta-error" role="alert" className="mt-1 text-sm font-medium text-peligro">
                 {errorAcepta}
-              </p>
-            ) : null}
-          </div>
-          <div data-campo="turnstile" className="flex flex-col gap-1">
-            <TurnstileWidget key={r.turnstileVuelta} onToken={r.recibirTurnstile} />
-            {r.avisoTurnstile ? (
-              <p role="alert" className="text-sm font-medium text-peligro">
-                Complete la verificación de seguridad para continuar. La reserva se envía sola al terminar.
               </p>
             ) : null}
           </div>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useId, type RefObject } from "react";
-import { TurnstileWidget } from "@/components/pago/TurnstileWidget";
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
 import { Campo, Entrada } from "@/components/ui/Campo";
@@ -120,7 +119,7 @@ function ZonaComprobante({ aviso }: { aviso: AvisoPagoEstado }) {
   );
 }
 
-/** «¿Ya pagó? Avísenos»: referencia, captura y Turnstile. */
+/** «¿Ya pagó? Avísenos»: referencia y captura. */
 export function AvisoPago({
   aviso, riel, formRef,
 }: {
@@ -158,12 +157,10 @@ export function AvisoPago({
 
       <ZonaComprobante aviso={aviso} />
 
-      <TurnstileWidget key={aviso.turnstileVuelta} onToken={aviso.recibirTurnstile} />
-
       {aviso.error ? <Aviso>{aviso.error}</Aviso> : null}
 
-      <Boton type="submit" tamano="lg" ancho cargando={aviso.enviando || aviso.esperandoToken} disabled={aviso.procesando}>
-        {aviso.esperandoToken ? "Verificando seguridad…" : aviso.enviando ? "Enviando…" : "Ya pagué"}
+      <Boton type="submit" tamano="lg" ancho cargando={aviso.enviando} disabled={aviso.procesando}>
+        {aviso.enviando ? "Enviando…" : "Ya pagué"}
       </Boton>
       <p className="text-center text-sm text-ink-soft">
         Verificamos cada pago a mano. Nunca le pediremos claves ni datos de tarjeta.
