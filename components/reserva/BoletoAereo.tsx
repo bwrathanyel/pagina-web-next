@@ -67,12 +67,14 @@ export function BoletoAereo({
   hotelNombre,
   rutas,
   guia,
+  className,
 }: {
   r: Pick<Reserva, "f" | "desde" | "hasta" | "pasajeros">;
   destino: string | null;
   hotelNombre: string;
   rutas: readonly RutaVuelo[];
   guia: readonly RutaAerea[];
+  className?: string;
 }) {
   const id = useId();
   const formId = `${id}-boleto`;
@@ -132,21 +134,27 @@ export function BoletoAereo({
   }
 
   return (
-    <section aria-labelledby={`${id}-titulo`} className="relative flex flex-col gap-3 lg:gap-2.5 lg:pl-6 xl:pl-5">
-      <span aria-hidden="true" className="absolute inset-y-0 left-0 hidden w-1 bg-linea lg:block" />
-      <div className="flex items-center gap-3">
-        <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-pill border border-linea-fuerte text-ink lg:h-7 lg:w-7">
+    // Teléfono: encabezado con ícono y tarjeta debajo. lg: una sola franja baja (ícono, título, texto y botón
+    // en fila) entre la cabecera y el mostrador, para que se vea en la primera pantalla.
+    <section
+      aria-labelledby={`${id}-titulo`}
+      className={`flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4 lg:rounded-card lg:border lg:border-linea lg:bg-card lg:px-4 lg:py-2.5 ${className ?? ""}`}
+    >
+      <div className="flex shrink-0 items-center gap-3">
+        <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-pill border border-linea-fuerte text-ink">
           <Icono nombre="avion" tamano={16} />
         </span>
-        <h2 id={`${id}-titulo`} className="min-w-0 flex-1 font-display text-xl font-bold text-ink lg:text-lg">
+        <h2 id={`${id}-titulo`} className="min-w-0 flex-1 font-display text-xl font-bold text-ink lg:text-base">
           Boleto aéreo
         </h2>
       </div>
-      <div className="flex flex-col gap-3 rounded-card border border-linea p-4 md:flex-row md:items-center md:justify-between md:gap-6 md:p-5">
-        <div className="flex min-w-0 flex-col gap-1">
-          <p className="text-sm font-semibold text-ink">¿Necesita también el boleto aéreo?</p>
-          <p className="text-sm text-ink-soft">Pague su hospedaje ahora; el boleto se lo cotiza un asesor de boletería.</p>
-          {avance ? <p className="text-sm text-ink-soft">{avance}</p> : null}
+      <div className="flex min-w-0 flex-1 flex-col gap-3 rounded-card border border-linea p-4 md:flex-row md:items-center md:justify-between md:gap-6 md:p-5 lg:rounded-none lg:border-0 lg:border-l lg:p-0 lg:pl-4">
+        <div className="flex min-w-0 flex-col gap-1 lg:gap-0.5">
+          <p className="text-sm font-semibold text-ink lg:hidden">¿Necesita también el boleto aéreo?</p>
+          <p className="text-sm text-ink-soft lg:text-ink">
+            <span className="max-lg:hidden">¿Necesita también el boleto? </span>Pague su hospedaje ahora; el boleto se lo cotiza un asesor de boletería.
+          </p>
+          {avance ? <p className="text-sm text-ink-soft lg:text-xs">{avance}</p> : null}
         </div>
         <Boton type="button" variante="secundario" className="shrink-0 self-start md:self-center" aria-haspopup="dialog" onClick={abrir}>
           {enviado ? "Ver solicitud del boleto" : "Cotizar boleto aéreo"}

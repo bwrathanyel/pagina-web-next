@@ -164,6 +164,11 @@ export function ReservarCliente({
         </Aviso>
       ) : null}
 
+      {/* Boleto: en escritorio, franja baja entre la cabecera y el mostrador, para verse sin bajar (queja
+          del dueño 2026-11-18, 1366×695); en el teléfono, al final. Se monta siempre (no espera a `pantalla`)
+          para que la franja no aparezca tarde y empuje el mostrador. Su formulario va en una Hoja. */}
+      <BoletoAereo r={r} destino={destino} hotelNombre={hotel.nombre} rutas={rutasVuelo} guia={guiaRutas} className="max-lg:order-1" />
+
       {/* lg: dos columnas (fechas y habitación | pago, datos y cierre). xl: tres (fechas y habitación | pago
           y política | datos y cierre); la columna derecha se disuelve con `xl:contents`. */}
       <div className="grid gap-4 lg:grid-cols-2 lg:items-start lg:gap-8 xl:grid-cols-3">
@@ -202,13 +207,10 @@ export function ReservarCliente({
         </div>
       </div>
 
-      {/* Boleto: apartado propio a todo el ancho, bajo el mostrador; no empuja el pago (su formulario va en
-          una Hoja). Con la misma condición que el cierre, para no aparecer arriba y saltar cuando este se monta. */}
-      {pantalla !== null ? (
-        <BoletoAereo r={r} destino={destino} hotelNombre={hotel.nombre} rutas={rutasVuelo} guia={guiaRutas} />
-      ) : null}
-
-      <BarraTotalMovil datos={datosPase} totales={r.totales} sinPrecio={r.sinPrecio} falta={fueraDeHorario ? null : r.falta} accion={<AccionReserva r={r} ancho={false} />} />
+      {/* order-last: en el teléfono su espaciador queda después del boleto. */}
+      <div className="order-last lg:hidden">
+        <BarraTotalMovil datos={datosPase} totales={r.totales} sinPrecio={r.sinPrecio} falta={fueraDeHorario ? null : r.falta} accion={<AccionReserva r={r} ancho={false} />} />
+      </div>
     </form>
   );
 }
