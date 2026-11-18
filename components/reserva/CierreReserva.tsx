@@ -2,7 +2,6 @@
 
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
-import { Icono } from "@/components/ui/Icono";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import type { Reserva } from "./useReserva";
 
@@ -68,14 +67,13 @@ export function CierreReserva({ r, boleto = null }: Props) {
               </p>
             ) : null}
           </div>
-          <p className="text-sm text-ink-soft">Aún no se le cobra nada: en el siguiente paso verá los datos para pagar.</p>
-          {boleto ? (
-            // Una línea: el detalle del vuelo ya está en la franja de arriba; con 4 líneas el botón quedaba bajo el pliegue (1366×695, dueño 2026-11-18).
-            <p className="flex items-center gap-2 text-xs text-ink-soft" title={boleto}>
-              <Icono nombre="avion" tamano={14} className="shrink-0" />
-              <span className="truncate">Boleto aéreo incluido en el pedido: se lo cotiza boletería por WhatsApp.</span>
-            </p>
-          ) : null}
+          {/* Con boleto, la nota reemplaza a la frase del cobro en vez de sumarse: la columna mide lo mismo que sin
+              vuelo y «Reservar y pagar» no baja del pliegue (1366×695, dueño 2026-11-18). El detalle va en la franja. */}
+          <p className="text-sm text-ink-soft" title={boleto ?? undefined}>
+            {boleto
+              ? "Aún no se le cobra nada; el boleto aéreo se lo cotiza boletería por WhatsApp."
+              : "Aún no se le cobra nada: en el siguiente paso verá los datos para pagar."}
+          </p>
         </>
       )}
       {/* Escritorio: la acción va al final, después de aceptar y verificar; en el teléfono la lleva la barra fija. */}
