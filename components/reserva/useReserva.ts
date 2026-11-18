@@ -439,7 +439,8 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial }: Entrada
     ? "Elija las fechas"
     : !edadesListas
       ? "Elija la edad de los niños"
-      : calculo && !calculo.ok
+      // `resultados` se calcula al render: sin cálculo es que ninguna habitación tiene precio, no que falte esperar.
+      : !calculo?.ok
         ? "Sin precio para esas fechas"
         : "Calculando…";
 

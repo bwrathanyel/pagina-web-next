@@ -357,3 +357,68 @@ test("Cala Margarita, fila vieja sola: doble/sencilla/persona_adicional = por ha
   assert.ok(r.ok);
   assert.equal(r.total, 3 * (290 + 60));
 });
+
+// Regla del dueño (2026-11-18): cada noche con la tarifa de su rango; si la estadía cruza dos rangos, dos tarifas.
+const BLOQUE_DUENO = bloque({ id: 5 });
+const rango = (id: number, titulo: string, precio: number, desde: string, hasta: string) =>
+  fila({ id, titulo, habitacion: "ESTANDAR", plan: "DESAYUNO", precios: { dbl: precio, sgl: precio * 1.3 }, ventanas: v(desde, hasta), tarifario_bloques: BLOQUE_DUENO });
+const DUENO = [rango(91001, "TARIFA A", 65, "2027-01-10", "2027-02-15"), rango(91002, "TARIFA B", 75, "2027-02-16", "2027-04-01")];
+
+test("cruce de rangos (ejemplo del dueño): noches hasta el 15/02 a $65, desde el 16/02 a $75", () => {
+  // Entrada 13/02, salida 18/02: noches 13, 14, 15 (A) y 16, 17 (B). La del 18 no se cobra.
+  const r = estimarEstadia(DUENO[0], DUENO, estadia("2027-02-13", "2027-02-18"));
+  assert.ok(r.ok);
+  assert.equal(r.noches, 5);
+  assert.deepEqual(r.lineas, [
+    { texto: "3 noches, tarifa a", monto: 3 * 65 * 2 },
+    { texto: "2 noches, tarifa b", monto: 2 * 75 * 2 },
+  ]);
+  assert.equal(r.total, 690);
+  // Justo en el borde: la noche del 15 es de A y la del 16 de B. Elegir B en la tarjeta no cambia nada.
+  const borde = estimarEstadia(DUENO[1], DUENO, estadia("2027-02-15", "2027-02-17"));
+  assert.ok(borde.ok);
+  assert.equal(borde.total, 65 * 2 + 75 * 2);
+});
+
+// LD Palm Beach (producto 4), filas reales 120091/120094/120095 al 2026-11-18.
+const PALM_2027 = [
+  palm(120091, "TEMPORADA BAJA", 75, 95, [
+    { desde: "2026-10-01", hasta: "2026-12-21" }, { desde: "2027-01-18", hasta: "2027-02-04" },
+    { desde: "2027-02-10", hasta: "2027-03-20" }, { desde: "2027-03-29", hasta: "2027-07-17" },
+  ], { fecha_fin: "2027-07-17" }),
+  palm(120094, "CARNAVAL", 85, 105, [
+    { desde: "2027-01-05", hasta: "2027-01-17" }, { desde: "2027-02-05", hasta: "2027-02-09" }, { desde: "2027-09-16", hasta: "2027-12-21" },
+  ], { fecha_fin: "2027-12-21" }),
+  palm(120095, "PROMOCION MIDWEEK", 67.5, 85.5, [
+    { desde: "2027-01-18", hasta: "2027-02-04" }, { desde: "2027-02-10", hasta: "2027-03-20" }, { desde: "2027-03-29", hasta: "2027-04-30" },
+  ], { fecha_fin: "2027-04-30", condiciones: ["DOMINGO A MIERCOLES + 1ER NIÑO GRATIS*"] }),
+];
+
+test("LD Palm Beach 9 al 13 feb, 2 adultos: carnaval, midweek el miércoles y temporada baja, sin bloqueo", () => {
+  const r = estimarEstadia(PALM_2027[0], PALM_2027, estadia("2027-02-09", "2027-02-13"));
+  assert.ok(r.ok, r.ok ? "" : r.texto);
+  // 09 (mar) carnaval 85 · 10 (mié) midweek 67,5 · 11 (jue) y 12 (vie) temporada baja 75. Por 2 adultos.
+  assert.deepEqual(r.lineas, [
+    { texto: "1 noche, carnaval", monto: 170 },
+    { texto: "1 noche, promocion midweek", monto: 135 },
+    { texto: "2 noches, temporada baja", monto: 300 },
+  ]);
+  assert.equal(r.total, 605);
+  assert.ok(!r.avisos.some((a) => a.includes("dos precios")));
+});
+
+test("dos filas igual de específicas con precios distintos: la web cotiza la mayor y avisa, nunca bloquea", () => {
+  const filas = [rango(91003, "TEMPORADA", 70, "2027-05-01", "2027-05-31"), rango(91004, "TEMPORADA BIS", 80, "2027-05-01", "2027-05-31")];
+  const r = estimarEstadia(filas[0], filas, estadia("2027-05-10", "2027-05-12"));
+  assert.ok(r.ok, r.ok ? "" : r.texto);
+  assert.equal(r.total, 2 * 80 * 2);
+  assert.ok(r.avisos.some((a) => a.includes("dos precios")));
+});
+
+test("promoción específica sobre la temporada general con las mismas fechas: rige la promoción siempre (dueño 2026-11-18)", () => {
+  const filas = [rango(91005, "TEMPORADA BAJA", 75, "2027-06-01", "2027-06-30"), rango(91006, "PROMOCION JUNIO", 60, "2027-06-01", "2027-06-30")];
+  const r = estimarEstadia(filas[0], filas, estadia("2027-06-10", "2027-06-12"));
+  assert.ok(r.ok, r.ok ? "" : r.texto);
+  assert.equal(r.total, 2 * 60 * 2);
+  assert.ok(!r.avisos.some((a) => a.includes("dos precios")));
+});

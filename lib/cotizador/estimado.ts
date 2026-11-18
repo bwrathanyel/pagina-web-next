@@ -294,7 +294,7 @@ const SIN_HABITACION = "Habitación";
 // Lo mismo que armarHotel (supabase/functions/_shared/hotel-cotizacion.ts) y que hace
 // el asesor al elegir el hotel en Cotizaciones sin tocar nada.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function armar(elegida: Tarifa, filas: Tarifa[], desde: string, hasta: string, adultos: number): { ok: true; it: any; filas: Tarifa[] } | Fallo {
+function armar(elegida: Tarifa, filas: Tarifa[], desde: string, hasta: string, adultos: number): { ok: true; it: any; filas: Tarifa[]; empate: boolean } | Fallo {
   const hoy = m.cbHoy();
   const copias = filas.map((t) => ({ ...t, vigente: t.vigente ?? true, habitacion: t.habitacion?.trim() ? t.habitacion : SIN_HABITACION }));
   if (!copias.some((t) => t.id === elegida.id)) {
@@ -311,6 +311,9 @@ function armar(elegida: Tarifa, filas: Tarifa[], desde: string, hasta: string, a
   const it = {
     tipo: "hotel", ida: desde, vuelta: hasta, adultos, ninos: 0, infantes: 0, unidad: "persona_noche", habitaciones: 1,
     infantes_gratis: true, tarifa_nino_auto: true, plan, hab, tarifa_variante: "",
+    // Dueño 2026-11-18: en la web el precio nunca se bloquea. Si dos filas igual de específicas
+    // dan precios distintos para una noche, el motor cobra la mayor (el CRM le pide elegir al asesor).
+    empate_mayor: true,
   };
   m.cbHotelUnidad(it, utiles);
   // Si esta habitación no aloja al grupo y otra del plan sí, sin costar más, el motor la cambia
@@ -322,7 +325,8 @@ function armar(elegida: Tarifa, filas: Tarifa[], desde: string, hasta: string, a
   }
   const s = m.cbTarSugerir(it, utiles, hoy, m.TAR_OCUPACION);
   if (!s.ok) return falloDelMotor(String(s.texto ?? ""));
-  return { ok: true, it: { ...it, tramos: s.tramos }, filas: utiles };
+  const empate = ((s.avisos ?? []) as string[]).some((a) => a.includes("se cotiza el mayor"));
+  return { ok: true, it: { ...it, tramos: s.tramos }, filas: utiles, empate };
 }
 
 /**
@@ -377,6 +381,7 @@ export function estimarEstadia(elegida: Tarifa, filas: Tarifa[], e: Estadia): Es
   }
 
   const avisos = avisosSuplementos(usadas, noches);
+  if (r.empate) avisos.push("Para alguna noche el tarifario trae dos precios: cotizamos el mayor y el asesor le confirma la tarifa final.");
   const cambio = (it as { _habCambio?: { hasta: string } })._habCambio;
   if (cambio) avisos.push(`Para ${pax.adultos} ${pax.adultos === 1 ? "adulto" : "adultos"} le cotizamos la habitación ${cambio.hasta}, que los aloja.`);
   if ((it.tramos as { sencilla?: number }[]).some((tr) => Number(tr.sencilla) > 0)) {
