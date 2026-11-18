@@ -53,12 +53,9 @@ export default async function CotizarPage({
       <Suspense fallback={null}>
         <FondoDestino fotos={fotosDestino} inicial={estado.destino} />
       </Suspense>
-      <div className="mb-4 flex flex-wrap items-baseline gap-x-5 gap-y-2">
-        <h1 className="font-display text-3xl font-bold leading-none text-ink sm:text-4xl">Arme su viaje</h1>
-        <p className="max-w-2xl text-ink-soft max-lg:hidden">
-          Elija qué necesita, cuándo y cuántos viajan. Un asesor le responde por WhatsApp.
-        </p>
-      </div>
+      {/* Sin encabezado visible (pedido del dueño 2026-11-18: ocupaba pantalla);
+          el h1 queda para lectores de pantalla y buscadores. */}
+      <h1 className="sr-only">Arme su viaje</h1>
       {/* El key rearma el cotizador si llega otra URL con la página ya abierta
           (otra búsqueda desde el hero o un enlace nuevo). */}
       <CotizadorViaje key={JSON.stringify(estado)} inicial={estado} hotel={hotel} ofertas={ofertas} rutas={rutas} guia={guia} />

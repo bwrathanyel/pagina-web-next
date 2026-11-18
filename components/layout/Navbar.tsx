@@ -38,6 +38,10 @@ const IDS_FUERA_DE_FILA = new Set(["empleo", "ia-negocio"]);
 // no pelear el mismo `top-0`.
 const RUTAS_CON_BARRA_PROPIA = ["/ia-para-tu-negocio"];
 
+// Embudos de compra sin la fila de categorías (pedido del dueño 2026-11-18:
+// le quitaba pantalla al cotizador). La fila solo existe en escritorio.
+const RUTAS_SIN_CATEGORIAS = ["/cotizar", "/reservar"];
+
 // Fondo de cada fila de la barra según haya o no un hero detrás. La clase
 // `barra-sobre-foto` (tinta clara) va aparte, en lo que se pinta encima: el
 // campo de búsqueda queda fuera porque es un campo sobre card.
@@ -60,6 +64,7 @@ export function Navbar() {
 
   const esHome = pathname === "/";
   const barraPropia = RUTAS_CON_BARRA_PROPIA.some((r) => pathname === r || pathname.startsWith(`${r}/`));
+  const sinCategorias = RUTAS_SIN_CATEGORIAS.some((r) => pathname === r || pathname.startsWith(`${r}/`));
   // Transparente solo mientras el hero (que avisa vía useHeroBajoBarra) sigue
   // detrás de la barra; en cualquier otra ruta, sólida.
   const transparente = esHome && sobreFoto;
@@ -190,6 +195,7 @@ export function Navbar() {
           se va con el scroll y solo la fila 1 queda pegada. Así la barra no
           cambia de alto mientras se lee (no hay salto de contenido) y las
           filas pegadas del catálogo quedan justo bajo la fila 1. */}
+      {sinCategorias ? null : (
       <nav
         aria-label="Categorías"
         className={
@@ -226,6 +232,7 @@ export function Navbar() {
           })}
         </div>
       </nav>
+      )}
     </>
   );
 }
