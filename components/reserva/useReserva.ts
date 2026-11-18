@@ -12,7 +12,15 @@ import {
   type BloqueoFecha, type HotelParaCobrar, type ResultadoHospedaje, type Riel,
 } from "@/lib/checkout/calculo";
 import { ERROR_CAMPO, mensajeReserva, rangoFechas, usd } from "@/lib/checkout/formato";
-import { bloqueosEnFechas, habitacionDeTarifa, type HabitacionWeb } from "@/lib/cotizador/hotel";
+import {
+  bloqueosDelAno,
+  bloqueosEnFechas,
+  habitacionDeTarifa,
+  nocheSinCupo,
+  type Bloqueo,
+  type HabitacionWeb,
+} from "@/lib/cotizador/hotel";
+import type { SinCupo } from "@/components/ui/SelectorFecha";
 import { calcularPlan } from "@/lib/checkout/plan";
 import { PLAN_ABONOS_VERSION } from "@/lib/checkout/politica";
 import { hoyCaracas } from "@/lib/cotizador/cotizacionRapida";
@@ -248,6 +256,23 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial }: Entrada
     () => (bloqueosCargados.clave === claveFechas ? bloqueosCargados.lista : []),
     [bloqueosCargados, claveFechas],
   );
+
+  // Noches sin cupo del año para el calendario: rojas y sin poder elegirse.
+  // Si la lectura falla, el calendario queda libre y el motivo sale en Opciones.
+  const [delAno, setDelAno] = useState<{ id: number; lista: Bloqueo[] } | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    bloqueosDelAno(hotel.id)
+      .then((lista) => vivo && setDelAno({ id: hotel.id, lista }))
+      .catch(() => vivo && setDelAno(null));
+    return () => { vivo = false; };
+  }, [hotel.id]);
+  const sinCupo = useMemo<SinCupo | undefined>(() => {
+    const lista = delAno && delAno.id === hotel.id ? delAno.lista : [];
+    return lista.some((b) => b.estado === "stop_sale")
+      ? { dia: (iso: string) => nocheSinCupo(lista, iso), leyenda: `${hotel.nombre}: noches sin disponibilidad` }
+      : undefined;
+  }, [delAno, hotel.id, hotel.nombre]);
 
   // Una opción por habitación (con sus temporadas); la tarifa elegida es la que cubre la entrada.
   const tarjetas = useMemo(() => tarjetasPorHabitacion(hotel.tarifas, desde), [hotel.tarifas, desde]);
@@ -590,7 +615,7 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial }: Entrada
   return {
     completos, abierto, editando, resumenTramo, cambiarTramo, cerrarTramo, deCuenta, noSoyYo,
     hoy, pantalla, esEscritorio, config, reintentar, user, abrirCuenta,
-    f, poner, desde, hasta, pasajeros, riel, hayFechas,
+    f, poner, desde, hasta, pasajeros, riel, hayFechas, sinCupo,
     acepta, setAcepta, modo, setModo, aceptaPlan, setAceptaPlan, hojaViajeros, setHojaViajeros,
     abierta, segundosAbierta, mostrarErrores, error, enviando,
     elegida, tarifaEfectiva, habitacion, opciones, motivoSinOpciones, caracteristicas,

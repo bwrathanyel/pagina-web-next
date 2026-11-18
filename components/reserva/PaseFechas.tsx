@@ -5,7 +5,7 @@ import { Boton } from "@/components/ui/Boton";
 import { Campo, Selector } from "@/components/ui/Campo";
 import { Hoja } from "@/components/ui/Hoja";
 import { Icono } from "@/components/ui/Icono";
-import { SelectorFecha } from "@/components/ui/SelectorFecha";
+import { SelectorFecha, type SinCupo } from "@/components/ui/SelectorFecha";
 import { resumenViajeros } from "@/components/ui/SelectorViajeros";
 import { MAX_BEBES, MAX_PAX } from "@/lib/checkout/calculo";
 import { rangoFechas } from "@/lib/checkout/formato";
@@ -143,6 +143,7 @@ export function PaseFechas({
   hasta,
   hoy,
   noches,
+  sinCupo,
   onFechas,
   pasajeros,
   onPasajeros,
@@ -155,6 +156,8 @@ export function PaseFechas({
   hasta: string;
   hoy: string;
   noches: number | null;
+  /** Stop sales del hotel: esas noches no se pueden elegir. */
+  sinCupo?: SinCupo;
   onFechas: (desde: string, hasta: string) => void;
   pasajeros: Pasajeros;
   onPasajeros: (p: Pasajeros) => void;
@@ -184,6 +187,7 @@ export function PaseFechas({
               valor={desde}
               min={hoy}
               rango={rango}
+              sinCupo={sinCupo}
               vacio="Elegir"
               onCambio={(v) => {
                 onFechas(v, hasta && hasta <= v ? sumarDias(v, Math.max(1, noches ?? 0)) : hasta);
@@ -201,6 +205,8 @@ export function PaseFechas({
               valor={hasta}
               min={desde ? sumarDias(desde, 1) : sumarDias(hoy, 1)}
               rango={rango}
+              sinCupo={sinCupo}
+              salidaDe={desde}
               vacio="Elegir"
               onCambio={(v) => onFechas(desde, v)}
               className="min-h-11 w-full text-base font-bold text-ink"

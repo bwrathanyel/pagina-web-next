@@ -51,9 +51,12 @@ interface Props {
   onCambio: (iso: string) => void;
   min?: string;
   rango?: { desde: string; hasta: string };
-  /** Noches sin cupo (stop sale del hotel): van en rojo y con su leyenda. Se
-   * pueden elegir igual (la salida puede caer en una), el aviso lo da el cotizador. */
+  /** Noches sin cupo (stop sale del hotel): van en rojo oscuro, con su leyenda,
+   * y no se pueden elegir; intentarlo deja un aviso dentro del calendario. */
   sinCupo?: SinCupo;
+  /** Calendario de salida: la entrada elegida. La salida sí puede caer en una
+   * noche sin cupo (esa noche no se duerme), pero no después de ella. */
+  salidaDe?: string;
   /** Texto sin fecha elegida: en tramos angostos, uno más corto. */
   vacio?: string;
   className?: string;
@@ -68,11 +71,13 @@ export function SelectorFecha({
   min,
   rango,
   sinCupo,
+  salidaDe,
   vacio = "Cualquier fecha",
   className = "",
 }: Props) {
   const [mes, setMes] = useState("");
   const [foco, setFoco] = useState("");
+  const [aviso, setAviso] = useState("");
   const [aperturas, setAperturas] = useState(0);
   const panel = useRef<HTMLDivElement>(null);
   const grilla = useRef<HTMLDivElement>(null);
@@ -97,6 +102,7 @@ export function SelectorFecha({
     setFoco(base);
     setMes(base.slice(0, 7));
     setAperturas((n) => n + 1);
+    setAviso("");
   }
 
   function cambiarMes(n: number) {
@@ -104,11 +110,39 @@ export function SelectorFecha({
     const primero = `${nuevo}-01`;
     setMes(nuevo);
     setFoco(primero < piso ? piso : primero);
+    setAviso("");
   }
 
   function elegir(iso: string) {
     panel.current?.hidePopover();
     onCambio(iso);
+  }
+
+  // Salida: la primera noche sin cupo desde la entrada es el tope; se puede
+  // salir ese día, no después. Solo se calcula con el calendario abierto.
+  let tope = "";
+  if (mes && sinCupo && salidaDe) {
+    for (let k = 0, n = salidaDe; k < 400 && !tope; k++, n = sumarDias(n, 1)) if (sinCupo.dia(n)) tope = n;
+  }
+
+  /** "lleno": noche sin cupo (rojo). "cruza": la estadía pasaría por una. */
+  function bloqueo(iso: string): "" | "lleno" | "cruza" {
+    if (!sinCupo || iso < piso) return "";
+    if (salidaDe !== undefined) {
+      if (!tope || iso <= tope) return "";
+      return sinCupo.dia(iso) ? "lleno" : "cruza";
+    }
+    return sinCupo.dia(iso) ? "lleno" : "";
+  }
+
+  function intentar(iso: string) {
+    const b = bloqueo(iso);
+    if (!b) return elegir(iso);
+    setAviso(
+      b === "lleno"
+        ? "Esa fecha no está disponible en este hotel."
+        : "Entre la entrada y esa fecha hay noches sin disponibilidad en este hotel.",
+    );
   }
 
   function teclas(e: KeyboardEvent<HTMLDivElement>) {
@@ -122,10 +156,10 @@ export function SelectorFecha({
     setMes(nuevo.slice(0, 7));
   }
 
-  function clasesDia(iso: string) {
-    const lleno = iso >= piso && !!sinCupo?.dia(iso);
-    if (iso === valor) return `bg-acento font-semibold text-sobre-acento${lleno ? " ring-2 ring-inset ring-peligro" : ""}`;
-    if (lleno) return "bg-peligro-suave font-medium text-peligro line-through hover:ring-1 hover:ring-inset hover:ring-peligro";
+  function clasesDia(iso: string, b: "" | "lleno" | "cruza") {
+    if (iso === valor) return `bg-acento font-semibold text-sobre-acento${b ? " ring-2 ring-inset ring-peligro" : ""}`;
+    if (b === "lleno") return "cursor-not-allowed bg-peligro font-medium text-card line-through";
+    if (b === "cruza") return "cursor-not-allowed text-ink-soft/35";
     if (rango && (iso === rango.desde || iso === rango.hasta)) return "bg-acento-suave font-semibold text-acento";
     if (rango && rango.desde && iso > rango.desde && iso < rango.hasta) return "bg-acento-suave text-ink";
     if (iso === hoy) return "font-semibold text-acento ring-1 ring-inset ring-acento/50 hover:bg-acento-suave";
@@ -190,6 +224,7 @@ export function SelectorFecha({
             <div ref={grilla} onKeyDown={teclas} className="grid grid-cols-7 gap-0.5">
               {celdas(mes).map((iso, k) => {
                 if (!iso) return <span key={`hueco-${k}`} />;
+                const b = bloqueo(iso);
                 return (
                   <button
                     key={iso}
@@ -197,13 +232,14 @@ export function SelectorFecha({
                     data-dia={iso}
                     tabIndex={iso === foco ? 0 : -1}
                     disabled={iso < piso}
+                    aria-disabled={b ? true : undefined}
                     aria-pressed={iso === valor}
                     aria-current={iso === hoy ? "date" : undefined}
-                    aria-label={`${LARGA.format(aFecha(iso))}${iso >= piso && sinCupo?.dia(iso) ? ", sin disponibilidad" : ""}`}
-                    onClick={() => elegir(iso)}
+                    aria-label={`${LARGA.format(aFecha(iso))}${b === "lleno" ? ", sin disponibilidad" : b ? ", no disponible" : ""}`}
+                    onClick={() => intentar(iso)}
                     className={
                       "flex h-11 md:h-10 items-center justify-center rounded-control text-sm tabular-nums transition-colors duration-150 ease-salida focus-visible:outline-offset-0 disabled:text-ink-soft/35 " +
-                      clasesDia(iso)
+                      clasesDia(iso, b)
                     }
                   >
                     {Number(iso.slice(8))}
@@ -213,9 +249,9 @@ export function SelectorFecha({
             </div>
 
             {sinCupo ? (
-              <p className="mt-3 flex items-center gap-2 text-xs text-ink-soft">
-                <span aria-hidden className="h-3 w-3 shrink-0 rounded-sm bg-peligro-suave ring-1 ring-inset ring-peligro" />
-                {sinCupo.leyenda}
+              <p role="status" className={`mt-3 flex items-center gap-2 text-xs ${aviso ? "font-medium text-peligro" : "text-ink-soft"}`}>
+                <span aria-hidden className="h-3 w-3 shrink-0 rounded-sm bg-peligro" />
+                {aviso || sinCupo.leyenda}
               </p>
             ) : null}
 
@@ -231,7 +267,7 @@ export function SelectorFecha({
               {piso === hoy ? (
                 <button
                   type="button"
-                  onClick={() => elegir(hoy)}
+                  onClick={() => intentar(hoy)}
                   className="min-h-11 md:min-h-0 rounded-control px-2 py-1.5 text-acento transition-colors hover:bg-acento-suave"
                 >
                   Hoy

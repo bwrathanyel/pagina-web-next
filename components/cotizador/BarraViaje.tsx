@@ -192,6 +192,7 @@ export function BarraViaje({
               onCambio={(iso) => onCambio({ ...estado, hasta: iso })}
               rango={{ desde: estado.desde, hasta: estado.hasta }}
               sinCupo={hospedaje ? sinCupo : undefined}
+              salidaDe={estado.desde}
               vacio="Elegir fecha"
               className={CONTROL_BOTON}
             />
@@ -353,6 +354,7 @@ export function BarraViajeCompacta({
                   onCambio={(iso) => onCambio({ ...estado, hasta: iso })}
                   rango={{ desde: estado.desde, hasta: estado.hasta }}
                   sinCupo={hospedaje ? sinCupo : undefined}
+                  salidaDe={estado.desde}
                   vacio={rotuloHasta}
                   className={CONTROL_CELDA}
                 />
