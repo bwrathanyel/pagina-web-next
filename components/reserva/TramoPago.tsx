@@ -16,7 +16,7 @@ type Props = {
 
 export function TramoPago({ r }: Props) {
   const { config, plan, riel, totales } = r;
-  // Pago Móvil: lo de hoy (total o cuota 1) a la tasa BCV euro (+16% si BT no incluye IVA), de la misma
+  // Pago Móvil: lo de hoy (total o cuota 1) a la tasa BCV de la tarifa (USD dólar, EUR euro; +16% si BT no incluye IVA), de la misma
   // tabla que usa el servidor.
   const { tasaUSD, tasaEUR } = useCurrency();
   const tasaBcv = r.tasa === "EUR" ? tasaEUR : tasaUSD;

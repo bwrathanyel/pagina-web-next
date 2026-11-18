@@ -12,6 +12,7 @@
 //   suplemento (Los Roques): { posada, items:[{concepto, monto, por}], notas } + tarifas.moneda
 import type { Producto, Tarifa } from "@/types/supabase";
 import { montoConMoneda, vendibleHoy, type PrecioTarjeta } from "@/lib/tarifas";
+import { tasaDeMoneda } from "@/lib/utils/convertirPrecio";
 
 type Bolsa = Record<string, unknown>;
 
@@ -180,8 +181,8 @@ export function precioDeServicio(producto: Pick<Producto, "tipo" | "tarifas">): 
     if (!t || !d || d.adulto === null) return null;
     const varias = (producto.tarifas ?? []).filter((x) => datosExcursion(x)).length > 1;
     const nino = d.nino !== null ? ` · niños ${montoConMoneda(d.nino, d.moneda)}${d.edadNino ? ` (${d.edadNino})` : ""}` : "";
-    if (d.privado) return { monto: montoConMoneda(d.adulto, d.moneda), unidad: `por persona · grupo privado${d.minPax ? ` (mín. ${d.minPax})` : ""}`, desde: varias, corto: true };
-    return { monto: montoConMoneda(d.adulto, d.moneda), unidad: `por adulto${nino}`, desde: varias, corto: true };
+    if (d.privado) return { monto: montoConMoneda(d.adulto, d.moneda), unidad: `por persona · grupo privado${d.minPax ? ` (mín. ${d.minPax})` : ""}`, desde: varias, corto: true, tasa: tasaDeMoneda(d.moneda) };
+    return { monto: montoConMoneda(d.adulto, d.moneda), unidad: `por adulto${nino}`, desde: varias, corto: true, tasa: tasaDeMoneda(d.moneda) };
   }
   if (producto.tipo === "traslado") {
     const tarifas = producto.tarifas ?? [];
@@ -195,7 +196,7 @@ export function precioDeServicio(producto: Pick<Producto, "tipo" | "tarifas">): 
     if (!filas.length) return null;
     const { f, t } = filas.sort((a, b) => a.f.monto! - b.f.monto!)[0];
     const unidad = f.unidad === "por persona" && f.sentido === "OW" ? "por persona, solo ida" : f.unidad === "por unidad" ? "por vehículo, solo ida" : f.unidad;
-    return { monto: montoConMoneda(f.monto!, t.moneda), unidad, desde: filas.length > 1, corto: true };
+    return { monto: montoConMoneda(f.monto!, t.moneda), unidad, desde: filas.length > 1, corto: true, tasa: tasaDeMoneda(t.moneda) };
   }
   return null;
 }

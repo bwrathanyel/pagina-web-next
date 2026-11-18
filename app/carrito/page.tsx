@@ -178,7 +178,7 @@ export default function CarritoPage() {
                     {item.nombre}
                   </Link>
                   <p className="mt-1 font-mono text-sm font-bold tabular-nums text-ink">
-                    <PrecioMostrado texto={item.precioLabel} ivaEnBs={item.ivaEnBs} />
+                    <PrecioMostrado texto={item.precioLabel} ivaEnBs={item.ivaEnBs} tasa={item.tasa} />
                   </p>
                 </div>
                 <button

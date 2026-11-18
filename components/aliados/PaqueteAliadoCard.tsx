@@ -6,6 +6,7 @@ import { Etiqueta } from "@/components/ui/Insignia";
 import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
 import type { PaqueteAliado } from "@/lib/aliados";
 import { fechaCorta, montoConMoneda } from "@/lib/tarifas";
+import { tasaDeMoneda } from "@/lib/utils/convertirPrecio";
 
 // "TODO INCLUIDO" -> "Todo incluido": el plan llega en mayúsculas del PDF.
 const planLegible = (plan: string | null) => {
@@ -96,14 +97,14 @@ export function PaqueteAliadoCard({
             <p className="font-mono text-xs text-ink-soft">
               Hot Sale{" "}
               <s>
-                <PrecioMostrado texto={montoConMoneda(p.total, p.moneda)} />
+                <PrecioMostrado texto={montoConMoneda(p.total, p.moneda)} tasa={tasaDeMoneda(p.moneda)} />
               </s>
             </p>
             <p className="font-mono text-3xl font-bold leading-tight tabular-nums text-acento">
-              <PrecioMostrado texto={montoConMoneda(p.totalAliado, p.moneda)} />
+              <PrecioMostrado texto={montoConMoneda(p.totalAliado, p.moneda)} tasa={tasaDeMoneda(p.moneda)} />
             </p>
             <p className="text-xs text-ink-soft">
-              Total del paquete · ahorra <PrecioMostrado texto={montoConMoneda(ahorro, p.moneda)} />
+              Total del paquete · ahorra <PrecioMostrado texto={montoConMoneda(ahorro, p.moneda)} tasa={tasaDeMoneda(p.moneda)} />
             </p>
             {p.viajeHasta || p.ventaHasta ? (
               <p className="mt-2 flex items-center gap-1.5 text-xs text-ink-soft">

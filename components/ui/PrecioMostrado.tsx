@@ -1,32 +1,40 @@
 "use client";
 
 import { useCurrency } from "@/components/providers/CurrencyProvider";
-import { convertirPrecioTexto, IVA_BS, montoBs } from "@/lib/utils/convertirPrecio";
+import { convertirPrecioTexto, IVA_BS, montoBs, type TasaBcv } from "@/lib/utils/convertirPrecio";
 import { textoEnDolares } from "@/lib/utils/formatoPrecio";
 
 export type OpcionesPrecio = {
   /** La tarifa de BT no incluye IVA: en Bs se suma 16%. */
   ivaEnBs?: boolean;
-  /** Montos que no son tarifas de BT (vuelos): en Bs van a tasa dólar, no euro. */
+  /** Tasa BCV de la tarifa = su `moneda` (tasaDeMoneda). Sin dato, dólar. */
+  tasa?: TasaBcv;
+  /** Montos que no son tarifas de BT (vuelos): tasa dólar y nunca IVA. */
   tasaDolar?: boolean;
 };
+
+function tasaDe(op: OpcionesPrecio, tasaUSD: number | null, tasaEUR: number | null) {
+  return !op.tasaDolar && op.tasa === "EUR" ? tasaEUR : tasaUSD;
+}
 
 /** Único punto de conversión $ -> Bs en toda la web: el texto que llega acá
  * (precioLabel, ya formateado por formatearPrecioCliente) NO se toca en
  * origen -- ni en el carrito ni en ningún estado guardado, solo acá en el
  * render, con la tasa que ya está en memoria del CurrencyProvider. Así
  * togglear moneda nunca deja un precio "doble convertido" guardado en algún
- * lado. En divisas todo sale en $ (un € suelto se pasa a $); en Bs, a tasa
- * euro (+16% si `ivaEnBs`). Si la tasa todavía no cargó, se muestra el texto
- * en $ sin bloquear el render. */
+ * lado. En divisas todo sale en $ (un € suelto se pasa a $); en Bs, a la tasa
+ * BCV de la moneda de la tarifa (`tasa`; +16% si `ivaEnBs`). El símbolo del
+ * texto no sirve para eso: formatearPrecioCliente pasa € a $, por eso la moneda
+ * viaja como opción. Si la tasa todavía no cargó, se muestra el texto en $ sin
+ * bloquear el render. */
 export function PrecioMostrado({ texto, ...op }: { texto: string | null | undefined } & OpcionesPrecio) {
   return <>{usePrecioMostrado(texto, op)}</>;
 }
 
 export type ParteMonto = { monto: number } & OpcionesPrecio;
 
-/** Total de piezas con tasas distintas (hotel a tasa euro, con o sin IVA, más
- * vuelo a tasa dólar). El texto ya sumado no se puede pasar a Bs: cada pieza se
+/** Total de piezas con tasas distintas (hotel a la tasa de su tarifa, con o sin
+ * IVA, más vuelo a tasa dólar). El texto ya sumado no se puede pasar a Bs: cada pieza se
  * convierte por su lado y después se suma. `enDolares` da el texto en $ (el
  * mismo formato que usaba quien llama); sin tasa cargada se queda en $. */
 export function usePrecioSuma(partes: ParteMonto[], enDolares: (n: number) => string, divisor = 1): string {
@@ -35,7 +43,7 @@ export function usePrecioSuma(partes: ParteMonto[], enDolares: (n: number) => st
   if (moneda !== "VES") return dolares;
   let bs = 0;
   for (const p of partes) {
-    const tasa = p.tasaDolar ? tasaUSD : tasaEUR;
+    const tasa = tasaDe(p, tasaUSD, tasaEUR);
     if (!tasa) return dolares;
     bs += p.monto * tasa * (!p.tasaDolar && p.ivaEnBs ? IVA_BS : 1);
   }
@@ -47,7 +55,7 @@ export function usePrecioMostrado(texto: string | null | undefined, op: Opciones
   const { moneda, tasaUSD, tasaEUR } = useCurrency();
   if (texto == null) return texto;
   if (moneda === "VES") {
-    const bs = convertirPrecioTexto(texto, op.tasaDolar ? tasaUSD : tasaEUR, !op.tasaDolar && !!op.ivaEnBs);
+    const bs = convertirPrecioTexto(texto, tasaDe(op, tasaUSD, tasaEUR), !op.tasaDolar && !!op.ivaEnBs);
     if (bs !== texto) return bs;
   }
   return textoEnDolares(texto);

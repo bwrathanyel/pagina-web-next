@@ -115,7 +115,7 @@ export function TicketCard({
   reservar = null,
   fotoTransicion,
 }: TicketCardProps) {
-  const { monto, unidad, grande: montoGrande, ivaEnBs } = separarMonto(precio);
+  const { monto, unidad, grande: montoGrande, ivaEnBs, tasa } = separarMonto(precio);
   const idFicha = href?.match(/^\/producto\/(\d+)$/)?.[1];
   const transicion =
     fotoTransicion === null ? undefined : (fotoTransicion ?? (idFicha ? nombreFoto(Number(idFicha)) : undefined));
@@ -327,6 +327,7 @@ export function TicketCard({
                 <MontoAjustado
                   texto={monto}
                   ivaEnBs={ivaEnBs}
+                  tasa={tasa}
                   tope="1.875rem"
                   unaLinea
                   className="min-w-0 flex-1"
@@ -334,7 +335,7 @@ export function TicketCard({
                 />
               ) : (
                 <span className={"truncate text-base font-bold leading-8 " + (precio ? "text-ink" : "text-ink-soft")}>
-                  {precio ? <PrecioMostrado texto={monto} ivaEnBs={ivaEnBs} /> : "Consultar disponibilidad"}
+                  {precio ? <PrecioMostrado texto={monto} ivaEnBs={ivaEnBs} tasa={tasa} /> : "Consultar disponibilidad"}
                 </span>
               )}
             </p>

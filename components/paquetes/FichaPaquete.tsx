@@ -424,12 +424,12 @@ export function FichaPaquete({ paquete, rutas }: { paquete: Paquete; rutas: Ruta
   );
 }
 
-/** Total del paquete (o por persona): en Bs el hotel va a tasa euro (+16% si
- * BT no incluye IVA) y el vuelo a tasa dólar, cada uno antes de sumar. */
+/** Total del paquete (o por persona): en Bs el hotel va a la tasa de su tarifa
+ * (+16% si BT no incluye IVA) y el vuelo a tasa dólar, cada uno antes de sumar. */
 function TotalPaquete({ est, porPersona = false }: { est: EstimadoPaquete; porPersona?: boolean }) {
   const partes =
     est.hotel.ok && est.vuelo.total != null
-      ? [{ monto: est.hotel.total, ivaEnBs: est.hotel.ivaEnBs }, { monto: est.vuelo.total, tasaDolar: true }]
+      ? [{ monto: est.hotel.total, ivaEnBs: est.hotel.ivaEnBs, tasa: est.hotel.moneda },{ monto: est.vuelo.total, tasaDolar: true }]
       : [];
   return <>{usePrecioSuma(partes, porPersona ? (n) => usd(Math.ceil(n)) : usd, porPersona ? Math.max(1, est.asientos) : 1)}</>;
 }
@@ -453,7 +453,7 @@ function ResumenPrecio({ est, noches }: { est: EstimadoPaquete | null; noches: n
             Hotel · {noches} {noches === 1 ? "noche" : "noches"}
           </dt>
           <dd className="font-mono font-bold tabular-nums text-ink">
-            {hotel.ok ? <PrecioMostrado texto={montoConMoneda(hotel.total, hotel.moneda)} ivaEnBs={hotel.ivaEnBs} /> : "A confirmar"}
+            {hotel.ok ? <PrecioMostrado texto={montoConMoneda(hotel.total, hotel.moneda)} ivaEnBs={hotel.ivaEnBs} tasa={hotel.moneda} /> : "A confirmar"}
           </dd>
         </div>
         <div className="flex items-baseline justify-between gap-3">

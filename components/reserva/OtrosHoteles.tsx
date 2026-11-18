@@ -20,13 +20,13 @@ const TARJETA =
 
 function PrecioDesde({ precio }: { precio: HotelAlternativo["precio"] }) {
   if (!precio) return <span className="text-xs text-ink-soft">Precio a confirmar</span>;
-  const { monto, unidad, grande, ivaEnBs } = separarMonto(precio);
+  const { monto, unidad, grande, ivaEnBs, tasa } = separarMonto(precio);
   return (
     <span className="flex min-w-0 flex-col">
       {grande ? (
         <span className="font-mono text-base font-bold tabular-nums text-ink">
           {precio.desde ? <span className="font-sans text-xs font-semibold text-ink-soft">Desde </span> : null}
-          <MontoTablero texto={monto ?? ""} ivaEnBs={ivaEnBs} />
+          <MontoTablero texto={monto ?? ""} ivaEnBs={ivaEnBs} tasa={tasa} />
         </span>
       ) : (
         <span className="line-clamp-2 text-xs font-semibold text-ink">{monto}</span>

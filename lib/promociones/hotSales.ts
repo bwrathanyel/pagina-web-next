@@ -2,6 +2,7 @@ import { fotosDe } from "@/lib/supabase/fotos";
 import { agruparPorDestino } from "@/lib/supabase/agruparPorDestino";
 import { DESTINOS_PRIORITARIOS, ordenarDestinos } from "@/lib/catalogo/destinos";
 import { formatearPrecioDesde } from "@/lib/utils/formatoPrecio";
+import { tasaDeMoneda, type TasaBcv } from "@/lib/utils/convertirPrecio";
 import type { HotSale, Promocion } from "@/types/supabase";
 
 // Mismo fallback que PromocionCard: fotos propias, y solo si no tiene
@@ -72,6 +73,8 @@ export type DestinoConOfertas = {
   ofertas: number;
   foto: string;
   desde: string | null;
+  /** Tasa BCV del piso para Bs (moneda de su tarifa). */
+  tasaDesde?: TasaBcv;
   /** Qué plan cubre el piso cuando no es el de cualquier oferta ("todo incluido"). */
   nota?: string;
 };
@@ -115,12 +118,13 @@ export function destinosConOfertas(pool: Promocion[]): DestinoConOfertas[] {
     const todoIncluido = DESTINOS_TODO_INCLUIDO.has(normalizar(destino).trim()) ? items.filter(esTodoIncluido) : [];
     const base = todoIncluido.length > 0 ? todoIncluido : items;
     let piso = Infinity;
+    let tasaDesde: TasaBcv | undefined;
     for (const p of base) {
       if (typeof p.precio_desde_usd !== "number" || !Number.isFinite(p.precio_desde_usd)) continue;
-      piso = Math.min(piso, p.precio_desde_usd);
+      if (p.precio_desde_usd < piso) [piso, tasaDesde] = [p.precio_desde_usd, tasaDeMoneda(p.moneda)];
     }
     const desde = Number.isFinite(piso) ? formatearPrecioDesde(piso) : null;
-    resultado.push({ destino, ofertas: items.length, foto, desde, nota: todoIncluido.length > 0 ? "todo incluido" : undefined });
+    resultado.push({ destino, ofertas: items.length, foto, desde, tasaDesde, nota: todoIncluido.length > 0 ? "todo incluido" : undefined });
   }
   // Más ofertas primero; a igual cantidad queda el orden alfabético del grupo.
   return resultado.sort((a, b) => b.ofertas - a.ofertas);

@@ -37,7 +37,7 @@ function Precios({ h, cantidad, grande }: { h: HotelNinoGratis; cantidad: number
         <div>
           <span className="block text-xs text-ink-soft">Adulto, por noche</span>
           <span className={"font-mono font-bold leading-tight text-ink tabular-nums " + (grande ? "text-xl" : "text-base")}>
-            <PrecioMostrado texto={h.precio} />
+            <PrecioMostrado texto={h.precio} tasa={h.tasa} />
           </span>
         </div>
       ) : null}

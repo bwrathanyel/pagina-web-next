@@ -86,20 +86,20 @@ function Precio({
       <span className="flex min-w-0 flex-col">
         <span className={`font-mono font-bold tabular-nums text-ink ${grande ? "text-2xl" : "text-lg"}`}>
           <span className="font-sans text-sm font-semibold text-ink-soft">Total </span>
-          <MontoTablero texto={montoConMoneda(precio.total, precio.moneda)} ivaEnBs={precio.ivaEnBs} />
+          <MontoTablero texto={montoConMoneda(precio.total, precio.moneda)} ivaEnBs={precio.ivaEnBs} tasa={precio.moneda} />
         </span>
         <span className="truncate text-xs text-ink-soft">{detalle}</span>
       </span>
     );
   }
   if (!oferta.precio) return <span className="text-sm text-ink-soft">Precio a confirmar por el asesor</span>;
-  const { monto, unidad, grande: montoGrande, ivaEnBs } = separarMonto(oferta.precio);
+  const { monto, unidad, grande: montoGrande, ivaEnBs, tasa } = separarMonto(oferta.precio);
   return (
     <span className="flex min-w-0 flex-col">
       {montoGrande ? (
         <span className={`font-mono font-bold tabular-nums text-ink ${grande ? "text-xl" : "text-base"}`}>
           {oferta.precio.desde ? <span className="font-sans text-sm font-semibold text-ink-soft">Desde </span> : null}
-          <MontoTablero texto={monto} ivaEnBs={ivaEnBs} />
+          <MontoTablero texto={monto} ivaEnBs={ivaEnBs} tasa={tasa} />
         </span>
       ) : (
         <span className="line-clamp-2 text-sm font-semibold text-ink">{monto}</span>

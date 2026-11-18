@@ -66,7 +66,7 @@ export function CarritoHoja() {
                 </Link>
                 {item.destino ? <p className="truncate text-sm text-ink-soft">{item.destino}</p> : null}
                 <p className="font-mono text-sm text-ink">
-                  <PrecioMostrado texto={item.precioLabel} ivaEnBs={item.ivaEnBs} />
+                  <PrecioMostrado texto={item.precioLabel} ivaEnBs={item.ivaEnBs} tasa={item.tasa} />
                 </p>
               </div>
               <button

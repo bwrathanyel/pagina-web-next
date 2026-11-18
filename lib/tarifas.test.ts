@@ -29,10 +29,13 @@ test("persona_noche y habitacion_noche cuentan como base declarada", () => {
 test("habitación con SGL = DBL: «desde» por habitación por noche, sin dividir (dueño, 2026-11-18)", () => {
   const cala = { ...fila({ sgl: 290, dbl: 290, tpl: 60 }), moneda: "EUR" } as Tarifa;
   assert.equal(montoHabitacionNoche(cala), 290);
-  assert.deepEqual(precioDeTarifa(cala), { monto: "$290", unidad: UNIDAD_HABITACION_NOCHE, desde: true, corto: true, ivaEnBs: false });
+  assert.deepEqual(precioDeTarifa(cala), { monto: "$290", unidad: UNIDAD_HABITACION_NOCHE, desde: true, corto: true, ivaEnBs: false, tasa: "EUR" });
   assert.equal(badgePrecio(cala), `Desde $290 ${UNIDAD_HABITACION_NOCHE}`);
   assert.deepEqual(precioDobleHero(cala), { monto: "$290", nota: UNIDAD_HABITACION_NOCHE });
   assert.equal(precioTarjeta({ precios: { sgl: 290, dbl: 290 }, moneda: "EUR" })?.unidad, UNIDAD_HABITACION_NOCHE);
+  assert.equal(precioTarjeta({ precios: { sgl: 290, dbl: 290 }, moneda: "EUR" })?.tasa, "EUR");
+  assert.equal(precioTarjeta({ precios: { sgl: 290, dbl: 290 }, moneda: "USD" })?.tasa, "USD");
+  assert.equal(precioTarjeta({ precios: { sgl: 290, dbl: 290 } })?.tasa, "USD");
   assert.equal(montoHabitacionNoche(fila({ doble: 290, sencilla: 319, persona_adicional: 60 })), 290);
   assert.equal(montoHabitacionNoche(fila({ sgl: 100, dbl: 100 }, "habitacion")), 100);
 });

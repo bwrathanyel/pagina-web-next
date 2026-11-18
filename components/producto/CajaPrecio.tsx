@@ -27,7 +27,7 @@ export function CajaPrecio({ producto, className = "" }: { producto: Producto; c
   const destacada = tarifaDestacada(producto);
   const servicio = esServicio(producto.tipo);
   const precio = servicio ? precioDeServicio(producto) : precioDeTarifa(destacada);
-  const { monto, unidad, grande } = separarMonto(precio);
+  const { monto, unidad, grande, ivaEnBs, tasa } = separarMonto(precio);
   const ventana = destacada && !servicio ? ventanasDe(destacada)[0] : undefined;
   const vigencia = servicio ? null : ventana ? rangoFechas(ventana) : (destacada?.vigencia_texto ?? null);
   const hasta = servicio ? null : ventaHasta(destacada);
@@ -80,7 +80,7 @@ export function CajaPrecio({ producto, className = "" }: { producto: Producto; c
                     : "text-base text-ink")
               }
             >
-              {precio ? <PrecioMostrado texto={monto} /> : "Consultar disponibilidad"}
+              {precio ? <PrecioMostrado texto={monto} ivaEnBs={ivaEnBs} tasa={tasa} /> : "Consultar disponibilidad"}
             </span>
           </p>
           {unidad ? <p className="mt-1 text-sm text-ink-soft">{unidad}</p> : null}

@@ -21,14 +21,14 @@ test("excursión: adulto, niño con edad, infante gratis y lo que no incluye", (
 
 test("tarjeta de excursión: precio del adulto y el niño en la unidad", () => {
   const p = precioDeServicio(producto("excursion", [COCHE]))!;
-  assert.deepEqual(p, { monto: "$80", unidad: "por adulto · niños $50 (4-11 años)", desde: false, corto: true });
+  assert.deepEqual(p, { monto: "$80", unidad: "por adulto · niños $50 (4-11 años)", desde: false, corto: true, tasa: "USD" });
 });
 
 test("full day de grupo privado: precio p/p con mínimo y marca de cotización", () => {
   const cayo = producto("excursion", [tarifa(9, { base: "persona", adulto: 30, nino: null, modalidad: "privado", min_pax: 15, incluye_traslado: false, no_incluye: [] })]);
   assert.equal(esGrupoPrivado(cayo), true);
   assert.equal(esGrupoPrivado(producto("excursion", [COCHE])), false);
-  assert.deepEqual(precioDeServicio(cayo), { monto: "$30", unidad: "por persona · grupo privado (mín. 15)", desde: false, corto: true });
+  assert.deepEqual(precioDeServicio(cayo), { monto: "$30", unidad: "por persona · grupo privado (mín. 15)", desde: false, corto: true, tasa: "USD" });
 });
 
 test("traslado compartido: rango, monto y niño 50%", () => {
@@ -44,7 +44,7 @@ test("traslado compartido: rango, monto y niño 50%", () => {
 test("tarjeta de traslado: la tarifa más baja, 'desde' si hay varias", () => {
   const t1 = tarifa(1, { modalidad: "compartido", base: "persona", monto: 16.5, pax_min: 1, pax_max: 1, sentido: "OW" });
   const t2 = tarifa(2, { modalidad: "compartido", base: "persona", monto: 8.25, pax_min: 2, pax_max: null, sentido: "OW" });
-  assert.deepEqual(precioDeServicio(producto("traslado", [t1, t2])), { monto: "$8.25", unidad: "por persona, solo ida", desde: true, corto: true });
+  assert.deepEqual(precioDeServicio(producto("traslado", [t1, t2])), { monto: "$8.25", unidad: "por persona, solo ida", desde: true, corto: true, tasa: "USD" });
   const priv = tarifa(3, { modalidad: "privado", base: "unidad", monto: 44, pax_min: 1, pax_max: 3, sentido: "OW" });
   assert.equal(precioDeServicio(producto("traslado", [priv]))?.unidad, "por vehículo, solo ida");
 });

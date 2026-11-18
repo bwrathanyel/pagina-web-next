@@ -152,6 +152,7 @@ export function PromocionCard({ promocion, prioridad = false }: { promocion: Pro
                 fotoUrl: foto,
                 precioLabel,
                 ivaEnBs: !!precio?.ivaEnBs,
+                tasa: precio?.tasa,
                 href: href ?? `/carrito`,
               })
         }

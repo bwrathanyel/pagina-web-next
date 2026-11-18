@@ -13,6 +13,8 @@ export interface ItemCarrito {
   precioLabel: string;
   /** La tarifa de BT no incluye IVA: en Bs el precio lleva 16% más. */
   ivaEnBs?: boolean;
+  /** Tasa BCV de la tarifa (su moneda) para pasar a Bs; ítems viejos sin dato = dólar. */
+  tasa?: "USD" | "EUR";
   href: string;
 }
 

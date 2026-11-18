@@ -272,7 +272,7 @@ export function OfertasHospedaje({
             const sinDisponibilidad = desde && hasta ? textoSinDisponibilidad(bloqueos?.get(o.hotelId), desde, hasta) : null;
             const onRequest = !sinDisponibilidad && esOnRequest(bloqueos?.get(o.hotelId));
             const esElegido = o.hotelId === elegido;
-            const { monto, unidad, grande, ivaEnBs } = separarMonto(o.precio);
+            const { monto, unidad, grande, ivaEnBs, tasa } = separarMonto(o.precio);
             return (
               <li key={o.hotelId} className={ENTRA_ESCALONADO} style={escalon(i)}>
                 <button
@@ -337,7 +337,7 @@ export function OfertasHospedaje({
                           <>
                             <span className="font-mono text-lg font-bold tabular-nums text-ink">
                               {o.precio.desde ? "Desde " : ""}
-                              <PrecioMostrado texto={monto} ivaEnBs={ivaEnBs} />
+                              <PrecioMostrado texto={monto} ivaEnBs={ivaEnBs} tasa={tasa} />
                             </span>
                             {unidad ? <span className="line-clamp-2 text-xs text-ink-soft">{unidad}</span> : null}
                           </>

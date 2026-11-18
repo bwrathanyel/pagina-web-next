@@ -86,6 +86,7 @@ export function ProductoCard({ producto, prioridad = false }: { producto: Produc
                 fotoUrl: foto,
                 precioLabel,
                 ivaEnBs: !!precio?.ivaEnBs,
+                tasa: precio?.tasa,
                 href,
               })
         }

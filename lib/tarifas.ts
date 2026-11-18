@@ -10,12 +10,13 @@
 import type { Producto, Tarifa, TarifarioBloque, VentanaTarifa } from "@/types/supabase";
 import { formatearPrecioCliente, formatearPrecioDesde } from "@/lib/utils/formatoPrecio";
 import { hoyCaracas } from "@/lib/cotizador/estado";
+import { tasaDeMoneda, type TasaBcv } from "@/lib/utils/convertirPrecio";
 
 const ETIQUETA_ORDEN = ["sgl", "dbl", "tpl", "cdp", "qpl", "pax_adic"];
 
 // Siempre $: el número de BT tal cual aunque la tarifa venga en € (regla del
-// dueño 2026-11-17). `moneda` ya no cambia el símbolo; solo decide la tasa del
-// checkout. En Bs todo va a tasa euro (ver lib/utils/convertirPrecio.ts).
+// dueño 2026-11-17). `moneda` ya no cambia el símbolo; solo decide la tasa BCV
+// con que se pasa a Bs: USD = dólar, EUR = euro (ver lib/utils/convertirPrecio.ts).
 export function montoConMoneda(valor: number, _moneda?: string | null): string {
   const n = Number(valor);
   return "$" + (n % 1 === 0 ? String(n) : n.toFixed(2));
@@ -204,17 +205,18 @@ export function precioTarjeta(p: {
   tarifario_bloques?: Tarifa["tarifario_bloques"];
   /** Las promos (web_promociones) lo traen plano; las tarifas, en su bloque. */
   iva_en_bs?: boolean | null;
-}): { monto: string; unidad: string | null; desde: boolean; corto: boolean; ivaEnBs?: boolean } | null {
+}): { monto: string; unidad: string | null; desde: boolean; corto: boolean; ivaEnBs?: boolean; tasa?: TasaBcv } | null {
   const ivaEnBs = !!(p.iva_en_bs ?? bloqueDe(p as Tarifa)?.iva_en_bs);
+  const tasa = tasaDeMoneda(p.moneda);
   const doble = precioDobleHero({ precios: p.precios, moneda: p.moneda, tarifario_bloques: p.tarifario_bloques } as Tarifa);
   if (doble) {
     const unidad = doble.nota === UNIDAD_HABITACION_NOCHE ? UNIDAD_HABITACION_NOCHE : "por persona y noche, en doble";
-    return { monto: doble.monto, unidad, desde: false, corto: true, ivaEnBs };
+    return { monto: doble.monto, unidad, desde: false, corto: true, ivaEnBs, tasa };
   }
   const desde = formatearPrecioDesde(p.precio_desde_usd);
-  if (desde) return { monto: desde, unidad: unidadDelTexto(p.precio_texto) ?? "según fechas y ocupación", desde: true, corto: true, ivaEnBs };
+  if (desde) return { monto: desde, unidad: unidadDelTexto(p.precio_texto) ?? "según fechas y ocupación", desde: true, corto: true, ivaEnBs, tasa };
   const texto = formatearPrecioCliente(p.precio_texto)?.trim();
-  return texto ? { monto: texto, unidad: null, desde: false, corto: texto.length <= 12, ivaEnBs } : null;
+  return texto ? { monto: texto, unidad: null, desde: false, corto: texto.length <= 12, ivaEnBs, tasa } : null;
 }
 
 export type PrecioTarjeta = NonNullable<ReturnType<typeof precioTarjeta>>;
@@ -227,14 +229,15 @@ export type PrecioTarjeta = NonNullable<ReturnType<typeof precioTarjeta>>;
 export function precioDeTarifa(t: Tarifa | null | undefined): PrecioTarjeta | null {
   if (!t) return null;
   const ivaEnBs = !!bloqueDe(t)?.iva_en_bs;
+  const tasa = tasaDeMoneda(t.moneda);
   const hab = montoHabitacionNoche(t);
-  if (hab !== null) return { monto: montoConMoneda(hab, t.moneda), unidad: UNIDAD_HABITACION_NOCHE, desde: true, corto: true, ivaEnBs };
+  if (hab !== null) return { monto: montoConMoneda(hab, t.moneda), unidad: UNIDAD_HABITACION_NOCHE, desde: true, corto: true, ivaEnBs, tasa };
   const pp = t.precios ? precioPorPersona(t) : null;
   if (pp !== null) {
-    return { monto: montoConMoneda(Math.round(pp * 100) / 100, t.moneda), unidad: "por persona", desde: true, corto: true, ivaEnBs };
+    return { monto: montoConMoneda(Math.round(pp * 100) / 100, t.moneda), unidad: "por persona", desde: true, corto: true, ivaEnBs, tasa };
   }
   const texto = formatearPrecioCliente(t.precio_texto)?.trim();
-  return texto ? { monto: texto, unidad: null, desde: false, corto: texto.length <= 12, ivaEnBs } : null;
+  return texto ? { monto: texto, unidad: null, desde: false, corto: texto.length <= 12, ivaEnBs, tasa } : null;
 }
 
 /** Texto libre del tarifario ("$286 por persona (paquete…)"): si arranca con
@@ -244,6 +247,7 @@ export function separarMonto(precio: PrecioTarjeta | null): {
   unidad: string | null | undefined;
   grande: boolean;
   ivaEnBs: boolean;
+  tasa: TasaBcv | undefined;
 } {
   const partido = precio && !precio.corto ? /^([$€]\s?[\d.,]+)\s+(.+)$/.exec(precio.monto) : null;
   return {
@@ -251,6 +255,7 @@ export function separarMonto(precio: PrecioTarjeta | null): {
     unidad: partido ? partido[2] : precio?.unidad,
     grande: partido ? true : (precio?.corto ?? false),
     ivaEnBs: !!precio?.ivaEnBs,
+    tasa: precio?.tasa,
   };
 }
 

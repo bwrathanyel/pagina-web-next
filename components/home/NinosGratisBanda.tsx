@@ -44,7 +44,7 @@ export function NinosGratisBanda({ bloque }: { bloque: BloqueNinosGratis | null 
             <>
               <p className="mt-5">
                 <span className="mb-2 block text-base font-semibold text-dusk-text">desde</span>
-                <NumeralPrecio texto={bloque.desde} />
+                <NumeralPrecio texto={bloque.desde} tasa={bloque.tasaDesde} />
               </p>
               <p className="mt-3 max-w-[30ch] text-base leading-snug text-dusk-text">por adulto, por noche, en habitación doble.</p>
             </>

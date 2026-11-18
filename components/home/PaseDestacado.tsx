@@ -73,7 +73,7 @@ export function PaseDestacado({
   const lugar = [destino, pase.plan].filter(Boolean).join(" · ");
   const incluye = pase.incluye.length > 0 ? `Incluye ${pase.incluye.join(", ").toLocaleLowerCase("es")}` : null;
   const precio = pase.precio;
-  const { monto: montoFinal, unidad, grande, ivaEnBs } = separarMonto(precio);
+  const { monto: montoFinal, unidad, grande, ivaEnBs, tasa } = separarMonto(precio);
   const monto = useMontoContado(montoFinal, separarMonto(precioAnterior ?? null).monto);
   const reservar = useReservarTarjeta(pase.productoId, pase.promoId, "hero", pase.destino);
 
@@ -93,10 +93,10 @@ export function PaseDestacado({
                 <>
                   {precio.desde ? <p className="text-xs text-ink-soft">desde</p> : null}
                   {grande ? (
-                    <MontoAjustado texto={monto} ivaEnBs={ivaEnBs} tope="1.25rem" topeLg="1.875rem" claseMonto="leading-none text-ink" />
+                    <MontoAjustado texto={monto} ivaEnBs={ivaEnBs} tasa={tasa} tope="1.25rem" topeLg="1.875rem" claseMonto="leading-none text-ink" />
                   ) : (
                     <p className="line-clamp-3 font-mono text-sm font-bold leading-none tabular-nums text-ink lg:text-base">
-                      <PrecioMostrado texto={monto} ivaEnBs={ivaEnBs} />
+                      <PrecioMostrado texto={monto} ivaEnBs={ivaEnBs} tasa={tasa} />
                     </p>
                   )}
                   {unidad ? <p className="hidden text-xs leading-snug text-ink-soft lg:line-clamp-2">{unidad}</p> : null}

@@ -9,6 +9,7 @@ import { fechasVuelo, nochesDe, textoViajeros, type EstadoViaje } from "@/lib/co
 import type { Estimado } from "@/lib/cotizador/estimado";
 import { textoBoletos, type VueloViaje } from "@/lib/cotizador/vuelo";
 import { montoConMoneda } from "@/lib/tarifas";
+import type { TasaBcv } from "@/lib/utils/convertirPrecio";
 import type { HotelCotizador } from "@/lib/supabase/queries";
 
 const CORTA = new Intl.DateTimeFormat("es-VE", { day: "numeric", month: "short", timeZone: "UTC" });
@@ -85,7 +86,7 @@ export function ResumenViaje({
   /** Nombre y WhatsApp: van en el pase, después de la lista (enviar sin ellos los enfoca). */
   datos?: ReactNode;
   /** Precio anunciado por la oferta, para mostrar mientras faltan fechas. */
-  desde?: { monto: string; unidad: string | null; ivaEnBs?: boolean } | null;
+  desde?: { monto: string; unidad: string | null; ivaEnBs?: boolean; tasa?: TasaBcv } | null;
   /** Nombres de los tours agregados. */
   tours?: string[];
   /** Ruta y aproximado del vuelo; sin él, el vuelo queda "a confirmar". */
@@ -104,12 +105,13 @@ export function ResumenViaje({
   const vueloTotal = conVuelo && vuelo?.total != null ? vuelo.total : null;
   const montoVuelo = vueloTotal !== null ? montoConMoneda(vueloTotal, "USD") : null;
   // Todo se muestra en $ (un hotel en € suma su mismo número). En Bs cada pieza
-  // va a su tasa: hotel euro (+16% si BT no incluye IVA), vuelo dólar.
+  // va a su tasa: hotel la de su tarifa (+16% si BT no incluye IVA), vuelo dólar.
   const sumable = !!(monto && montoVuelo && estimado?.ok);
   const ivaHotel = !!(estimado?.ok && estimado.ivaEnBs);
+  const tasaHotel = estimado?.ok ? estimado.moneda : undefined;
   const montoTalon = sumable && estimado?.ok ? montoConMoneda(estimado.total + (vueloTotal as number), "USD") : monto ?? montoVuelo;
   const talonSuma = usePrecioSuma(
-    sumable && estimado?.ok ? [{ monto: estimado.total, ivaEnBs: ivaHotel }, { monto: vueloTotal as number, tasaDolar: true }] : [],
+    sumable && estimado?.ok ? [{ monto: estimado.total, ivaEnBs: ivaHotel, tasa: tasaHotel }, { monto: vueloTotal as number, tasaDolar: true }] : [],
     (n) => montoConMoneda(n, "USD"),
   );
   const etiquetaTalon = sumable ? "Hospedaje + vuelo aprox." : !monto && montoVuelo ? "Vuelo aprox." : null;
@@ -148,6 +150,7 @@ export function ResumenViaje({
                 texto={montoTalon || referencia?.monto || (faltaEdad && hospedaje ? "Falta edad" : "A confirmar")}
                 mostrar={sumable ? talonSuma : undefined}
                 ivaEnBs={montoTalon ? ivaHotel : !!referencia?.ivaEnBs}
+                tasa={montoTalon ? tasaHotel : referencia?.tasa}
                 tasaDolar={!monto && !!montoVuelo}
               />
             </span>
@@ -181,7 +184,7 @@ export function ResumenViaje({
             precio={
               unico ? null : monto ? (
                 <>
-                  Estimado <PrecioMostrado texto={monto} ivaEnBs={ivaHotel} />
+                  Estimado <PrecioMostrado texto={monto} ivaEnBs={ivaHotel} tasa={tasaHotel} />
                 </>
               ) : faltaEdad && hospedaje ? (
                 "Elija la edad de cada niño para ver el precio"

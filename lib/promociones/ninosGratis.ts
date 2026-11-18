@@ -1,4 +1,5 @@
 import { montoConMoneda, montoDoble } from "@/lib/tarifas";
+import { tasaDeMoneda, type TasaBcv } from "@/lib/utils/convertirPrecio";
 import { fotoDelAlojamiento } from "@/lib/promociones/fotosHero";
 import type { HotSale, NinoGratis } from "@/types/supabase";
 
@@ -28,6 +29,8 @@ export interface HotelNinoGratis {
   href: string;
   /** Doble por adulto y noche, ya formateado; null si la fila no trae grilla. */
   precio: string | null;
+  /** Tasa BCV para Bs = moneda de la tarifa. */
+  tasa: TasaBcv;
   hasta: string | null;
   /** Días que quedan para viajar con el regalo (0 = hoy es el último). */
   dias: number | null;
@@ -37,6 +40,8 @@ export interface BloqueNinosGratis {
   hoteles: HotelNinoGratis[];
   /** El piso de los `precio` de arriba, en una sola moneda. */
   desde: string | null;
+  /** Tasa BCV del piso (su moneda). */
+  tasaDesde: TasaBcv;
   cantidad: number;
   edades: string | null;
 }
@@ -59,7 +64,7 @@ export function ninosGratisEn(pool: HotSale[], destino: string, ahora = new Date
     if (!ng || !p.producto || p.producto.destino !== destino || vistos.has(p.producto.id)) continue;
     vistos.add(p.producto.id);
     const monto = montoDoble(p.precios);
-    const moneda = String(p.moneda || "USD").toUpperCase() === "EUR" ? "EUR" : "USD";
+    const moneda = tasaDeMoneda(p.moneda);
     filas.push({
       ng,
       monto,
@@ -72,6 +77,7 @@ export function ninosGratisEn(pool: HotSale[], destino: string, ahora = new Date
         foto: fotoDelAlojamiento(p) ?? null,
         href: `/producto/${p.producto.id}`,
         precio: monto === null ? null : montoConMoneda(monto, moneda),
+        tasa: moneda,
         hasta: ng.hasta,
         dias: ng.hasta ? Math.max(0, Math.round((Date.parse(ng.hasta) - hoy) / DIA)) : null,
       },
@@ -95,6 +101,7 @@ export function ninosGratisEn(pool: HotSale[], destino: string, ahora = new Date
   return {
     hoteles: filas.map((f) => f.h),
     desde,
+    tasaDesde: Number.isFinite(usd) ? "USD" : "EUR",
     cantidad: Math.min(...filas.map((f) => f.ng.cantidad)),
     edades: edades.size === 1 ? [...edades][0] || null : null,
   };
