@@ -59,6 +59,8 @@ function useMontoContado(texto: string | undefined, desde: string | undefined) {
 // columna derecha con plan, lo que incluye, la vigencia y "Ver oferta".
 // Con compra directa (Margarita, checkout en horario) suma
 // debajo «Reservar y pagar ahora»: hermano del enlace, no hijo (nada de <a> en <a>).
+// Desde lg el botón va fuera de flujo (absolute bajo el boleto): al aparecer no
+// agranda la columna ni empuja hacia abajo la barra de cotizar.
 export function PaseDestacado({
   pase,
   destino,
@@ -158,7 +160,7 @@ export function PaseDestacado({
         </Boleto>
       </Link>
       {reservar ? (
-        <div className="mt-3">
+        <div className="mt-3 lg:absolute lg:inset-x-0 lg:top-full">
           <Boton
             variante="firma"
             ancho
@@ -168,7 +170,7 @@ export function PaseDestacado({
           >
             Reservar y pagar ahora
           </Boton>
-          <p className="mt-2 hidden text-center text-sm text-white/85 lg:block">
+          <p className="mt-2 hidden text-center text-sm text-white/85 [@media(min-width:1024px)_and_(min-height:820px)]:block">
             Compre al instante desde la web: elija fechas, pague y quede confirmado.
           </p>
         </div>
