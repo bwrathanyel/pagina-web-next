@@ -10,9 +10,11 @@ import type { CuotaPlan } from "@/lib/checkout/plan";
 import { MontoTablero } from "@/components/ui/MontoTablero";
 import type { TramoId } from "@/lib/checkout/tramos";
 import { ROTULO } from "./PaseFechas";
+import { useBsHoy } from "./useBsHoy";
 
 // Resumen de /reservar: el total en la cabecera (escritorio) y la barra fija con el total (teléfono). Montos SIEMPRE en dólares desde `usd`: nada de TalonPrecio/PrecioMostrado, que
-// convierten a Bs con la tasa del selector de moneda y no con la que fija el servidor.
+// convierten a Bs con la tasa del selector de moneda y no con la que fija el servidor. Con Pago Móvil, debajo va el estimado
+// en Bs a la tasa BCV de la tarifa (`useBsHoy`, mismo cálculo que TramoPago).
 
 export interface Totales {
   precio: number;
@@ -36,6 +38,17 @@ export interface Totales {
 /** Lo que se cobra hoy: el total, o la cuota 1 si eligió el plan. */
 const hoyDe = (t: Totales) => (t.plan ? t.plan.hoy : t.total);
 const rotuloDe = (t: Totales | null) => (t?.plan ? "Hoy paga" : "Total");
+
+/** Pago Móvil: lo de hoy en bolívares bajo el total en dólares (estimado con la misma tasa que muestra TramoPago). */
+function TotalBs({ t, className = "" }: { t: Totales; className?: string }) {
+  const bs = useBsHoy(t, t.riel, t.tasa);
+  if (!bs) return null;
+  return (
+    <span className={"font-mono text-sm font-semibold tabular-nums text-ink-soft " + className}>
+      <span className="sr-only">En bolívares: </span>≈ {bs.monto}
+    </span>
+  );
+}
 
 export interface DatosResumen {
   hotel: string;
@@ -158,7 +171,10 @@ function DetallePase({ datos, totales }: { datos: DatosResumen; totales: Totales
       <Desglose t={totales} />
       <div className="flex items-baseline justify-between border-t border-linea pt-3">
         <span className={ROTULO}>{rotuloDe(totales)}</span>
-        <span className="font-mono text-2xl font-bold tabular-nums text-ink">{usd(hoyDe(totales))}</span>
+        <span className="flex flex-col items-end">
+          <span className="font-mono text-2xl font-bold tabular-nums text-ink">{usd(hoyDe(totales))}</span>
+          <TotalBs t={totales} />
+        </span>
       </div>
     </div>
   );
@@ -187,6 +203,7 @@ export function PaseCabecera({
           <span className="font-mono text-2xl font-bold tabular-nums text-ink">
             <MontoTablero texto={usd(hoyDe(totales))} convertir={false} />
           </span>
+          <TotalBs t={totales} />
           <button
             type="button"
             onClick={() => setAbierta(true)}
@@ -238,7 +255,8 @@ export function BarraTotalMovil({
               <MontoTablero texto={usd(hoyDe(totales))} convertir={false} />
               <Icono nombre="chevron-abajo" tamano={16} className="rotate-180 text-ink-soft" />
             </span>
-          ) : (
+          ) : null}
+          {totales ? <TotalBs t={totales} className="text-xs" /> : (
             <span className="text-sm font-semibold text-ink">{sinPrecio}</span>
           )}
           <span aria-live="polite" className="max-w-full truncate text-xs text-ink-soft">
