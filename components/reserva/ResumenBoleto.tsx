@@ -48,6 +48,8 @@ export interface DatosResumen {
   pago: string;
   /** Qué tramos ya están terminados: cada dato del pase aparece al terminarse el suyo. */
   completos: Record<TramoId, boolean>;
+  /** Boleto aéreo agregado: «Caracas a Isla de Margarita, … · aprox. $400». No suma al total de hoy. */
+  boleto?: string | null;
 }
 
 /** Las filas del pase. Una fila que se completa después de montar entra con `panel-entra`; las que
@@ -80,6 +82,14 @@ function FilasPase({ d }: { d: DatosResumen }) {
           )}
         </div>
       ))}
+      {d.boleto ? (
+        <div className="flex items-baseline gap-3">
+          <dt className={ROTULO + " w-24 shrink-0"}>Boleto aéreo</dt>
+          <dd className="min-w-0 flex-1 text-ink">
+            {d.boleto} <span className="text-ink-soft">· lo cotiza boletería, no se cobra hoy</span>
+          </dd>
+        </div>
+      ) : null}
     </dl>
   );
 }

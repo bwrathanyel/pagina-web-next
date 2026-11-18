@@ -133,11 +133,26 @@ export interface EntradaReserva {
   habitaciones: HabitacionWeb[];
   fotosHotel: string[];
   inicial: { tarifaId: number | null; desde: string; hasta: string; pasajeros: Pasajeros | null };
+  /** Reserva creada: lo que viaja con ella (el boleto aéreo agregado) sale con los mismos datos. */
+  alCrear?: (d: ReservaCreada) => void;
+  /** Se agrega al WhatsApp de «Reservar por WhatsApp» (p. ej. el boleto aéreo agregado). */
+  notaWhatsApp?: (d: Pick<ReservaCreada, "desde" | "hasta" | "pasajeros">) => string | null;
+}
+
+export interface ReservaCreada {
+  codigo: string;
+  nombre: string;
+  telefono: string;
+  iso: string;
+  email: string;
+  desde: string;
+  hasta: string;
+  pasajeros: Pasajeros;
 }
 
 export type Reserva = ReturnType<typeof useReserva>;
 
-export function useReserva({ hotel, habitaciones, fotosHotel, inicial }: EntradaReserva) {
+export function useReserva({ hotel, habitaciones, fotosHotel, inicial, alCrear, notaWhatsApp }: EntradaReserva) {
   const router = useRouter();
   const hoy = hoyCaracas();
   const pantalla = useEsEscritorioConocido();
@@ -475,6 +490,7 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial }: Entrada
 
   const fueraDeHorario = Boolean(config?.activo && config.abierto === false);
   const habitacion = elegida?.tarifa.habitacion?.trim() || null;
+  const notaWa = notaWhatsApp?.({ desde, hasta, pasajeros });
   const mensajeWhatsApp = [
     `Hola, quiero reservar en ${hotel.nombre}`,
     habitacion ? ` (${habitacion})` : "",
@@ -482,6 +498,7 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial }: Entrada
     `, ${textoViajeros(pasajeros)}`,
     riel ? `, pago por ${NOMBRE_RIEL[riel]}` : "",
     ".",
+    notaWa ? ` ${notaWa}` : "",
   ].join("");
   const wa = (motivo: string) => ({
     href: whatsappHref(mensajeWhatsApp),
@@ -539,6 +556,12 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial }: Entrada
           /* sin almacenamiento: el link igual queda en la barra del navegador */
         }
         registrarEvento("abrir_pago", { ruta: "/reservar", meta: { etapa: "reserva_creada", producto_id: hotel.id, riel, tasa, plan: usarPlan } });
+        // router.replace no descarga la página: lo que dispare alCrear termina aunque ya esté en /pagar.
+        try {
+          alCrear?.({ codigo: String(data.codigo ?? ""), nombre: f.nombre.trim(), telefono: f.telefono, iso: f.iso, email, desde, hasta, pasajeros });
+        } catch {
+          /* lo agregado nunca frena el pago del hospedaje */
+        }
         // replace: «atrás» desde /pagar vuelve a la ficha, no a un formulario que crearía otra reserva.
         router.replace(`/pagar/${data.token}`);
         return; // el botón sigue «cargando» mientras navega

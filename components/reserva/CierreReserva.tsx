@@ -2,6 +2,7 @@
 
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
+import { Icono } from "@/components/ui/Icono";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import type { Reserva } from "./useReserva";
 
@@ -22,10 +23,12 @@ export function AccionReserva({ r, ancho }: { r: Accion; ancho: boolean }) {
 
 type Props = {
   r: Accion & Pick<Reserva, "error" | "acepta" | "setAcepta" | "errorDe" | "esEscritorio">;
+  /** Boleto aéreo agregado: se pide junto con la reserva. */
+  boleto?: string | null;
 };
 
 // La aceptación existe UNA sola vez, al final de la columna de pago.
-export function CierreReserva({ r }: Props) {
+export function CierreReserva({ r, boleto = null }: Props) {
   const { error, fueraDeHorario, acepta, setAcepta } = r;
   const errorAcepta = r.errorDe("acepta");
   return (
@@ -66,6 +69,14 @@ export function CierreReserva({ r }: Props) {
             ) : null}
           </div>
           <p className="text-sm text-ink-soft">Aún no se le cobra nada: en el siguiente paso verá los datos para pagar.</p>
+          {boleto ? (
+            <p className="flex items-start gap-2 text-sm text-ink">
+              <Icono nombre="avion" tamano={16} className="mt-0.5 shrink-0 text-ink-soft" />
+              <span>
+                Con su reserva pedimos también el boleto aéreo ({boleto}): un asesor de boletería se lo cotiza por WhatsApp.
+              </span>
+            </p>
+          ) : null}
         </>
       )}
       {/* Escritorio: la acción va al final, después de aceptar y verificar; en el teléfono la lleva la barra fija. */}

@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { Aviso } from "@/components/ui/Aviso";
+import { esDestinoCompraDirecta } from "@/lib/checkout/destinos";
 import { Boton } from "@/components/ui/Boton";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import type { HotelParaCobrar } from "@/lib/checkout/calculo";
@@ -8,7 +10,7 @@ import { horaAmPm } from "@/lib/checkout/formato";
 import { ChipPlazo } from "@/components/checkout/ChipPlazo";
 import type { HabitacionWeb } from "@/lib/cotizador/hotel";
 import { AccionReserva, CierreReserva } from "./CierreReserva";
-import { BoletoAereo } from "./BoletoAereo";
+import { BoletoAereo, pedirBoleto, textoBoleto } from "./BoletoAereo";
 import type { VueloPedido } from "@/lib/cotizador/estado";
 import type { RutaAerea } from "@/lib/cotizador/guiaRutas";
 import type { RutaVuelo } from "@/lib/cotizador/vuelo";
@@ -58,9 +60,21 @@ export function ReservarCliente({
   /** Vuelo pedido en /cotizar: precarga el boleto aéreo. */
   vueloPedido?: VueloPedido | null;
 }) {
-  const r = useReserva({ hotel, habitaciones, fotosHotel, inicial });
+  // Boleto aéreo agregado a la reserva: con `vuelo=` (viene de /cotizar) entra ya agregado. Se pide con
+  // los datos de «Sus datos» al crearse la reserva; fuera de horario va en el WhatsApp.
+  const [boleto, setBoleto] = useState<VueloPedido | null>(vueloPedido);
+  const conBoleto = boleto && esDestinoCompraDirecta(destino) ? boleto : null;
+  const r = useReserva({
+    hotel,
+    habitaciones,
+    fotosHotel,
+    inicial,
+    alCrear: conBoleto ? (d) => pedirBoleto(d, conBoleto, rutasVuelo, hotel.nombre) : undefined,
+    notaWhatsApp: conBoleto ? (d) => `También necesito el boleto aéreo: ${textoBoleto(d, conBoleto, rutasVuelo)}.` : undefined,
+  });
   const { config, pantalla, esEscritorio, fueraDeHorario, abierta, segundosAbierta, wa } = r;
   const ancho = useEsAncho();
+  const textoDelBoleto = conBoleto ? textoBoleto(r, conBoleto, rutasVuelo) : null;
 
   // ------------------------------------------------------------------ pantallas de salida
   if (config && (config.fallo || !config.activo)) {
@@ -100,6 +114,7 @@ export function ReservarCliente({
     viajeros: textoViajeros(r.pasajeros),
     pago: r.resumenTramo.pago,
     completos: r.completos,
+    boleto: textoDelBoleto,
   };
   const propsTramo = (id: TramoId, numero: number, titulo: string) => ({
     id,
@@ -170,8 +185,8 @@ export function ReservarCliente({
 
       {/* Boleto: en escritorio, franja baja entre la cabecera y el mostrador, para verse sin bajar (queja
           del dueño 2026-11-18, 1366×695); en el teléfono, al final. Se monta siempre (no espera a `pantalla`)
-          para que la franja no aparezca tarde y empuje el mostrador. Su formulario va en una Hoja. */}
-      <BoletoAereo r={r} destino={destino} hotelNombre={hotel.nombre} rutas={rutasVuelo} guia={guiaRutas} pedido={vueloPedido} className="max-lg:order-1" />
+          para que la franja no aparezca tarde y empuje el mostrador. Sus opciones van en una Hoja. */}
+      <BoletoAereo r={r} destino={destino} rutas={rutasVuelo} guia={guiaRutas} valor={boleto} onCambio={setBoleto} className="max-lg:order-1" />
 
       {/* lg: dos columnas (fechas y habitación | pago, datos y cierre). xl: tres (fechas y habitación | pago
           y política | datos y cierre); la columna derecha se disuelve con `xl:contents`. */}
@@ -206,7 +221,7 @@ export function ReservarCliente({
             ) : null}
 
             {pantalla === false ? politicaNodo : null}
-            {pantalla !== null ? <CierreReserva r={r} /> : null}
+            {pantalla !== null ? <CierreReserva r={r} boleto={textoDelBoleto} /> : null}
           </div>
         </div>
       </div>
