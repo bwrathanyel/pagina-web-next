@@ -68,6 +68,7 @@ export interface Formulario {
 // devuelve la misma reserva en vez de crear otra.
 const claveBorrador = (hotelId: number) => `lotus-reservar:${hotelId}`;
 const CLAVE_ABIERTA = CLAVE_RESERVA_ABIERTA;
+const CLAVE_PLAN_TRAS_LOGIN = "lotus-reservar-plan-tras-login";
 
 const texto = (v: unknown, max: number) => (typeof v === "string" ? v.slice(0, max) : undefined);
 
@@ -161,7 +162,17 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial, alCrear, 
   const esEscritorio = pantalla === true;
   const { config, reintentar } = useCheckoutConfig();
   const { user } = useAuth();
-  const abrirCuenta = usePaneles((s) => s.abrirCuenta);
+  const abrirPanelCuenta = usePaneles((s) => s.abrirCuenta);
+  // «Plan de abonos» sin sesión abre la cuenta. Con Google la página se descarga: la marca (por pestaña,
+  // 10 min, como la cookie de retorno) deja el plan elegido al volver. Aceptarlo sigue siendo a mano.
+  const abrirCuenta = useCallback(() => {
+    try {
+      sessionStorage.setItem(CLAVE_PLAN_TRAS_LOGIN, `${hotel.id}:${Date.now()}`);
+    } catch {
+      /* sin almacenamiento: al volver se elige el plan a mano */
+    }
+    abrirPanelCuenta();
+  }, [abrirPanelCuenta, hotel.id]);
 
   const [f, setF] = useState<Formulario>({
     desde: inicial.desde,
@@ -431,6 +442,16 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial, alCrear, 
     setModo("total");
     setAceptaPlan(false);
   }
+  useEffect(() => {
+    if (!planElegible) return;
+    try {
+      const [id, cuando] = (sessionStorage.getItem(CLAVE_PLAN_TRAS_LOGIN) ?? "").split(":").map(Number);
+      sessionStorage.removeItem(CLAVE_PLAN_TRAS_LOGIN);
+      if (id === hotel.id && Date.now() - cuando < 600_000) setModo("plan");
+    } catch {
+      /* sin almacenamiento */
+    }
+  }, [planElegible, hotel.id]);
   const planListo = modo === "plan" && planElegible && precio !== null && plan?.disponible ? plan : null;
   const usarPlan = planListo !== null;
   // IGTF: solo en pagos en divisas (Zelle, Binance), sobre lo que se cobra hoy (el total con cargo, o

@@ -5,6 +5,15 @@ import { type NextRequest, NextResponse } from "next/server";
  * @supabase/ssr pattern. Without this, sessions silently expire mid-visit
  * because Server Components can't write cookies themselves. */
 export async function middleware(request: NextRequest) {
+  // www sirve el mismo Worker, pero Supabase solo admite el retorno de Google al dominio sin www: desde
+  // www caía al site_url (la home) y la sesión no se abría (dueño 2026-11-18, «Plan de abonos» en
+  // /reservar). Un solo dominio: www redirige con la misma ruta y query. 308 conserva POST.
+  const host = request.headers.get("host") ?? "";
+  if (host.startsWith("www.")) {
+    const destino = new URL(request.nextUrl.pathname + request.nextUrl.search, `https://${host.slice(4)}`);
+    return NextResponse.redirect(destino, 308);
+  }
+
   // Si el flujo OAuth falla del lado de Supabase (ej. bad_oauth_state: volvió
   // en otra pestaña o el estado venció), Supabase cae al site_url, que es la
   // home, con ?error_code=… y la home no lo muestra en ningún lado.

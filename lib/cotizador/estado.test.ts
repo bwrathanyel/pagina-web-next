@@ -15,6 +15,8 @@ import {
   serializarEstado,
   telefonoValido,
   textoRangoCorto,
+  vueloATexto,
+  vueloDeTexto,
 } from "./estado.ts";
 
 const HOY = "2026-09-25";
@@ -186,11 +188,19 @@ test("vuelo pedido en /cotizar viaja a /reservar con origen, tipo, fechas propia
     flexible: true,
   };
   const q = new URLSearchParams({ hotel: "4", desde: "2026-11-26", hasta: "2026-11-30" });
-  ponerVuelo(q, { ...e, servicios: [...e.servicios] });
+  ponerVuelo(q, e);
   const sp = Object.fromEntries(q.entries());
   assert.deepEqual(leerVueloPedido(sp, HOY), {
     origen: "Caracas", vuelo: "ida", vueloDesde: "2026-11-26", vueloHasta: "", equipaje: "maleta", flexible: true,
   });
   // Sin `vuelo=` el enlace no trae boleto (solo hospedaje).
   assert.equal(leerVueloPedido({ hotel: "4", desde: "2026-11-26" }, HOY), null);
+});
+
+test("boleto de /reservar ida y vuelta por texto (sessionStorage)", () => {
+  const v = { origen: "Caracas", vuelo: "ida-vuelta", vueloDesde: "2026-11-26", vueloHasta: "2026-11-30", equipaje: "maleta", flexible: true } as const;
+  assert.deepEqual(vueloDeTexto(vueloATexto(v), HOY), v);
+  assert.equal(vueloDeTexto("", HOY), null);
+  assert.equal(vueloDeTexto(null, HOY), null);
+  assert.equal(vueloDeTexto("hotel=4", HOY), null);
 });

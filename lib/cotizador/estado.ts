@@ -297,13 +297,13 @@ export function serializarEstado(e: EstadoViaje): string {
 }
 
 /** Parámetros del vuelo (los mismos que lee `parsearEstado`): /cotizar y el enlace a /reservar. */
-export function ponerVuelo(q: URLSearchParams, e: EstadoViaje): void {
+export function ponerVuelo(q: URLSearchParams, e: VueloPedido & Partial<Pick<EstadoViaje, "vueloDestino" | "vueloDestinoOtro">>): void {
   q.set("origen", e.origen);
   q.set("vuelo", e.vuelo);
   if (e.vueloDesde) q.set("vuelo_ida", e.vueloDesde);
   if (e.vueloHasta) q.set("vuelo_vuelta", e.vueloHasta);
   if (e.vueloDestino) q.set("vdestino", e.vueloDestino);
-  if (e.vueloDestino === VUELO_DESTINO_OTRO && e.vueloDestinoOtro.trim()) q.set("vdestino_otro", e.vueloDestinoOtro.trim());
+  if (e.vueloDestino === VUELO_DESTINO_OTRO && e.vueloDestinoOtro?.trim()) q.set("vdestino_otro", e.vueloDestinoOtro.trim());
   if (e.equipaje !== EQUIPAJE_INICIAL) q.set("equipaje", e.equipaje);
   if (e.flexible) q.set("flex", "1");
 }
@@ -316,6 +316,18 @@ export function leerVueloPedido(sp: ParamsBusqueda, hoy = hoyCaracas()): VueloPe
   if (!uno(sp.vuelo)) return null;
   const { origen, vuelo, vueloDesde, vueloHasta, equipaje, flexible } = parsearEstado(sp, hoy);
   return { origen, vuelo, vueloDesde, vueloHasta, equipaje, flexible };
+}
+
+/** Boleto de /reservar a texto (los mismos parámetros del enlace) para guardarlo en sessionStorage. */
+export function vueloATexto(v: VueloPedido): string {
+  const q = new URLSearchParams();
+  ponerVuelo(q, v);
+  return q.toString();
+}
+
+/** Inverso de `vueloATexto`, validado como el enlace: texto ajeno o vacío da null. */
+export function vueloDeTexto(texto: string | null | undefined, hoy = hoyCaracas()): VueloPedido | null {
+  return texto ? leerVueloPedido(Object.fromEntries(new URLSearchParams(texto)), hoy) : null;
 }
 
 // ---- transformaciones ----

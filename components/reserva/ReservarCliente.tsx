@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Aviso } from "@/components/ui/Aviso";
 import { esDestinoCompraDirecta } from "@/lib/checkout/destinos";
 import { Boton } from "@/components/ui/Boton";
@@ -11,7 +11,7 @@ import { ChipPlazo } from "@/components/checkout/ChipPlazo";
 import type { HabitacionWeb } from "@/lib/cotizador/hotel";
 import { AccionReserva, CierreReserva } from "./CierreReserva";
 import { BoletoAereo, pedirBoleto, textoBoleto } from "./BoletoAereo";
-import type { VueloPedido } from "@/lib/cotizador/estado";
+import { vueloATexto, vueloDeTexto, type VueloPedido } from "@/lib/cotizador/estado";
 import type { RutaAerea } from "@/lib/cotizador/guiaRutas";
 import type { RutaVuelo } from "@/lib/cotizador/vuelo";
 import { FotosCabecera } from "./FotosCabecera";
@@ -63,6 +63,29 @@ export function ReservarCliente({
   // Boleto aéreo agregado a la reserva: con `vuelo=` (viene de /cotizar) entra ya agregado. Se pide con
   // los datos de «Sus datos» al crearse la reserva; fuera de horario va en el WhatsApp.
   const [boleto, setBoleto] = useState<VueloPedido | null>(vueloPedido);
+  // Como el borrador de useReserva: entrar con Google sale del sitio y vuelve a esta URL; el boleto
+  // agregado, editado o quitado se guarda por pestaña. Solo se restaura si el enlace trae el mismo
+  // `vuelo=` que cuando se guardó (otro enlace desde /cotizar manda).
+  const claveBoleto = `lotus-reservar-boleto:${hotel.id}`;
+  const origenBoleto = vueloPedido ? vueloATexto(vueloPedido) : "";
+  const boletoRestaurado = useRef(false);
+  useEffect(() => {
+    if (!boletoRestaurado.current) return;
+    try {
+      sessionStorage.setItem(claveBoleto, JSON.stringify({ origen: origenBoleto, valor: boleto ? vueloATexto(boleto) : "" }));
+    } catch {
+      /* sin almacenamiento: el boleto sigue funcionando en esta visita */
+    }
+  }, [boleto, claveBoleto, origenBoleto]);
+  useEffect(() => {
+    try {
+      const g = JSON.parse(sessionStorage.getItem(claveBoleto) ?? "null") as { origen?: unknown; valor?: unknown } | null;
+      if (g && g.origen === origenBoleto && typeof g.valor === "string") setBoleto(vueloDeTexto(g.valor));
+    } catch {
+      /* borrador ilegible: queda el del enlace */
+    }
+    boletoRestaurado.current = true;
+  }, [claveBoleto, origenBoleto]);
   const conBoleto = boleto && esDestinoCompraDirecta(destino) ? boleto : null;
   const r = useReserva({
     hotel,
