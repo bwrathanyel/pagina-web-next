@@ -117,6 +117,8 @@ function leerAbierta(): ReservaAbierta | null {
 const CONTACTO_OK = { nombre: "Ana Pérez", telefono: "+584141234567", email: "a@b.co", riel: "zelle" };
 const invalido = (c: Partial<typeof CONTACTO_OK>) => validarContacto({ ...CONTACTO_OK, ...c }) !== null;
 
+const RE_TODO_INCLUIDO = /todo\s*incluido|all\s*inclusive/i;
+
 /** `habitacion` puede venir vacío en tarifas cargadas a mano: el nombre queda en el título, con el hotel delante. */
 function nombreDeHabitacion(t: Tarifa, hotel: string): string {
   const propio = t.habitacion?.trim();
@@ -312,7 +314,7 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial, alCrear, 
   // Qué se ofrece (dueño, 2026-11-18): nada sin precio concreto («A consultar», «Sin cupo», on request);
   // si hay habitaciones con fotos propias, solo esas; si no, una opción por plan con la habitación más
   // barata (el tipo exacto lo confirma Reservas).
-  const { visibles, porPlan } = useMemo(() => {
+  const { visibles, porPlan, todoIncluido } = useMemo(() => {
     const precioDe = (id: number) => {
       const r = resultados.get(id);
       return r?.ok ? r.precio : Infinity;
@@ -322,15 +324,17 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial, alCrear, 
       const r = resultados.get(c.tarifa.id);
       return !r || r.ok;
     });
+    // Todo incluido: el cliente no elige habitación, el hotel lo acomoda según cuántas personas viajan (dueño 2026-11-18).
+    const todoIncluido = conPrecio.length > 0 && conPrecio.every((c) => RE_TODO_INCLUIDO.test(c.tarifa.plan ?? ""));
     const conFoto = conPrecio.filter((c) => !!habitacionDeTarifa(habitaciones, c.tarifa)?.fotos.length);
-    if (conFoto.length) return { visibles: conFoto, porPlan: false };
+    if (conFoto.length && !todoIncluido) return { visibles: conFoto, porPlan: false, todoIncluido };
     const mejor = new Map<string, (typeof tarjetas)[number]>();
     for (const c of conPrecio) {
       const k = c.tarifa.plan?.trim().toLowerCase() ?? "";
       const previa = mejor.get(k);
       if (!previa || precioDe(c.tarifa.id) < precioDe(previa.tarifa.id)) mejor.set(k, c);
     }
-    return { visibles: [...mejor.values()], porPlan: true };
+    return { visibles: [...mejor.values()], porPlan: true, todoIncluido };
   }, [tarjetas, resultados, habitaciones, hotel.nombre]);
 
   // La elegida es la que cubre la entrada; si quedó oculta (p. ej. al poner fechas cambió la más barata
@@ -364,11 +368,11 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial, alCrear, 
       return {
         id: c.tarifa.id,
         titulo: plan ?? "Habitación",
-        plan: plan ? "Habitación base del hotel" : null,
+        plan: todoIncluido ? "Lo acomodan según cuántas personas viajan" : plan ? "Habitación base del hotel" : null,
         fotos: fotosHotel,
         fotoPropia: false,
         detalles: [],
-        descripcion: "El tipo de habitación se lo confirma Reservas.",
+        descripcion: todoIncluido ? null : "El tipo de habitación se lo confirma Reservas.",
         precio: r?.ok ? r.precio : null,
         nota: null,
       };
@@ -394,6 +398,7 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial, alCrear, 
   // Chips del hotel cuando no hay fotos por habitación: amenities y vistas de sus fichas, las más
   // repetidas primero. «Mini-bar», «Minibar» y «Mini bar» cuentan como una sola.
   const caracteristicas = useMemo(() => {
+    if (todoIncluido) return [];
     const cuenta = new Map<string, { texto: string; n: number }>();
     for (const h of habitaciones) {
       for (const a of [...(h.amenities ?? []), h.vista]) {
@@ -405,7 +410,7 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial, alCrear, 
       }
     }
     return [...cuenta.values()].sort((a, b) => b.n - a.n).slice(0, 8).map((c) => c.texto);
-  }, [habitaciones]);
+  }, [habitaciones, todoIncluido]);
 
   // El precio que fijó el servidor vale solo para ESTE carrito: si el cliente cambia algo, se descarta.
   const claveSel = JSON.stringify([tarifaEfectiva, desde, hasta, pasajeros]);
@@ -642,7 +647,7 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial, alCrear, 
     f, poner, desde, hasta, pasajeros, riel, hayFechas, sinCupo,
     acepta, setAcepta, modo, setModo, aceptaPlan, setAceptaPlan, hojaViajeros, setHojaViajeros,
     abierta, segundosAbierta, mostrarErrores, error, enviando,
-    elegida, tarifaEfectiva, habitacion, opciones, motivoSinOpciones, caracteristicas,
+    elegida, tarifaEfectiva, habitacion, opciones, motivoSinOpciones, caracteristicas, todoIncluido,
     precio, plan, ofrecerPlan, tasa, noches, totales, sinPrecio,
     errores, errorDe, falta, fueraDeHorario, wa, alEnviar,
   };

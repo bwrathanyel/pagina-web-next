@@ -107,7 +107,7 @@ export function ReservarCliente({
   // política se montan recién al conocer la media query (B-15: Turnstile una sola vez, sin saltos).
   const datosPase: DatosResumen = {
     hotel: hotel.nombre,
-    habitacion: r.habitacion,
+    habitacion: r.todoIncluido ? null : r.habitacion,
     plan: r.elegida?.tarifa.plan?.trim() || null,
     desde: r.desde,
     hasta: r.hasta,
@@ -196,7 +196,7 @@ export function ReservarCliente({
             <TramoFechas r={r} />
           </Tramo>
 
-          <Tramo {...propsTramo("habitacion", 2, "Habitación")}>
+          <Tramo {...propsTramo("habitacion", 2, r.todoIncluido ? "Plan" : "Habitación")}>
             <TramoHabitacion r={r} />
             <OtrosHoteles hoteles={otrosHoteles} destino={destino} desde={r.desde} hasta={r.hasta} pasajeros={r.pasajeros} />
           </Tramo>
