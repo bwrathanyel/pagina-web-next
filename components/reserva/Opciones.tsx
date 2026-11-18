@@ -105,7 +105,10 @@ export function OpcionesHabitacion({
   hayFechas,
   caracteristicas,
   noches,
+  motivo = null,
 }: {
+  /** Por qué no queda ninguna habitación (sin disponibilidad, mínimo de noches...). */
+  motivo?: string | null;
   opciones: OpcionHabitacion[];
   elegida: number | null;
   onElegir: (id: number) => void;
@@ -117,7 +120,7 @@ export function OpcionesHabitacion({
   if (!opciones.length) {
     return hayFechas ? (
       <p className="rounded-card border border-linea bg-card p-4 text-sm text-ink-soft">
-        No hay habitaciones con precio confirmado para estas fechas. Pruebe otras fechas o escríbanos por WhatsApp y un asesor le consulta disponibilidad.
+        {motivo ?? "No hay habitaciones con precio confirmado para estas fechas."} Pruebe otras fechas o escríbanos por WhatsApp y un asesor le consulta disponibilidad.
       </p>
     ) : null;
   }

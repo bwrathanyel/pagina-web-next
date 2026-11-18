@@ -304,6 +304,18 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial }: Entrada
   const tarifaEfectiva = elegida?.tarifa.id ?? null;
   const calculo = tarifaEfectiva ? (resultados.get(tarifaEfectiva) ?? null) : null;
 
+  // Si no queda ninguna habitación, el cliente debe saber el motivo real (stop sale, mínimo de noches...)
+  // y no un «no hay precio confirmado» que parece un hueco del tarifario.
+  let motivoSinOpciones: string | null = null;
+  if (!visibles.length) {
+    for (const r of resultados.values()) {
+      if (!r.ok) {
+        motivoSinOpciones = r.texto;
+        break;
+      }
+    }
+  }
+
   const opciones: OpcionHabitacion[] = visibles.map((c) => {
     const r = resultados.get(c.tarifa.id);
     const ficha = porPlan ? undefined : habitacionDeTarifa(habitaciones, c.tarifa);
@@ -581,7 +593,7 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial }: Entrada
     f, poner, desde, hasta, pasajeros, riel, hayFechas,
     acepta, setAcepta, modo, setModo, aceptaPlan, setAceptaPlan, hojaViajeros, setHojaViajeros,
     abierta, segundosAbierta, mostrarErrores, error, enviando,
-    elegida, tarifaEfectiva, habitacion, opciones, caracteristicas,
+    elegida, tarifaEfectiva, habitacion, opciones, motivoSinOpciones, caracteristicas,
     precio, plan, ofrecerPlan, tasa, noches, totales, sinPrecio,
     errores, errorDe, falta, fueraDeHorario, wa, alEnviar,
   };

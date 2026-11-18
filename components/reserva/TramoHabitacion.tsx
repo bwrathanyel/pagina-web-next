@@ -4,7 +4,7 @@ import { OpcionesHabitacion } from "./Opciones";
 import type { Reserva } from "./useReserva";
 
 type Props = {
-  r: Pick<Reserva, "opciones" | "tarifaEfectiva" | "poner" | "hayFechas" | "caracteristicas" | "noches" | "editando" | "cerrarTramo">;
+  r: Pick<Reserva, "opciones" | "motivoSinOpciones" | "tarifaEfectiva" | "poner" | "hayFechas" | "caracteristicas" | "noches" | "editando" | "cerrarTramo">;
 };
 
 export function TramoHabitacion({ r }: Props) {
@@ -20,6 +20,7 @@ export function TramoHabitacion({ r }: Props) {
         }}
         noches={r.noches}
         hayFechas={r.hayFechas}
+        motivo={r.motivoSinOpciones}
         caracteristicas={r.caracteristicas}
       />
     </div>

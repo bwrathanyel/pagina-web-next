@@ -36,7 +36,7 @@ function PrecioDesde({ precio }: { precio: HotelAlternativo["precio"] }) {
   );
 }
 
-/** «¿Prefiere otro hotel?» bajo las habitaciones: dos del mismo destino y el resto en una hoja.
+/** «Otros hoteles en {destino}» bajo las habitaciones: dos del mismo destino y el resto en una hoja.
  * Elegir uno abre /reservar de ese hotel con las mismas fechas y viajeros (sin tarifa: se elige allá). */
 export function OtrosHoteles({
   hoteles,
@@ -61,7 +61,7 @@ export function OtrosHoteles({
 
   return (
     <section aria-label="Otros hoteles" className="flex flex-col gap-3 border-t border-dashed border-linea-fuerte pt-4">
-      <p className="text-sm font-semibold text-ink">¿Prefiere otro hotel?</p>
+      <p className="text-sm font-semibold text-ink">{destino ? `Otros hoteles en ${destino}` : "Otros hoteles"}</p>
       {/* Teléfono: tira que se desliza de lado con todos, en renglones bajos (menos scroll). Desde lg: dos
           tarjetas con foto 4:3 y el resto en la hoja. */}
       <ul className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto overscroll-x-contain px-4 pb-1 sm:-mx-5 sm:scroll-px-5 sm:px-5 lg:mx-0 lg:grid lg:grid-cols-2 lg:overflow-visible lg:px-0 lg:pb-0">

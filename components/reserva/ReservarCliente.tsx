@@ -8,6 +8,9 @@ import { horaAmPm } from "@/lib/checkout/formato";
 import { ChipPlazo } from "@/components/checkout/ChipPlazo";
 import type { HabitacionWeb } from "@/lib/cotizador/hotel";
 import { AccionReserva, CierreReserva } from "./CierreReserva";
+import { BoletoAereo } from "./BoletoAereo";
+import type { RutaAerea } from "@/lib/cotizador/guiaRutas";
+import type { RutaVuelo } from "@/lib/cotizador/vuelo";
 import { FotosCabecera } from "./FotosCabecera";
 import { textoViajeros, type Pasajeros } from "./PaseFechas";
 import { OtrosHoteles, type HotelAlternativo } from "./OtrosHoteles";
@@ -37,6 +40,8 @@ export function ReservarCliente({
   inicial,
   politica,
   otrosHoteles,
+  rutasVuelo,
+  guiaRutas,
 }: {
   hotel: HotelParaCobrar;
   destino: string | null;
@@ -46,6 +51,8 @@ export function ReservarCliente({
   inicial: { tarifaId: number | null; desde: string; hasta: string; pasajeros: Pasajeros | null };
   politica: string[];
   otrosHoteles: HotelAlternativo[];
+  rutasVuelo: RutaVuelo[];
+  guiaRutas: RutaAerea[];
 }) {
   const r = useReserva({ hotel, habitaciones, fotosHotel, inicial });
   const { config, pantalla, esEscritorio, fueraDeHorario, abierta, segundosAbierta, wa } = r;
@@ -191,6 +198,11 @@ export function ReservarCliente({
 
             {pantalla === false ? politicaNodo : null}
             {pantalla !== null ? <CierreReserva r={r} /> : null}
+            {/* Boleto aparte y después del cierre: no empuja el pago (su formulario va en una Hoja). Con la
+                misma condición que el cierre, para no aparecer arriba y saltar cuando este se monta. */}
+            {pantalla !== null ? (
+              <BoletoAereo r={r} destino={destino} hotelNombre={hotel.nombre} rutas={rutasVuelo} guia={guiaRutas} />
+            ) : null}
           </div>
         </div>
       </div>
