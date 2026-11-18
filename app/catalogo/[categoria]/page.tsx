@@ -5,13 +5,12 @@ import { CatalogHeader } from "@/components/catalogo/CatalogHeader";
 import { FILA_FIJA } from "@/components/layout/filaFija";
 import { GrillaFiltrable, type EntradaGrilla } from "@/components/catalogo/GrillaFiltrable";
 import { ProductoCard } from "@/components/catalogo/ProductoCard";
-import { PromocionCard } from "@/components/catalogo/PromocionCard";
-import { montoOrden, precioPorPersona, tarifaDestacada } from "@/lib/tarifas";
+import { precioPorPersona, tarifaDestacada } from "@/lib/tarifas";
 import { datosExcursion, tarifaBaseExcursion } from "@/lib/servicios";
 import { TarifasServicio } from "@/components/producto/TarifasServicio";
 import { Boton } from "@/components/ui/Boton";
 import { enlaceCotizarProducto } from "@/lib/cotizador/estado";
-import { getProductosPorCategoria, getPromociones, rutasVuelo } from "@/lib/supabase/queries";
+import { getProductosPorCategoria, rutasVuelo } from "@/lib/supabase/queries";
 import { getPaquetes } from "@/lib/paquetes/queries";
 import { entradaInicial, origenesValidos, vencido } from "@/lib/paquetes/precio";
 import { hoyCaracas } from "@/lib/cotizador/estado";
@@ -19,7 +18,7 @@ import { PaquetesListado } from "@/components/paquetes/PaquetesListado";
 import { agruparPorDestino } from "@/lib/supabase/agruparPorDestino";
 import { ordenarDestinos } from "@/lib/catalogo/destinos";
 import { jsonLdScript, buildBreadcrumbJsonLd, buildItemListJsonLd } from "@/lib/seo/jsonld";
-import { CATEGORIAS, type Categoria, type Producto, type Promocion } from "@/types/supabase";
+import { CATEGORIAS, type Categoria, type Producto } from "@/types/supabase";
 
 const SLUGS = CATEGORIAS.map((c) => c.slug);
 
@@ -28,12 +27,6 @@ const SLUGS = CATEGORIAS.map((c) => c.slug);
 // "full day Morrocoy", "boletos aéreos nacionales") en vez del label genérico.
 // heading es el h1 visible — misma intención, redactado natural.
 const SEO_POR_CATEGORIA: Record<Categoria, { title: string; description: string; heading: string }> = {
-  promociones: {
-    title: "Promociones y Ofertas de Viajes en Venezuela",
-    description:
-      "Ofertas de temporada en hoteles, posadas, full days y paquetes todo incluido: Los Roques, Margarita, Morrocoy y más. Precios reales, cotice en línea o por WhatsApp.",
-    heading: "Promociones",
-  },
   hoteles: {
     title: "Hoteles y Posadas en Venezuela — Margarita, Los Roques, Morrocoy",
     description:
@@ -94,31 +87,19 @@ export default async function CatalogoPage({
 
   const label = CATEGORIAS.find((c) => c.slug === categoria)!.label;
   if (categoria === "paquetes") return <PaquetesPage label={label} />;
-  const esPromociones = categoria === "promociones";
-  const items = esPromociones ? await getPromociones() : await getProductosPorCategoria(categoria);
-
-  const grupos = esPromociones
-    ? agruparPorDestino(items as Promocion[], (p) => p.producto?.destino ?? null)
-    : agruparPorDestino(items as Producto[], (p) => p.destino);
+  const items = await getProductosPorCategoria(categoria);
+  const grupos = agruparPorDestino(items, (p) => p.destino);
 
   // "Recomendadas" = el orden de antes (destinos de la A a la Z, "Otros" al
   // final), ahora en una sola grilla que los chips filtran.
-  const planas = (grupos as { destino: string; items: (Promocion | Producto)[] }[]).flatMap(
-    ({ destino, items: delGrupo }) => delGrupo.map((item) => ({ destino, item })),
-  );
+  const planas = grupos.flatMap(({ destino, items: delGrupo }) => delGrupo.map((item) => ({ destino, item })));
   // Full days de grupo privado primero en Excursiones (pedido del dueño); el resto
   // conserva su orden. Array.prototype.sort es estable.
   if (categoria === "excursiones") {
-    const privado = (item: Promocion | Producto) =>
-      datosExcursion(tarifaBaseExcursion((item as Producto).tarifas))?.privado === true;
+    const privado = (item: Producto) => datosExcursion(tarifaBaseExcursion(item.tarifas))?.privado === true;
     planas.sort((a, b) => Number(privado(b.item)) - Number(privado(a.item)));
   }
-  const entradas: EntradaGrilla[] = planas.map(({ destino, item }, i) => {
-    if (esPromociones) {
-      const p = item as Promocion;
-      return { id: p.id, destino, monto: montoOrden(p), tarjeta: <PromocionCard promocion={p} prioridad={i < 2} /> };
-    }
-    const p = item as Producto;
+  const entradas: EntradaGrilla[] = planas.map(({ destino, item: p }, i) => {
     const destacada = tarifaDestacada(p);
     return {
       id: p.id,
@@ -128,11 +109,7 @@ export default async function CatalogoPage({
     };
   });
 
-  const itemList = esPromociones
-    ? (items as Promocion[])
-        .filter((p) => p.producto)
-        .map((p) => ({ name: p.titulo, url: `/producto/${p.producto!.id}` }))
-    : (items as Producto[]).map((p) => ({ name: p.nombre, url: `/producto/${p.id}` }));
+  const itemList = items.map((p) => ({ name: p.nombre, url: `/producto/${p.id}` }));
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-4 md:py-14 lg:py-6">
@@ -175,7 +152,7 @@ export default async function CatalogoPage({
           {grupos.map(({ destino, items: delGrupo }) => (
             <section key={destino} aria-label={`Traslados en ${destino}`}>
               <h2 className="font-display text-2xl font-bold text-ink">{destino}</h2>
-              {(delGrupo as Producto[]).map((p) => (
+              {delGrupo.map((p) => (
                 <article key={p.id} className="mt-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <h3 className="font-display text-xl font-bold text-ink">{p.nombre}</h3>

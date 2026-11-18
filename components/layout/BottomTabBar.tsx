@@ -33,7 +33,7 @@ const IZQUIERDA: Pestana[] = [
     href: "/catalogo/hot-sales",
     label: "Promos",
     icono: "etiqueta",
-    activaEn: (p) => empieza(p, "/catalogo/hot-sales") || empieza(p, "/catalogo/promociones"),
+    activaEn: (p) => empieza(p, "/catalogo/hot-sales"),
   },
 ];
 

@@ -88,7 +88,7 @@ function NavigationFields() {
 }
 
 function CatalogFields() {
-  return <div className="space-y-3"><Field path="catalog.eyebrow" label="Etiqueta del catálogo" /><Field path="catalog.descriptions.promociones" label="Descripción de promociones" multiline /><Field path="catalog.descriptions.hoteles" label="Descripción de hoteles" multiline /><Field path="catalog.descriptions.paquetes" label="Descripción de paquetes" multiline /><Field path="catalog.descriptions.guias-tours" label="Descripción de guías y tours" multiline /><Link href="/cuenta/admin" className="inline-flex min-h-11 w-full items-center justify-center rounded-control bg-dusk px-4 text-sm font-bold text-dusk-text">Editar productos, tarifas y fotos</Link></div>;
+  return <div className="space-y-3"><Field path="catalog.eyebrow" label="Etiqueta del catálogo" /><Field path="catalog.descriptions.hoteles" label="Descripción de hoteles" multiline /><Field path="catalog.descriptions.paquetes" label="Descripción de paquetes" multiline /><Field path="catalog.descriptions.guias-tours" label="Descripción de guías y tours" multiline /><Link href="/cuenta/admin" className="inline-flex min-h-11 w-full items-center justify-center rounded-control bg-dusk px-4 text-sm font-bold text-dusk-text">Editar productos, tarifas y fotos</Link></div>;
 }
 
 function FooterFields() {

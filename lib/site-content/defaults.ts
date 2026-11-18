@@ -18,7 +18,6 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   },
   navigation: {
     items: [
-      { id: "promociones", label: "Promociones", href: "/catalogo/promociones", visible: true },
       { id: "hot-sales", label: "Hot Sales", href: "/catalogo/hot-sales", visible: true },
       { id: "hoteles", label: "Hoteles", href: "/catalogo/hoteles", visible: true },
       { id: "paquetes", label: "Paquetes", href: "/catalogo/paquetes", visible: true },
@@ -86,7 +85,6 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   catalog: {
     eyebrow: "Catálogo Destino y Eventos Lotus 360",
     descriptions: {
-      promociones: "Ofertas vigentes para aprovechar cuando encuentre el plan indicado.",
       hoteles: "Hospedajes para descansar, celebrar o descubrir un destino a su manera.",
       paquetes: "Boleto aéreo y hotel en un solo precio: elija pasajeros y noches.",
       excursiones: "Full days y actividades en Margarita, Cubagua y Coche, con precio por adulto y por niño.",

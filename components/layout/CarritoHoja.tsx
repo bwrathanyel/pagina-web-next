@@ -43,8 +43,8 @@ export function CarritoHoja() {
           <p className="text-ink-soft">
             Todavía no ha agregado nada. Guarde hoteles, tours o promociones para cotizarlos juntos.
           </p>
-          <Boton href="/catalogo/promociones" onClick={cerrar} variante="secundario" tamano="md">
-            Ver promociones
+          <Boton href="/catalogo/hot-sales" onClick={cerrar} variante="secundario" tamano="md">
+            Ver Hot Sales
           </Boton>
         </div>
       ) : (

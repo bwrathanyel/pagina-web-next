@@ -174,21 +174,20 @@ export interface HotSale extends Promocion {
 /** Categorías públicas del catálogo. Desde el rework de Excursiones/Traslados
  * (2026-10-15) 'destino' (guías/tours) ya no se vende: la ruta vieja
  * /catalogo/guias-tours redirige a /catalogo/excursiones (next.config.ts). */
-export type Categoria = "hoteles" | "paquetes" | "excursiones" | "traslados" | "promociones";
+export type Categoria = "hoteles" | "paquetes" | "excursiones" | "traslados";
 
-export const CATEGORIA_A_TIPO: Record<Exclude<Categoria, "promociones">, ProductoTipo> = {
+export const CATEGORIA_A_TIPO: Record<Categoria, ProductoTipo> = {
   hoteles: "hotel",
   paquetes: "paquete",
   excursiones: "excursion",
   traslados: "traslado",
 };
 
-// Promociones primero a propósito: es lo primero que debe ver el usuario
-// al entrar al catálogo, Hoteles pasa a segundo lugar.
+// Promociones salió el 2026-11-18 (pedido del dueño: ya están Hot Sales y
+// Paquetes); /catalogo/promociones redirige a /catalogo/hot-sales (next.config.ts).
 // Excursiones y Traslados salen de aquí mientras estén ocultos (lib/catalogo/ocultas.ts):
 // con esto desaparecen de las pestañas, el índice, el sitemap y las rutas del catálogo.
 export const CATEGORIAS: { slug: Categoria; label: string }[] = [
-  { slug: "promociones", label: "Promociones" },
   { slug: "hoteles", label: "Hoteles" },
   { slug: "paquetes", label: "Paquetes" },
   { slug: "excursiones", label: "Excursiones" },

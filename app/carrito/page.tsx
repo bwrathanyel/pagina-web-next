@@ -101,10 +101,10 @@ export default function CarritoPage() {
           )}
         </SolicitudLista>
         <Link
-          href="/catalogo/promociones"
+          href="/catalogo/hot-sales"
           className="mt-6 inline-flex min-h-11 items-center gap-2 font-semibold text-acento underline-offset-4 hover:underline"
         >
-          Seguir viendo promociones
+          Seguir viendo Hot Sales
           <Icono nombre="flecha-der" tamano={18} />
         </Link>
       </main>
@@ -131,8 +131,8 @@ export default function CarritoPage() {
           Agregue hoteles, tours o promociones desde el catálogo y pida la cotización de todo junto.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
-          <Boton href="/catalogo/promociones" iconoFin={<Icono nombre="flecha-der" tamano={18} />}>
-            Ver promociones
+          <Boton href="/catalogo/hot-sales" iconoFin={<Icono nombre="flecha-der" tamano={18} />}>
+            Ver Hot Sales
           </Boton>
           <Boton href="/cotizar" variante="secundario">
             Cotizar a medida

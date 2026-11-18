@@ -80,7 +80,7 @@ export interface SiteContent {
   };
   catalog: {
     eyebrow: string;
-    descriptions: Record<"promociones" | "hoteles" | "paquetes" | "excursiones" | "traslados", string>;
+    descriptions: Record<"hoteles" | "paquetes" | "excursiones" | "traslados", string>;
   };
   footer: {
     eyebrow: string;

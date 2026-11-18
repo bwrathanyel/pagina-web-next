@@ -2,14 +2,14 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
 import { CATEGORIAS, type Categoria } from "@/types/supabase";
-import { getProductosPorCategoria, getPromociones } from "@/lib/supabase/queries";
+import { getProductosPorCategoria } from "@/lib/supabase/queries";
 import { fotosDe } from "@/lib/supabase/fotos";
 import { Icono } from "@/components/ui/Icono";
 import { jsonLdScript, buildBreadcrumbJsonLd } from "@/lib/seo/jsonld";
 
-const TITLE = "Catálogo — Hoteles, Paquetes, Excursiones, Traslados y Promociones en Venezuela";
+const TITLE = "Catálogo — Hoteles, Paquetes, Excursiones y Traslados en Venezuela";
 const DESCRIPTION =
-  "Explore hoteles, paquetes todo incluido, excursiones/full days, traslados y promociones de viajes en Venezuela: Los Roques, Margarita, Coche, Canaima, Morrocoy, Mérida y más.";
+  "Explore hoteles, paquetes todo incluido, excursiones/full days, traslados y ofertas de viajes en Venezuela: Los Roques, Margarita, Coche, Canaima, Morrocoy, Mérida y más.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -23,22 +23,17 @@ const FOTO_EDITORIAL: Record<Categoria, string> = {
   paquetes: "/images/editorial/escapada-caribe.png",
   excursiones: "/images/editorial/tour-tropical.png",
   traslados: "/images/editorial/vuelo-a-tu-medida.png",
-  promociones: "/images/editorial/vuelo-a-tu-medida.png",
 };
 
 export default async function CatalogoIndexPage() {
   // Sin .catch: un fallo de Supabase no debe quedar cacheado como catálogo sin fotos (Fase 6).
-  const [hoteles, promociones] = await Promise.all([
-    getProductosPorCategoria("hoteles"),
-    getPromociones(),
-  ]);
+  const hoteles = await getProductosPorCategoria("hoteles");
 
   const fotosPorCategoria: Record<Categoria, string | null> = {
     hoteles: fotosDe(hoteles[0]?.producto_fotos)[0] ?? null,
     paquetes: null,
     excursiones: null,
     traslados: null,
-    promociones: fotosDe(promociones[0]?.promocion_fotos)[0] ?? null,
   };
 
   return (

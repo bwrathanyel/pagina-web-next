@@ -40,7 +40,7 @@ export const PRODUCTO_SELECT =
   `tarifas(${TARIFA_SELECT}),` +
   "producto_fotos(id,storage_path,orden,es_principal,activo,width,height,origen,credito,credito_url)";
 
-// La fuente de /catalogo/promociones es la vista `web_promociones`
+// La fuente de las promociones (buscador, /cotizar, /reservar) es la vista `web_promociones`
 // (migración 20260906120000): flyers vigentes + Hot Sales pinchados + la tarifa
 // destacada de cada hotel activo del tarifario nacional automático, ya filtrada
 // por vigencia y fechas. Los ids son los de `tarifas` (los que apuntan las fotos
@@ -67,7 +67,7 @@ export async function getProductosPorTipo(tipo: ProductoTipo): Promise<Producto[
 }
 
 export async function getProductosPorCategoria(
-  categoria: Exclude<Categoria, "promociones">,
+  categoria: Categoria,
 ): Promise<Producto[]> {
   return getProductosPorTipo(CATEGORIA_A_TIPO[categoria]);
 }

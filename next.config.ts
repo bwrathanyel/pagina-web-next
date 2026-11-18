@@ -26,6 +26,8 @@ const nextConfig: NextConfig = {
       // "Guías y tours" pasó a Excursiones (+ Traslados) en el rework del tarifario.
       // Excursiones está oculta al público (lib/catalogo/ocultas.ts): temporal al catálogo.
       { source: "/catalogo/guias-tours", destination: "/catalogo", permanent: false },
+      // Promociones salió del sitio (2026-11-18): las ofertas viven en Hot Sales.
+      { source: "/catalogo/promociones", destination: "/catalogo/hot-sales", statusCode: 301 },
       // /juega fue la página del stand (evento Naguanagua, 18-sep-2026) y los QR
       // impresos apuntan ahí. Temporal (307) para poder reactivarla en el próximo
       // evento quitando esta línea: con 308 los navegadores la guardarían.
