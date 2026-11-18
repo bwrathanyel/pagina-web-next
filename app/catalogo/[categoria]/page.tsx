@@ -135,7 +135,7 @@ export default async function CatalogoPage({
     : (items as Producto[]).map((p) => ({ name: p.nombre, url: `/producto/${p.id}` }));
 
   return (
-    <main className="mx-auto max-w-7xl px-5 py-4 md:py-14">
+    <main className="mx-auto max-w-7xl px-5 py-4 md:py-14 lg:py-6">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript(
@@ -161,7 +161,7 @@ export default async function CatalogoPage({
       </div>
 
       {/* Hija directa de <main>: sticky no sale de su padre. */}
-      <div className={FILA_FIJA + " mb-6 lg:mb-10"}>
+      <div className={FILA_FIJA + " mb-6 lg:hidden"}>
         <CategoriaTabs activa={categoria} className="px-5 scroll-px-5" />
       </div>
 
@@ -210,7 +210,7 @@ async function PaquetesPage({ label }: { label: string }) {
   );
 
   return (
-    <main className="mx-auto max-w-7xl px-5 py-4 md:py-14">
+    <main className="mx-auto max-w-7xl px-5 py-4 md:py-14 lg:py-6">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript(
@@ -233,7 +233,7 @@ async function PaquetesPage({ label }: { label: string }) {
         <CatalogHeader categoria="paquetes" label={SEO_POR_CATEGORIA.paquetes.heading} count={paquetes.length} />
       </div>
 
-      <div className={FILA_FIJA + " mb-6 lg:mb-10"}>
+      <div className={FILA_FIJA + " mb-6 lg:hidden"}>
         <CategoriaTabs activa="paquetes" className="px-5 scroll-px-5" />
       </div>
 
