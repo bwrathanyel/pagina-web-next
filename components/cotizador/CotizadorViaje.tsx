@@ -18,7 +18,7 @@ import { TelefonoPais } from "@/components/ui/TelefonoPais";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import { PAIS_POR_DEFECTO, buscarPais, telefonoInternacional } from "@/lib/paises";
 import { avisoIgtf, type Estadia } from "@/lib/cotizador/estimado";
-import { habitacionVisible } from "@/lib/cotizador/habitacionesVisibles";
+import { habitacionVisible, opcionDeOferta } from "@/lib/cotizador/habitacionesVisibles";
 import {
   bloqueosDelAno,
   bloqueosEnFechas,
@@ -622,9 +622,13 @@ export function CotizadorViaje({
   };
   const hotelBloqueado = hospedaje && hotel ? sinDisponibilidad(hotel.id) : null;
   // Una URL o un borrador pueden conservar una tarifa que ya no se ofrece.
+  // Sin habitación elegida, si la tarifa anunciada no da precio para esas fechas
+  // manda la habitación más barata que sí lo da (no «a confirmar» con tarifa cargada).
   const opcionElegida =
-    hospedaje && tarifaCandidata && detalleElegido && detalleElegido !== "error" && !hotelBloqueado && !bloqueosFallo
-      ? habitacionVisible(tarifaCandidata, detalleElegido.tarifas, estadia)
+    hospedaje && detalleElegido && detalleElegido !== "error" && !hotelBloqueado && !bloqueosFallo
+      ? estado.tarifa != null
+        ? tarifaCandidata && habitacionVisible(tarifaCandidata, detalleElegido.tarifas, estadia)
+        : opcionDeOferta(tarifaCandidata, detalleElegido.tarifas, estadia)
       : null;
   const tarifaElegida = opcionElegida?.tarifa ?? null;
   const estimado = opcionElegida?.estimado ?? null;
@@ -679,8 +683,8 @@ export function CotizadorViaje({
     const filas = detalle && detalle !== "error" ? detalle.tarifas : tarifasHoteles[o.hotelId];
     if (filas === undefined) return candidatos.includes(o.hotelId) ? "cargando" : null;
     if (filas === "error") return null;
-    const anunciada = filas.find((t) => t.id === o.tarifaId);
-    return anunciada ? (habitacionVisible(anunciada, filas, { ...estadia, ninosGratis: o.ninosGratisCantidad || undefined })?.estimado ?? null) : null;
+    const anunciada = filas.find((t) => t.id === o.tarifaId) ?? null;
+    return opcionDeOferta(anunciada, filas, { ...estadia, ninosGratis: o.ninosGratisCantidad || undefined })?.estimado ?? null;
   };
   const recomendaciones = recomendarHoteles(ofertasDestino, {
     ninos: estado.ninos,

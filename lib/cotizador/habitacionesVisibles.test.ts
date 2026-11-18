@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { Tarifa } from "@/types/supabase";
 import type { Estadia } from "./estimado";
-import { habitacionVisible, habitacionesVisibles } from "./habitacionesVisibles";
+import { habitacionVisible, habitacionesVisibles, opcionDeOferta } from "./habitacionesVisibles";
 
 const estadia: Estadia = { desde: "2026-12-10", hasta: "2026-12-13", adultos: 2, edades: [], bebes: 0 };
 const fila = (id: number, extra: Partial<Tarifa> = {}): Tarifa => ({
@@ -84,4 +84,23 @@ test("sin nombre de habitación también reconoce on request en el título", () 
 test("una temporada sin cobertura a mitad de la estadía no ofrece precio parcial", () => {
   const t = fila(1, { ventanas: [{ desde: "2026-12-01", hasta: "2026-12-11" }] });
   assert.equal(habitacionVisible(t, [t], estadia), null);
+});
+
+test("/cotizar: oferta de flyer sin grilla cae a la habitación más barata con precio (LD Palm Beach)", () => {
+  const flyer = fila(9, { habitacion: null, plan: null, precios: null, ventanas: null, titulo: "Plan Residentes Navidad", precio_texto: "03 días y 02 noches para 02 personas con 1 Niño Gratis: REF. 240.00" } as Partial<Tarifa>);
+  const cara = fila(2, { habitacion: "SUITE", precios: { dbl: 90 }, titulo: "TEMPORADA BAJA" });
+  const barata = fila(3, { titulo: "TEMPORADA BAJA" });
+  const filas = [flyer, cara, barata];
+  const r = opcionDeOferta(flyer, filas, { ...estadia, ninosGratis: 1 });
+  assert.equal(r?.tarifa.id, 3);
+  assert.ok(r?.estimado?.ok);
+  assert.equal(r.estimado.total, 360);
+  assert.match(r.estimado.avisos[0], /Plan Residentes Navidad.*no cubre esta estadía/);
+});
+
+test("/cotizar: la tarifa anunciada con precio manda, y sin fechas no se elige otra", () => {
+  const filas = [fila(1, { precios: { dbl: 80 } }), fila(2, { habitacion: "SUITE", precios: { dbl: 50 } })];
+  assert.equal(opcionDeOferta(filas[0], filas, estadia)?.tarifa.id, 1);
+  const flyer = fila(9, { precios: null, ventanas: null, precio_texto: "A consultar" } as Partial<Tarifa>);
+  assert.equal(opcionDeOferta(flyer, [flyer, ...filas], { ...estadia, desde: "", hasta: "" }), null);
 });

@@ -15,6 +15,30 @@ export function habitacionVisible(tarifa: Tarifa, filasHotel: Tarifa[], estadia:
   return { tarifa, estimado };
 }
 
+/** La tarifa que anuncia una oferta y, si no da precio para esa estadía (un
+ * flyer sin grilla, una promo de otras fechas), la habitación más barata del
+ * hotel que sí lo da: el cliente ve el precio real, no «a confirmar». El regalo
+ * de niños es de la promo anunciada: con otra tarifa no se aplica. */
+export function opcionDeOferta(
+  anunciada: Tarifa | null,
+  filasHotel: Tarifa[],
+  estadia: Estadia,
+): { tarifa: Tarifa; estimado: Estimado | null } | null {
+  const propia = anunciada ? habitacionVisible(anunciada, filasHotel, estadia) : null;
+  if (propia) return propia;
+  if (!estadia.desde || !estadia.hasta || estadia.edades.some((e) => e === null)) return null;
+  const sinRegalo = { ...estadia, ninosGratis: undefined };
+  let mejor: { tarifa: Tarifa; estimado: Estimado; total: number } | null = null;
+  for (const h of habitacionesVisibles(filasHotel, filasHotel, sinRegalo)) {
+    const est = h.estimado;
+    if (est?.ok && (!mejor || est.total < mejor.total)) mejor = { tarifa: h.tarifa, estimado: est, total: est.total };
+  }
+  if (!mejor) return null;
+  const est = mejor.estimado;
+  const aviso = anunciada?.titulo && est.ok ? `La promoción «${anunciada.titulo.trim()}» no cubre esta estadía: precio de la tarifa ${mejor.tarifa.titulo?.trim() || "vigente"}.` : null;
+  return { tarifa: mejor.tarifa, estimado: aviso && est.ok ? { ...est, avisos: [aviso, ...est.avisos] } : est };
+}
+
 export function habitacionesVisibles(tarifas: Tarifa[], filasHotel: Tarifa[], estadia: Estadia) {
   return tarjetasPorHabitacion(tarifas, estadia.desde).flatMap((tarjeta) => {
     const visible = habitacionVisible(tarjeta.tarifa, filasHotel, estadia);
