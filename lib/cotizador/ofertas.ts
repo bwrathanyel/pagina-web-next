@@ -68,6 +68,28 @@ function precioNino(p: Promocion): string | null {
   return montoConMoneda(Math.min(...montos), moneda);
 }
 
+/** La tarjeta con las fechas del cliente: si la tarifa anunciada (un flyer sin
+ * grilla, una promo de otras fechas) no da precio y manda otra habitación
+ * (`opcionDeOferta`), la tarjeta muestra el título y el plan de esa tarifa y no
+ * promete el regalo de niños de la promo, que con ella no se aplica. `tarifaId`
+ * sigue siendo la anunciada: al elegirla, el resumen hace la misma caída sin regalo. */
+export function ofertaParaEstadia(
+  o: OfertaHotel,
+  usada: { id: number; titulo?: string | null; plan?: string | null } | null,
+): OfertaHotel {
+  if (!usada || usada.id === o.tarifaId) return o;
+  const plan = usada.plan ?? o.plan;
+  return {
+    ...o,
+    titulo: usada.titulo ?? null,
+    plan,
+    todoIncluido: plan ? /todo\s*incluido/i.test(clave(plan)) : o.todoIncluido,
+    ninosGratis: false,
+    ninosGratisCantidad: 0,
+    ninosGratisEdades: null,
+  };
+}
+
 /** Una oferta por hotel (la de mayor prioridad: niños gratis, todo incluido,
  * el resto y al final solo desayuno; a igual prioridad, el ranking del pool),
  * de todos los destinos de /cotizar. Solo hoteles: son los que tienen

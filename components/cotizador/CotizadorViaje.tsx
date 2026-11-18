@@ -30,7 +30,7 @@ import {
   type Bloqueo,
   type HotelDetalle,
 } from "@/lib/cotizador/hotel";
-import type { OfertaHotel } from "@/lib/cotizador/ofertas";
+import { ofertaParaEstadia, type OfertaHotel } from "@/lib/cotizador/ofertas";
 import { candidatosEstimado, recomendarHoteles } from "@/lib/cotizador/recomendar";
 import { rotarDestacados, semillaVisitante } from "@/lib/cotizador/destacados";
 import type { Tarifa } from "@/types/supabase";
@@ -676,16 +676,26 @@ export function CotizadorViaje({
   // Total de cada hotel recomendable con la tarifa que anuncia su oferta: el
   // mismo cálculo (y el mismo número) que el resumen cuando el cliente lo elige.
   const conFechas = !!(estado.desde && estado.hasta);
-  const precioDe = (o: OfertaHotel): PrecioViaje => {
+  const opcionDe = (o: OfertaHotel) => {
     if (!conFechas || bloqueosFallo) return null;
     const detalle = detalles[o.hotelId];
     const filas = detalle && detalle !== "error" ? detalle.tarifas : tarifasHoteles[o.hotelId];
     if (filas === undefined) return candidatos.includes(o.hotelId) ? "cargando" : null;
     if (filas === "error") return null;
     const anunciada = filas.find((t) => t.id === o.tarifaId) ?? null;
-    return opcionDeOferta(anunciada, filas, { ...estadia, ninosGratis: o.ninosGratisCantidad || undefined })?.estimado ?? null;
+    return opcionDeOferta(anunciada, filas, { ...estadia, ninosGratis: o.ninosGratisCantidad || undefined });
   };
-  const recomendaciones = recomendarHoteles(ofertasDestino, {
+  const precioDe = (o: OfertaHotel): PrecioViaje => {
+    const op = opcionDe(o);
+    return op === "cargando" ? op : (op?.estimado ?? null);
+  };
+  // Con fechas, cada tarjeta muestra la tarifa con la que se calcula (no el
+  // título ni el regalo de un flyer que no cubre esa estadía).
+  const ofertasVista = ofertasDestino.map((o) => {
+    const op = opcionDe(o);
+    return op && op !== "cargando" && op.estimado?.ok ? ofertaParaEstadia(o, op.tarifa) : o;
+  });
+  const recomendaciones = recomendarHoteles(ofertasVista, {
     ninos: estado.ninos,
     bloqueada: (o) => !!sinDisponibilidad(o.hotelId),
     // Tarifas en € y en $ se comparan por su número: al cliente todo se le
@@ -1031,7 +1041,7 @@ export function CotizadorViaje({
   const noches = nochesDe(estado);
   const textoNoches = `${noches} ${noches === 1 ? "noche" : "noches"}`;
   const montoBarra = estimado?.ok ? montoConMoneda(estimado.total, estimado.moneda) : null;
-  const hayRegalo = ofertasDestino.some((o) => o.ninosGratis);
+  const hayRegalo = ofertasVista.some((o) => o.ninosGratis);
   // Móvil: en qué paso va (1 viaje, 2 elegir, 3 enviar), solo para orientar.
   const pasoActual: 1 | 2 | 3 = !(estado.desde && estado.hasta)
     ? 1
@@ -1041,7 +1051,7 @@ export function CotizadorViaje({
   // «Su hotel» vive en la tarjeta del selector; este bloque queda de respaldo
   // para el hotel sin oferta en el destino (llegó por enlace). El total se
   // anuncia una sola vez, en el resumen.
-  const ofertaSuHotel = hotel ? ofertasDestino.find((o) => o.hotelId === hotel.id) : undefined;
+  const ofertaSuHotel = hotel ? ofertasVista.find((o) => o.hotelId === hotel.id) : undefined;
   const notaSinTotal =
     hotelBloqueado || estimado?.ok
       ? null
@@ -1354,7 +1364,7 @@ export function CotizadorViaje({
       >
         <div className="flex flex-col gap-4 p-4 md:p-5">
           <OfertasHospedaje
-            ofertas={ofertasDestino}
+            ofertas={ofertasVista}
             destino={estado.destino}
             ninos={estado.ninos}
             elegido={hotel?.id ?? null}

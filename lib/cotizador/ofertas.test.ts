@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { ofertasHoteles } from "./ofertas.ts";
+import { ofertaParaEstadia, ofertasHoteles } from "./ofertas.ts";
 
 const promo = (precios: Record<string, string | number | null>, edades: string | null) =>
   ({
@@ -23,6 +23,19 @@ test("promo niños: 2do niño toma la tarifa chd más barata y las edades se lee
   assert.equal(o.ninosGratisCantidad, 1);
   assert.equal(o.precioNino?.replace(/[^\d.]/g, ""), "18");
   assert.equal(o.ninosGratisEdades, "4 a 10");
+});
+
+test("flyer que no cubre las fechas: la tarjeta toma la tarifa usada y sin regalo", () => {
+  const [o] = ofertasHoteles([promo({ dbl: 60 }, "4 - 10")]);
+  assert.equal(ofertaParaEstadia(o, null), o);
+  assert.equal(ofertaParaEstadia(o, { id: 1, titulo: "Otra" }), o);
+  const v = ofertaParaEstadia(o, { id: 2, titulo: "TEMPORADA BAJA", plan: "TODO INCLUIDO" });
+  assert.equal(v.tarifaId, 1);
+  assert.equal(v.titulo, "TEMPORADA BAJA");
+  assert.equal(v.todoIncluido, true);
+  assert.equal(v.ninosGratis, false);
+  assert.equal(v.ninosGratisCantidad, 0);
+  assert.equal(v.ninosGratisEdades, null);
 });
 
 test("promo niños sin tarifa chd: el asesor confirma", () => {
