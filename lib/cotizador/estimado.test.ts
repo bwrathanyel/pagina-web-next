@@ -336,3 +336,24 @@ test("Mifafi: una persona sola en tarifa por habitación paga +30%", () => {
   assert.equal(r.total, 65);
   assert.ok(r.avisos.some((a) => a.includes("30%")));
 });
+
+// Cala Margarita (2026-11-18, dueño): «por habitación por noche» con DBL = SGL y TPL = 60 = adulto extra.
+// La fila vieja (doble/sencilla/persona_adicional) se pisa en fechas con la nueva y pierde por amplitud.
+const CALA = [
+  fila({ id: 120319, titulo: "TEMPORADA BAJA", plan: "SOLO DESAYUNO", habitacion: "SUITE PREMIUM", moneda: "EUR", precios: { dbl: 290, sgl: 290, tpl: 60 }, ventanas: v("2026-11-04", "2026-12-21"), tarifario_bloques: bloque({ id: 157 }) }),
+  fila({ id: 31418, titulo: "TEMPORADA BAJA", plan: "SOLO DESAYUNO", habitacion: "SUITE PREMIUM", moneda: "EUR", precios: { doble: 290, persona_adicional: 60, sencilla: 319 }, ventanas: v("2026-05-11", "2026-12-01"), tarifario_bloques: bloque({ id: 157 }) }),
+];
+
+test("Cala Margarita: DBL = SGL es por habitación; TPL 60 es PAX ADIC (1/2/3 adultos = 870/870/1050)", () => {
+  for (const [adultos, total] of [[1, 870], [2, 870], [3, 1050]] as const) {
+    const r = estimarEstadia(CALA[0], CALA, estadia("2026-11-24", "2026-11-27", adultos));
+    assert.ok(r.ok, `${adultos} adultos`);
+    assert.equal(r.total, total, `${adultos} adultos`);
+  }
+});
+
+test("Cala Margarita, fila vieja sola: doble/sencilla/persona_adicional = por habitación + PAX ADIC", () => {
+  const r = estimarEstadia(CALA[1], [CALA[1]], estadia("2026-11-24", "2026-11-27", 3));
+  assert.ok(r.ok);
+  assert.equal(r.total, 3 * (290 + 60));
+});

@@ -75,16 +75,32 @@ function normalizarBase(b: unknown): "habitacion" | "persona" | null {
   return s === "habitacion" || s === "habitacion_noche" ? "habitacion" : s === "persona" || s === "persona_noche" ? "persona" : null;
 }
 
+/** Claves de PAX ADIC (TAR_PAX_ADIC de app.js) y las ocupaciones de 3+ que, por debajo de la
+ * mitad del DBL, son el adulto extra y no una triple (Cala Margarita: DBL = SGL = 290, TPL = 60). */
+const CLAVES_PAX_ADIC = ["pax_adic", "pax_adicional", "pax_adic_12", "extra_pax", "adic_adt", "persona_adicional", "tpl_qdpl_pax_adicional"];
+const OCUPACIONES_3_O_MAS = ["tpl", "trpl", "triple", "cdp", "cpl", "cdl", "cdpl", "qdpl", "cua", "cuad", "cuadruple", "cpl_cua", "qpl", "quin", "quint", "qtp", "qtpl", "qui", "qpl_qui"];
+/** PAX ADIC que marca «por habitación»: sin DBL, o por debajo de la mitad del DBL. Cerca del DBL es
+ * un precio por persona más (La Laguna By LD: DBL 310, SGL 405, PAX ADIC 280) y manda SGL/DBL. */
+function paxAdicDeHabitacion(p: Record<string, unknown>): boolean {
+  const dbl = numeroDe(p["dbl"] ?? p["doble"]);
+  const explicita = CLAVES_PAX_ADIC.map((k) => numeroDe(p[k])).find((v) => v !== null);
+  if (explicita !== undefined && explicita !== null) return dbl === null || explicita < dbl / 2;
+  return dbl !== null && dbl > 0 && OCUPACIONES_3_O_MAS.some((k) => { const v = numeroDe(p[k]); return v !== null && v > 0 && v < dbl / 2; });
+}
+
 /** Misma regla que tarUnidad() del CRM (app.js, bloque CB_TARIFAS): fila, luego bloque, y
- * solo sin ninguna se deduce de la grilla (DBL > SGL = por habitación, DBL < SGL = por persona). */
+ * solo sin ninguna se deduce de la grilla: con PAX ADIC o DBL >= SGL = por habitación,
+ * DBL < SGL = por persona (DBL = SGL dejó de quedar sin decidir el 2026-11-18, dueño). */
 export function unidadTarifa(t: Tarifa | null | undefined): { unidad: "habitacion" | "persona" | null; deducida: boolean } {
   const p = t?.precios;
   if (!p || typeof p !== "object" || Array.isArray(p)) return { unidad: normalizarBase(bloqueDe(t)?.base_precio), deducida: false };
   const fila = p["base"], bloque = bloqueDe(t)?.base_precio;
   if ((typeof fila === "string" && fila.trim()) || (typeof bloque === "string" && bloque.trim())) return { unidad: baseDeclarada(fila, bloque), deducida: false };
-  const sgl = numeroDe(p["sgl"]), dbl = numeroDe(p["dbl"]);
-  if (sgl === null || dbl === null || sgl === dbl) return { unidad: null, deducida: false };
-  return { unidad: dbl > sgl ? "habitacion" : "persona", deducida: true };
+  const precios = p as Record<string, unknown>;
+  if (paxAdicDeHabitacion(precios)) return { unidad: "habitacion", deducida: true };
+  const sgl = numeroDe(precios["sgl"] ?? precios["sencilla"]), dbl = numeroDe(precios["dbl"] ?? precios["doble"]);
+  if (sgl === null || dbl === null) return { unidad: null, deducida: false };
+  return { unidad: dbl >= sgl ? "habitacion" : "persona", deducida: true };
 }
 
 /** Espejo en JS de precio_por_persona() (migración 20260904160000). La base

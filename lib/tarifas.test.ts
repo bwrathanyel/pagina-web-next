@@ -13,7 +13,11 @@ test("unidadTarifa: fila, luego bloque, luego grilla", () => {
   assert.deepEqual(unidadTarifa(fila({ sgl: 100, dbl: 100 }, "habitacion")), { unidad: "habitacion", deducida: false });
   assert.deepEqual(unidadTarifa(fila({ base: "persona", dbl: 60 }, "habitacion")), { unidad: "persona", deducida: false });
   assert.deepEqual(unidadTarifa(fila({ sgl: 80, dbl: 120 })), { unidad: "habitacion", deducida: true });
-  assert.deepEqual(unidadTarifa(fila({ sgl: 80, dbl: 80 })), { unidad: null, deducida: false });
+  assert.deepEqual(unidadTarifa(fila({ sgl: 80, dbl: 80 })), { unidad: "habitacion", deducida: true });
+  assert.deepEqual(unidadTarifa(fila({ sgl: 290, dbl: 290, tpl: 60 })), { unidad: "habitacion", deducida: true });
+  assert.deepEqual(unidadTarifa(fila({ doble: 290, sencilla: 319, persona_adicional: 60 })), { unidad: "habitacion", deducida: true });
+  assert.deepEqual(unidadTarifa(fila({ sgl: 90, dbl: 60, tpl: 55 })), { unidad: "persona", deducida: true });
+  assert.deepEqual(unidadTarifa(fila({ dbl: 310, sgl: 405, pax_adic: 280 })), { unidad: "persona", deducida: true });
 });
 
 test("persona_noche y habitacion_noche cuentan como base declarada", () => {
