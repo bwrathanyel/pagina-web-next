@@ -69,9 +69,7 @@ export default function TerminosPage() {
               confirmar, retenemos el cupo por un tiempo limitado (por lo general 24 horas si paga en dólares
               y 2 horas con Pago Móvil, en cuyo caso el monto en bolívares queda fijado con la tasa del día;
               el plazo exacto se le muestra al reservar) y usted indica por qué medio pagará: Zelle, Pago
-              Móvil o Binance. Los pagos en divisas (Zelle y Binance) incluyen el Impuesto a las Grandes
-              Transacciones Financieras (IGTF), que se le muestra como una línea aparte en el total antes
-              de pagar; con Pago Móvil no se cobra.
+              Móvil o Binance. El total que ve antes de pagar es el que paga.
             </p>
             <p className="mt-3">
               La reserva no queda confirmada hasta que una persona de nuestro equipo verifica el pago. Si
@@ -105,8 +103,7 @@ export default function TerminosPage() {
               </li>
               <li>
                 El precio queda fijo en dólares (USD) desde el día de la reserva. Si paga una cuota en bolívares,
-                se convierte con la tasa del BCV del día en que paga. Las cuotas en divisas (Zelle y Binance)
-                llevan el IGTF de esa cuota.
+                se convierte con la tasa del BCV del día en que paga.
               </li>
               <li>Puede adelantar cuotas o pagar todo el saldo cuando quiera, sin recargo.</li>
               <li>
