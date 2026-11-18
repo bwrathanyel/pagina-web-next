@@ -10,7 +10,8 @@
 //
 // «EUR» en el tarifario NO es otra moneda: es la tasa con que se pasa a bolívares (regla del
 // dueño). El precio es el mismo número en dólares (divisa); en Pago Móvil la base lo convierte
-// a Bs con la tasa euro del BCV. `tasa` viaja con el servicio para que la base elija la tasa.
+// a Bs con la tasa BCV de la moneda de la tarifa (USD = dólar, EUR = euro). `tasa` viaja con
+// el servicio y la base la contrasta con el tarifario (checkout_tasa_servicio).
 import type { Tarifa } from "@/types/supabase";
 import { estimarEstadia, nochesDeEstadia } from "@/lib/cotizador/estimado";
 import { hoyCaracas } from "@/lib/cotizador/estado";
@@ -56,8 +57,8 @@ export type ErrorCalculo =
   | "sujeto_a_confirmacion"
   | "precio_a_confirmar";
 
-/** Tasa BCV con que se pasa a bolívares. Desde 2026-11-17 siempre «EUR» (regla del
- * dueño: todo a tasa euro, también lo que BT da en $); el servidor la fija igual. */
+/** Tasa BCV con que se pasa a bolívares: la de la moneda de la tarifa elegida (regla del
+ * dueño 2026-11-18; «todo a tasa euro» del 11-17 fue un malentendido). */
 export type TasaBcv = "USD" | "EUR";
 
 export type ResultadoHospedaje =
@@ -137,7 +138,7 @@ export function calcularHospedaje(
   return {
     ok: true,
     precio,
-    tasa: "EUR",
+    tasa: est.moneda,
     ivaEnBs: est.ivaEnBs,
     noches: est.noches,
     descripcion,
