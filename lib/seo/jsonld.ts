@@ -1,5 +1,5 @@
 import { fotosDeAncho } from "@/lib/supabase/fotos";
-import { precioPorPersona, tarifaDestacada } from "@/lib/tarifas";
+import { montoHabitacionNoche, precioPorPersona, tarifaDestacada } from "@/lib/tarifas";
 import { REDES } from "@/lib/social";
 import { NEGOCIO } from "@/lib/seo/negocio";
 import type { Producto } from "@/types/supabase";
@@ -149,7 +149,7 @@ export function buildProductJsonLd(producto: Producto) {
   // precios estructurados la Offer lleva el precio POR PERSONA; sin ellos se
   // mantiene el `precio_desde_usd` legacy (no se inventa un número nuevo).
   const tarifa = tarifaDestacada(producto);
-  const porPersona = tarifa?.precios ? precioPorPersona(tarifa) : null;
+  const porPersona = tarifa?.precios ? (montoHabitacionNoche(tarifa) ?? precioPorPersona(tarifa)) : null;
   const precio = porPersona !== null ? Math.round(porPersona * 100) / 100 : tarifa?.precio_desde_usd ?? undefined;
   const fotos = fotosDeAncho(producto.producto_fotos, 1280);
 

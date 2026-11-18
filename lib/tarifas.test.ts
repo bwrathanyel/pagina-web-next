@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { Tarifa } from "@/types/supabase";
-import { montoDoble, precioPorPersona, unidadTarifa, vendibleEn } from "./tarifas.ts";
+import { UNIDAD_HABITACION_NOCHE, badgePrecio, montoDoble, montoHabitacionNoche, precioDeTarifa, precioDobleHero, precioPorPersona, precioTarjeta, unidadTarifa, vendibleEn } from "./tarifas.ts";
 import { hoyCaracas } from "./cotizador/estado.ts";
 
 // Misma tabla de verdad que tarUnidad() del CRM (app.js, bloque CB_TARIFAS).
@@ -24,6 +24,25 @@ test("persona_noche y habitacion_noche cuentan como base declarada", () => {
   assert.equal(precioPorPersona(fila({ base: "habitacion_noche", sgl: 100, dbl: 100 })), 50);
   assert.equal(precioPorPersona(fila({ base: "persona_noche", sgl: 50, dbl: 120 })), 120);
   assert.equal(montoDoble({ base: "habitacion_noche", sgl: 100, dbl: 100 }), 50);
+});
+
+test("habitación con SGL = DBL: «desde» por habitación por noche, sin dividir (dueño, 2026-11-18)", () => {
+  const cala = { ...fila({ sgl: 290, dbl: 290, tpl: 60 }), moneda: "EUR" } as Tarifa;
+  assert.equal(montoHabitacionNoche(cala), 290);
+  assert.deepEqual(precioDeTarifa(cala), { monto: "$290", unidad: UNIDAD_HABITACION_NOCHE, desde: true, corto: true, ivaEnBs: false });
+  assert.equal(badgePrecio(cala), `Desde $290 ${UNIDAD_HABITACION_NOCHE}`);
+  assert.deepEqual(precioDobleHero(cala), { monto: "$290", nota: UNIDAD_HABITACION_NOCHE });
+  assert.equal(precioTarjeta({ precios: { sgl: 290, dbl: 290 }, moneda: "EUR" })?.unidad, UNIDAD_HABITACION_NOCHE);
+  assert.equal(montoHabitacionNoche(fila({ doble: 290, sencilla: 319, persona_adicional: 60 })), 290);
+  assert.equal(montoHabitacionNoche(fila({ sgl: 100, dbl: 100 }, "habitacion")), 100);
+});
+
+test("sin cambio: DBL > SGL sigue el doble por persona; base persona sigue por persona", () => {
+  assert.equal(montoHabitacionNoche(fila({ sgl: 80, dbl: 120 })), null);
+  assert.equal(precioDeTarifa(fila({ sgl: 80, dbl: 120 }))?.unidad, "por persona");
+  assert.equal(montoHabitacionNoche(fila({ base: "persona", sgl: 90, dbl: 90 })), null);
+  assert.equal(montoHabitacionNoche(fila({ sgl: 90, dbl: 60 })), null);
+  assert.equal(precioTarjeta({ precios: { sgl: 80, dbl: 120 } })?.unidad, "por persona y noche, en doble");
 });
 
 test("vendibleEn: la que vence hoy en Caracas sigue vendible después de las 20 h", () => {

@@ -129,7 +129,7 @@ export function DetalleHotel({
                           <span className="font-mono font-bold tabular-nums">
                             <PrecioMostrado texto={precio.monto} ivaEnBs={precio.ivaEnBs} />
                           </span>
-                          {precio.unidad ? ` ${precio.unidad} por noche` : ""}
+                          {precio.unidad ? ` ${precio.unidad}${/noche/.test(precio.unidad) ? "" : " por noche"}` : ""}
                         </p>
                       ) : null}
                       {est?.ok ? (

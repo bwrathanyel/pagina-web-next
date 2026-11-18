@@ -103,6 +103,20 @@ export function unidadTarifa(t: Tarifa | null | undefined): { unidad: "habitacio
   return { unidad: dbl >= sgl ? "habitacion" : "persona", deducida: true };
 }
 
+export const UNIDAD_HABITACION_NOCHE = "por habitación por noche";
+
+/** Habitación que cuesta lo mismo con una o dos personas (por habitación y SGL >= DBL o sin
+ * SGL): el «desde» es la habitación por noche, sin dividir ni rotular «por persona». Cala
+ * Margarita DBL = SGL = 290 se anuncia 290 por habitación por noche, no 145 ni 290 por persona
+ * (dueño, 2026-11-18; la migración de precio_por_persona quedó descartada). Con DBL > SGL
+ * sigue el doble por persona (dbl/2). */
+export function montoHabitacionNoche(t: Tarifa | null | undefined): number | null {
+  const p = t?.precios;
+  if (!p || typeof p !== "object" || Array.isArray(p) || unidadTarifa(t).unidad !== "habitacion") return null;
+  const dbl = numeroDe(p["dbl"] ?? p["doble"]), sgl = numeroDe(p["sgl"] ?? p["sencilla"]);
+  return dbl !== null && (sgl === null || sgl >= dbl) ? dbl : null;
+}
+
 /** Espejo en JS de precio_por_persona() (migración 20260904160000). La base
  * declarada (fila, o bloque si la fila no trae) gana; si no hay, dbl>sgl = por habitación; sin ninguna de las dos
  * señales NO divide (dividir de más es cotizar de menos). CHD y PAX ADIC nunca
@@ -131,6 +145,8 @@ export function precioPorPersona(t: Tarifa): number | null {
  * menos. Mismo criterio que tarBadgePrecio() en el CRM. */
 export function badgePrecio(t: Tarifa | null | undefined): string | null {
   if (!t) return null;
+  const hab = montoHabitacionNoche(t);
+  if (hab !== null) return "Desde " + montoConMoneda(hab, t.moneda) + " " + UNIDAD_HABITACION_NOCHE;
   const pp = t.precios ? precioPorPersona(t) : null;
   if (pp !== null) return "Desde " + montoConMoneda(Math.round(pp * 100) / 100, t.moneda) + " por persona";
   return formatearPrecioCliente(t.precio_texto) ?? null;
@@ -142,6 +158,8 @@ export function badgePrecio(t: Tarifa | null | undefined): string | null {
  * tal cual si es por persona. Sin clave `dbl` -> null (la tarjeta usa su grilla
  * o su precio_texto de siempre). */
 export function precioDobleHero(t: Tarifa | null | undefined): { monto: string; nota: string } | null {
+  const hab = montoHabitacionNoche(t);
+  if (hab !== null) return { monto: montoConMoneda(hab, t?.moneda), nota: UNIDAD_HABITACION_NOCHE };
   const monto = montoDoble(t?.precios, bloqueDe(t)?.base_precio);
   if (monto === null) return null;
   return {
@@ -188,8 +206,11 @@ export function precioTarjeta(p: {
   iva_en_bs?: boolean | null;
 }): { monto: string; unidad: string | null; desde: boolean; corto: boolean; ivaEnBs?: boolean } | null {
   const ivaEnBs = !!(p.iva_en_bs ?? bloqueDe(p as Tarifa)?.iva_en_bs);
-  const doble = precioDobleHero({ precios: p.precios, moneda: p.moneda } as Tarifa);
-  if (doble) return { monto: doble.monto, unidad: "por persona y noche, en doble", desde: false, corto: true, ivaEnBs };
+  const doble = precioDobleHero({ precios: p.precios, moneda: p.moneda, tarifario_bloques: p.tarifario_bloques } as Tarifa);
+  if (doble) {
+    const unidad = doble.nota === UNIDAD_HABITACION_NOCHE ? UNIDAD_HABITACION_NOCHE : "por persona y noche, en doble";
+    return { monto: doble.monto, unidad, desde: false, corto: true, ivaEnBs };
+  }
   const desde = formatearPrecioDesde(p.precio_desde_usd);
   if (desde) return { monto: desde, unidad: unidadDelTexto(p.precio_texto) ?? "según fechas y ocupación", desde: true, corto: true, ivaEnBs };
   const texto = formatearPrecioCliente(p.precio_texto)?.trim();
@@ -206,6 +227,8 @@ export type PrecioTarjeta = NonNullable<ReturnType<typeof precioTarjeta>>;
 export function precioDeTarifa(t: Tarifa | null | undefined): PrecioTarjeta | null {
   if (!t) return null;
   const ivaEnBs = !!bloqueDe(t)?.iva_en_bs;
+  const hab = montoHabitacionNoche(t);
+  if (hab !== null) return { monto: montoConMoneda(hab, t.moneda), unidad: UNIDAD_HABITACION_NOCHE, desde: true, corto: true, ivaEnBs };
   const pp = t.precios ? precioPorPersona(t) : null;
   if (pp !== null) {
     return { monto: montoConMoneda(Math.round(pp * 100) / 100, t.moneda), unidad: "por persona", desde: true, corto: true, ivaEnBs };
