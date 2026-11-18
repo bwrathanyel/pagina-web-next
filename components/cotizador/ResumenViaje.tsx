@@ -90,9 +90,9 @@ export function ResumenViaje({
   tours?: string[];
   /** Ruta y aproximado del vuelo; sin él, el vuelo queda "a confirmar". */
   vuelo?: VueloViaje | null;
-  /** Compra directa: solo hospedaje con precio exacto y checkout abierto. Pasa a ser la acción
-   * principal y «Enviar solicitud» queda debajo. */
-  reservar?: { href: string; onClick: () => void } | null;
+  /** Compra directa: hospedaje con precio exacto y checkout abierto (con o sin vuelo: el boleto se
+   * pide desde /reservar). Pasa a ser la acción principal y «Enviar solicitud» queda debajo. */
+  reservar?: { href: string; onClick: () => void; conVuelo?: boolean } | null;
 }) {
   const noches = nochesDe(estado);
   const fechas = textoFechas(estado);
@@ -123,9 +123,17 @@ export function ResumenViaje({
   const vueloFechas = fechasVuelo(estado);
   let n = 0;
 
+  // Escritorio: nombre y WhatsApp justo bajo el talón, antes del detalle, para que se vean y se
+  // escriban en la primera pantalla (1366×695) aunque el resumen tenga hospedaje y vuelo.
+  const datosArriba =
+    datos && conTitulo ? <div className="border-b border-dashed border-linea-fuerte px-5 pb-4 pt-3">{datos}</div> : null;
+
   const boleto = (
     <Boleto
       orientacion="h"
+      // En el aside (columna flex con alto máximo y scroll) el pase no se encoge: con overflow-hidden
+      // su min-height automático es 0, se recortaba por abajo y el aside nunca tenía qué desplazar.
+      className="shrink-0"
       // El talón tiene alto fijo: solo caben el total y el envío. Va arriba para
       // que "Enviar solicitud" se vea sin bajar, y los avisos quedan al final.
       tamanoTalon={reservar ? "10.5rem" : "7.5rem"}
@@ -147,7 +155,7 @@ export function ResumenViaje({
           {reservar ? (
             <div className="flex flex-col gap-2">
               <Boton href={reservar.href} tamano="lg" ancho onClick={reservar.onClick}>
-                Reservar y pagar
+                {reservar.conVuelo ? "Reservar" : "Reservar y pagar"}
               </Boton>
               <Boton type="submit" form={formId} variante="secundario" ancho cargando={enviando}>
                 Enviar solicitud
@@ -162,6 +170,7 @@ export function ResumenViaje({
         </div>
       }
     >
+      {datosArriba}
       {conTitulo ? <h2 className="px-5 pt-4 font-display text-2xl font-bold leading-none text-ink">Su cotización</h2> : null}
       <ul className={(conTitulo ? "mt-2 " : "") + "divide-y divide-dashed divide-linea-fuerte"}>
         {estado.servicios.includes("hospedaje") ? (
@@ -219,17 +228,14 @@ export function ResumenViaje({
           </Linea>
         ) : null}
       </ul>
-      {datos && conTitulo ? (
-        <div className="border-t border-dashed border-linea-fuerte px-5 pb-4 pt-3">
-          {datos}
-        </div>
-      ) : null}
       <div className="flex items-end gap-3 px-5 pb-4 pt-1">
       <p className="min-w-0 flex-1 text-xs text-ink-soft">
         {referencia ? `${referencia.unidad ? `${referencia.unidad[0].toUpperCase()}${referencia.unidad.slice(1)}. ` : ""}Elija fechas para ver su total. ` : ""}
         {montoTalon && pendientes.length ? `${pendientes.join(" y ").replace(/^./, (c) => c.toUpperCase())} a confirmar. ` : ""}
         {montoVuelo ? "El vuelo es aproximado: la boletería cambia según la disponibilidad y puede salir menos. " : ""}
-        {reservar
+        {reservar?.conVuelo
+          ? "Sujeto a disponibilidad. «Reservar» paga el hospedaje en línea y deja su boleto listo para pedirlo a boletería; o envíe la solicitud y un asesor le escribe por WhatsApp."
+          : reservar
           ? "Sujeto a disponibilidad. Puede reservar y pagar en línea ahora, o enviar la solicitud y un asesor le escribe por WhatsApp."
           : "Sujeto a disponibilidad. El asesor le escribe por WhatsApp con el precio final."}
       </p>

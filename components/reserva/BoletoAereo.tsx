@@ -11,7 +11,10 @@ import { SelectorFecha } from "@/components/ui/SelectorFecha";
 import { TelefonoPais } from "@/components/ui/TelefonoPais";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import { esDestinoCompraDirecta } from "@/lib/checkout/destinos";
-import { estadoInicial, hoyCaracas, sumarDias, type EstadoViaje } from "@/lib/cotizador/estado";
+import { textoFechas } from "@/components/cotizador/ResumenViaje";
+import { PrecioMostrado } from "@/components/ui/PrecioMostrado";
+import { estadoInicial, hoyCaracas, sumarDias, type EstadoViaje, type VueloPedido } from "@/lib/cotizador/estado";
+import { montoConMoneda } from "@/lib/tarifas";
 import { listaNatural, nombreDia, recomendacionDia, rutasHacia, type RutaAerea } from "@/lib/cotizador/guiaRutas";
 import { estimarVueloViaje, type RutaVuelo } from "@/lib/cotizador/vuelo";
 import { enviarCotizacionViaje, type CotizacionEnviada } from "@/lib/leads/enviarCotizacionViaje";
@@ -25,15 +28,19 @@ const DESTINO_VUELO = { destino: "Isla de Margarita", iata: "PMV" } as const;
 
 type Errores = Partial<Record<"fechas" | "nombre" | "telefono", string>>;
 
-function estadoDesdeReserva(r: Pick<Reserva, "desde" | "hasta" | "pasajeros">): EstadoViaje {
+/** Fechas del vuelo: las propias que pidió en /cotizar o, si no, las del hospedaje. Origen, ida/vuelta,
+ * equipaje y flexibilidad salen del pedido del cotizador cuando lo hay. */
+function estadoDesdeReserva(r: Pick<Reserva, "desde" | "hasta" | "pasajeros">, pedido: VueloPedido | null): EstadoViaje {
   const edades = r.pasajeros.edades;
+  const propias = !!pedido?.vueloDesde;
   return {
     ...estadoInicial(),
+    ...(pedido ? { origen: pedido.origen, vuelo: pedido.vuelo, equipaje: pedido.equipaje, flexible: pedido.flexible } : {}),
     servicios: ["vuelo"],
     destino: DESTINO_VUELO.destino,
     vueloDestino: DESTINO_VUELO.iata,
-    desde: r.desde,
-    hasta: r.hasta,
+    desde: propias ? pedido!.vueloDesde : r.desde,
+    hasta: propias ? pedido!.vueloHasta : r.hasta,
     adultos: r.pasajeros.adultos,
     ninos: edades.length,
     edades,
@@ -67,6 +74,7 @@ export function BoletoAereo({
   hotelNombre,
   rutas,
   guia,
+  pedido = null,
   className,
 }: {
   r: Pick<Reserva, "f" | "desde" | "hasta" | "pasajeros">;
@@ -74,26 +82,35 @@ export function BoletoAereo({
   hotelNombre: string;
   rutas: readonly RutaVuelo[];
   guia: readonly RutaAerea[];
+  /** Vuelo que el cliente ya armó en /cotizar: la franja lo resume y el formulario abre cargado. */
+  pedido?: VueloPedido | null;
   className?: string;
 }) {
   const id = useId();
   const formId = `${id}-boleto`;
   const [abierta, setAbierta] = useState(false);
-  const [estado, setEstado] = useState<EstadoViaje>(() => estadoDesdeReserva(r));
+  const [estado, setEstado] = useState<EstadoViaje>(() => estadoDesdeReserva(r, pedido));
   const [contacto, setContacto] = useState({ nombre: "", telefono: "", iso: PAIS_POR_DEFECTO });
   const [errores, setErrores] = useState<Errores>({});
   const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState<CotizacionEnviada | null>(null);
 
   if (!esDestinoCompraDirecta(destino)) return null;
-  const vuelo = estimarVueloViaje(estado, rutas, hoyCaracas());
+  const hoy = hoyCaracas();
+  const vuelo = estimarVueloViaje(estado, rutas, hoy);
   const avance = avanceLlegada(guia, r.desde);
   const idaVuelta = estado.vuelo === "ida-vuelta";
+  // Cada apertura parte de lo que el cliente tiene en la reserva (fechas, viajeros y sus datos); la
+  // franja resume eso mismo, así sigue a las fechas del hospedaje si las cambia aquí.
+  const desdeReserva = (e: EstadoViaje): EstadoViaje => ({
+    ...estadoDesdeReserva(r, pedido), origen: e.origen, vuelo: e.vuelo, equipaje: e.equipaje, flexible: e.flexible,
+  });
+  const franja = enviado ? estado : desdeReserva(estado);
+  const vueloFranja = pedido ? estimarVueloViaje(franja, rutas, hoy) : null;
 
   function abrir() {
-    // Cada apertura parte de lo que el cliente tiene en la reserva (fechas, viajeros y sus datos).
     if (!enviado) {
-      setEstado((e) => ({ ...estadoDesdeReserva(r), origen: e.origen, vuelo: e.vuelo, equipaje: e.equipaje, flexible: e.flexible }));
+      setEstado(desdeReserva);
       setContacto((c) => ({
         nombre: c.nombre || r.f.nombre,
         telefono: c.telefono || r.f.telefono,
@@ -150,14 +167,31 @@ export function BoletoAereo({
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-3 rounded-card border border-linea p-4 md:flex-row md:items-center md:justify-between md:gap-6 md:p-5 lg:rounded-none lg:border-0 lg:border-l lg:p-0 lg:pl-4">
         <div className="flex min-w-0 flex-col gap-1 lg:gap-0.5">
-          <p className="text-sm font-semibold text-ink lg:hidden">¿Necesita también el boleto aéreo?</p>
-          <p className="text-sm text-ink-soft lg:text-ink">
-            <span className="max-lg:hidden">¿Necesita también el boleto? </span>Pague su hospedaje ahora; el boleto se lo cotiza un asesor de boletería.
-          </p>
-          {avance ? <p className="text-sm text-ink-soft lg:text-xs">{avance}</p> : null}
+          {pedido ? (
+            <>
+              <p className="text-sm font-semibold text-ink">
+                Su vuelo: {franja.origen} a {DESTINO_VUELO.destino}, {franja.vuelo === "ida" ? "solo ida" : "ida y vuelta"},{" "}
+                {textoFechas({ ...franja, hasta: franja.vuelo === "ida" ? "" : franja.hasta })}
+                {vueloFranja?.total != null ? (
+                  <>
+                    {" "}· aprox. <PrecioMostrado texto={montoConMoneda(vueloFranja.total, "USD")} tasaDolar />
+                  </>
+                ) : null}
+              </p>
+              <p className="text-sm text-ink-soft lg:text-xs">Pague su hospedaje ahora; su boleto ya está cargado para pedírselo a un asesor de boletería.</p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-semibold text-ink lg:hidden">¿Necesita también el boleto aéreo?</p>
+              <p className="text-sm text-ink-soft lg:text-ink">
+                <span className="max-lg:hidden">¿Necesita también el boleto? </span>Pague su hospedaje ahora; el boleto se lo cotiza un asesor de boletería.
+              </p>
+              {avance ? <p className="text-sm text-ink-soft lg:text-xs">{avance}</p> : null}
+            </>
+          )}
         </div>
         <Boton type="button" variante="secundario" className="shrink-0 self-start md:self-center" aria-haspopup="dialog" onClick={abrir}>
-          {enviado ? "Ver solicitud del boleto" : "Cotizar boleto aéreo"}
+          {enviado ? "Ver solicitud del boleto" : pedido ? "Pedir este boleto" : "Cotizar boleto aéreo"}
         </Boton>
       </div>
 

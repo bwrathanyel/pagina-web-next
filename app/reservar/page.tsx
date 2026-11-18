@@ -8,6 +8,7 @@ import { Boton } from "@/components/ui/Boton";
 import { hotelParaCobrar, vitrinaDeHabitaciones, type HotelCobrable } from "@/lib/checkout/datos";
 import { esDestinoCompraDirecta } from "@/lib/checkout/destinos";
 import type { HotelAlternativo } from "@/components/reserva/OtrosHoteles";
+import { leerVueloPedido } from "@/lib/cotizador/estado";
 import { ofertasHoteles } from "@/lib/cotizador/ofertas";
 import { getHotelCotizador, hotSalesCotizar, promocionesCotizar, rutasAereasGuia, rutasVueloCotizar } from "@/lib/supabase/queries";
 import { POLITICA_CANCELACION } from "@/lib/checkout/politica";
@@ -15,7 +16,8 @@ import { vendibleHoy } from "@/lib/tarifas";
 import { whatsappHref } from "@/lib/whatsapp";
 
 // Compra directa de hospedaje (Plan 1), fuera de buscadores. Se entra desde la ficha o el cotizador:
-// /reservar?hotel=<id>&tarifa=<id>&desde=AAAA-MM-DD&hasta=AAAA-MM-DD&adultos=2&edades=5,8&bebes=1.
+// /reservar?hotel=<id>&tarifa=<id>&desde=AAAA-MM-DD&hasta=AAAA-MM-DD&adultos=2&edades=5,8&bebes=1,
+// más el vuelo pedido en el cotizador (origen, vuelo, vuelo_ida, vuelo_vuelta, equipaje, flex).
 export const metadata: Metadata = {
   title: "Reservar y pagar",
   robots: { index: false, follow: false },
@@ -104,6 +106,7 @@ export default async function ReservarPage({ searchParams }: { searchParams: Pro
         habitaciones={fichas.habitaciones}
         fotosHotel={fichas.fotosHotel}
         inicial={{ tarifaId: entero(q.tarifa), desde: fecha(q.desde), hasta: fecha(q.hasta), pasajeros: pasajeros(q) }}
+        vueloPedido={leerVueloPedido(q)}
         politica={POLITICA_CANCELACION}
       />
     </main>

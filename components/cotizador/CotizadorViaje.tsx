@@ -652,22 +652,28 @@ export function CotizadorViaje({
     estimado: estimado?.ok ? montoConMoneda(estimado.total, estimado.moneda) : null,
     sugerido: sugerido && !!hotel,
   };
-  // «Reservar y pagar» solo si /reservar puede cobrar lo mismo que se ve: solo hospedaje, precio
-  // exacto (estimado ok), tarifa vendible hoy, viajeros dentro del límite del checkout y la
-  // ventana de atención abierta, solo en destinos con compra directa (Margarita). Si no, la única
-  // acción sigue siendo «Enviar solicitud».
+  // «Reservar» solo si /reservar puede cobrar el mismo hospedaje que se ve: precio exacto (estimado
+  // ok), tarifa vendible hoy, viajeros dentro del límite del checkout y la ventana de atención
+  // abierta, solo en destinos con compra directa (Margarita). Con vuelo también: /reservar cobra el
+  // hospedaje y precarga el boleto aéreo (origen, ida/vuelta, fechas) para pedirlo al asesor. Con
+  // tours no (/reservar no los vende). Si no, la única acción sigue siendo «Enviar solicitud».
   const { config: checkout } = useCheckoutConfig();
   const viajeros = estado.adultos + estadia.edades.length + estado.bebes;
+  const conVuelo = estado.servicios.includes("vuelo");
   const reservar =
-    estado.servicios.length === 1 && hotel && esDestinoCompraDirecta(hotel.destino) && tarifaElegida && estimado?.ok && vendibleHoy(tarifaElegida) &&
+    hospedaje && !estado.servicios.includes("tours") && hotel && esDestinoCompraDirecta(hotel.destino) && tarifaElegida && estimado?.ok && vendibleHoy(tarifaElegida) &&
     checkout?.activo && checkout.abierto && viajeros <= MAX_PAX && estado.bebes <= MAX_BEBES &&
     estadia.edades.every((e) => e !== null && e >= 2 && e <= 11)
       ? {
-          href: enlaceReservar(hotel.id, tarifaElegida.id, {
-            desde: estado.desde, hasta: estado.hasta, adultos: estado.adultos, edades: estadia.edades as number[], bebes: estado.bebes,
-          }),
+          href: enlaceReservar(
+            hotel.id,
+            tarifaElegida.id,
+            { desde: estado.desde, hasta: estado.hasta, adultos: estado.adultos, edades: estadia.edades as number[], bebes: estado.bebes },
+            conVuelo ? estado : null,
+          ),
+          conVuelo,
           onClick: () => {
-            registrarEvento("abrir_pago", { ruta: "/cotizar", meta: { etapa: "cotizador", producto_id: hotel.id } });
+            registrarEvento("abrir_pago", { ruta: "/cotizar", meta: { etapa: "cotizador", producto_id: hotel.id, con_vuelo: conVuelo } });
             llevarContactoAReservar(hotel.id, contacto, iso);
           },
         }

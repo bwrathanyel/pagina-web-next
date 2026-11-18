@@ -9,6 +9,7 @@ import { ChipPlazo } from "@/components/checkout/ChipPlazo";
 import type { HabitacionWeb } from "@/lib/cotizador/hotel";
 import { AccionReserva, CierreReserva } from "./CierreReserva";
 import { BoletoAereo } from "./BoletoAereo";
+import type { VueloPedido } from "@/lib/cotizador/estado";
 import type { RutaAerea } from "@/lib/cotizador/guiaRutas";
 import type { RutaVuelo } from "@/lib/cotizador/vuelo";
 import { FotosCabecera } from "./FotosCabecera";
@@ -42,6 +43,7 @@ export function ReservarCliente({
   otrosHoteles,
   rutasVuelo,
   guiaRutas,
+  vueloPedido = null,
 }: {
   hotel: HotelParaCobrar;
   destino: string | null;
@@ -53,6 +55,8 @@ export function ReservarCliente({
   otrosHoteles: HotelAlternativo[];
   rutasVuelo: RutaVuelo[];
   guiaRutas: RutaAerea[];
+  /** Vuelo pedido en /cotizar: precarga el boleto aéreo. */
+  vueloPedido?: VueloPedido | null;
 }) {
   const r = useReserva({ hotel, habitaciones, fotosHotel, inicial });
   const { config, pantalla, esEscritorio, fueraDeHorario, abierta, segundosAbierta, wa } = r;
@@ -167,7 +171,7 @@ export function ReservarCliente({
       {/* Boleto: en escritorio, franja baja entre la cabecera y el mostrador, para verse sin bajar (queja
           del dueño 2026-11-18, 1366×695); en el teléfono, al final. Se monta siempre (no espera a `pantalla`)
           para que la franja no aparezca tarde y empuje el mostrador. Su formulario va en una Hoja. */}
-      <BoletoAereo r={r} destino={destino} hotelNombre={hotel.nombre} rutas={rutasVuelo} guia={guiaRutas} className="max-lg:order-1" />
+      <BoletoAereo r={r} destino={destino} hotelNombre={hotel.nombre} rutas={rutasVuelo} guia={guiaRutas} pedido={vueloPedido} className="max-lg:order-1" />
 
       {/* lg: dos columnas (fechas y habitación | pago, datos y cierre). xl: tres (fechas y habitación | pago
           y política | datos y cierre); la columna derecha se disuelve con `xl:contents`. */}

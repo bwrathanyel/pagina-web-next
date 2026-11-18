@@ -7,6 +7,7 @@ import { useCheckoutConfig, type CheckoutConfig } from "@/components/checkout/us
 import { registrarEvento } from "@/lib/analitica/eventos";
 import { esDestinoCompraDirecta } from "@/lib/checkout/destinos";
 import { horaAmPm } from "@/lib/checkout/formato";
+import { ponerVuelo, type EstadoViaje } from "@/lib/cotizador/estado";
 import { whatsappHref } from "@/lib/whatsapp";
 
 /** Enlace a /reservar con la tarifa ya elegida y, desde el cotizador, fechas y viajeros
@@ -15,6 +16,8 @@ export function enlaceReservar(
   productoId: number,
   tarifaId?: number | null,
   viaje?: { desde: string; hasta: string; adultos: number; edades: number[]; bebes: number },
+  /** Vuelo pedido en el cotizador: /reservar precarga el boleto aéreo con él. */
+  vuelo?: EstadoViaje | null,
 ) {
   const q = new URLSearchParams({ hotel: String(productoId) });
   if (tarifaId) q.set("tarifa", String(tarifaId));
@@ -25,6 +28,7 @@ export function enlaceReservar(
     if (viaje.edades.length) q.set("edades", viaje.edades.join(","));
     if (viaje.bebes) q.set("bebes", String(viaje.bebes));
   }
+  if (vuelo) ponerVuelo(q, vuelo);
   return `/reservar?${q.toString().replace(/%2C/g, ",")}`;
 }
 

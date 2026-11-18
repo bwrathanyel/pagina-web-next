@@ -291,18 +291,31 @@ export function serializarEstado(e: EstadoViaje): string {
   if (e.bebes) q.set("bebes", String(e.bebes));
   if (e.hotel) q.set("hotel", String(e.hotel));
   if (e.tarifa) q.set("tarifa", String(e.tarifa));
-  if (e.servicios.includes("vuelo")) {
-    q.set("origen", e.origen);
-    q.set("vuelo", e.vuelo);
-    if (e.vueloDesde) q.set("vuelo_ida", e.vueloDesde);
-    if (e.vueloHasta) q.set("vuelo_vuelta", e.vueloHasta);
-    if (e.vueloDestino) q.set("vdestino", e.vueloDestino);
-    if (e.vueloDestino === VUELO_DESTINO_OTRO && e.vueloDestinoOtro.trim()) q.set("vdestino_otro", e.vueloDestinoOtro.trim());
-    if (e.equipaje !== EQUIPAJE_INICIAL) q.set("equipaje", e.equipaje);
-    if (e.flexible) q.set("flex", "1");
-  }
+  if (e.servicios.includes("vuelo")) ponerVuelo(q, e);
   if (e.servicios.includes("tours") && e.tours.length) q.set("tour", e.tours.join(","));
   return q.toString();
+}
+
+/** Parámetros del vuelo (los mismos que lee `parsearEstado`): /cotizar y el enlace a /reservar. */
+export function ponerVuelo(q: URLSearchParams, e: EstadoViaje): void {
+  q.set("origen", e.origen);
+  q.set("vuelo", e.vuelo);
+  if (e.vueloDesde) q.set("vuelo_ida", e.vueloDesde);
+  if (e.vueloHasta) q.set("vuelo_vuelta", e.vueloHasta);
+  if (e.vueloDestino) q.set("vdestino", e.vueloDestino);
+  if (e.vueloDestino === VUELO_DESTINO_OTRO && e.vueloDestinoOtro.trim()) q.set("vdestino_otro", e.vueloDestinoOtro.trim());
+  if (e.equipaje !== EQUIPAJE_INICIAL) q.set("equipaje", e.equipaje);
+  if (e.flexible) q.set("flex", "1");
+}
+
+/** Vuelo pedido en /cotizar que viaja a /reservar para precargar el boleto aéreo. */
+export type VueloPedido = Pick<EstadoViaje, "origen" | "vuelo" | "vueloDesde" | "vueloHasta" | "equipaje" | "flexible">;
+
+/** /reservar: el vuelo que trae el enlace del cotizador (`vuelo=` presente), o null. */
+export function leerVueloPedido(sp: ParamsBusqueda, hoy = hoyCaracas()): VueloPedido | null {
+  if (!uno(sp.vuelo)) return null;
+  const { origen, vuelo, vueloDesde, vueloHasta, equipaje, flexible } = parsearEstado(sp, hoy);
+  return { origen, vuelo, vueloDesde, vueloHasta, equipaje, flexible };
 }
 
 // ---- transformaciones ----

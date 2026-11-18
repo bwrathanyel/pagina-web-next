@@ -9,7 +9,9 @@ import {
   correoValido,
   estadoInicial,
   fechasVuelo,
+  leerVueloPedido,
   parsearEstado,
+  ponerVuelo,
   serializarEstado,
   telefonoValido,
   textoRangoCorto,
@@ -170,4 +172,25 @@ test("combinar: segundo destino conocido y distinto del principal; ida y vuelta"
   assert.equal(parsearEstado({ destino: "Morrocoy", combinar: "Morrocoy" }, HOY).combinar, "");
   assert.equal(parsearEstado({ destino: "Morrocoy", combinar: "Narnia" }, HOY).combinar, "");
   assert.ok(!serializarEstado({ ...e, combinar: "" }).includes("combinar="));
+});
+
+test("vuelo pedido en /cotizar viaja a /reservar con origen, tipo, fechas propias, equipaje y flex", () => {
+  const e = {
+    ...estadoInicial(),
+    servicios: ["hospedaje", "vuelo"] as const,
+    origen: "Caracas",
+    vuelo: "ida" as const,
+    vueloDesde: "2026-11-26",
+    vueloHasta: "",
+    equipaje: "maleta" as const,
+    flexible: true,
+  };
+  const q = new URLSearchParams({ hotel: "4", desde: "2026-11-26", hasta: "2026-11-30" });
+  ponerVuelo(q, { ...e, servicios: [...e.servicios] });
+  const sp = Object.fromEntries(q.entries());
+  assert.deepEqual(leerVueloPedido(sp, HOY), {
+    origen: "Caracas", vuelo: "ida", vueloDesde: "2026-11-26", vueloHasta: "", equipaje: "maleta", flexible: true,
+  });
+  // Sin `vuelo=` el enlace no trae boleto (solo hospedaje).
+  assert.equal(leerVueloPedido({ hotel: "4", desde: "2026-11-26" }, HOY), null);
 });
