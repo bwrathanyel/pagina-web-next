@@ -21,6 +21,7 @@ import {
   type HabitacionWeb,
 } from "@/lib/cotizador/hotel";
 import type { SinCupo } from "@/components/ui/SelectorFecha";
+import { nombreDeHabitacion, opcionesVisibles } from "@/lib/checkout/opcionesHotel";
 import { calcularPlan } from "@/lib/checkout/plan";
 import { PLAN_ABONOS_VERSION } from "@/lib/checkout/politica";
 import { hoyCaracas } from "@/lib/cotizador/cotizacionRapida";
@@ -30,7 +31,6 @@ import { buscarPais, PAIS_POR_DEFECTO, separarTelefono, telefonoInternacional } 
 import { whatsappHref } from "@/lib/whatsapp";
 import { ORDEN_TRAMOS, siguienteTramo, tramosCompletos, type TramoId } from "@/lib/checkout/tramos";
 import { comportamientoScroll } from "@/components/ui/movimiento";
-import type { Tarifa } from "@/types/supabase";
 import type { ModoPago, OpcionHabitacion } from "./Opciones";
 import { textoViajeros, type Pasajeros } from "./PaseFechas";
 import type { Totales } from "./ResumenBoleto";
@@ -118,16 +118,6 @@ function leerAbierta(): ReservaAbierta | null {
 const CONTACTO_OK = { nombre: "Ana Pérez", telefono: "+584141234567", email: "a@b.co", riel: "zelle" };
 const invalido = (c: Partial<typeof CONTACTO_OK>) => validarContacto({ ...CONTACTO_OK, ...c }) !== null;
 
-const RE_TODO_INCLUIDO = /todo\s*incluido|all\s*inclusive/i;
-
-/** `habitacion` puede venir vacío en tarifas cargadas a mano: el nombre queda en el título, con el hotel delante. */
-function nombreDeHabitacion(t: Tarifa, hotel: string): string {
-  const propio = t.habitacion?.trim();
-  if (propio) return propio;
-  const titulo = (t.titulo ?? "").trim();
-  const sinHotel = titulo.toLowerCase().startsWith(hotel.toLowerCase()) ? titulo.slice(hotel.length).replace(/^\s*[-–—:]\s*/, "") : titulo;
-  return sinHotel.trim() || "Habitación";
-}
 
 export type ClaveCampo ="fechas" | "edades" | "precio" | "plan" | "riel" | "nombre" | "telefono" | "email" | "acepta";
 
@@ -322,31 +312,10 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial, alCrear, 
     return m;
   }, [hotel, tarjetas, hayFechas, edadesListas, desde, hasta, pasajeros.adultos, pasajeros.bebes, edades, bloqueos]);
 
-  // Qué se ofrece (dueño, 2026-11-18): nada sin precio concreto («A consultar», «Sin cupo», on request);
-  // si hay habitaciones con fotos propias, solo esas; si no, una opción por plan con la habitación más
-  // barata (el tipo exacto lo confirma Reservas).
-  const { visibles, porPlan, todoIncluido } = useMemo(() => {
-    const precioDe = (id: number) => {
-      const r = resultados.get(id);
-      return r?.ok ? r.precio : Infinity;
-    };
-    const conPrecio = tarjetas.filter((c) => {
-      if (/on request/i.test(nombreDeHabitacion(c.tarifa, hotel.nombre))) return false;
-      const r = resultados.get(c.tarifa.id);
-      return !r || r.ok;
-    });
-    // Todo incluido: el cliente no elige habitación, el hotel lo acomoda según cuántas personas viajan (dueño 2026-11-18).
-    const todoIncluido = conPrecio.length > 0 && conPrecio.every((c) => RE_TODO_INCLUIDO.test(c.tarifa.plan ?? ""));
-    const conFoto = conPrecio.filter((c) => !!habitacionDeTarifa(habitaciones, c.tarifa)?.fotos.length);
-    if (conFoto.length && !todoIncluido) return { visibles: conFoto, porPlan: false, todoIncluido };
-    const mejor = new Map<string, (typeof tarjetas)[number]>();
-    for (const c of conPrecio) {
-      const k = c.tarifa.plan?.trim().toLowerCase() ?? "";
-      const previa = mejor.get(k);
-      if (!previa || precioDe(c.tarifa.id) < precioDe(previa.tarifa.id)) mejor.set(k, c);
-    }
-    return { visibles: [...mejor.values()], porPlan: true, todoIncluido };
-  }, [tarjetas, resultados, habitaciones, hotel.nombre]);
+  const { visibles, porPlan, todoIncluido } = useMemo(
+    () => opcionesVisibles(tarjetas, resultados, (t) => !!habitacionDeTarifa(habitaciones, t)?.fotos.length, hotel.nombre),
+    [tarjetas, resultados, habitaciones, hotel.nombre],
+  );
 
   // La elegida es la que cubre la entrada; si quedó oculta (p. ej. al poner fechas cambió la más barata
   // del plan), se mantiene el plan y si no, la primera visible.

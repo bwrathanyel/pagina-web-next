@@ -101,6 +101,37 @@ export async function tarifasDeHoteles(ids: number[]): Promise<Map<number, Tarif
   return out;
 }
 
+/** Lo que /reservar necesita de varios hoteles para calcular el precio de cada uno («Otros hoteles»):
+ * tarifas vendibles y habitaciones revisadas con sus fotos. Dos lecturas para todos. */
+export async function hotelesParaPrecio(
+  ids: number[],
+): Promise<Map<number, { id: number; nombre: string; tarifas: Tarifa[]; habitaciones: HabitacionWeb[] }>> {
+  const out = new Map<number, { id: number; nombre: string; tarifas: Tarifa[]; habitaciones: HabitacionWeb[] }>();
+  if (!ids.length) return out;
+  const sb = supabaseBrowser();
+  const [prods, habs] = await Promise.all([
+    sb
+      .from("productos")
+      .select(`id,nombre,tarifas(${TARIFA_SELECT}),producto_fotos(id,storage_path,orden,es_principal,activo,width,height,origen,habitacion_id)`)
+      .eq("activo", true)
+      .eq("oculto_sin_foto", false)
+      .eq("tipo", "hotel")
+      .in("id", ids),
+    sb.from("web_habitaciones").select(`producto_id,${HABITACION_SELECT}`).in("producto_id", ids).order("id"),
+  ]);
+  if (prods.error) throw prods.error;
+  // Sin habitaciones (error o ninguna revisada) el precio sale igual, con una opción por plan.
+  const filasHab = (habs.data ?? []) as (Omit<HabitacionWeb, "fotos"> & { producto_id: number })[];
+  for (const p of (prods.data ?? []) as unknown as { id: number; nombre: string; tarifas: Tarifa[] | null; producto_fotos: Foto[] | null }[]) {
+    const fotos = p.producto_fotos ?? [];
+    const habitaciones = filasHab
+      .filter((h) => h.producto_id === p.id)
+      .map((h) => ({ ...h, fotos: fotosDe(fotos.filter((f) => f.habitacion_id === h.id)) }));
+    out.set(p.id, { id: p.id, nombre: p.nombre, tarifas: (p.tarifas ?? []).filter(vendibleHoy), habitaciones });
+  }
+  return out;
+}
+
 const clave = (s: string | null | undefined) =>
   (s ?? "")
     .normalize("NFD")
