@@ -23,7 +23,7 @@ import {
   sumarDias,
   textoDuracion,
 } from "@/lib/cotizador/cotizacionRapida";
-import type { Servicio } from "@/lib/cotizador/estado";
+import { conVueloAlExtranjero, type Servicio } from "@/lib/cotizador/estado";
 import { normalizarBusqueda } from "@/lib/catalogo/busqueda";
 import type { FotoHero } from "@/lib/promociones/fotosHero";
 import { portadaDestino } from "@/lib/promociones/fotosDestino";
@@ -182,6 +182,7 @@ function useCotizacionRapida(ninoGratis: HotelNinoGratis | null) {
 
   function setDestino(v: string) {
     setDestinoPropio(v);
+    setServicios((s) => conVueloAlExtranjero(s, v));
     if (v === combinar) setCombinar("");
   }
 

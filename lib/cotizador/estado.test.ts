@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  conVueloAlExtranjero,
+  DESTINO_EXTRANJERO,
   alternarServicio,
   alternarTour,
   atajosFinde,
@@ -242,4 +244,10 @@ test("extranjero: la solicitud va y vuelve por la URL, solo con ese destino", ()
   assert.equal(ideas.ideas, true);
   assert.equal(ideas.presupuesto, "");
   assert.equal(ideas.salida, "");
+});
+
+test("Viajar al extranjero marca el vuelo sin quitar los otros servicios", () => {
+  assert.deepEqual(conVueloAlExtranjero(["hospedaje"], DESTINO_EXTRANJERO), ["hospedaje", "vuelo"]);
+  assert.deepEqual(conVueloAlExtranjero(["vuelo", "tours"], DESTINO_EXTRANJERO), ["vuelo", "tours"]);
+  assert.deepEqual(conVueloAlExtranjero(["hospedaje"], "Isla de Margarita"), ["hospedaje"]);
 });

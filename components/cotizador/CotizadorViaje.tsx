@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { BarraViaje, BarraViajeCompacta, ChipsServicios, chip } from "@/components/cotizador/BarraViaje";
+import { BarraViaje, BarraViajeCompacta, ChipsServicios } from "@/components/cotizador/BarraViaje";
 import { AyudanteCotizar } from "@/components/cotizador/AyudanteCotizar";
 import { comportamientoScroll } from "@/components/ui/movimiento";
 import { DetalleHotel } from "@/components/cotizador/DetalleHotel";
@@ -49,9 +49,9 @@ import { Hoja } from "@/components/ui/Hoja";
 import { Icono } from "@/components/ui/Icono";
 import {
   alternarTour,
-  atajosFinde,
   correoValido,
   DESTINO_EXTRANJERO,
+  conVueloAlExtranjero,
   fechasVuelo,
   hoyCaracas,
   nochesDe,
@@ -59,7 +59,6 @@ import {
   rutaCotizar,
   serializarEstado,
   textoDuracion,
-  textoRangoCorto,
   textoViajeros,
   type EstadoViaje,
 } from "@/lib/cotizador/estado";
@@ -775,7 +774,11 @@ export function CotizadorViaje({
     if (enviado) confirmacion.current?.focus({ preventScroll: true });
   }, [enviado]);
 
-  function cambiar(nuevo: EstadoViaje) {
+  function cambiar(recibido: EstadoViaje) {
+    const nuevo =
+      recibido.destino !== estado.destino
+        ? { ...recibido, servicios: conVueloAlExtranjero(recibido.servicios, recibido.destino) }
+        : recibido;
     // Un servicio recién marcado abre su pestaña.
     const agregado = nuevo.servicios.find((s) => !estado.servicios.includes(s));
     if (agregado) setPestana(agregado);
@@ -1051,13 +1054,6 @@ export function CotizadorViaje({
     if (o.conFotosHabitacion) setTimeout(() => abrirOferta(o), 260);
     else abrirOferta(o);
   };
-  // "Otras fechas": en escritorio abre el calendario de la barra; en móvil, la hoja del viaje.
-  const abrirCalendario = () => {
-    const boton = window.matchMedia("(min-width: 64rem)").matches ? document.getElementById(`${formId}-barra-desde`) : null;
-    if (!boton) return setEditarViaje(true);
-    boton.scrollIntoView({ block: "nearest", behavior: comportamientoScroll() });
-    boton.click();
-  };
   const extranjero = estado.destino === DESTINO_EXTRANJERO;
   const enDestino = extranjero ? "el extranjero" : estado.destino;
   const noches = nochesDe(estado);
@@ -1130,23 +1126,9 @@ export function CotizadorViaje({
         </div>
       ) : null}
       {!estado.desde ? (
-        <div className="flex flex-col gap-2 rounded-card bg-acento-suave p-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
-          <p className="text-sm font-semibold text-ink">¿Cuándo viaja? Elija y le mostramos el total:</p>
-          <div role="group" aria-label="Fechas sugeridas" className="flex flex-wrap gap-2">
-            {atajosFinde().map((a) => (
-              <button
-                key={a.desde}
-                type="button"
-                onClick={() => cambiar({ ...estado, desde: a.desde, hasta: a.hasta })}
-                className={chip(false)}
-              >
-                {textoRangoCorto(a.desde, a.hasta)}
-              </button>
-            ))}
-            <button type="button" onClick={abrirCalendario} className={chip(false)}>
-              Otras fechas
-            </button>
-          </div>
+        <div className="flex flex-col gap-3 rounded-card bg-acento-suave p-3">
+          <p className="text-sm font-semibold text-ink">¿Cuándo viaja? Elija fechas y viajeros y le mostramos el total:</p>
+          <BarraViaje estado={estado} onCambio={cambiar} conServicios={false} conDestino={false} sinCupo={sinCupo} />
         </div>
       ) : null}
       {ofertasDestino.length ? (

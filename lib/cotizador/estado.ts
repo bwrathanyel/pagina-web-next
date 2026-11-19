@@ -53,6 +53,12 @@ export const TOURS_MAX = 6;
 // ---- solicitud «Viajar al extranjero» (campos decididos por el dueño 2026-11-19) ----
 
 export const DESTINO_EXTRANJERO = "Extranjero";
+/** Al elegir el extranjero el vuelo queda marcado solo (pedido del dueño
+ * 2026-11-19); no quita los otros servicios y va al final para no cambiar el
+ * primero (que nombra las fechas). */
+export function conVueloAlExtranjero<S extends string>(servicios: S[], destino: string): S[] {
+  return destino === DESTINO_EXTRANJERO && !servicios.includes("vuelo" as S) ? [...servicios, "vuelo" as S] : servicios;
+}
 export const EXT_SUGERENCIAS: readonly string[] = ["Punta Cana", "Cancún", "Miami", "Orlando", "Madrid", "Aruba", "Curazao", "Panamá"];
 export type TipoViajeExt = "playa" | "ciudad" | "crucero" | "luna-de-miel" | "parques";
 export const EXT_TIPOS: readonly { valor: TipoViajeExt; etiqueta: string }[] = [

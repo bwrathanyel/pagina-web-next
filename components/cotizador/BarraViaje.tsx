@@ -130,11 +130,14 @@ export function BarraViaje({
   estado,
   onCambio,
   conServicios = true,
+  conDestino = true,
   sinCupo,
 }: {
   estado: EstadoViaje;
   onCambio: (e: EstadoViaje) => void;
   conServicios?: boolean;
+  /** Sin destino: solo fechas y viajeros (panel de hospedaje sin fechas). */
+  conDestino?: boolean;
   /** Noches sin cupo del hotel elegido: solo pintan las fechas de hospedaje. */
   sinCupo?: SinCupo;
 }) {
@@ -151,16 +154,24 @@ export function BarraViaje({
       {conServicios ? <ChipsServicios estado={estado} onCambio={onCambio} /> : null}
 
       {/* El destino lleva nombres largos ("Isla de Margarita"): columna más ancha. */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(0,1fr))]">
-        <div className="flex flex-col gap-1.5">
-          <Rotulo htmlFor={`${id}-destino`}>Destino</Rotulo>
-          <SelectorDestino
-            id={`${id}-destino`}
-            valor={estado.destino}
-            onCambio={(destino) => onCambio({ ...estado, destino })}
-            className={CONTROL_BOTON}
-          />
-        </div>
+      <div
+        className={
+          conDestino
+            ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(0,1fr))]"
+            : "grid gap-4 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]"
+        }
+      >
+        {conDestino ? (
+          <div className="flex flex-col gap-1.5">
+            <Rotulo htmlFor={`${id}-destino`}>Destino</Rotulo>
+            <SelectorDestino
+              id={`${id}-destino`}
+              valor={estado.destino}
+              onCambio={(destino) => onCambio({ ...estado, destino })}
+              className={CONTROL_BOTON}
+            />
+          </div>
+        ) : null}
 
         <div className="flex flex-col gap-1.5">
           <Rotulo htmlFor={`${id}-desde`}>{rotuloDesde}</Rotulo>

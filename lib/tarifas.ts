@@ -8,7 +8,7 @@
 // `origen='flyer'`). Los campos estructurados los escribe la carga maestra;
 // mientras no corra vienen NULL y todo cae a `precio_texto`/`vigencia_texto`.
 import type { Producto, Tarifa, TarifarioBloque, VentanaTarifa } from "@/types/supabase";
-import { formatearPrecioCliente, formatearPrecioDesde } from "@/lib/utils/formatoPrecio";
+import { formatearPrecioCliente, formatearPrecioDesde, textoEnDolares } from "@/lib/utils/formatoPrecio";
 import { hoyCaracas } from "@/lib/cotizador/estado";
 import { tasaDeMoneda, type TasaBcv } from "@/lib/utils/convertirPrecio";
 
@@ -197,6 +197,24 @@ function unidadDelTexto(texto: string | null | undefined): string | null {
   return noche ? "por noche" : null;
 }
 
+/** Precio de un texto de paquete que no arranca con monto ("03 días y 02
+ * noches para 02 personas con 1 Niño Gratis: REF. 240.00 / Adulto Adicional:
+ * …", LD Palm Beach 2026-11-19): el primer monto va al talón y lo que lo
+ * precede, a la unidad. Sin monto reconocible -> null (queda el texto). */
+export function precioDePaquete(texto: string | null | undefined): { monto: string; unidad: string | null } | null {
+  const t = textoEnDolares(texto ?? "").trim();
+  if (!t || /^[$€]\s?\d/.test(t)) return null;
+  const m = /(?:\bREF\b\.?|\bUSD\b|\$)\s?(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?)(?!\d)/i.exec(t);
+  if (!m) return null;
+  const [, entero, decimales = ""] = /^(.*?)(?:[.,](\d{1,2}))?$/.exec(m[1]) ?? [];
+  const n = Number(`${(entero ?? "").replace(/[.,]/g, "")}.${decimales || "0"}`);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  const antes = t.slice(0, m.index).replace(/[\s:/|·-]+$/, "").replace(/\b0+(\d)/g, "$1").trim();
+  // El primer monto es de niño: anunciarlo sería cotizar de menos.
+  if (/\b(?:chd|niñ[oa]s?)[\s\d()-]*$/i.test(antes)) return null;
+  return { monto: montoConMoneda(n), unidad: antes ? formatearPrecioCliente(antes) : null };
+}
+
 export function precioTarjeta(p: {
   precios?: Record<string, string | number | null> | null;
   moneda?: string | null;
@@ -215,6 +233,8 @@ export function precioTarjeta(p: {
   }
   const desde = formatearPrecioDesde(p.precio_desde_usd);
   if (desde) return { monto: desde, unidad: unidadDelTexto(p.precio_texto) ?? "según fechas y ocupación", desde: true, corto: true, ivaEnBs, tasa };
+  const paquete = precioDePaquete(p.precio_texto);
+  if (paquete) return { ...paquete, desde: false, corto: true, ivaEnBs, tasa };
   const texto = formatearPrecioCliente(p.precio_texto)?.trim();
   return texto ? { monto: texto, unidad: null, desde: false, corto: texto.length <= 12, ivaEnBs, tasa } : null;
 }
@@ -236,6 +256,8 @@ export function precioDeTarifa(t: Tarifa | null | undefined): PrecioTarjeta | nu
   if (pp !== null) {
     return { monto: montoConMoneda(Math.round(pp * 100) / 100, t.moneda), unidad: "por persona", desde: true, corto: true, ivaEnBs, tasa };
   }
+  const paquete = precioDePaquete(t.precio_texto);
+  if (paquete) return { ...paquete, desde: false, corto: true, ivaEnBs, tasa };
   const texto = formatearPrecioCliente(t.precio_texto)?.trim();
   return texto ? { monto: texto, unidad: null, desde: false, corto: texto.length <= 12, ivaEnBs, tasa } : null;
 }
