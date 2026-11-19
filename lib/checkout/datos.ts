@@ -7,8 +7,21 @@ import { fotosDe } from "@/lib/supabase/fotos";
 import type { HabitacionWeb } from "@/lib/cotizador/hotel";
 import type { Foto, Tarifa } from "@/types/supabase";
 import type { BloqueoFecha, HotelParaCobrar } from "./calculo";
+import { mapaSlugs, type MapaSlugs } from "./slugHotel";
 
 export type HotelCobrable = HotelParaCobrar & { destino: string | null };
+
+/** Slugs de /reservar/<slug> de todos los hoteles públicos (mismo filtro que `hotelParaCobrar`). */
+export async function slugsDeHoteles(): Promise<MapaSlugs> {
+  const { data, error } = await supabaseServer()
+    .from("productos")
+    .select("id,nombre")
+    .eq("activo", true)
+    .eq("oculto_sin_foto", false)
+    .eq("tipo", "hotel");
+  if (error) throw error;
+  return mapaSlugs((data ?? []) as { id: number; nombre: string }[]);
+}
 
 export async function hotelParaCobrar(id: number): Promise<HotelCobrable | null> {
   const { data, error } = await supabaseServer()

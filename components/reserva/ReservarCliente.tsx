@@ -67,6 +67,7 @@ export function ReservarCliente({
   // agregado, editado o quitado se guarda por pestaña. Solo se restaura si el enlace trae el mismo
   // `vuelo=` que cuando se guardó (otro enlace desde /cotizar manda).
   const claveBoleto = `lotus-reservar-boleto:${hotel.id}`;
+  const hayVuelo = vueloPedido !== null;
   const origenBoleto = vueloPedido ? vueloATexto(vueloPedido) : "";
   const boletoRestaurado = useRef(false);
   useEffect(() => {
@@ -80,12 +81,13 @@ export function ReservarCliente({
   useEffect(() => {
     try {
       const g = JSON.parse(sessionStorage.getItem(claveBoleto) ?? "null") as { origen?: unknown; valor?: unknown } | null;
-      if (g && g.origen === origenBoleto && typeof g.valor === "string") setBoleto(vueloDeTexto(g.valor));
+      // Sin `vuelo=` (URL limpia tras recargar o volver del login) manda lo guardado, venga del enlace que venga.
+      if (g && (!hayVuelo || g.origen === origenBoleto) && typeof g.valor === "string") setBoleto(vueloDeTexto(g.valor));
     } catch {
       /* borrador ilegible: queda el del enlace */
     }
     boletoRestaurado.current = true;
-  }, [claveBoleto, origenBoleto]);
+  }, [claveBoleto, origenBoleto, hayVuelo]);
   const conBoleto = boleto && esDestinoCompraDirecta(destino) ? boleto : null;
   const r = useReserva({
     hotel,
