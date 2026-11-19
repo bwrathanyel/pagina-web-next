@@ -29,4 +29,5 @@ test("niño gratis: paquete de texto (LD Palm Beach) muestra su monto y unidad, 
   assert.equal(palm?.unidad, "3 días y 2 noches para 2 personas");
   assert.equal(b?.hoteles.find((h) => h.id === 2)?.unidad, null);
   assert.equal(b?.desde, "$55");
+  assert.match(palm?.href ?? "", /^\/cotizar\?.*&hotel=10&tarifa=1$/);
 });

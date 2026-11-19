@@ -50,6 +50,8 @@ export interface BloqueNinosGratis {
 }
 
 const DIA = 864e5;
+/** /cotizar con hospedaje en Margarita para 2 adultos y 1 niño (botón del bloque). */
+export const COTIZAR_NINOS_HREF = "/cotizar?servicios=hospedaje&destino=Isla%20de%20Margarita&adultos=2&ninos=1";
 export const diaMes = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
 
 /** Hoteles con niño gratis vigente en un destino, el que vence primero
@@ -81,7 +83,8 @@ export function ninosGratisEn(pool: HotSale[], destino: string, ahora = new Date
         hotel: p.producto.nombre,
         plan: p.plan?.trim() || null,
         foto: fotoDelAlojamiento(p) ?? null,
-        href: `/producto/${p.producto.id}`,
+        // Cada hotel abre /cotizar con él y su tarifa ya elegidos (dueño 2026-11-19).
+        href: `${COTIZAR_NINOS_HREF}&hotel=${p.producto.id}&tarifa=${p.id}`,
         precio: monto !== null ? montoConMoneda(monto, moneda) : (paquete?.monto ?? null),
         unidad: paquete?.unidad?.replace(/\s*con \d+ niñ[oa]s? gratis$/i, "") || null,
         tasa: moneda,

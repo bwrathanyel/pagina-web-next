@@ -6,11 +6,10 @@ import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import { WhatsAppLeadButton } from "@/components/leads/WhatsAppLeadButton";
 import { NumeralPrecio } from "@/components/home/NumeralPrecio";
 import { NinosGratisRotacion } from "@/components/home/NinosGratisRotacion";
-import type { BloqueNinosGratis } from "@/lib/promociones/ninosGratis";
+import { COTIZAR_NINOS_HREF as COTIZAR_HREF, type BloqueNinosGratis } from "@/lib/promociones/ninosGratis";
 
 // Cotizador ya armado para la promo: hospedaje en Margarita, dos adultos y un
 // niño (parsearEstado ignora lo que no reconozca).
-const COTIZAR_HREF = "/cotizar?servicios=hospedaje&destino=Isla%20de%20Margarita&adultos=2&ninos=1";
 
 /** Banda "Niños gratis en Margarita" (comp C aprobado, 2026-09-24): dusk a
  * sangre en los dos temas, con la foto del lugar. A la izquierda el precio
