@@ -121,6 +121,8 @@ function Sello({
           {foto ? (
             <span aria-hidden="true" className="sello-escena pointer-events-none absolute inset-0 -z-10 bg-dusk">
               <Image src={foto.url} alt="" fill sizes="7rem" className="object-cover" />
+              {/* Velo dusk: el nombre sigue legible sobre la foto. */}
+              <span className="absolute inset-0 bg-linear-to-t from-dusk/90 via-dusk/60 to-dusk/10" />
             </span>
           ) : null}
         </>
@@ -131,11 +133,14 @@ function Sello({
         </span>
       ) : null}
       {conEscena && destino ? (
-        // Sello y nombre se apagan juntos mientras se ve la foto (el arte ya
-        // trae su propia animación `estampa`: por eso un envoltorio aparte).
-        <span className={`${foto ? "sello-contenido" : ""} flex flex-col items-center gap-1.5`}>
-          <SelloDestino key={String(activo)} destino={destino} tamano={36} className={`sello-destino-arte ${tinta}`} />
-          <span>{etiqueta}</span>
+        // Mientras se ve la foto el sello se apaga (el arte ya trae su propia
+        // animación `estampa`: por eso un envoltorio aparte) y el nombre se
+        // queda en su lugar, aclarado a dusk-text sobre el velo.
+        <span className="flex flex-col items-center gap-1.5">
+          <span className={`${foto ? "sello-arte-escena" : ""} inline-flex`}>
+            <SelloDestino key={String(activo)} destino={destino} tamano={36} className={`sello-destino-arte ${tinta}`} />
+          </span>
+          <span className={foto ? "sello-nombre-escena" : undefined}>{etiqueta}</span>
         </span>
       ) : (
         <>

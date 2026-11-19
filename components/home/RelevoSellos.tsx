@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, type ComponentProps } from "react";
 
-/** Paso del relevo: la escena dura `--ritmo-escena` (globals.css, 1,3 s) y el
- * resto es la pausa hasta el próximo sello. */
-export const PASO_RELEVO_MS = 3800;
+/** Paso del relevo: la escena dura `--ritmo-escena` (globals.css, 2,8 s) y el
+ * resto (0,4 s) es la pausa hasta el próximo sello. */
+export const PASO_RELEVO_MS = 3200;
 /** Primer sello al abrir el panel (deja asentar la caída de las opciones). */
 const ARRANQUE_MS = 400;
-/** Al volver de una pausa (puntero, pestaña) espera como entre dos sellos. */
-const REANUDA_MS = 2500;
+/** Al volver de una pausa (puntero, pestaña) retoma enseguida. */
+const REANUDA_MS = 600;
 const CLASE = "relevo-activo";
 
 /** Grilla de sellos de destino que se relevan de a uno (pedido del dueño,

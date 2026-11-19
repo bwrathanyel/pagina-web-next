@@ -828,7 +828,7 @@ html {
    en orden de lectura, con pausa entre uno y otro y en bucle; nunca dos a la vez. El sello brilla
    con su tinta, se apaga y deja ver la foto de su destino, y vuelve. Solo opacity y transform; el
    brillo es una capa con opacity (nada de box-shadow animado). Capas invisibles y quietas con
-   reduced-motion. --ritmo-escena va en sintonía con PASO_RELEVO_MS (3,8 s = escena + pausa). */
+   reduced-motion. --ritmo-escena va en sintonía con PASO_RELEVO_MS (3,2 s = escena + pausa). */
 .sello-brillo {
   background: radial-gradient(circle at 50% 40%, color-mix(in oklab, var(--tinta-destino) 38%, transparent), color-mix(in oklab, var(--tinta-destino) 12%, transparent));
   opacity: 0;
@@ -836,8 +836,10 @@ html {
 .sello-escena {
   opacity: 0;
 }
+/* Dueño 2026-11-19 (2.ª vuelta): relevo más ágil (0,4 s entre sellos) y foto más larga (~1,6 s
+   quieta de 2,8 s); el nombre no se apaga, pasa a dusk-text sobre el velo de la foto. */
 .sello-con-escena {
-  --ritmo-escena: 1.3s;
+  --ritmo-escena: 2.8s;
 }
 @media (prefers-reduced-motion: no-preference) {
   .relevo-activo .sello-brillo {
@@ -846,27 +848,33 @@ html {
   .relevo-activo .sello-escena {
     animation: sello-escena var(--ritmo-escena) var(--ease-entrada-salida) both;
   }
-  .relevo-activo .sello-contenido {
+  .relevo-activo .sello-arte-escena {
     animation: sello-se-funde var(--ritmo-escena) var(--ease-entrada-salida) both;
+  }
+  .relevo-activo .sello-nombre-escena {
+    animation: sello-nombre-aclara var(--ritmo-escena) var(--ease-entrada-salida) both;
   }
 }
 @keyframes sello-brilla {
   0% { opacity: 0; }
-  18% { opacity: 1; }
-  40%, 72% { opacity: 0.5; }
+  10% { opacity: 1; }
+  24%, 82% { opacity: 0.4; }
   100% { opacity: 0; }
 }
 @keyframes sello-escena {
-  0%, 18% { opacity: 0; transform: scale(1.12); }
-  38% { opacity: 1; }
-  72% { opacity: 1; transform: scale(1); }
-  90%, 100% { opacity: 0; transform: scale(1); }
+  0%, 10% { opacity: 0; transform: scale(1.12); }
+  24% { opacity: 1; }
+  82% { opacity: 1; transform: scale(1); }
+  94%, 100% { opacity: 0; transform: scale(1); }
 }
 @keyframes sello-se-funde {
   0% { opacity: 1; transform: scale(1); }
-  16% { opacity: 1; transform: scale(1.08); }
-  34%, 72% { opacity: 0; transform: scale(0.94); }
-  90%, 100% { opacity: 1; transform: scale(1); }
+  10% { opacity: 1; transform: scale(1.08); }
+  22%, 82% { opacity: 0; transform: scale(0.94); }
+  94%, 100% { opacity: 1; transform: scale(1); }
+}
+@keyframes sello-nombre-aclara {
+  22%, 82% { color: var(--color-dusk-text); }
 }
 @keyframes valor-sube {
   from { opacity: 0; transform: translateY(0.375rem); }
