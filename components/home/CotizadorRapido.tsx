@@ -235,6 +235,7 @@ function Tramo({
   id,
   className = "",
   foto = null,
+  destino = "",
   children,
 }: {
   etiqueta: string;
@@ -242,8 +243,11 @@ function Tramo({
   className?: string;
   /** Banner: la foto del destino detrás, oscurecida con dusk (texto claro en los dos temas). */
   foto?: string | null;
+  /** Destino del banner: pone su tinta (`--color-destino-*`) y su sello de motivo. */
+  destino?: string;
   children: (id: string) => ReactNode;
 }) {
+  const sello = destino ? selloDestino(destino) : undefined;
   const propio = useId();
   const idControl = id ?? propio;
   return (
@@ -253,10 +257,28 @@ function Tramo({
       } ${className}`}
     >
       {foto ? (
-        <span aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-control bg-dusk">
-          {/* La key cambia con el destino: la foto nueva entra asentándose. */}
-          <Image key={foto} src={foto} alt="" fill sizes="22rem" className="hero-banner-destino object-cover" />
+        // Banner animado por destino (pedido del dueño, 2026-11-19): la foto
+        // deriva en bucle, la tinta del destino respira a la derecha y su sello
+        // flota de fondo. Bucles con `alternate` (van y vuelven, sin corte) y
+        // periodos distintos para que no se lean como un solo movimiento.
+        // Nodos separados: la deriva en el contenedor y la entrada en el
+        // <Image>, si no los dos transform se pisan (misma lección del hero).
+        <span
+          aria-hidden="true"
+          data-destino={sello}
+          className="banner-destino pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-control bg-dusk"
+        >
+          <span className="banner-deriva absolute inset-0">
+            {/* La key cambia con el destino: la foto nueva entra asentándose. */}
+            <Image key={foto} src={foto} alt="" fill sizes="28rem" className="hero-banner-destino object-cover" />
+          </span>
           <span className="absolute inset-0 bg-gradient-to-r from-dusk/90 via-dusk/70 to-dusk/35" />
+          <span className="banner-tinta absolute inset-0" />
+          {sello ? (
+            <span className="absolute -right-2 top-1/2 -translate-y-1/2">
+              <SelloDestino key={`motivo-${sello}`} destino={destino} tamano={88} className="banner-sello" />
+            </span>
+          ) : null}
         </span>
       ) : null}
       <label htmlFor={idControl} className={`text-sm ${foto ? "text-dusk-text-soft" : "text-ink-soft"}`}>
@@ -440,7 +462,7 @@ export function CotizadorRapidoBarra({
     >
       <input type="hidden" name="servicios" value={c.servicios.join(",")} />
       <div className="grid min-w-0 flex-1 grid-cols-[2.35fr_2fr_1.65fr] divide-x divide-linea">
-        <Tramo etiqueta="Destino" foto={fotoDestino}>
+        <Tramo etiqueta="Destino" foto={fotoDestino} destino={c.destino}>
           {(id) => (
             <DestinoBarra
               id={id}

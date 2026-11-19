@@ -204,7 +204,7 @@ Radios de 12 a 16px: `card` 16px, `media` y `control` 12px, `pill` 999px solo pa
 - **Escalonado:** 40 ms entre hermanos, con tope en el séptimo (≤ 240 ms de retraso total).
 - **Propiedades:** solo `transform` y `opacity` (y `box-shadow` en el hover de tarjeta). Nada de animar `width`, `height`, `top`, `margin`: sin layout thrash.
 - **Curvas:** `--ease-salida` para llegar, `--ease-entrada-salida` para lo que va y vuelve (flap). Nunca `cubic-bezier` en línea; en `motion` las mismas curvas como arreglo (`EASE_SALIDA` en `Hoja`).
-- **Loops:** solo los del hero (Ken Burns, barra de segmentos) y se pausan fuera de pantalla o con la pestaña oculta (`.en-pausa`).
+- **Loops:** solo los del hero (Ken Burns, barra de segmentos, banner del tramo Destino) y se pausan fuera de pantalla o con la pestaña oculta (`.en-pausa`; el banner con `.fuera-de-vista`, porque sigue vivo al tocar el cotizador). Un bucle va y vuelve (`alternate`): nunca salta de 100% a 0%.
 - **Movimiento reducido:** sin desplazamiento ni escala; las entradas quedan como fundido corto (`aparecer-suave`), los loops se quitan, lo que se revela al hacer scroll ya está en su lugar y las view transitions no animan.
 
 ### Momentos permitidos

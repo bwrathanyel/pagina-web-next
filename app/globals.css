@@ -788,16 +788,16 @@ html {
 
 /* Panel de destinos (CotizadorRapido): al pasar el puntero cada sello sin marcar toma su tinta y su
    giro propios. Marcado sigue en acento (es el estado, no el destino). Sin movimiento con reduced-motion. */
-.sello-destino[data-destino="margarita"] { --tinta-destino: var(--color-destino-margarita); --giro-destino: 6deg; }
-.sello-destino[data-destino="coche"] { --tinta-destino: var(--color-destino-coche); --giro-destino: 8deg; }
-.sello-destino[data-destino="morrocoy"] { --tinta-destino: var(--color-destino-morrocoy); --giro-destino: -14deg; }
-.sello-destino[data-destino="los-roques"] { --tinta-destino: var(--color-destino-los-roques); --giro-destino: 10deg; }
-.sello-destino[data-destino="merida"] { --tinta-destino: var(--color-destino-merida); --giro-destino: -3deg; }
-.sello-destino[data-destino="canaima"] { --tinta-destino: var(--color-destino-canaima); --giro-destino: -16deg; }
-.sello-destino[data-destino="catatumbo"] { --tinta-destino: var(--color-destino-catatumbo); --giro-destino: 12deg; }
-.sello-destino[data-destino="colonia-tovar"] { --tinta-destino: var(--color-destino-colonia-tovar); --giro-destino: -10deg; }
-.sello-destino[data-destino="caracas"] { --tinta-destino: var(--color-destino-caracas); --giro-destino: -6deg; }
-.sello-destino[data-destino="extranjero"] { --tinta-destino: var(--color-destino-extranjero); --giro-destino: 4deg; }
+:is(.sello-destino, .banner-destino)[data-destino="margarita"] { --tinta-destino: var(--color-destino-margarita); --giro-destino: 6deg; }
+:is(.sello-destino, .banner-destino)[data-destino="coche"] { --tinta-destino: var(--color-destino-coche); --giro-destino: 8deg; }
+:is(.sello-destino, .banner-destino)[data-destino="morrocoy"] { --tinta-destino: var(--color-destino-morrocoy); --giro-destino: -14deg; }
+:is(.sello-destino, .banner-destino)[data-destino="los-roques"] { --tinta-destino: var(--color-destino-los-roques); --giro-destino: 10deg; }
+:is(.sello-destino, .banner-destino)[data-destino="merida"] { --tinta-destino: var(--color-destino-merida); --giro-destino: -3deg; }
+:is(.sello-destino, .banner-destino)[data-destino="canaima"] { --tinta-destino: var(--color-destino-canaima); --giro-destino: -16deg; }
+:is(.sello-destino, .banner-destino)[data-destino="catatumbo"] { --tinta-destino: var(--color-destino-catatumbo); --giro-destino: 12deg; }
+:is(.sello-destino, .banner-destino)[data-destino="colonia-tovar"] { --tinta-destino: var(--color-destino-colonia-tovar); --giro-destino: -10deg; }
+:is(.sello-destino, .banner-destino)[data-destino="caracas"] { --tinta-destino: var(--color-destino-caracas); --giro-destino: -6deg; }
+:is(.sello-destino, .banner-destino)[data-destino="extranjero"] { --tinta-destino: var(--color-destino-extranjero); --giro-destino: 4deg; }
 @media (hover: hover) {
   .sello-destino:not([aria-pressed="true"]):hover {
     border-color: var(--tinta-destino);
@@ -827,6 +827,52 @@ html {
 }
 @keyframes banner-asienta {
   from { opacity: 0; transform: scale(1.08); }
+}
+
+/* Banner del tramo Destino (CotizadorRapido, barra lg+): tinta y sello propios de cada destino
+   (data-destino, mismos tokens que los sellos) sobre la foto oscurecida con dusk. El banner es siempre
+   oscuro: la tinta se aclara hacia dusk-text para que el sello se lea también con la tinta profunda
+   del tema claro. Tres bucles con alternate (ida y vuelta: nunca hay un salto de 100% a 0%), solo
+   transform/opacity, quietos con reduced-motion y pausados con el hero fuera de pantalla o la pestaña
+   oculta (.fuera-de-vista, Hero.tsx). No se pausan al tocar el cotizador: el banner confirma el
+   destino elegido mientras se llena el resto. */
+.banner-destino {
+  --tinta-destino: var(--color-dusk-2);
+}
+.banner-tinta {
+  background: linear-gradient(90deg, transparent 30%, color-mix(in oklab, var(--tinta-destino) 55%, transparent));
+  opacity: 0.8;
+}
+.banner-sello {
+  color: color-mix(in oklab, var(--tinta-destino) 55%, var(--color-dusk-text));
+  opacity: 0.4;
+  rotate: var(--giro-destino, 0deg);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .banner-deriva {
+    animation: banner-deriva 18s var(--ease-entrada-salida) infinite alternate;
+  }
+  .banner-tinta {
+    animation: banner-respira 7s var(--ease-entrada-salida) infinite alternate;
+  }
+  .banner-sello {
+    animation: banner-sello 11s var(--ease-entrada-salida) infinite alternate;
+  }
+}
+.fuera-de-vista :is(.banner-deriva, .banner-tinta, .banner-sello) {
+  animation-play-state: paused;
+}
+@keyframes banner-deriva {
+  from { transform: scale(1.06) translate3d(-2%, 1%, 0); }
+  to { transform: scale(1.14) translate3d(2%, -1%, 0); }
+}
+@keyframes banner-respira {
+  from { opacity: 0.55; }
+  to { opacity: 1; }
+}
+@keyframes banner-sello {
+  from { transform: translate3d(0, 8%, 0) rotate(-4deg); }
+  to { transform: translate3d(-10%, -8%, 0) rotate(5deg); }
 }
 
 /* Hoja «Su reserva» (ResumenBoleto.tsx): la ruta entre entrada y salida se dibuja, las noches aparecen

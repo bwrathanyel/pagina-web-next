@@ -101,6 +101,12 @@ export function Hero({ fotos, ninoGratis = null }: { fotos: FotoHero[]; ninoGrat
   // oferta siguen rotando mientras pone fechas y viajeros, distrae (visto en el
   // video de prueba del 2026-10-16). Desde el primer toque el hero queda quieto.
   const [tocado, setTocado] = useState(false);
+  // Clic en un segmento cuya foto todavía no bajó: se espera a que baje y se
+  // decodifique antes de saltar. Saltar directo era el mismo hueco dusk en
+  // pantalla completa que el reloj ya evita (revisión del hero, 2026-11-19).
+  // El ref lo leen los callbacks de carga, que pueden llegar tarde.
+  const [pendiente, setPendiente] = useState<number | null>(null);
+  const pendienteRef = useRef<number | null>(null);
   const seccion = useRef<HTMLElement>(null);
   useHeroBajoBarra(seccion);
   const activo = pestanaVisible && enPantalla && !tocado;
@@ -121,6 +127,8 @@ export function Hero({ fotos, ninoGratis = null }: { fotos: FotoHero[]; ninoGrat
     setOrden(fotos.length > 1 ? [fotos[0], ...barajar(fotos.slice(1))] : fotos);
     setI(0);
     setCiclo(0);
+    setPendiente(null);
+    pendienteRef.current = null;
     cargadas.current = new Set(fotos[0] ? [fotos[0].url] : []);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [claveFotos]);
@@ -145,7 +153,7 @@ export function Hero({ fotos, ninoGratis = null }: { fotos: FotoHero[]; ninoGrat
   // `i` en las dependencias: un salto manual (clic en un segmento) reinicia el
   // reloj, así la foto elegida tiene su tiempo completo igual que su segmento.
   useEffect(() => {
-    if (!rotando || !activo) return;
+    if (!rotando || !activo || pendiente !== null) return;
     const t = setTimeout(() => {
       for (let paso = 1; paso < orden.length; paso++) {
         const siguiente = (i + paso) % orden.length;
@@ -159,7 +167,21 @@ export function Hero({ fotos, ninoGratis = null }: { fotos: FotoHero[]; ninoGrat
       setVuelta((v) => v + 1);
     }, MS_POR_FOTO);
     return () => clearTimeout(t);
-  }, [rotando, activo, orden, i, ciclo, vuelta]);
+  }, [rotando, activo, orden, i, ciclo, vuelta, pendiente]);
+
+  const fijarPendiente = (idx: number | null) => {
+    pendienteRef.current = idx;
+    setPendiente(idx);
+  };
+
+  const irA = (idx: number) => {
+    if (idx === i) return fijarPendiente(null);
+    if (cargadas.current.has(fondoDe(orden[idx], ciclo).url)) {
+      fijarPendiente(null);
+      return setI(idx);
+    }
+    fijarPendiente(idx);
+  };
 
   // Una foto que no baja (red cortada, archivo borrado) sale de la rotación y
   // se salta ya a la próxima que sí bajó: si no, queda el texto alternativo
@@ -201,11 +223,23 @@ export function Hero({ fotos, ninoGratis = null }: { fotos: FotoHero[]; ninoGrat
 
   // Solo se monta la foto actual (más la saliente mientras se desvanece) y un
   // prefetch invisible de la siguiente: montar el pool entero bajaría todas.
+  // Con un salto pendiente, el prefetch baja esa foto en vez de la siguiente.
   const indiceSiguiente = orden.length > 1 ? (i + 1) % orden.length : -1;
   const fotoSiguiente =
-    indiceSiguiente >= 0 ? fondoDe(orden[indiceSiguiente], indiceSiguiente < i ? ciclo + 1 : ciclo) : null;
+    pendiente !== null && orden[pendiente]
+      ? fondoDe(orden[pendiente], ciclo)
+      : indiceSiguiente >= 0
+        ? fondoDe(orden[indiceSiguiente], indiceSiguiente < i ? ciclo + 1 : ciclo)
+        : null;
 
   const marcarCargada = (url: string) => cargadas.current.add(url);
+
+  // El salto pendiente se cumple solo si nadie eligió otra foto mientras bajaba.
+  const cumplirPendiente = (salto: number | null, url: string | null) => {
+    if (salto === null || pendienteRef.current !== salto) return;
+    fijarPendiente(null);
+    if (url) setI(salto);
+  };
 
   const asesor = esWhatsapp ? (
     <WhatsAppLeadButton
@@ -233,12 +267,13 @@ export function Hero({ fotos, ninoGratis = null }: { fotos: FotoHero[]; ninoGrat
       ref={seccion}
       className={
         "sobre-dusk bajo-barra relative isolate flex min-h-[calc(100svh-5rem)] flex-col overflow-hidden bg-dusk lg:min-h-svh" +
-        (activo ? "" : " en-pausa")
+        (activo ? "" : " en-pausa") +
+        (pestanaVisible && enPantalla ? "" : " fuera-de-vista")
       }
     >
       <div className="hero-parallax absolute inset-0 overflow-hidden">
         {hero.image ? (
-          <Image src={hero.image} alt={heroAlt} fill sizes="100vw" className="hero-kenburns object-cover" priority />
+          <Image src={hero.image} alt={heroAlt} fill sizes="100vw" className="hero-kenburns object-cover" preload />
         ) : fondo ? (
           // Tres nodos: este contenedor hace parallax; la capa de motion cruza
           // (opacidad + escala); el <Image> de adentro hace Ken Burns. Mezclar
@@ -264,7 +299,10 @@ export function Hero({ fotos, ninoGratis = null }: { fotos: FotoHero[]; ninoGrat
                 fill
                 sizes="100vw"
                 className={"object-cover text-transparent " + (i % 2 ? "hero-kenburns-inv" : "hero-kenburns")}
-                priority={i === 0 && ciclo === 0}
+                // La primera es el LCP: <link preload> en el <head>. Las demás
+                // ya están bajadas por el prefetch; eager evita que el lazy por
+                // defecto espere a un layout para pedirla a la caché.
+                {...(i === 0 && ciclo === 0 ? { preload: true } : { loading: "eager" as const })}
                 onLoad={() => marcarCargada(fondo.url)}
                 onError={() => alFallar(fondo.url)}
               />
@@ -292,8 +330,14 @@ export function Hero({ fotos, ninoGratis = null }: { fotos: FotoHero[]; ninoGrat
             // primeros cuadros. decode() la deja lista antes de habilitar el salto.
             onLoad={(e) => {
               const url = fotoSiguiente.url;
-              e.currentTarget.decode().then(() => marcarCargada(url), () => marcarCargada(url));
+              const salto = pendiente;
+              const listo = () => {
+                marcarCargada(url);
+                cumplirPendiente(salto, url);
+              };
+              e.currentTarget.decode().then(listo, listo);
             }}
+            onError={() => cumplirPendiente(pendiente, null)}
           />
         </div>
       ) : null}
@@ -389,12 +433,17 @@ export function Hero({ fotos, ninoGratis = null }: { fotos: FotoHero[]; ninoGrat
                   <button
                     key={`${foto.url}-${foto.pase?.promoId ?? idx}`}
                     type="button"
-                    onClick={() => setI(idx)}
+                    onClick={() => irA(idx)}
                     aria-label={`Ver oferta ${idx + 1} de ${orden.length}: ${foto.pase?.hotel ?? foto.alt}`}
                     aria-current={idx === i}
                     className="group/seg flex h-11 min-w-0 flex-1 items-center px-1"
                   >
-                    <span className="relative block h-1 w-full overflow-hidden rounded-pill bg-white/25 transition-colors duration-150 ease-salida group-hover/seg:bg-white/45">
+                    <span
+                      className={
+                        "relative block h-1 w-full overflow-hidden rounded-pill transition-colors duration-150 ease-salida group-hover/seg:bg-white/45 " +
+                        (idx === pendiente ? "bg-white/45" : "bg-white/25")
+                      }
+                    >
                       {idx < i ? <span className="absolute inset-0 bg-white/80" /> : null}
                       {idx === i ? (
                         <span
