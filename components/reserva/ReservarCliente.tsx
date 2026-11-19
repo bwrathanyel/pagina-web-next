@@ -20,6 +20,7 @@ import { OtrosHoteles, type HotelAlternativo } from "./OtrosHoteles";
 import { PoliticaPlegable } from "./PoliticaPlegable";
 import { Tramo } from "./Tramo";
 import { SelloDestino } from "@/components/ui/SelloDestino";
+import { SellosCabecera } from "./SellosCabecera";
 import type { TramoId } from "@/lib/checkout/tramos";
 import { BarraTotalMovil, PaseCabecera, type DatosResumen } from "./ResumenBoleto";
 import { TramoDatos } from "./TramoDatos";
@@ -176,11 +177,11 @@ export function ReservarCliente({
 
       {/* Teléfono: franja con las fotos del hotel rotando de fondo y el nombre sobre el velo dusk; tocar
           la franja abre el visor (velo y texto dejan pasar el toque). Desde lg: tarjeta con la miniatura,
-          el nombre y el total del pase a la derecha. */}
+          el nombre, los sellos de confianza + WhatsApp al centro y el total del pase a la derecha. */}
       <header className="relative flex min-h-24 items-end gap-3 overflow-hidden rounded-card bg-dusk p-3 sm:min-h-28 lg:min-h-0 lg:items-center lg:gap-4 lg:border lg:border-linea lg:bg-card lg:p-2">
         <FotosCabecera hotelId={hotel.id} nombre={hotel.nombre} fotos={fotosCabecera} />
         <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-t from-dusk from-10% via-dusk/60 to-dusk/10 lg:hidden" />
-        <div className="pointer-events-none relative min-w-0 flex-1">
+        <div className="pointer-events-none relative min-w-0 flex-1 lg:max-w-xs lg:flex-none xl:max-w-sm">
           <h1 className="titulo-marca text-balance font-display text-xl font-bold leading-tight text-dusk-text sm:text-2xl lg:text-xl lg:text-ink">{hotel.nombre}</h1>
           <p className="mt-1.5 flex lg:mt-1 items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest text-dusk-text lg:text-ink-soft">
             {destino ? <SelloDestino destino={destino} tamano={24} className="shrink-0 text-dusk-text lg:text-ink-soft" /> : null}
@@ -189,6 +190,11 @@ export function ReservarCliente({
             </span>
           </p>
         </div>
+        <SellosCabecera
+          horasCupo={config ? (r.totales?.riel === "pago_movil" ? config.hold_horas_ves : config.hold_horas_usd) : null}
+          wa={wa("encabezado")}
+          className="relative flex-1 max-lg:hidden"
+        />
         <PaseCabecera datos={datosPase} totales={r.totales} sinPrecio={r.sinPrecio} className="relative max-lg:hidden" />
         <a
           {...wa("encabezado")}
