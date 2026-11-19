@@ -43,3 +43,12 @@ test("promo niños sin tarifa chd: el asesor confirma", () => {
   assert.equal(o.precioNino, null);
   assert.equal(o.ninosGratisEdades, null);
 });
+
+test("paquete de texto con niño gratis (LD Palm Beach) no le gana a la tarifa normal del hotel", () => {
+  const paquete = { ...promo({}, "4-10"), id: 120929, precios: null, precio_desde_usd: null, precio_texto: "03 días y 02 noches para 02 personas con 1 Niño Gratis: REF. 240.00" };
+  const normal = { ...promo({ dbl: 75, sgl: 95 }, null), id: 121008, nino_gratis: null };
+  const [o] = ofertasHoteles([paquete, normal] as unknown as Parameters<typeof ofertasHoteles>[0]);
+  assert.equal(o.tarifaId, 121008);
+  assert.equal(o.ninosGratis, false);
+  assert.equal(o.precio?.monto, "$75");
+});

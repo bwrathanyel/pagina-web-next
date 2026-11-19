@@ -96,9 +96,14 @@ const esPlanBasico = (p: Promocion) => /desayuno|solo alojamiento/.test(normaliz
 
 /** Qué oferta se muestra primero de un destino (pedido del dueño, 2026-09-25):
  * niños gratis, después todo incluido, después el resto, y al final los planes
- * de solo desayuno o solo alojamiento. A igual prioridad manda el ranking. */
+ * de solo desayuno o solo alojamiento. A igual prioridad manda el ranking.
+ * Un paquete de texto sin grilla (LD Palm Beach «Plan Residentes Navidad»,
+ * dueño 2026-11-19) va al final: el hotel se anuncia con su tarifa normal y el
+ * paquete solo vive en su propia tarjeta y en el bloque de niño gratis. */
+const esPaqueteSinGrilla = (p: ConNinoGratis) =>
+  !p.precios || Object.values(p.precios).every((v) => v === null || v === "");
 export const prioridadOferta = (p: ConNinoGratis) =>
-  tieneNinoGratis(p) ? 0 : esTodoIncluido(p) ? 1 : esPlanBasico(p) ? 3 : 2;
+  esPaqueteSinGrilla(p) ? 4 : tieneNinoGratis(p) ? 0 : esTodoIncluido(p) ? 1 : esPlanBasico(p) ? 3 : 2;
 
 /** Destinos que se venden por el todo incluido: su piso de precio es el del
  * todo incluido más barato, no el de una habitación con desayuno. */
