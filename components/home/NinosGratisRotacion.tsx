@@ -35,7 +35,7 @@ function Precios({ h, cantidad, grande }: { h: HotelNinoGratis; cantidad: number
     <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
       {h.precio ? (
         <div>
-          <span className="block text-xs text-ink-soft">Adulto, por noche</span>
+          <span className="block text-xs text-ink-soft">{h.unidad ?? "Adulto, por noche"}</span>
           <span className={"font-mono font-bold leading-tight text-ink tabular-nums " + (grande ? "text-xl" : "text-base")}>
             <PrecioMostrado texto={h.precio} tasa={h.tasa} />
           </span>

@@ -1,4 +1,4 @@
-import { montoConMoneda, montoDoble } from "@/lib/tarifas";
+import { montoConMoneda, montoDoble, precioDePaquete } from "@/lib/tarifas";
 import { tasaDeMoneda, type TasaBcv } from "@/lib/utils/convertirPrecio";
 import { fotoDelAlojamiento } from "@/lib/promociones/fotosHero";
 import type { HotSale, NinoGratis } from "@/types/supabase";
@@ -29,6 +29,9 @@ export interface HotelNinoGratis {
   href: string;
   /** Doble por adulto y noche, ya formateado; null si la fila no trae grilla. */
   precio: string | null;
+  /** Qué cubre `precio` cuando no es el doble por adulto y noche (paquete:
+   * "3 días y 2 noches para 2 personas"); null = adulto por noche. */
+  unidad: string | null;
   /** Tasa BCV para Bs = moneda de la tarifa. */
   tasa: TasaBcv;
   hasta: string | null;
@@ -65,6 +68,9 @@ export function ninosGratisEn(pool: HotSale[], destino: string, ahora = new Date
     vistos.add(p.producto.id);
     const monto = montoDoble(p.precios);
     const moneda = tasaDeMoneda(p.moneda);
+    // Sin grilla, el paquete de texto («03 días y 02 noches… REF. 240.00»)
+    // muestra su monto con su unidad; no entra al piso por noche.
+    const paquete = monto === null ? precioDePaquete(p.precio_texto) : null;
     filas.push({
       ng,
       monto,
@@ -76,7 +82,8 @@ export function ninosGratisEn(pool: HotSale[], destino: string, ahora = new Date
         plan: p.plan?.trim() || null,
         foto: fotoDelAlojamiento(p) ?? null,
         href: `/producto/${p.producto.id}`,
-        precio: monto === null ? null : montoConMoneda(monto, moneda),
+        precio: monto !== null ? montoConMoneda(monto, moneda) : (paquete?.monto ?? null),
+        unidad: paquete?.unidad?.replace(/\s*con \d+ niñ[oa]s? gratis$/i, "") || null,
         tasa: moneda,
         hasta: ng.hasta,
         dias: ng.hasta ? Math.max(0, Math.round((Date.parse(ng.hasta) - hoy) / DIA)) : null,
