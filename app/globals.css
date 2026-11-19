@@ -1350,6 +1350,215 @@ html {
   from { transform: scale(0.94); opacity: 0.55; }
   to { transform: scale(1.06); opacity: 0.85; }
 }
+/* Resto de los destinos. Las piezas repetidas se ubican y desfasan con --n (ClimaDestino.tsx). */
+.clima-niebla-3 {
+  top: 32%;
+  height: 20%;
+}
+.clima-cenit {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 80vmin;
+  aspect-ratio: 1;
+  translate: -50% -55%;
+  border-radius: var(--radius-pill);
+  background: radial-gradient(
+    circle,
+    color-mix(in oklab, var(--color-dusk-text) 45%, transparent),
+    color-mix(in oklab, var(--color-gold) 20%, transparent) 35%,
+    transparent 68%
+  );
+  opacity: 0.7;
+}
+.clima-destello {
+  position: absolute;
+  width: 0.75rem;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: var(--radius-pill);
+  background: radial-gradient(
+    circle,
+    var(--color-dusk-text) 15%,
+    color-mix(in oklab, var(--color-gold) 40%, transparent) 35%,
+    transparent 70%
+  );
+  opacity: 0;
+}
+.clima-reflejo {
+  position: absolute;
+  left: calc(8% + var(--n) * 21%);
+  top: calc(52% + var(--n) * 4%);
+  width: 34%;
+  height: 5%;
+  background: radial-gradient(ellipse, color-mix(in oklab, var(--color-dusk-text) 30%, transparent), transparent 70%);
+  opacity: 0.5;
+}
+.clima-ola {
+  position: absolute;
+  left: 0;
+  top: calc(30% + var(--n) * 8%);
+  width: 45%;
+  height: 0.125rem;
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--color-dusk-text) 50%, transparent), transparent);
+  opacity: 0;
+}
+.clima-arcoiris {
+  position: absolute;
+  top: 12%;
+  right: -10%;
+  width: 80vmin;
+  aspect-ratio: 1;
+  border-radius: var(--radius-pill);
+  background: radial-gradient(
+    circle,
+    transparent 55%,
+    color-mix(in oklab, var(--color-seafoam) 35%, transparent) 57%,
+    color-mix(in oklab, var(--color-gold) 35%, transparent) 60%,
+    color-mix(in oklab, var(--color-coral-bright) 35%, transparent) 63%,
+    transparent 66%
+  );
+  mask-image: linear-gradient(to bottom, black 20%, transparent 55%);
+  opacity: 0.35;
+}
+.clima-bruma {
+  position: absolute;
+  left: 40%;
+  top: 35%;
+  width: 70%;
+  height: 45%;
+  background: radial-gradient(ellipse, color-mix(in oklab, var(--color-dusk-text) 25%, transparent), transparent 70%);
+  opacity: 0.6;
+}
+.clima-bruma-2 {
+  left: 55%;
+  top: 45%;
+  width: 50%;
+}
+/* Catatumbo: destello difuso y tenue (tope 0.4), dos pulsos por ciclo: lejos del umbral de flashes. */
+.clima-relampago {
+  position: absolute;
+  left: 45%;
+  top: 18%;
+  width: 55%;
+  height: 40%;
+  background: radial-gradient(
+    ellipse,
+    color-mix(in oklab, var(--color-dusk-text) 55%, transparent),
+    color-mix(in oklab, var(--color-gold) 12%, transparent) 40%,
+    transparent 70%
+  );
+  opacity: 0;
+}
+.clima-relampago-2 {
+  left: 5%;
+  top: 24%;
+  width: 45%;
+  height: 32%;
+}
+.clima-nube {
+  position: absolute;
+  left: calc(10% + var(--n) * 30%);
+  top: calc(4% + var(--n) * 7%);
+  width: 45%;
+  height: 22%;
+  background: radial-gradient(ellipse, color-mix(in oklab, var(--color-dusk-text) 30%, transparent), transparent 70%);
+  opacity: 0.55;
+}
+.clima-estela {
+  fill: none;
+  stroke: var(--color-dusk-text);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 1000 1000;
+  stroke-dashoffset: 1000;
+  opacity: 0.5;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .clima-rafaga.clima-brisa {
+    animation-duration: 13s;
+    opacity: 0.3;
+  }
+  .clima-niebla-3 {
+    animation-duration: 38s;
+  }
+  .clima-cenit {
+    animation: clima-respira 7s var(--ease-entrada-salida) infinite alternate;
+  }
+  .clima-destello {
+    animation: clima-destello 3.4s var(--ease-entrada-salida) infinite;
+    animation-delay: calc(var(--n) * -0.73s);
+  }
+  .clima-reflejo {
+    animation: clima-reflejo 5s var(--ease-entrada-salida) infinite alternate;
+    animation-delay: calc(var(--n) * -1.3s);
+  }
+  .clima-ola {
+    animation: clima-ola 9s var(--ease-entrada-salida) infinite;
+    animation-delay: calc(var(--n) * -1.9s);
+  }
+  .clima-arcoiris {
+    animation: clima-arcoiris 16s var(--ease-entrada-salida) infinite alternate;
+  }
+  .clima-bruma {
+    animation: clima-sube 14s var(--ease-entrada-salida) infinite alternate;
+  }
+  .clima-bruma-2 {
+    animation-duration: 18s;
+    animation-direction: alternate-reverse;
+  }
+  .clima-relampago {
+    animation: clima-relampago 7s linear infinite;
+  }
+  .clima-relampago-2 {
+    animation-duration: 11s;
+    animation-delay: -4s;
+  }
+  .clima-nube {
+    animation: clima-baja 24s var(--ease-entrada-salida) infinite alternate;
+    animation-delay: calc(var(--n) * -7s);
+  }
+  .clima-estela {
+    animation: clima-estela 16s var(--ease-entrada-salida) infinite;
+  }
+}
+@keyframes clima-destello {
+  0%, 100% { transform: scale(0.4); opacity: 0; }
+  50% { transform: scale(1.2); opacity: 0.9; }
+}
+@keyframes clima-reflejo {
+  from { transform: scale(0.75, 1); opacity: 0.3; }
+  to { transform: scale(1.15, 1.3); opacity: 0.7; }
+}
+@keyframes clima-ola {
+  0% { transform: translate3d(-100%, 0, 0); opacity: 0; }
+  25%, 75% { opacity: 0.8; }
+  100% { transform: translate3d(225%, 0, 0); opacity: 0; }
+}
+@keyframes clima-arcoiris {
+  from { opacity: 0; }
+  to { opacity: 0.45; }
+}
+@keyframes clima-sube {
+  from { transform: translate3d(0, 8%, 0) scale(1); opacity: 0.35; }
+  to { transform: translate3d(0, -14%, 0) scale(1.1); opacity: 0.7; }
+}
+@keyframes clima-relampago {
+  0%, 58% { opacity: 0; }
+  60% { opacity: 0.4; }
+  62% { opacity: 0.08; }
+  64% { opacity: 0.32; }
+  68%, 100% { opacity: 0; }
+}
+@keyframes clima-baja {
+  from { transform: translate3d(6%, -12%, 0); }
+  to { transform: translate3d(-8%, 18%, 0); }
+}
+@keyframes clima-estela {
+  0% { stroke-dashoffset: 1000; opacity: 0.5; }
+  45% { stroke-dashoffset: 0; opacity: 0.5; }
+  75%, 100% { stroke-dashoffset: 0; opacity: 0; }
+}
 
 /* Relleno del segmento activo del hero, con la misma duración que el reloj
    de la rotación (--dur-segmento lo pone Hero.tsx desde MS_POR_FOTO). En CSS
