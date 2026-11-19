@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { Hoja } from "@/components/ui/Hoja";
 import { Icono } from "@/components/ui/Icono";
 import { Etiqueta } from "@/components/ui/Insignia";
@@ -14,7 +14,7 @@ import type { Plan } from "@/lib/checkout/plan";
 // tarjeta entera clicable, con el estado elegido en acento suave (el design system no usa radios sueltos).
 
 const TARJETA =
-  "group flex cursor-pointer rounded-card border bg-card " + ELEGIBLE + " " +
+  "eleva-hover group flex cursor-pointer rounded-card border bg-card " + ELEGIBLE + " " +
   "has-[:checked]:border-acento has-[:checked]:bg-acento-suave " +
   "has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-acento/20";
 
@@ -254,12 +254,18 @@ export function OpcionesRiel({
         aria-label="Método de pago"
         className={"grid gap-2 sm:gap-3 " + (visibles.length >= 3 ? "grid-cols-3" : visibles.length === 2 ? "grid-cols-2" : "grid-cols-1")}
       >
-        {visibles.map((r) => {
+        {visibles.map((r, i) => {
           const h = horas ? (r.enBs ? horas.ves : horas.usd) : 0;
           return (
             <label
               key={r.id}
-              className={TARJETA + " min-h-16 flex-col items-center justify-center gap-0.5 px-2 py-2.5 text-center" + (error ? " border-peligro" : "")}
+              style={{ "--riel": `var(--color-riel-${r.id.replace("_", "-")})`, "--n": i } as CSSProperties}
+              className={
+                TARJETA + " min-h-16 flex-col items-center justify-center gap-0.5 px-2 py-2.5 text-center" +
+                (error ? " border-peligro" : "") +
+                // Late hasta que se elige uno; con error el borde rojo manda.
+                (!riel && !error ? " riel-late" : "")
+              }
             >
               <input
                 type="radio"
@@ -269,7 +275,10 @@ export function OpcionesRiel({
                 onChange={() => onElegir(r.id)}
                 className="sr-only"
               />
-              <span className="text-sm font-bold text-ink sm:text-base">{r.titulo}</span>
+              <span className="flex items-center gap-1.5 text-sm font-bold text-ink sm:text-base">
+                <span aria-hidden className="riel-punto size-2 shrink-0 rounded-pill" />
+                {r.titulo}
+              </span>
               <span className="font-mono text-xs font-bold text-ink-soft">{r.moneda}</span>
               {h > 0 ? <span className="text-xs text-ink-soft">Cupo {h} h</span> : null}
             </label>

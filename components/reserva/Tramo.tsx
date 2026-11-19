@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { Boton } from "@/components/ui/Boton";
 import { Icono } from "@/components/ui/Icono";
 import type { TramoId } from "@/lib/checkout/tramos";
@@ -36,7 +36,13 @@ export function Tramo({
   const idTitulo = `tramo-${id}-titulo`;
   const idPanel = `tramo-${id}-panel`;
   return (
-    <section id={`tramo-${id}`} aria-labelledby={idTitulo} className="relative flex scroll-mt-20 flex-col gap-3 lg:scroll-mt-28 lg:gap-2.5 lg:pl-6 xl:pl-5">
+    // Al montar, los tramos entran uno tras otro (`entra-card`, --n = posición); reduced-motion lo apaga.
+    <section
+      id={`tramo-${id}`}
+      aria-labelledby={idTitulo}
+      style={{ "--n": numero } as CSSProperties}
+      className="entra-card relative flex scroll-mt-20 flex-col gap-3 lg:scroll-mt-28 lg:gap-2.5 lg:pl-6 xl:pl-5"
+    >
       <span aria-hidden="true" className={"absolute inset-y-0 left-0 hidden w-1 lg:block " + (completo ? "franja-marca" : "bg-linea")} />
       <div className="flex items-center gap-3">
         <span

@@ -18,7 +18,7 @@ import type { Pasajeros } from "./PaseFechas";
 export type HotelAlternativo = Pick<OfertaHotel, "hotelId" | "nombre" | "foto" | "precio">;
 
 const TARJETA =
-  "group flex min-w-0 overflow-hidden rounded-card border border-linea bg-card transition-colors duration-150 ease-salida " +
+  "eleva-hover group flex min-w-0 overflow-hidden rounded-card border border-linea bg-card transition-colors duration-150 ease-salida " +
   "motion-reduce:transition-none hover:border-ink/35 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-acento/20";
 
 const NOTA = "text-xs text-ink-soft";
