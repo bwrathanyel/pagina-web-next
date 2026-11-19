@@ -241,7 +241,9 @@ export function SelectorFecha({
         style={{ anchorName: ancla } as CSSProperties}
         className={`flex items-center gap-2 text-left ${className}`}
       >
-        <span className={`min-w-0 truncate ${valor ? "" : "font-medium text-ink-soft"}`}>{texto}</span>
+        <span key={texto} className={`valor-cambia min-w-0 truncate ${valor ? "" : "font-medium text-ink-soft"}`}>
+          {texto}
+        </span>
         <Icono nombre="calendario" tamano={18} className="ml-auto shrink-0 text-ink-soft" />
       </button>
       <input type="hidden" name={name} value={valor} disabled={!valor} />

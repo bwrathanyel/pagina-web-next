@@ -370,7 +370,7 @@ export function Hero({ fotos, ninoGratis = null }: { fotos: FotoHero[]; ninoGrat
           onFocusCapture={() => setTocado(true)}
         >
           <div className="hero-sube hidden lg:block" style={retraso(120)}>
-            <CotizadorRapidoBarra ninoGratis={ninoGratis} brillo={!tocado} />
+            <CotizadorRapidoBarra ninoGratis={ninoGratis} brillo={!tocado} fotos={fotos} />
           </div>
 
           <div className="hero-sube lg:hidden" style={retraso(120)}>

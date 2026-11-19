@@ -2,6 +2,7 @@
 
 import { useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import Form from "next/form";
+import Image from "next/image";
 import { Boton, clasesBoton } from "@/components/ui/Boton";
 import { CLASE_CONTROL, Campo, Selector } from "@/components/ui/Campo";
 import { Hoja } from "@/components/ui/Hoja";
@@ -22,6 +23,8 @@ import {
   textoDuracion,
 } from "@/lib/cotizador/cotizacionRapida";
 import type { Servicio } from "@/lib/cotizador/estado";
+import { normalizarBusqueda } from "@/lib/catalogo/busqueda";
+import type { FotoHero } from "@/lib/promociones/fotosHero";
 import type { HotelNinoGratis } from "@/lib/promociones/ninosGratis";
 
 // Cotizador rápido del hero. Es un formulario GET de verdad (next/form): sin
@@ -72,6 +75,7 @@ function Sello({
   destino,
   icono,
   compacto = false,
+  orden,
 }: {
   activo: boolean;
   onClick: () => void;
@@ -79,6 +83,8 @@ function Sello({
   destino?: string;
   icono?: NombreIcono;
   compacto?: boolean;
+  /** Posición en el panel de destinos: las opciones caen escalonadas al abrir. */
+  orden?: number;
 }) {
   // La key cambia al marcar: así la animación `estampa` vuelve a correr.
   const tinta = activo ? "estampa -rotate-8 text-acento" : "-rotate-8 opacity-60";
@@ -87,7 +93,8 @@ function Sello({
       type="button"
       aria-pressed={activo}
       onClick={onClick}
-      className={`${compacto ? CLASE_PESTANA : CLASE_SELLO} ${
+      style={orden === undefined ? undefined : ({ "--n": orden } as CSSProperties)}
+      className={`${compacto ? `pestana ${CLASE_PESTANA}` : CLASE_SELLO} ${orden === undefined ? "" : "op-cae"} ${
         activo ? "border-acento bg-acento-suave text-ink" : "border-linea-fuerte bg-card text-ink-soft hover:border-ink/40 hover:text-ink"
       }`}
     >
@@ -99,12 +106,16 @@ function Sello({
       {destino ? (
         <SelloDestino key={String(activo)} destino={destino} tamano={36} className={tinta} />
       ) : icono ? (
-        <span key={String(activo)} aria-hidden="true" className={`inline-flex ${tinta}`}>
+        <span key={String(activo)} aria-hidden="true" className={`inline-flex ${compacto ? "pestana-icono" : ""} ${tinta}`}>
           <Icono nombre={icono} tamano={compacto ? 18 : 28} />
         </span>
       ) : null}
       <span>{etiqueta}</span>
       {activo && compacto ? <Icono nombre="check" tamano={14} className="text-acento" /> : null}
+      {/* Pestaña marcada: el canto con el degradado del logo crece desde el centro. */}
+      {activo && compacto ? (
+        <span aria-hidden="true" className="pestana-marca franja-marca absolute inset-x-3 bottom-0 h-0.5 rounded-pill" />
+      ) : null}
     </button>
   );
 }
@@ -217,29 +228,56 @@ function Tramo({
   etiqueta,
   id,
   className = "",
+  foto = null,
   children,
 }: {
   etiqueta: string;
   id?: string;
   className?: string;
+  /** Banner: la foto del destino detrás, oscurecida con dusk (texto claro en los dos temas). */
+  foto?: string | null;
   children: (id: string) => ReactNode;
 }) {
   const propio = useId();
   const idControl = id ?? propio;
   return (
     <div
-      className={`flex min-w-0 flex-col gap-0.5 rounded-control px-4 pb-1.5 pt-3 transition-colors duration-150 ease-salida hover:bg-sand-2/60 xl:px-5 ${className}`}
+      className={`tramo relative isolate flex min-w-0 flex-col gap-0.5 rounded-control px-4 pb-1.5 pt-3 transition-colors duration-150 ease-salida xl:px-5 ${
+        foto ? "" : "hover:bg-sand-2/60"
+      } ${className}`}
     >
-      <label htmlFor={idControl} className="text-sm text-ink-soft">
+      {foto ? (
+        <span aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-control bg-dusk">
+          {/* La key cambia con el destino: la foto nueva entra asentándose. */}
+          <Image key={foto} src={foto} alt="" fill sizes="22rem" className="hero-banner-destino object-cover" />
+          <span className="absolute inset-0 bg-gradient-to-r from-dusk/90 via-dusk/70 to-dusk/35" />
+        </span>
+      ) : null}
+      <label htmlFor={idControl} className={`text-sm ${foto ? "text-dusk-text-soft" : "text-ink-soft"}`}>
         {etiqueta}
       </label>
       {children(idControl)}
+      {/* Tramo activo (foco adentro o su panel abierto): línea con el degradado del logo. */}
+      <span aria-hidden="true" className="tramo-linea franja-marca absolute inset-x-4 bottom-0 h-0.5 rounded-pill xl:inset-x-5" />
     </div>
   );
 }
 
-const CONTROL_TRAMO =
-  "w-full min-w-0 cursor-pointer rounded-control bg-transparent py-1 text-base font-semibold text-ink outline-offset-4 xl:text-lg";
+const CONTROL_TRAMO_BASE =
+  "w-full min-w-0 cursor-pointer rounded-control bg-transparent py-1 text-base font-semibold outline-offset-4 xl:text-lg";
+const CONTROL_TRAMO = `${CONTROL_TRAMO_BASE} text-ink`;
+
+/** Foto del destino para el banner del tramo: primero las fotos propias del
+ * lugar (las que traen `fondos`), si no la del alojamiento. «Isla de Margarita»
+ * casa con «Margarita»; sin foto (Extranjero) el tramo queda liso. */
+function fotoDelDestino(fotos: readonly FotoHero[], destino: string): string | null {
+  const d = normalizarBusqueda(destino);
+  const casa = (f: FotoHero) => {
+    const x = normalizarBusqueda(f.destino?.trim() ?? "");
+    return x !== "" && (d.includes(x) || x.includes(d));
+  };
+  return (fotos.find((f) => f.fondos && casa(f)) ?? fotos.find(casa))?.url ?? null;
+}
 const etiquetaDestino = (valor: string) => DESTINOS_RAPIDOS.find((d) => d.valor === valor)?.label ?? valor;
 
 /** Escritorio: el destino abre un popover ancho con los 8 sellos (opción
@@ -251,12 +289,14 @@ function DestinoBarra({
   setDestino,
   combinar,
   setCombinar,
+  sobreFoto = false,
 }: {
   id: string;
   destino: string;
   setDestino: (v: string) => void;
   combinar: string;
   setCombinar: (v: string) => void;
+  sobreFoto?: boolean;
 }) {
   const idPanel = useId();
   const panel = useRef<HTMLDivElement>(null);
@@ -273,11 +313,13 @@ function DestinoBarra({
         popoverTarget={idPanel}
         aria-label={`Destino: ${texto}`}
         style={{ anchorName: ancla } as CSSProperties}
-        className={`flex items-center gap-2 text-left ${CONTROL_TRAMO}`}
+        className={`flex items-center gap-2 text-left ${CONTROL_TRAMO_BASE} ${sobreFoto ? "banner-control text-dusk-text" : "text-ink"}`}
       >
-        <SelloDestino destino={destino} tamano={24} className="-rotate-8 shrink-0 text-acento" />
-        <span className="min-w-0 truncate">{texto}</span>
-        <Icono nombre="chevron-abajo" tamano={18} className="ml-auto shrink-0 text-ink-soft" />
+        <SelloDestino key={destino} destino={destino} tamano={24} className={`estampa -rotate-8 shrink-0 ${sobreFoto ? "text-gold" : "text-acento"}`} />
+        <span key={texto} className="valor-cambia min-w-0 truncate">
+          {texto}
+        </span>
+        <Icono nombre="chevron-abajo" tamano={18} className={`ml-auto shrink-0 ${sobreFoto ? "text-dusk-text-soft" : "text-ink-soft"}`} />
       </button>
       <input type="hidden" name="destino" value={destino} />
       {combinar ? <input type="hidden" name="combinar" value={combinar} /> : null}
@@ -295,9 +337,10 @@ function DestinoBarra({
         className="calendario-flotante w-[min(36rem,calc(100vw-2rem))] rounded-card bg-card p-4 text-ink shadow-chrome"
       >
         <div className="grid grid-cols-4 gap-2">
-          {DESTINOS_RAPIDOS.map((d) => (
+          {DESTINOS_RAPIDOS.map((d, i) => (
             <Sello
               key={d.valor}
+              orden={(i % 4) + Math.floor(i / 4)}
               activo={destino === d.valor}
               onClick={() => {
                 setDestino(d.valor);
@@ -312,9 +355,10 @@ function DestinoBarra({
           <div className="mt-3 border-t border-linea pt-3">
             <p className="mb-1.5 text-sm font-semibold text-ink">¿Con qué otro destino?</p>
             <div className="grid grid-cols-4 gap-2">
-              {DESTINOS_RAPIDOS.filter((d) => d.valor !== destino).map((d) => (
+              {DESTINOS_RAPIDOS.filter((d) => d.valor !== destino).map((d, i) => (
                 <Sello
                   key={d.valor}
+                  orden={(i % 4) + Math.floor(i / 4)}
                   activo={combinar === d.valor}
                   onClick={() => {
                     setCombinar(combinar === d.valor ? "" : d.valor);
@@ -345,8 +389,13 @@ function DestinoBarra({
 }
 
 /** Escritorio: barra ancha estilo buscador de viajes, con "Cotizar" como CTA. */
-export function CotizadorRapidoBarra({ ninoGratis = null, brillo = false }: PropsCotizador & { brillo?: boolean }) {
+export function CotizadorRapidoBarra({
+  ninoGratis = null,
+  brillo = false,
+  fotos = [],
+}: PropsCotizador & { brillo?: boolean; fotos?: readonly FotoHero[] }) {
   const c = useCotizacionRapida(ninoGratis);
+  const fotoDestino = fotoDelDestino(fotos, c.destino);
   const n = c.servicios.length;
   const idSalida = useId();
   const fin = c.etiquetaFin;
@@ -382,9 +431,16 @@ export function CotizadorRapidoBarra({ ninoGratis = null, brillo = false }: Prop
     >
       <input type="hidden" name="servicios" value={c.servicios.join(",")} />
       <div className="grid min-w-0 flex-1 grid-cols-[2.35fr_2fr_1.65fr] divide-x divide-linea">
-        <Tramo etiqueta="Destino">
+        <Tramo etiqueta="Destino" foto={fotoDestino}>
           {(id) => (
-            <DestinoBarra id={id} destino={c.destino} setDestino={c.setDestino} combinar={c.combinar} setCombinar={c.setCombinar} />
+            <DestinoBarra
+              id={id}
+              destino={c.destino}
+              setDestino={c.setDestino}
+              combinar={c.combinar}
+              setCombinar={c.setCombinar}
+              sobreFoto={Boolean(fotoDestino)}
+            />
           )}
         </Tramo>
 
@@ -580,9 +636,8 @@ export function CotizadorRapidoMovil({ ninoGratis = null }: PropsCotizador) {
                       c.cambiarEntrada(v);
                       // Elegida la entrada, se abre la salida.
                       if (v && c.etiquetaFin && !c.salida) {
-                        requestAnimationFrame(() =>
-                          (document.querySelector(`[id="${idForm}"] input[name="hasta"]`)?.previousElementSibling as HTMLElement | null)?.click(),
-                        );
+                        const boton = document.querySelector(`[id="${idForm}"] input[name="hasta"]`)?.previousElementSibling;
+                        if (boton?.id) seguirCon(boton.id);
                       }
                     }}
                     min={hoyCaracas()}

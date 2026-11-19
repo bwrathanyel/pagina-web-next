@@ -703,6 +703,54 @@ html {
   from { opacity: 0; transform: perspective(12em) rotateX(-80deg); }
 }
 
+/* Barra del cotizador rápido (CotizadorRapido.tsx, 2026-11-19). El tramo activo (foco adentro o su panel
+   abierto, el popover es descendiente del tramo) subraya con el degradado del logo; sin movimiento
+   aparece de una. Pestañas: el canto marcado crece desde el centro y el icono sube al pasar el puntero.
+   Valores (destino, fechas): el texto nuevo sube al cambiar. Panel de destinos: los sellos caen en
+   diagonal (--n = fila + columna). Banner del destino: la foto nueva entra asentándose. */
+.tramo-linea {
+  scale: 0 1;
+}
+.tramo:is(:focus-within, :has(:popover-open)) .tramo-linea {
+  scale: 1;
+}
+/* Sobre el banner oscuro el acento no contrasta: el foco pasa al dorado (como en .sobre-dusk). */
+.sobre-dusk .sobre-claro .banner-control:focus-visible {
+  outline-color: var(--color-gold);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .tramo-linea {
+    transition: scale var(--dur-media) var(--ease-salida);
+  }
+  .pestana-marca {
+    animation: barra-llena var(--dur-media) var(--ease-salida) both;
+  }
+  .pestana-icono {
+    transition: translate var(--dur-rapida) var(--ease-salida);
+  }
+  .valor-cambia {
+    animation: valor-sube var(--dur-media) var(--ease-salida);
+  }
+  .calendario-flotante:popover-open .op-cae {
+    animation: pase-aparece var(--dur-media) var(--ease-salida) both;
+    animation-delay: calc(var(--n, 0) * 35ms);
+  }
+  .hero-banner-destino {
+    animation: banner-asienta var(--dur-lenta) var(--ease-salida) both;
+  }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .pestana:hover .pestana-icono {
+    translate: 0 -2px;
+  }
+}
+@keyframes valor-sube {
+  from { opacity: 0; transform: translateY(0.375rem); }
+}
+@keyframes banner-asienta {
+  from { opacity: 0; transform: scale(1.08); }
+}
+
 /* Hoja «Su reserva» (ResumenBoleto.tsx): la ruta entre entrada y salida se dibuja, las noches aparecen
    al medio, las fichas de cada noche caen una tras otra y la barra de composición se llena por partes. */
 @media (prefers-reduced-motion: no-preference) {
