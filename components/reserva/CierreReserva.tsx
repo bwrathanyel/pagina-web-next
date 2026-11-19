@@ -67,17 +67,25 @@ export function CierreReserva({ r, boleto = null }: Props) {
               </p>
             ) : null}
           </div>
-          {/* Con boleto, la nota reemplaza a la frase del cobro en vez de sumarse: la columna mide lo mismo que sin
-              vuelo y «Reservar y pagar» no baja del pliegue (1366×695, dueño 2026-11-18). El detalle va en la franja. */}
-          <p className="text-sm text-ink-soft" title={boleto ?? undefined}>
-            {boleto
-              ? "Aún no se le cobra nada; el boleto aéreo se lo cotiza boletería por WhatsApp."
-              : "Aún no se le cobra nada: en el siguiente paso verá los datos para pagar."}
-          </p>
         </>
       )}
-      {/* Escritorio: la acción va al final, después de aceptar y verificar; en el teléfono la lleva la barra fija. */}
-      {r.esEscritorio ? <AccionReserva r={r} ancho /> : null}
+      {/* Escritorio: la acción va después de aceptar; en el teléfono la lleva la barra fija. Pegada al borde de
+          abajo: con la barra de tareas de Windows visible (1366×768 deja ~640 px útiles) el botón bajaba del
+          pliegue; así se ve con cualquier alto y, si sobra pantalla, queda en su lugar (dueño 2026-11-18). */}
+      {r.esEscritorio ? (
+        <div className="sticky bottom-3 z-10 rounded-control shadow-lg shadow-black/40">
+          <AccionReserva r={r} ancho />
+        </div>
+      ) : null}
+      {/* Bajo el botón (antes iba encima): sube «Reservar y pagar» ~40 px. Con boleto, la nota reemplaza a la
+          frase del cobro en vez de sumarse; el detalle va en la franja. */}
+      {fueraDeHorario ? null : (
+        <p className="text-sm text-ink-soft" title={boleto ?? undefined}>
+          {boleto
+            ? "Aún no se le cobra nada; el boleto aéreo se lo cotiza boletería por WhatsApp."
+            : "Aún no se le cobra nada: en el siguiente paso verá los datos para pagar."}
+        </p>
+      )}
     </div>
   );
 }
