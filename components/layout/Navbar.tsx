@@ -47,6 +47,13 @@ const RUTAS_SIN_CATEGORIAS = ["/cotizar", "/reservar"];
 // campo de búsqueda queda fuera porque es un campo sobre card.
 const FONDO_TRANSPARENTE = "border-transparent bg-transparent";
 const FONDO_SOLIDO = "border-linea bg-sand";
+// Barra compacta (ya hubo scroll, opción A del dueño 2026-11-19): vidrio sobre
+// card. Sombra en vez de filete: una superficie se eleva con uno de los dos.
+const FONDO_VIDRIO = "border-transparent bg-card/80 shadow-chrome backdrop-blur-md";
+
+// Páginas largas: en el móvil la barra se va al bajar y vuelve al subir, en
+// vez de esperar a que el scroll pare.
+const RUTAS_LARGAS = ["/catalogo", "/reservar"];
 
 export function Navbar() {
   const pathname = usePathname();
@@ -58,9 +65,8 @@ export function Navbar() {
   const abrirBuscador = usePaneles((s) => s.abrirBuscador);
   const sobreFoto = useBarraSobreFoto((s) => s.sobreFoto);
   const categorias = content.navigation.items.filter((item) => itemMenuPublico(item) && !IDS_FUERA_DE_FILA.has(item.id));
-  const { visible, propsContenedor } = useHeaderAutoHide();
-
   const esActiva = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const { visible, compacta, propsContenedor } = useHeaderAutoHide({ alBajar: RUTAS_LARGAS.some(esActiva) });
 
   const esHome = pathname === "/";
   const barraPropia = RUTAS_CON_BARRA_PROPIA.some((r) => pathname === r || pathname.startsWith(`${r}/`));
@@ -69,6 +75,8 @@ export function Navbar() {
   // detrás de la barra; en cualquier otra ruta, sólida.
   const transparente = esHome && sobreFoto;
   const fondo = transparente ? FONDO_TRANSPARENTE : FONDO_SOLIDO;
+  const vidrio = compacta && !transparente;
+  const fondoFila1 = vidrio ? FONDO_VIDRIO : fondo;
   const grupoSobreFoto = transparente ? "barra-sobre-foto" : "";
 
   // Sin historial propio (llegó desde una red social a esta página) "atrás"
@@ -103,8 +111,8 @@ export function Navbar() {
             para lo que no cabe en las pestañas de abajo. */}
         <div
           className={
-            "flex h-14 items-center gap-1 border-b pl-2 pr-1 transition-colors duration-(--dur-media) lg:hidden " +
-            fondo +
+            "flex h-14 items-center gap-1 border-b pl-2 pr-1 transition-[background-color,border-color,box-shadow] duration-(--dur-media) lg:hidden " +
+            fondoFila1 +
             " " +
             grupoSobreFoto
           }
@@ -135,10 +143,17 @@ export function Navbar() {
 
         {/* Escritorio, fila 1: logo · campo de búsqueda · acciones. Nada de
             anchos fijos: el campo es el único que se estira y se encoge
-            (min-w-0), y las etiquetas aparecen por breakpoint. */}
-        <div
-          className={"hidden h-16 border-b transition-colors duration-(--dur-media) lg:block " + fondo}
-        >
+            (min-w-0), y las etiquetas aparecen por breakpoint. El contenedor
+            guarda siempre h-16 (el hero y --alto-barra no saltan); compacta,
+            la fila visible baja a h-14 y lo de abajo deja pasar el clic. */}
+        <div className="pointer-events-none hidden h-16 lg:block">
+          <div
+            className={
+              "pointer-events-auto border-b transition-[height,background-color,border-color,box-shadow] duration-(--dur-media) ease-salida motion-reduce:transition-none " +
+              (vidrio ? "h-14 " : "h-16 ") +
+              fondoFila1
+            }
+          >
           <div className="mx-auto flex h-full max-w-[var(--ancho-contenido)] items-center gap-4 px-5 xl:gap-8">
             <Link href="/" className={"flex shrink-0 items-center gap-2.5 " + grupoSobreFoto}>
               <BrandMark priority />
@@ -150,7 +165,7 @@ export function Navbar() {
               onClick={abrirBuscador}
               aria-keyshortcuts="Control+K Meta+K"
               title="Buscar (Ctrl K)"
-              className="mx-auto flex h-11 min-w-0 max-w-xl flex-1 items-center gap-3 rounded-pill border border-linea bg-card px-4 text-left text-base text-ink-soft transition-colors duration-(--dur-rapida) hover:border-linea-fuerte hover:text-ink"
+              className="mx-auto flex h-11 min-w-0 max-w-xl flex-1 items-center gap-3 rounded-pill border border-linea bg-card px-4 text-left text-base text-ink-soft transition-[max-width,border-color,color] duration-(--dur-media) ease-salida motion-reduce:transition-none hover:max-w-2xl hover:border-linea-fuerte hover:text-ink focus-visible:max-w-2xl"
             >
               <Icono nombre="buscar" tamano={18} className="shrink-0 text-ink" />
               <span className="truncate">¿A dónde quiere viajar?</span>
@@ -187,6 +202,7 @@ export function Navbar() {
                 <PreferenciasPopover onCerrar={() => setPrefAbiertas(false)} anclaRef={prefRef} />
               ) : null}
             </div>
+          </div>
           </div>
         </div>
       </header>

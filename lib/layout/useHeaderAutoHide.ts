@@ -13,10 +13,15 @@ import { useEffect, useRef, useState } from "react";
  *    hacer clic, no hay forma de usar el menú.
  *  - Mientras algo adentro tiene foco de teclado: quien navega con Tab
  *    perdería de vista el elemento enfocado.
+ *
+ * Con `alBajar` (páginas largas: catálogo, /reservar) no espera a que el
+ * scroll pare: se va al bajar y vuelve al subir. `compacta` marca que ya no
+ * está arriba de todo (la barra se achica y pasa a vidrio).
  */
-export function useHeaderAutoHide(msParaOcultar = 1600) {
+export function useHeaderAutoHide({ msParaOcultar = 1600, alBajar = false } = {}) {
   const [visible, setVisible] = useState(true);
   const [retenido, setRetenido] = useState(false);
+  const [compacta, setCompacta] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retenidoRef = useRef(false);
 
@@ -24,13 +29,14 @@ export function useHeaderAutoHide(msParaOcultar = 1600) {
     retenidoRef.current = retenido;
     // Al soltar (mouse afuera / foco perdido), reprograma el ocultado en vez
     // de dejar el header colgado visible para siempre.
-    if (!retenido && window.scrollY > 8) {
+    if (!alBajar && !retenido && window.scrollY > 8) {
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => setVisible(false), msParaOcultar);
     }
-  }, [retenido, msParaOcultar]);
+  }, [retenido, msParaOcultar, alBajar]);
 
   useEffect(() => {
+    let ultimoY = window.scrollY;
     const programarOcultado = () => {
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
@@ -39,12 +45,23 @@ export function useHeaderAutoHide(msParaOcultar = 1600) {
     };
 
     const alScrollear = () => {
-      setVisible(true);
-      if (window.scrollY <= 8) {
+      const y = window.scrollY;
+      setCompacta(y > 8);
+      if (y <= 8) {
         // Arriba de todo se queda fijo: no programa ocultado.
+        setVisible(true);
         if (timerRef.current) clearTimeout(timerRef.current);
+        ultimoY = y;
         return;
       }
+      if (alBajar) {
+        // Umbral de 6px: el rebote del scroll táctil no la hace parpadear.
+        if (Math.abs(y - ultimoY) < 6) return;
+        setVisible(y < ultimoY);
+        ultimoY = y;
+        return;
+      }
+      setVisible(true);
       programarOcultado();
     };
 
@@ -53,7 +70,7 @@ export function useHeaderAutoHide(msParaOcultar = 1600) {
       window.removeEventListener("scroll", alScrollear);
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [msParaOcultar]);
+  }, [msParaOcultar, alBajar]);
 
   const refContenedor = useRef<HTMLElement | null>(null);
   const mostrado = visible || retenido;
@@ -79,6 +96,14 @@ export function useHeaderAutoHide(msParaOcultar = 1600) {
     return () => raiz.removeAttribute("data-barra-oculta");
   }, [mostrado]);
 
+  // En escritorio la fila 1 se achica al compactarse: la fila sticky del
+  // catálogo sube con ella (globals.css, data-barra-compacta).
+  useEffect(() => {
+    const raiz = document.documentElement;
+    raiz.toggleAttribute("data-barra-compacta", compacta);
+    return () => raiz.removeAttribute("data-barra-compacta");
+  }, [compacta]);
+
   const propsContenedor = {
     ref: refContenedor,
     onMouseEnter: () => setRetenido(true),
@@ -87,5 +112,5 @@ export function useHeaderAutoHide(msParaOcultar = 1600) {
     onBlurCapture: () => setRetenido(false),
   };
 
-  return { visible: mostrado, propsContenedor };
+  return { visible: mostrado, compacta, propsContenedor };
 }

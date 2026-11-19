@@ -310,6 +310,15 @@
   }
 }
 
+/* Escritorio con la barra compacta (Navbar): el header guarda su alto para
+   que nada salte, pero la fila visible mide 0.5rem menos (h-16 a h-14); la
+   fila sticky del catálogo se pega a la fila visible, no al header. */
+@media (min-width: 1024px) {
+  :root[data-barra-compacta] {
+    --offset-sticky: calc(var(--alto-barra) - 0.5rem);
+  }
+}
+
 @media (min-width: 1024px) {
   :root {
     --alto-barra: 4rem;
