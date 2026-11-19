@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CLAVE_RESERVA_ABIERTA } from "@/lib/checkout/reservaAbierta";
+import { CLAVE_RESERVA_ABIERTA, descartarReservaAbierta } from "@/lib/checkout/reservaAbierta";
 import { useCheckoutConfig } from "@/components/checkout/useCheckoutConfig";
 import { useEsEscritorioConocido } from "@/components/checkout/useEsEscritorio";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -104,6 +104,10 @@ interface ReservaAbierta {
   hotel: string;
 }
 
+// Base de la clave de idempotencia. Por http:// (el navegador de Instagram abre el enlace de la bio así)
+// no existe crypto.randomUUID; getRandomValues sí está en contextos no seguros.
+const nuevaBase = () => Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => b.toString(16).padStart(2, "0")).join("");
+
 function leerAbierta(): ReservaAbierta | null {
   try {
     const r = JSON.parse(localStorage.getItem(CLAVE_ABIERTA) ?? "null") as ReservaAbierta | null;
@@ -181,11 +185,7 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial, alCrear, 
     interactuo.current = true;
     setF((prev) => ({ ...prev, ...p }));
   }, []);
-  // Por http:// (el navegador de Instagram abre el enlace de la bio así) no existe crypto.randomUUID;
-  // getRandomValues sí está en contextos no seguros.
-  const [base, setBase] = useState(() =>
-    Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => b.toString(16).padStart(2, "0")).join(""),
-  );
+  const [base, setBase] = useState(nuevaBase);
   const [acepta, setAcepta] = useState(false);
   const [modo, setModo] = useState<ModoPago>("total");
   const [aceptaPlan, setAceptaPlan] = useState(false);
@@ -595,6 +595,17 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial, alCrear, 
 
   const segundosAbierta = abierta ? Math.floor((Date.parse(abierta.expira_en) - Date.now()) / 1000) : 0;
 
+  // «Descartar» del aviso: libera el cupo en la base y olvida la reserva. Base nueva: la próxima compra
+  // con los mismos datos no debe reutilizar la reserva descartada por la clave de idempotencia.
+  async function descartarAbierta(): Promise<string | null> {
+    if (!abierta) return null;
+    const err = await descartarReservaAbierta(abierta.token);
+    if (err) return err;
+    setAbierta(null);
+    setBase(nuevaBase());
+    return null;
+  }
+
   // ------------------------------------------------------------------ tramos
   // En el teléfono un tramo terminado se pliega salvo que la persona lo reabra («Cambiar»). Uno con
   // error nunca está terminado, así que `enfocar()` siempre encuentra su campo a la vista.
@@ -636,7 +647,7 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial, alCrear, 
     hoy, pantalla, esEscritorio, config, reintentar, user, abrirCuenta,
     f, poner, desde, hasta, pasajeros, riel, hayFechas, sinCupo,
     acepta, setAcepta, modo, setModo, aceptaPlan, setAceptaPlan, hojaViajeros, setHojaViajeros,
-    abierta, segundosAbierta, mostrarErrores, error, enviando,
+    abierta, segundosAbierta, descartarAbierta, mostrarErrores, error, enviando,
     elegida, tarifaEfectiva, habitacion, opciones, motivoSinOpciones, caracteristicas, todoIncluido,
     precio, plan, ofrecerPlan, tasa, noches, totales, sinPrecio,
     errores, errorDe, falta, fueraDeHorario, wa, alEnviar,

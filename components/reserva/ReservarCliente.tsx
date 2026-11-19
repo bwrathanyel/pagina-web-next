@@ -7,7 +7,7 @@ import { Boton } from "@/components/ui/Boton";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import type { HotelParaCobrar } from "@/lib/checkout/calculo";
 import { horaAmPm } from "@/lib/checkout/formato";
-import { ChipPlazo } from "@/components/checkout/ChipPlazo";
+import { AvisoAbierta } from "./AvisoAbierta";
 import type { HabitacionWeb } from "@/lib/cotizador/hotel";
 import { AccionReserva, CierreReserva } from "./CierreReserva";
 import { BoletoAereo, pedirBoleto, textoBoleto } from "./BoletoAereo";
@@ -161,18 +161,7 @@ export function ReservarCliente({
     <form onSubmit={r.alEnviar} noValidate className="flex flex-col gap-4">
       {/* Una reserva ya creada esperando pago va antes que todo: es lo que no se debe perder. */}
       {abierta && segundosAbierta > 0 ? (
-        <Aviso tono="info">
-          <span className="flex flex-wrap items-center gap-2">
-            <span>
-              Tiene la reserva <span className="font-mono font-bold">{abierta.codigo}</span>
-              {abierta.hotel && abierta.hotel !== hotel.nombre ? ` (${abierta.hotel})` : ""} esperando pago.
-            </span>
-            <ChipPlazo hasta={abierta.expira_en} />
-          </span>
-          <Boton href={`/pagar/${abierta.token}`} variante="secundario" tamano="sm" className="mt-2">
-            Continuar al pago
-          </Boton>
-        </Aviso>
+        <AvisoAbierta abierta={abierta} hotelActual={hotel.nombre} onDescartar={r.descartarAbierta} />
       ) : null}
 
       {/* Teléfono: franja con las fotos del hotel rotando de fondo y el nombre sobre el velo dusk; tocar
