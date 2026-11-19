@@ -2,7 +2,7 @@
 
 import { useId } from "react";
 import { CLASE_CONTROL, Selector } from "@/components/ui/Campo";
-import { SelectorFecha, type SinCupo } from "@/components/ui/SelectorFecha";
+import { SelectorFecha, seguirCon, type SinCupo } from "@/components/ui/SelectorFecha";
 import { SelectorViajeros } from "@/components/ui/SelectorViajeros";
 import { SelectorDestino } from "@/components/cotizador/SelectorDestino";
 import {
@@ -171,7 +171,7 @@ export function BarraViaje({
             valor={estado.desde}
             onCambio={(iso) => {
               onCambio(cambiarDesde(estado, iso));
-              if (iso && conSegunda) requestAnimationFrame(() => document.getElementById(`${id}-hasta`)?.click());
+              if (iso && conSegunda) seguirCon(`${id}-hasta`);
             }}
             rango={conSegunda ? { desde: estado.desde, hasta: estado.hasta } : undefined}
             sinCupo={hospedaje ? sinCupo : undefined}
@@ -333,7 +333,7 @@ export function BarraViajeCompacta({
               valor={estado.desde}
               onCambio={(iso) => {
                 onCambio(cambiarDesde(estado, iso));
-                if (iso && conSegunda) requestAnimationFrame(() => document.getElementById(`${id}-hasta`)?.click());
+                if (iso && conSegunda) seguirCon(`${id}-hasta`);
               }}
               rango={conSegunda ? { desde: estado.desde, hasta: estado.hasta } : undefined}
               sinCupo={hospedaje ? sinCupo : undefined}

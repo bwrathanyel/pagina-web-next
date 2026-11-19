@@ -7,7 +7,7 @@ import { CLASE_CONTROL, Campo, Selector } from "@/components/ui/Campo";
 import { Hoja } from "@/components/ui/Hoja";
 import { Icono, type NombreIcono } from "@/components/ui/Icono";
 import { SelloDestino } from "@/components/ui/SelloDestino";
-import { SelectorFecha } from "@/components/ui/SelectorFecha";
+import { SelectorFecha, seguirCon } from "@/components/ui/SelectorFecha";
 import { SelectorViajeros, type Viajeros } from "@/components/ui/SelectorViajeros";
 import {
   ADULTOS_MAX,
@@ -355,7 +355,7 @@ export function CotizadorRapidoBarra({ ninoGratis = null, brillo = false }: Prop
   function elegirEntrada(v: string) {
     c.cambiarEntrada(v);
     // Como en los buscadores de viaje: elegida la entrada, se abre la salida.
-    if (v && fin && !c.salida) requestAnimationFrame(() => document.getElementById(idSalida)?.click());
+    if (v && fin && !c.salida) seguirCon(idSalida);
   }
 
   return (

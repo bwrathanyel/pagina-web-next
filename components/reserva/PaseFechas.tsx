@@ -5,7 +5,7 @@ import { Boton } from "@/components/ui/Boton";
 import { Campo, Selector } from "@/components/ui/Campo";
 import { Hoja } from "@/components/ui/Hoja";
 import { Icono } from "@/components/ui/Icono";
-import { SelectorFecha, type SinCupo } from "@/components/ui/SelectorFecha";
+import { SelectorFecha, seguirCon, type SinCupo } from "@/components/ui/SelectorFecha";
 import { resumenViajeros } from "@/components/ui/SelectorViajeros";
 import { MAX_BEBES, MAX_PAX } from "@/lib/checkout/calculo";
 import { rangoFechas } from "@/lib/checkout/formato";
@@ -191,7 +191,7 @@ export function PaseFechas({
               vacio="Elegir"
               onCambio={(v) => {
                 onFechas(v, hasta && hasta <= v ? sumarDias(v, Math.max(1, noches ?? 0)) : hasta);
-                if (v) requestAnimationFrame(() => document.getElementById("r-hasta")?.click());
+                if (v) seguirCon("r-hasta");
               }}
               className="min-h-11 w-full text-base font-bold text-ink"
             />

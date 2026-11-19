@@ -661,6 +661,81 @@ html {
     position-try-fallbacks: flip-block, flip-inline;
   }
 }
+/* Movimiento del calendario (2026-11-19): se despliega como una paleta del tablero (bisagra arriba) y
+   se pliega al cerrar (allow-discrete mantiene display/overlay durante la salida). Los días caen en
+   diagonal (--n = fila + columna, lo pone SelectorFecha) cada vez que abre o cambia de mes.
+   Entrada → salida (seguirCon): [data-pasa] se va a la derecha tras un instante (se ve la fecha marcada)
+   y el siguiente, con [data-llega], entra desde la izquierda. Sin soporte de @starting-style, abre quieto. */
+@media (prefers-reduced-motion: no-preference) {
+  .calendario-flotante {
+    transform-origin: 50% 0;
+    transition-property: opacity, transform, display, overlay;
+    transition-duration: var(--dur-media);
+    transition-timing-function: var(--ease-salida);
+    transition-behavior: allow-discrete;
+  }
+  .calendario-flotante:not(:popover-open) {
+    opacity: 0;
+    transform: perspective(40rem) rotateX(-14deg) translateY(-0.5rem);
+  }
+  @starting-style {
+    .calendario-flotante:popover-open {
+      opacity: 0;
+      transform: perspective(40rem) rotateX(-14deg) translateY(-0.5rem);
+    }
+    .calendario-flotante[data-llega]:popover-open {
+      transform: translateX(-1.5rem);
+    }
+  }
+  .calendario-flotante[data-pasa] {
+    opacity: 0;
+    transform: translateX(1.5rem);
+    transition-delay: 120ms;
+  }
+  .calendario-flotante:popover-open .cal-dia {
+    transform-origin: 50% 0;
+    backface-visibility: hidden;
+    animation: cal-caer var(--dur-media) var(--ease-salida) both;
+    animation-delay: calc(var(--n, 0) * 22ms);
+  }
+}
+@keyframes cal-caer {
+  from { opacity: 0; transform: perspective(12em) rotateX(-80deg); }
+}
+
+/* Hoja «Su reserva» (ResumenBoleto.tsx): la ruta entre entrada y salida se dibuja, las noches aparecen
+   al medio, las fichas de cada noche caen una tras otra y la barra de composición se llena por partes. */
+@media (prefers-reduced-motion: no-preference) {
+  .pase-ruta {
+    transform-origin: 0 50%;
+    animation: pase-traza var(--dur-lenta) var(--ease-salida) both;
+    animation-delay: 120ms;
+  }
+  .pase-noches {
+    animation: pase-aparece var(--dur-media) var(--ease-salida) both;
+    animation-delay: 480ms;
+  }
+  .ficha-noche {
+    transform-origin: 50% 0;
+    backface-visibility: hidden;
+    animation: cal-caer var(--dur-media) var(--ease-salida) both;
+    animation-delay: calc(200ms + min(var(--n, 0), 13) * 40ms);
+  }
+  .barra-crece {
+    transform-origin: 0 50%;
+    animation: barra-llena var(--dur-lenta) var(--ease-salida) both;
+    animation-delay: calc(240ms + var(--n, 0) * 160ms);
+  }
+}
+@keyframes pase-traza {
+  from { transform: scaleX(0); }
+}
+@keyframes pase-aparece {
+  from { opacity: 0; transform: scale(0.85); }
+}
+@keyframes barra-llena {
+  from { transform: scaleX(0); }
+}
 
 :focus-visible {
   outline: 2px solid var(--color-acento);

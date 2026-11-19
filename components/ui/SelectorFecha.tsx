@@ -2,14 +2,23 @@
 
 import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { Icono } from "@/components/ui/Icono";
+import { TableroSalidas } from "@/components/ui/TableroSalidas";
 import { hoyCaracas, sumarDias } from "@/lib/cotizador/cotizacionRapida";
 
 // Calendario propio: el de <input type="date"> en Chromium no se puede
 // estilizar. Es un popover (capa superior: la foto del hero no lo recorta, y
 // Esc y el clic afuera lo cierran solos). La fecha viaja en un input oculto con
 // el mismo name, así el formulario GET no cambia. Nada antes de `min` (hoy en
-// Caracas si no se pasa). Con `rango` se pintan los días entre entrada y
-// salida. Todo se calcula en UTC para que la zona del navegador no corra un día.
+// Caracas si no se pasa). Con `rango` se pinta la estadía como una banda
+// continua en seafoam (no naranja: se confundía con el rojo de las noches sin
+// cupo). Todo se calcula en UTC para que la zona del navegador no corra un día.
+//
+// Movimiento (2026-11-19, pedido del dueño): el panel se despliega como una
+// paleta del tablero, el cartel con el rótulo («ENTRADA») gira letra por letra
+// como el del hero y los días caen en diagonal. Entrada → salida no salta:
+// quien llama pide `seguirCon(idSalida)` dentro de su onCambio; este panel se va
+// hacia la derecha y el de salida entra desde la izquierda con su cartel girando
+// de «ENTRADA» a «SALIDA». Con reduced-motion todo es instantáneo.
 
 const DIAS = ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"];
 const MES = new Intl.DateTimeFormat("es-VE", { month: "long", year: "numeric", timeZone: "UTC" });
@@ -17,8 +26,22 @@ const CORTA = new Intl.DateTimeFormat("es-VE", { day: "numeric", month: "short",
 const CON_ANO = new Intl.DateTimeFormat("es-VE", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 const LARGA = new Intl.DateTimeFormat("es-VE", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
 const PASOS: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
+/** Lo que tarda el panel en irse (globals.css: retraso + --dur-media) antes de abrir el siguiente. */
+const PASE_MS = 400;
 
 const aFecha = (iso: string) => new Date(`${iso}T00:00:00Z`);
+const nochesEntre = (a: string, b: string) => Math.round((aFecha(b).getTime() - aFecha(a).getTime()) / 864e5);
+
+let siguiente = "";
+/** Dentro del onCambio de un SelectorFecha: al cerrarse, abrir con transición el calendario cuyo botón tiene este id. */
+export function seguirCon(idBoton: string) {
+  siguiente = idBoton;
+}
+function tomarSiguiente() {
+  const id = siguiente;
+  siguiente = "";
+  return id;
+}
 
 function moverMes(mes: string, n: number) {
   const d = aFecha(`${mes}-01`);
@@ -41,17 +64,18 @@ const FLECHA =
   "enabled:hover:bg-sand-2 disabled:text-ink-soft/40";
 
 export type SinCupo = { dia: (iso: string) => boolean; leyenda: string };
+type Rango = { desde: string; hasta: string };
 
 interface Props {
   id: string;
   name: string;
-  /** Nombre visible del campo ("Entrada", "Ida"...): arma el nombre accesible. */
+  /** Nombre visible del campo ("Entrada", "Ida"...): arma el nombre accesible y el cartel del panel. */
   etiqueta: string;
   valor: string;
   onCambio: (iso: string) => void;
   min?: string;
-  rango?: { desde: string; hasta: string };
-  /** Noches sin cupo (stop sale del hotel): van en rojo oscuro, con su leyenda,
+  rango?: Rango;
+  /** Noches sin cupo (stop sale del hotel): van en rojo, con su leyenda,
    * y no se pueden elegir; intentarlo deja un aviso dentro del calendario. */
   sinCupo?: SinCupo;
   /** Calendario de salida: la entrada elegida. La salida sí puede caer en una
@@ -79,6 +103,9 @@ export function SelectorFecha({
   const [foco, setFoco] = useState("");
   const [aviso, setAviso] = useState("");
   const [aperturas, setAperturas] = useState(0);
+  const [cartel, setCartel] = useState("");
+  /** Día bajo el puntero o el foco en el calendario de salida: adelanta la estadía. */
+  const [sobre, setSobre] = useState("");
   const panel = useRef<HTMLDivElement>(null);
   const grilla = useRef<HTMLDivElement>(null);
   const enfocar = useRef(false);
@@ -86,6 +113,7 @@ export function SelectorFecha({
   const ancla = `--fecha-${idPanel.replace(/[^a-zA-Z0-9]/g, "")}`;
   const hoy = hoyCaracas();
   const piso = min && min > hoy ? min : hoy;
+  const largoCartel = Math.max(8, etiqueta.length);
 
   // Solo el teclado y la apertura mueven el foco a la grilla: con las flechas
   // de mes, el foco se queda en la flecha para poder avanzar varios meses.
@@ -95,14 +123,25 @@ export function SelectorFecha({
     grilla.current?.querySelector<HTMLButtonElement>(`[data-dia="${foco}"]`)?.focus();
   }, [foco, mes, aperturas]);
 
-  function alAbrir(abierto: boolean) {
-    if (!abierto) return;
+  function alCambiar(abierto: boolean) {
+    const p = panel.current;
+    if (!abierto) {
+      if (p) {
+        delete p.dataset.pasa;
+        delete p.dataset.llega;
+      }
+      setSobre("");
+      return;
+    }
     const base = valor && valor >= piso ? valor : piso;
     enfocar.current = true;
     setFoco(base);
     setMes(base.slice(0, 7));
     setAperturas((n) => n + 1);
     setAviso("");
+    // El cartel arranca en blanco (o en el rótulo del calendario anterior) y gira al propio.
+    setCartel(p?.dataset.llega ?? "");
+    requestAnimationFrame(() => setCartel(etiqueta));
   }
 
   function cambiarMes(n: number) {
@@ -114,8 +153,25 @@ export function SelectorFecha({
   }
 
   function elegir(iso: string) {
-    panel.current?.hidePopover();
+    tomarSiguiente();
     onCambio(iso);
+    const idSig = tomarSiguiente();
+    const p = panel.current;
+    const sig = iso && idSig ? (document.getElementById(idSig) as HTMLButtonElement | null) : null;
+    if (!p || !sig) return p?.hidePopover();
+    const quieto = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    p.dataset.pasa = "";
+    window.setTimeout(
+      () => {
+        // Si lo cerró a mano mientras se iba (Esc, clic afuera), no se abre el siguiente.
+        if (!p.matches(":popover-open")) return;
+        p.hidePopover();
+        const destino = sig.popoverTargetElement as HTMLElement | null;
+        if (destino && !quieto) destino.dataset.llega = etiqueta;
+        sig.click();
+      },
+      quieto ? 0 : PASE_MS,
+    );
   }
 
   // Salida: la primera noche sin cupo desde la entrada es el tope; se puede
@@ -156,14 +212,21 @@ export function SelectorFecha({
     setMes(nuevo.slice(0, 7));
   }
 
+  // Lo que se pinta: la estadía elegida o, en la salida, la que quedaría con el día bajo el puntero.
+  const previa = !!salidaDe && !!sobre && sobre > salidaDe && sobre >= piso && !bloqueo(sobre);
+  const vista: Rango | undefined = previa ? { desde: salidaDe, hasta: sobre } : rango?.desde && rango.hasta ? rango : undefined;
+  const noches = vista ? nochesEntre(vista.desde, vista.hasta) : 0;
+
   function clasesDia(iso: string, b: "" | "lleno" | "cruza") {
-    if (iso === valor) return `bg-acento font-semibold text-sobre-acento${b ? " ring-2 ring-inset ring-peligro" : ""}`;
+    const borde = vista ? (iso === vista.desde ? " rounded-r-none" : iso === vista.hasta ? " rounded-l-none" : "") : "";
+    if (iso === valor && !previa) return `bg-seafoam-text font-semibold text-card${borde}${b ? " ring-2 ring-inset ring-peligro" : ""}`;
     if (b === "lleno") return "cursor-not-allowed bg-peligro font-medium text-card line-through";
     if (b === "cruza") return "cursor-not-allowed text-ink-soft/35";
-    if (rango && (iso === rango.desde || iso === rango.hasta)) return "bg-acento-suave font-semibold text-acento";
-    if (rango && rango.desde && iso > rango.desde && iso < rango.hasta) return "bg-acento-suave text-ink";
+    if (previa && iso === sobre) return `bg-seafoam-bg font-semibold text-seafoam-text ring-2 ring-inset ring-seafoam-text${borde}`;
+    if (vista && (iso === vista.desde || iso === vista.hasta)) return `bg-seafoam-text font-semibold text-card${borde}`;
+    if (vista && iso > vista.desde && iso < vista.hasta) return "rounded-none bg-seafoam-bg text-ink";
     if (iso === hoy) return "font-semibold text-acento ring-1 ring-inset ring-acento/50 hover:bg-acento-suave";
-    return "enabled:hover:bg-sand-2";
+    return "enabled:hover:bg-sand-2 disabled:text-ink-soft/35";
   }
 
   const texto = valor ? (valor.slice(0, 4) === hoy.slice(0, 4) ? CORTA : CON_ANO).format(aFecha(valor)) : vacio;
@@ -189,12 +252,26 @@ export function SelectorFecha({
         popover="auto"
         role="dialog"
         aria-label={etiqueta === "Fecha" ? "Elegir fecha" : `Elegir fecha de ${etiqueta.toLowerCase()}`}
-        onToggle={(e) => alAbrir(e.newState === "open")}
+        onToggle={(e) => alCambiar(e.newState === "open")}
         style={{ positionAnchor: ancla } as CSSProperties}
         className="calendario-flotante w-[min(22rem,calc(100vw-1rem))] md:w-[19.5rem] rounded-card bg-card p-4 text-ink shadow-chrome"
       >
         {mes && (
           <>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <TableroSalidas key={aperturas} texto={cartel} largo={largoCartel} className="text-sm" />
+              {salidaDe || noches > 0 ? (
+                <p className="flex flex-col items-end text-right font-mono text-xs leading-snug text-ink-soft">
+                  {salidaDe ? <span>Entrada {CORTA.format(aFecha(salidaDe))}</span> : null}
+                  {noches > 0 ? (
+                    <span key={noches} className="monto-flap font-bold text-seafoam-text">
+                      {noches} {noches === 1 ? "noche" : "noches"}
+                    </span>
+                  ) : null}
+                </p>
+              ) : null}
+            </div>
+
             <div className="mb-3 flex items-center justify-between">
               <button
                 type="button"
@@ -205,7 +282,7 @@ export function SelectorFecha({
               >
                 <Icono nombre="chevron-izq" tamano={20} />
               </button>
-              <p aria-live="polite" className="font-semibold first-letter:uppercase">
+              <p key={mes} aria-live="polite" className="monto-flap font-semibold first-letter:uppercase">
                 {MES.format(aFecha(`${mes}-01`))}
               </p>
               <button type="button" onClick={() => cambiarMes(1)} aria-label="Mes siguiente" className={FLECHA}>
@@ -221,7 +298,14 @@ export function SelectorFecha({
               ))}
             </div>
 
-            <div ref={grilla} onKeyDown={teclas} className="grid grid-cols-7 gap-0.5">
+            {/* key = mes: al cambiar de mes los días vuelven a caer en cascada. Sin hueco horizontal: la estadía es una banda. */}
+            <div
+              key={mes}
+              ref={grilla}
+              onKeyDown={teclas}
+              onPointerLeave={() => setSobre("")}
+              className="grid grid-cols-7 gap-y-0.5"
+            >
               {celdas(mes).map((iso, k) => {
                 if (!iso) return <span key={`hueco-${k}`} />;
                 const b = bloqueo(iso);
@@ -237,8 +321,11 @@ export function SelectorFecha({
                     aria-current={iso === hoy ? "date" : undefined}
                     aria-label={`${LARGA.format(aFecha(iso))}${b === "lleno" ? ", sin disponibilidad" : b ? ", no disponible" : ""}`}
                     onClick={() => intentar(iso)}
+                    onPointerEnter={salidaDe ? () => setSobre(iso) : undefined}
+                    onFocus={salidaDe ? () => setSobre(iso) : undefined}
+                    style={{ "--n": Math.floor(k / 7) + (k % 7) } as CSSProperties}
                     className={
-                      "flex h-11 md:h-10 items-center justify-center rounded-control text-sm tabular-nums transition-colors duration-150 ease-salida focus-visible:outline-offset-0 disabled:text-ink-soft/35 " +
+                      "cal-dia flex h-11 md:h-10 items-center justify-center rounded-control text-sm tabular-nums transition-colors duration-150 ease-salida focus-visible:outline-offset-0 " +
                       clasesDia(iso, b)
                     }
                   >
@@ -249,10 +336,16 @@ export function SelectorFecha({
             </div>
 
             {sinCupo ? (
-              <p role="status" className={`mt-3 flex items-center gap-2 text-xs ${aviso ? "font-medium text-peligro" : "text-ink-soft"}`}>
-                <span aria-hidden className="h-3 w-3 shrink-0 rounded-sm bg-peligro" />
-                {aviso || sinCupo.leyenda}
-              </p>
+              <div className="mt-3 flex flex-col gap-1.5 text-xs">
+                <p role="status" className={`flex items-center gap-2 ${aviso ? "font-medium text-peligro" : "text-ink-soft"}`}>
+                  <span aria-hidden className="h-3 w-3 shrink-0 rounded-sm bg-peligro" />
+                  {aviso || sinCupo.leyenda}
+                </p>
+                <p className="flex items-center gap-2 text-ink-soft">
+                  <span aria-hidden className="h-3 w-3 shrink-0 rounded-sm bg-seafoam-text" />
+                  Su estadía
+                </p>
+              </div>
             ) : null}
 
             <div className="mt-3 flex items-center justify-between border-t border-linea pt-3 text-sm font-medium">
