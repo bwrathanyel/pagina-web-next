@@ -1234,8 +1234,121 @@ html {
    sobre una foto de 1280px que nadie está mirando. */
 .en-pausa .hero-kenburns,
 .en-pausa .hero-kenburns-inv,
-.en-pausa .segmento-llena {
+.en-pausa .segmento-llena,
+.en-pausa .clima-destino,
+.en-pausa .clima-destino * {
   animation-play-state: paused;
+}
+
+/* Clima del destino (ClimaDestino.tsx, pedido del dueño 2026-11-19): un detalle animado propio de
+   cada destino sobre la foto del hero, bajo los velos para no quitarle contraste al texto. Sutil:
+   trazos finos y luz tenue, nunca compite con el tablero. Quieto con reduced-motion (el sol queda
+   fijo; las ráfagas, fuera del trazo). */
+.clima-rafaga {
+  fill: none;
+  stroke: var(--color-dusk-text);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  /* pathLength=1000: una sola ráfaga de 220 recorre el trazo y empieza y termina fuera de él. */
+  stroke-dasharray: 220 1400;
+  stroke-dashoffset: 220;
+  opacity: 0.45;
+}
+.clima-niebla {
+  position: absolute;
+  inset-inline: -25%;
+  top: 16%;
+  height: 30%;
+  background: radial-gradient(ellipse at center, color-mix(in oklab, var(--color-dusk-text) 22%, transparent), transparent 70%);
+  opacity: 0.6;
+}
+.clima-niebla-2 {
+  top: 50%;
+  height: 22%;
+}
+.clima-sol {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 90vmin;
+  aspect-ratio: 1;
+  translate: 35% -30%;
+}
+.clima-sol-rayos {
+  position: absolute;
+  inset: 0;
+  background: repeating-conic-gradient(
+    transparent 0deg,
+    color-mix(in oklab, var(--color-gold) 24%, transparent) 4deg,
+    transparent 8deg 20deg
+  );
+  mask-image: radial-gradient(circle, black 12%, transparent 68%);
+  opacity: 0.55;
+}
+.clima-sol-halo {
+  position: absolute;
+  inset: 15%;
+  border-radius: var(--radius-pill);
+  background: radial-gradient(
+    circle,
+    color-mix(in oklab, var(--color-gold) 55%, transparent),
+    color-mix(in oklab, var(--color-coral-bright) 18%, transparent) 40%,
+    transparent 70%
+  );
+  opacity: 0.7;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .clima-viento {
+    animation: clima-ondea 9s var(--ease-entrada-salida) infinite alternate;
+  }
+  .clima-rafaga {
+    animation: clima-rafaga 7s var(--ease-entrada-salida) infinite;
+  }
+  .clima-rafaga:nth-child(2) { animation-duration: 8.5s; animation-delay: -3s; }
+  .clima-rafaga:nth-child(3) { animation-duration: 10s; animation-delay: -5.5s; }
+  .clima-rafaga:nth-child(4) { animation-duration: 7.5s; animation-delay: -1.5s; }
+  .clima-rafaga:nth-child(5) { animation-duration: 9s; animation-delay: -7s; }
+  .clima-niebla {
+    animation: clima-niebla 30s var(--ease-entrada-salida) infinite alternate;
+  }
+  .clima-niebla-2 {
+    animation-duration: 22s;
+    animation-direction: alternate-reverse;
+  }
+  .clima-sol-rayos {
+    animation: clima-gira 90s linear infinite;
+  }
+  .clima-sol-halo {
+    animation: clima-respira 6s var(--ease-entrada-salida) infinite alternate;
+  }
+}
+@media (max-width: 1023.98px) {
+  .clima-lejos,
+  .clima-niebla-2 {
+    display: none;
+  }
+  .clima-sol-rayos {
+    opacity: 0.4;
+  }
+}
+@keyframes clima-rafaga {
+  0% { stroke-dashoffset: 220; }
+  55%, 100% { stroke-dashoffset: -1000; }
+}
+@keyframes clima-ondea {
+  from { transform: translate3d(0, -1.5%, 0); }
+  to { transform: translate3d(0, 1.5%, 0); }
+}
+@keyframes clima-niebla {
+  from { transform: translate3d(-8%, 0, 0); }
+  to { transform: translate3d(8%, 0, 0); }
+}
+@keyframes clima-gira {
+  to { transform: rotate(360deg); }
+}
+@keyframes clima-respira {
+  from { transform: scale(0.94); opacity: 0.55; }
+  to { transform: scale(1.06); opacity: 0.85; }
 }
 
 /* Relleno del segmento activo del hero, con la misma duración que el reloj

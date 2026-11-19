@@ -12,6 +12,7 @@ import { TableroSalidas } from "@/components/ui/TableroSalidas";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import { CotizadorRapidoBarra, CotizadorRapidoMovil } from "@/components/home/CotizadorRapido";
 import { PaseDestacado } from "@/components/home/PaseDestacado";
+import { ClimaDestino, climaDe } from "@/components/home/ClimaDestino";
 import { useHeroBajoBarra } from "@/lib/layout/barraSobreFoto";
 import type { FondoHero, FotoHero, PaseHero } from "@/lib/promociones/fotosHero";
 import type { HotelNinoGratis } from "@/lib/promociones/ninosGratis";
@@ -206,6 +207,7 @@ export function Hero({ fotos, ninoGratis = null }: { fotos: FotoHero[]; ninoGrat
   // del admin no hay destino que anunciar: queda la marca.
   const destino = actual?.destino?.trim();
   const tablero = destino || actual?.alt || "Lotus 360";
+  const clima = climaDe(destino);
   const pase = actual?.pase;
   // El precio del pase nuevo cuenta desde el del anterior (PaseDestacado se
   // vuelve a montar con cada promo, así que el anterior lo recuerda el hero).
@@ -341,6 +343,24 @@ export function Hero({ fotos, ninoGratis = null }: { fotos: FotoHero[]; ninoGrat
           />
         </div>
       ) : null}
+
+      {/* Clima del destino en pantalla (viento, sol...): bajo los velos, cruza
+          junto con la foto. */}
+      <AnimatePresence initial={false}>
+        {clima ? (
+          <m.div
+            key={clima}
+            aria-hidden="true"
+            className="clima-destino pointer-events-none absolute inset-0 overflow-hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: SEG_CRUCE, ease: CURVA }}
+          >
+            <ClimaDestino clima={clima} />
+          </m.div>
+        ) : null}
+      </AnimatePresence>
 
       {/* Velos: solo a la izquierda (donde va el texto) y abajo (donde va el
           cotizador), no un velo plano sobre toda la foto. En el teléfono el
