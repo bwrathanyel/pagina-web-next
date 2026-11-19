@@ -12,6 +12,7 @@ import {
   leerVueloPedido,
   parsearEstado,
   ponerVuelo,
+  rutaCotizar,
   serializarEstado,
   telefonoValido,
   textoRangoCorto,
@@ -203,4 +204,11 @@ test("boleto de /reservar ida y vuelta por texto (sessionStorage)", () => {
   assert.equal(vueloDeTexto("", HOY), null);
   assert.equal(vueloDeTexto(null, HOY), null);
   assert.equal(vueloDeTexto("hotel=4", HOY), null);
+});
+
+test("rutaCotizar: el hotel pasa a la ruta y el resto queda en la query", () => {
+  assert.equal(rutaCotizar("hotel=12&destino=Isla+de+Margarita&adultos=2", "hesperia-isla-margarita"), "/cotizar/hesperia-isla-margarita?destino=Isla+de+Margarita&adultos=2");
+  assert.equal(rutaCotizar("hotel=12", "hesperia-isla-margarita"), "/cotizar/hesperia-isla-margarita");
+  assert.equal(rutaCotizar("hotel=12&adultos=2", null), "/cotizar?hotel=12&adultos=2");
+  assert.equal(rutaCotizar("", undefined), "/cotizar");
 });

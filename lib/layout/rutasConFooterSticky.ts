@@ -6,6 +6,7 @@ export function tieneFooterStickyPropio(pathname: string): boolean {
   return (
     pathname.startsWith("/producto/") ||
     pathname === "/cotizar" ||
+    pathname.startsWith("/cotizar/") ||
     pathname === "/carrito"
   );
 }

@@ -54,6 +54,7 @@ import {
   hoyCaracas,
   nochesDe,
   parsearEstado,
+  rutaCotizar,
   serializarEstado,
   textoDuracion,
   textoRangoCorto,
@@ -387,12 +388,15 @@ function GuiaPasos({ paso }: { paso: 1 | 2 | 3 }) {
   );
 }
 
+const SIN_SLUGS: Record<number, string> = {};
+
 export function CotizadorViaje({
   inicial,
   hotel: hotelInicial,
   ofertas,
   rutas,
   guia = [],
+  slugs = SIN_SLUGS,
 }: {
   inicial: EstadoViaje;
   hotel: HotelCotizador | null;
@@ -400,6 +404,8 @@ export function CotizadorViaje({
   rutas: RutaVuelo[];
   /** Guía orientativa de aerolíneas y días (web_rutas_aereas). */
   guia?: RutaAerea[];
+  /** Slug de cada hotel elegible: con hotel, la barra muestra /cotizar/<slug>. */
+  slugs?: Record<number, string>;
 }) {
   const formId = useId();
   const [estado, setEstado] = useState(inicial);
@@ -547,7 +553,8 @@ export function CotizadorViaje({
       // guardado espera a este punto (borradorResuelto) para no pisarlo con vacío.
       if (guardado && (guardado.contacto.nombre || guardado.contacto.telefono || guardado.contacto.correo || guardado.contacto.notas))
         setContacto(guardado.contacto);
-      if (guardado && window.location.search === "" && borradorUtil(guardado.q, guardado.contacto)) setBorradorPendiente(guardado);
+      // /cotizar/<slug> ya trae estado (el hotel) aunque la query esté vacía: ahí no se ofrece el borrador.
+      if (guardado && window.location.pathname === "/cotizar" && window.location.search === "" && borradorUtil(guardado.q, guardado.contacto)) setBorradorPendiente(guardado);
       else borradorResuelto.current = true;
       setContactoListo(true);
     }, 0);
@@ -745,14 +752,19 @@ export function CotizadorViaje({
   }, [estado.hotel, estado.destino, idSugerible, tarifaSugerible, sugeridoSinCupo]);
 
   // El estado vive en la URL: se reescribe sin apilar historial. La primera
-  // vez no, así una URL limpia sigue limpia hasta que el cliente toca algo.
+  // vez no, así una URL limpia sigue limpia hasta que el cliente toca algo;
+  // solo un `?hotel=` de un enlace viejo pasa a /cotizar/<slug>.
   useEffect(() => {
     if (primeraVez.current) {
       primeraVez.current = false;
+      const p = new URLSearchParams(window.location.search);
+      const slug = slugs[Number(p.get("hotel"))];
+      if (slug) window.history.replaceState(null, "", rutaCotizar(p.toString(), slug));
       return;
     }
-    window.history.replaceState(null, "", `?${serializarEstado(sinHotelSugerido(estado, sugerido))}`);
-  }, [estado, sugerido]);
+    const e = sinHotelSugerido(estado, sugerido);
+    window.history.replaceState(null, "", rutaCotizar(serializarEstado(e), e.hotel ? slugs[e.hotel] : null));
+  }, [estado, sugerido, slugs]);
 
   // El botón de envío desaparece al confirmar: el foco pasa a la confirmación,
   // si no queda en el body y el lector de pantalla no se entera.

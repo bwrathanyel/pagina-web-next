@@ -422,3 +422,13 @@ export function enlaceCotizarProducto(p: { id: number; tipo: string; destino?: s
 export function enlaceCotizarPromocion(promo: { id: number; producto?: { id: number } | null }): string {
   return promo.producto ? `/cotizar?hotel=${promo.producto.id}&tarifa=${promo.id}` : "/cotizar";
 }
+
+/** Dirección de la barra para un estado ya serializado: con el slug del hotel, `/cotizar/<slug>` y el
+ * resto en la query (pedido del dueño 2026-11-18: limpiar solo `?hotel=`); sin slug, la query de siempre. */
+export function rutaCotizar(q: string, slug: string | null | undefined): string {
+  if (!slug) return q ? `/cotizar?${q}` : "/cotizar";
+  const p = new URLSearchParams(q);
+  p.delete("hotel");
+  const resto = p.toString();
+  return `/cotizar/${slug}${resto ? `?${resto}` : ""}`;
+}
