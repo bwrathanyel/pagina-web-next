@@ -828,7 +828,7 @@ html {
    en orden de lectura, con pausa entre uno y otro y en bucle; nunca dos a la vez. El sello brilla
    con su tinta, se apaga y deja ver la foto de su destino, y vuelve. Solo opacity y transform; el
    brillo es una capa con opacity (nada de box-shadow animado). Capas invisibles y quietas con
-   reduced-motion. --ritmo-escena va en sintonía con PASO_RELEVO_MS (3,2 s = escena + pausa). */
+   reduced-motion. --ritmo-escena va en sintonía con PASO_RELEVO_MS (1,6 s = escena + pausa). */
 .sello-brillo {
   background: radial-gradient(circle at 50% 40%, color-mix(in oklab, var(--tinta-destino) 38%, transparent), color-mix(in oklab, var(--tinta-destino) 12%, transparent));
   opacity: 0;
@@ -839,7 +839,7 @@ html {
 /* Dueño 2026-11-19 (2.ª vuelta): relevo más ágil (0,4 s entre sellos) y foto más larga (~1,6 s
    quieta de 2,8 s); el nombre no se apaga, pasa a dusk-text sobre el velo de la foto. */
 .sello-con-escena {
-  --ritmo-escena: 2.8s;
+  --ritmo-escena: 1.4s; /* 3.ª vuelta: el doble de rápido (foto ~0,8 s, 0,2 s entre sellos) */
 }
 @media (prefers-reduced-motion: no-preference) {
   .relevo-activo .sello-brillo {
