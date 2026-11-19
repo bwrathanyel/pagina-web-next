@@ -8,6 +8,7 @@ import { CLASE_CONTROL, Campo, Selector } from "@/components/ui/Campo";
 import { Hoja } from "@/components/ui/Hoja";
 import { Icono, type NombreIcono } from "@/components/ui/Icono";
 import { SelloDestino } from "@/components/ui/SelloDestino";
+import { GrillaRelevo } from "@/components/home/RelevoSellos";
 import { selloDestino } from "@/lib/arte";
 import { SelectorFecha, seguirCon } from "@/components/ui/SelectorFecha";
 import { SelectorViajeros, type Viajeros } from "@/components/ui/SelectorViajeros";
@@ -90,8 +91,8 @@ function Sello({
   compacto?: boolean;
   /** Posición en el panel de destinos: las opciones caen escalonadas al abrir. */
   orden?: number;
-  /** Panel de destinos: al abrir, el sello brilla con su tinta, se funde a la
-   * foto de su destino y vuelve (una vez, cada destino a su ritmo). */
+  /** Panel de destinos: por turno (GrillaRelevo), el sello brilla con su
+   * tinta, se funde a la foto de su destino y vuelve. */
   escena?: boolean;
 }) {
   // La key cambia al marcar: así la animación `estampa` vuelve a correr.
@@ -112,7 +113,7 @@ function Sello({
       } ${activo ? "border-acento bg-acento-suave text-ink" : "border-linea-fuerte bg-card text-ink-soft hover:border-ink/40 hover:text-ink"}`}
     >
       {conEscena ? (
-        // Cascada al abrir (globals.css, «Escena del sello»): brillo de tinta,
+        // Relevo de a uno (globals.css, «Escena del sello»): brillo de tinta,
         // foto del destino y de vuelta al sello. Capas quietas e invisibles con
         // reduced-motion. Un destino sin foto (portadaDestino) solo brilla.
         <>
@@ -390,7 +391,7 @@ function DestinoPlegable({
         />
       </button>
       {abierto ? (
-        <div id={idGrilla} role="group" aria-labelledby={idRotulo} className={`mt-2 ${FILA_SELLOS} ${escena ? "escena-al-abrir" : ""}`}>
+        <GrillaRelevo id={idGrilla} role="group" aria-labelledby={idRotulo} className={`mt-2 ${FILA_SELLOS}`}>
           {opciones.map((d) => (
             <Sello
               key={d.valor}
@@ -404,7 +405,7 @@ function DestinoPlegable({
               destino={d.valor}
             />
           ))}
-        </div>
+        </GrillaRelevo>
       ) : null}
     </>
   );
@@ -469,7 +470,7 @@ function DestinoBarra({
         style={{ positionAnchor: ancla } as CSSProperties}
         className="calendario-flotante w-[min(36rem,calc(100vw-2rem))] rounded-card bg-card p-4 text-ink shadow-chrome"
       >
-        <div className="grid grid-cols-5 gap-2">
+        <GrillaRelevo className="grid grid-cols-5 gap-2">
           {DESTINOS_RAPIDOS.map((d, i) => (
             <Sello
               key={d.valor}
@@ -484,7 +485,7 @@ function DestinoBarra({
               destino={d.valor}
             />
           ))}
-        </div>
+        </GrillaRelevo>
         {conOtro ? (
           <div className="mt-3 border-t border-linea pt-3">
             <p className="mb-1.5 text-sm font-semibold text-ink">¿Con qué otro destino?</p>
