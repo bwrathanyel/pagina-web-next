@@ -80,6 +80,7 @@ function Sello({
   icono,
   compacto = false,
   orden,
+  escena = false,
 }: {
   activo: boolean;
   onClick: () => void;
@@ -89,11 +90,16 @@ function Sello({
   compacto?: boolean;
   /** Posición en el panel de destinos: las opciones caen escalonadas al abrir. */
   orden?: number;
+  /** Panel de destinos: al abrir, el sello brilla con su tinta, se funde a la
+   * foto de su destino y vuelve (una vez, en cascada por `orden`). */
+  escena?: boolean;
 }) {
   // La key cambia al marcar: así la animación `estampa` vuelve a correr.
   const tinta = activo ? "estampa -rotate-8 text-acento" : "-rotate-8 opacity-60";
   // Tinta y giro propios al pasar el puntero (`.sello-destino` en globals.css).
   const slugSello = destino && !compacto ? selloDestino(destino) : undefined;
+  const conEscena = Boolean(escena && slugSello && orden !== undefined);
+  const foto = conEscena && destino ? portadaDestino(destino) : undefined;
   return (
     <button
       type="button"
@@ -102,22 +108,46 @@ function Sello({
       data-destino={slugSello}
       style={orden === undefined ? undefined : ({ "--n": orden } as CSSProperties)}
       className={`${compacto ? `pestana ${CLASE_PESTANA}` : CLASE_SELLO} ${orden === undefined ? "" : "op-cae"} ${slugSello ? "sello-destino" : ""} ${
-        activo ? "border-acento bg-acento-suave text-ink" : "border-linea-fuerte bg-card text-ink-soft hover:border-ink/40 hover:text-ink"
-      }`}
+        conEscena ? "sello-con-escena isolate overflow-hidden" : ""
+      } ${activo ? "border-acento bg-acento-suave text-ink" : "border-linea-fuerte bg-card text-ink-soft hover:border-ink/40 hover:text-ink"}`}
     >
+      {conEscena ? (
+        // Cascada al abrir (globals.css, «Escena del sello»): brillo de tinta,
+        // foto del destino y de vuelta al sello. Capas quietas e invisibles con
+        // reduced-motion. Un destino sin foto (portadaDestino) solo brilla.
+        <>
+          <span aria-hidden="true" className="sello-brillo pointer-events-none absolute inset-0 -z-10" />
+          {foto ? (
+            <span aria-hidden="true" className="sello-escena pointer-events-none absolute inset-0 -z-10 bg-dusk">
+              <Image src={foto.url} alt="" fill sizes="7rem" className="object-cover" />
+            </span>
+          ) : null}
+        </>
+      ) : null}
       {activo && !compacto ? (
         <span aria-hidden="true" className="absolute right-1 top-1 grid size-5 place-items-center rounded-full bg-acento text-sobre-acento">
           <Icono nombre="check" tamano={12} />
         </span>
       ) : null}
-      {destino ? (
-        <SelloDestino key={String(activo)} destino={destino} tamano={36} className={`sello-destino-arte ${tinta}`} />
-      ) : icono ? (
-        <span key={String(activo)} aria-hidden="true" className={`inline-flex ${compacto ? "pestana-icono" : ""} ${tinta}`}>
-          <Icono nombre={icono} tamano={compacto ? 18 : 28} />
+      {conEscena && destino ? (
+        // Sello y nombre se apagan juntos mientras se ve la foto (el arte ya
+        // trae su propia animación `estampa`: por eso un envoltorio aparte).
+        <span className={`${foto ? "sello-contenido" : ""} flex flex-col items-center gap-1.5`}>
+          <SelloDestino key={String(activo)} destino={destino} tamano={36} className={`sello-destino-arte ${tinta}`} />
+          <span>{etiqueta}</span>
         </span>
-      ) : null}
-      <span>{etiqueta}</span>
+      ) : (
+        <>
+          {destino ? (
+            <SelloDestino key={String(activo)} destino={destino} tamano={36} className={`sello-destino-arte ${tinta}`} />
+          ) : icono ? (
+            <span key={String(activo)} aria-hidden="true" className={`inline-flex ${compacto ? "pestana-icono" : ""} ${tinta}`}>
+              <Icono nombre={icono} tamano={compacto ? 18 : 28} />
+            </span>
+          ) : null}
+          <span>{etiqueta}</span>
+        </>
+      )}
       {activo && compacto ? <Icono nombre="check" tamano={14} className="text-acento" /> : null}
       {/* Pestaña marcada: el canto con el degradado del logo crece desde el centro. */}
       {activo && compacto ? (
@@ -302,7 +332,7 @@ const CONTROL_TRAMO = `${CONTROL_TRAMO_BASE} text-ink`;
  * lugar que ya trae el hero (las que traen `fondos`), si no la del alojamiento,
  * y si el destino no tiene promo en el hero, su portada curada de
  * /public/destinos (antes solo 4-5 destinos tenían banner, 2026-11-19).
- * «Isla de Margarita» casa con «Margarita». Sin ninguna (Coche) va sin foto. */
+ * «Isla de Margarita» casa con «Margarita». Sin ninguna va sin foto. */
 function fotoDelDestino(fotos: readonly FotoHero[], destino: string): string | null {
   const d = normalizarBusqueda(destino);
   const casa = (f: FotoHero) => {
@@ -377,6 +407,7 @@ function DestinoBarra({
             <Sello
               key={d.valor}
               orden={(i % 5) + Math.floor(i / 5)}
+              escena
               activo={destino === d.valor}
               onClick={() => {
                 setDestino(d.valor);

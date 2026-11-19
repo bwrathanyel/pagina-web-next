@@ -29,6 +29,34 @@ export const CREDITOS_FOTOS_DESTINO = [
     "altoOriginal": 2048
   },
   {
+    "archivo": "coche-playa-el-amor",
+    "destino": "Isla de Coche",
+    "titulo": "Playa El Amor, Isla de Coche",
+    "alt": "Acantilados rojizos sobre la orilla de Playa El Amor y el mar verde azulado, Isla de Coche",
+    "autor": "Wilfredor",
+    "autorUrl": "https://commons.wikimedia.org/wiki/User:Wilfredor",
+    "fuente": "https://commons.wikimedia.org/wiki/File:El_Amor_Beach,_Coche_Island_(4).jpg",
+    "licencia": "CC0",
+    "licenciaUrl": "https://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/El_Amor_Beach%2C_Coche_Island_%284%29.jpg",
+    "anchoOriginal": 3072,
+    "altoOriginal": 2048
+  },
+  {
+    "archivo": "coche-el-guamache",
+    "destino": "Isla de Coche",
+    "titulo": "Muelle de El Guamache, Isla de Coche",
+    "alt": "Peñeros junto al muelle de El Guamache con Margarita al fondo, Isla de Coche",
+    "autor": "Wilfredor",
+    "autorUrl": "https://commons.wikimedia.org/wiki/User:Wilfredor",
+    "fuente": "https://commons.wikimedia.org/wiki/File:El_Guamache,_Coche_Island_(1).jpg",
+    "licencia": "CC0",
+    "licenciaUrl": "https://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/c/cb/El_Guamache%2C_Coche_Island_%281%29.jpg",
+    "anchoOriginal": 3072,
+    "altoOriginal": 2048
+  },
+  {
     "archivo": "morrocoy-sombrero",
     "destino": "Morrocoy",
     "titulo": "Cayo Sombrero, Morrocoy",

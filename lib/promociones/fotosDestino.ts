@@ -25,6 +25,11 @@ export const FOTOS_DESTINO: Record<string, FotoDestino[]> = {
     { archivo: "margarita-el-agua", alt: "Oleaje, arena blanca y palmeras en Playa El Agua, Isla de Margarita" },
     { archivo: "margarita-palmeras", alt: "Palmeras y sombrillas junto al mar en Playa El Agua, Isla de Margarita" },
   ],
+  // Agregada el 2026-11-19 (Wilfredor, CC0): antes Coche iba sin foto.
+  coche: [
+    { archivo: "coche-playa-el-amor", alt: "Acantilados rojizos sobre la orilla de Playa El Amor y el mar verde azulado, Isla de Coche" },
+    { archivo: "coche-el-guamache", alt: "Peñeros junto al muelle de El Guamache con Margarita al fondo, Isla de Coche" },
+  ],
   merida: [
     { archivo: "merida-pico-bolivar", alt: "Cumbres rocosas del Pico Bolívar en la Sierra Nevada de Mérida" },
   ],
@@ -67,6 +72,7 @@ export const ATRACTIVO_DESTINO: Record<string, string> = {
   canaima: "Tepuyes y cascadas del Parque Nacional, a una lancha del Salto Ángel",
   "los roques": "Cayos de arena blanca y agua turquesa, Parque Nacional",
   margarita: "Playas todo el año y vida nocturna en Nueva Esparta",
+  coche: "Playas de aguas calmas y arena blanca, frente a Margarita",
   merida: "El teleférico más alto del mundo entre pueblos andinos",
   caracas: "La ciudad a los pies del Ávila",
   morrocoy: "Cayos de coco y arrecifes a minutos de la costa",

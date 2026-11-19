@@ -822,6 +822,51 @@ html {
     scale: 1.1;
   }
 }
+
+/* Escena del sello (panel de destinos, pedido del dueño 2026-11-19): al abrir el panel, cascada
+   diagonal UNA vez (retraso por --n, después de que caen las opciones). Cada sello brilla con su
+   tinta, se apaga y deja ver la foto de su destino, y vuelve. 2,5 s por sello, solo opacity y
+   transform; el brillo es una capa con opacity (nada de box-shadow animado). Capas invisibles y
+   quietas con reduced-motion. Se repite en cada apertura porque el popover cerrado no se pinta. */
+.sello-brillo {
+  background: radial-gradient(circle at 50% 40%, color-mix(in oklab, var(--tinta-destino) 38%, transparent), color-mix(in oklab, var(--tinta-destino) 12%, transparent));
+  opacity: 0;
+}
+.sello-escena {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .calendario-flotante:popover-open .sello-con-escena {
+    --retraso-escena: calc(200ms + var(--n, 0) * 160ms);
+  }
+  .calendario-flotante:popover-open .sello-con-escena .sello-brillo {
+    animation: sello-brilla 2.5s var(--ease-entrada-salida) var(--retraso-escena) both;
+  }
+  .calendario-flotante:popover-open .sello-con-escena .sello-escena {
+    animation: sello-escena 2.5s var(--ease-entrada-salida) var(--retraso-escena) both;
+  }
+  .calendario-flotante:popover-open .sello-con-escena .sello-contenido {
+    animation: sello-se-funde 2.5s var(--ease-entrada-salida) var(--retraso-escena) both;
+  }
+}
+@keyframes sello-brilla {
+  0% { opacity: 0; }
+  18% { opacity: 1; }
+  40%, 72% { opacity: 0.5; }
+  100% { opacity: 0; }
+}
+@keyframes sello-escena {
+  0%, 18% { opacity: 0; transform: scale(1.12); }
+  38% { opacity: 1; }
+  72% { opacity: 1; transform: scale(1); }
+  90%, 100% { opacity: 0; transform: scale(1); }
+}
+@keyframes sello-se-funde {
+  0% { opacity: 1; transform: scale(1); }
+  16% { opacity: 1; transform: scale(1.08); }
+  34%, 72% { opacity: 0; transform: scale(0.94); }
+  90%, 100% { opacity: 1; transform: scale(1); }
+}
 @keyframes valor-sube {
   from { opacity: 0; transform: translateY(0.375rem); }
 }
