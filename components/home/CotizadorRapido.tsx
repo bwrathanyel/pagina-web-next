@@ -26,6 +26,7 @@ import {
 import type { Servicio } from "@/lib/cotizador/estado";
 import { normalizarBusqueda } from "@/lib/catalogo/busqueda";
 import type { FotoHero } from "@/lib/promociones/fotosHero";
+import { portadaDestino } from "@/lib/promociones/fotosDestino";
 import type { HotelNinoGratis } from "@/lib/promociones/ninosGratis";
 
 // Cotizador rápido del hero. Es un formulario GET de verdad (next/form): sin
@@ -248,15 +249,17 @@ function Tramo({
   children: (id: string) => ReactNode;
 }) {
   const sello = destino ? selloDestino(destino) : undefined;
+  // Sin foto propia (Coche) el banner va igual: dusk, tinta y sello animados.
+  const conBanner = Boolean(foto || sello);
   const propio = useId();
   const idControl = id ?? propio;
   return (
     <div
       className={`tramo relative isolate flex min-w-0 flex-col gap-0.5 rounded-control px-4 pb-1.5 pt-3 transition-colors duration-150 ease-salida xl:px-5 ${
-        foto ? "" : "hover:bg-sand-2/60"
+        conBanner ? "" : "hover:bg-sand-2/60"
       } ${className}`}
     >
-      {foto ? (
+      {conBanner ? (
         // Banner animado por destino (pedido del dueño, 2026-11-19): la foto
         // deriva en bucle, la tinta del destino respira a la derecha y su sello
         // flota de fondo. Bucles con `alternate` (van y vuelven, sin corte) y
@@ -270,7 +273,7 @@ function Tramo({
         >
           <span className="banner-deriva absolute inset-0">
             {/* La key cambia con el destino: la foto nueva entra asentándose. */}
-            <Image key={foto} src={foto} alt="" fill sizes="28rem" className="hero-banner-destino object-cover" />
+            {foto ? <Image key={foto} src={foto} alt="" fill sizes="28rem" className="hero-banner-destino object-cover" /> : null}
           </span>
           <span className="absolute inset-0 bg-gradient-to-r from-dusk/90 via-dusk/70 to-dusk/35" />
           <span className="banner-tinta absolute inset-0" />
@@ -281,7 +284,7 @@ function Tramo({
           ) : null}
         </span>
       ) : null}
-      <label htmlFor={idControl} className={`text-sm ${foto ? "text-dusk-text-soft" : "text-ink-soft"}`}>
+      <label htmlFor={idControl} className={`text-sm ${conBanner ? "text-dusk-text-soft" : "text-ink-soft"}`}>
         {etiqueta}
       </label>
       {children(idControl)}
@@ -296,15 +299,17 @@ const CONTROL_TRAMO_BASE =
 const CONTROL_TRAMO = `${CONTROL_TRAMO_BASE} text-ink`;
 
 /** Foto del destino para el banner del tramo: primero las fotos propias del
- * lugar (las que traen `fondos`), si no la del alojamiento. «Isla de Margarita»
- * casa con «Margarita»; sin foto (Extranjero) el tramo queda liso. */
+ * lugar que ya trae el hero (las que traen `fondos`), si no la del alojamiento,
+ * y si el destino no tiene promo en el hero, su portada curada de
+ * /public/destinos (antes solo 4-5 destinos tenían banner, 2026-11-19).
+ * «Isla de Margarita» casa con «Margarita». Sin ninguna (Coche) va sin foto. */
 function fotoDelDestino(fotos: readonly FotoHero[], destino: string): string | null {
   const d = normalizarBusqueda(destino);
   const casa = (f: FotoHero) => {
     const x = normalizarBusqueda(f.destino?.trim() ?? "");
     return x !== "" && (d.includes(x) || x.includes(d));
   };
-  return (fotos.find((f) => f.fondos && casa(f)) ?? fotos.find(casa))?.url ?? null;
+  return (fotos.find((f) => f.fondos && casa(f)) ?? fotos.find(casa))?.url ?? portadaDestino(destino)?.url ?? null;
 }
 const etiquetaDestino = (valor: string) => DESTINOS_RAPIDOS.find((d) => d.valor === valor)?.label ?? valor;
 
@@ -470,7 +475,7 @@ export function CotizadorRapidoBarra({
               setDestino={c.setDestino}
               combinar={c.combinar}
               setCombinar={c.setCombinar}
-              sobreFoto={Boolean(fotoDestino)}
+              sobreFoto={Boolean(fotoDestino || selloDestino(c.destino))}
             />
           )}
         </Tramo>
