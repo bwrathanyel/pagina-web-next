@@ -133,6 +133,16 @@
   --color-riel-zelle: #6d1ed4;
   --color-riel-pago-movil: #0b6bcb;
   --color-riel-binance: #c99400;
+  /* Tinta propia de cada sello de destino al pasar el puntero (panel de destinos de la home). Solo el
+     sello y el borde, nunca texto. Un tono por destino, separados en el círculo y lejos del acento. */
+  --color-destino-margarita: #a8327a;
+  --color-destino-morrocoy: #2a7a50;
+  --color-destino-los-roques: #007f87;
+  --color-destino-merida: #5a6b22;
+  --color-destino-canaima: #b0303f;
+  --color-destino-catatumbo: #6240b0;
+  --color-destino-colonia-tovar: #7a4a2e;
+  --color-destino-extranjero: #1f5fa0;
 
   /* Acentos que cambian con el tema. Los de marca (coral #A83E00, gold #FBC000)
      están calibrados para leerse sobre `sand` claro: en oscuro el coral se
@@ -187,12 +197,28 @@
   --color-riel-zelle: #b48cff;
   --color-riel-pago-movil: #79b8ff;
   --color-riel-binance: #f0b90b;
+  --color-destino-margarita: #f29ac8;
+  --color-destino-morrocoy: #7fd4a4;
+  --color-destino-los-roques: #6fd6dc;
+  --color-destino-merida: #c3d27a;
+  --color-destino-canaima: #ff8a96;
+  --color-destino-catatumbo: #b8a2f5;
+  --color-destino-colonia-tovar: #e0ad86;
+  --color-destino-extranjero: #8fbcf2;
 }
 
 :root[data-theme="light"] {
   --color-riel-zelle: #6d1ed4;
   --color-riel-pago-movil: #0b6bcb;
   --color-riel-binance: #c99400;
+  --color-destino-margarita: #a8327a;
+  --color-destino-morrocoy: #2a7a50;
+  --color-destino-los-roques: #007f87;
+  --color-destino-merida: #5a6b22;
+  --color-destino-canaima: #b0303f;
+  --color-destino-catatumbo: #6240b0;
+  --color-destino-colonia-tovar: #7a4a2e;
+  --color-destino-extranjero: #1f5fa0;
   --color-acento: #A83E00;
   --color-acento-suave: #fbe6d5;
   --color-ambar: #8a5a00;
@@ -742,6 +768,41 @@ html {
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   .pestana:hover .pestana-icono {
     translate: 0 -2px;
+  }
+}
+
+/* Panel de destinos (CotizadorRapido): al pasar el puntero cada sello sin marcar toma su tinta y su
+   giro propios. Marcado sigue en acento (es el estado, no el destino). Sin movimiento con reduced-motion. */
+.sello-destino[data-destino="margarita"] { --tinta-destino: var(--color-destino-margarita); --giro-destino: 6deg; }
+.sello-destino[data-destino="morrocoy"] { --tinta-destino: var(--color-destino-morrocoy); --giro-destino: -14deg; }
+.sello-destino[data-destino="los-roques"] { --tinta-destino: var(--color-destino-los-roques); --giro-destino: 10deg; }
+.sello-destino[data-destino="merida"] { --tinta-destino: var(--color-destino-merida); --giro-destino: -3deg; }
+.sello-destino[data-destino="canaima"] { --tinta-destino: var(--color-destino-canaima); --giro-destino: -16deg; }
+.sello-destino[data-destino="catatumbo"] { --tinta-destino: var(--color-destino-catatumbo); --giro-destino: 12deg; }
+.sello-destino[data-destino="colonia-tovar"] { --tinta-destino: var(--color-destino-colonia-tovar); --giro-destino: -10deg; }
+.sello-destino[data-destino="extranjero"] { --tinta-destino: var(--color-destino-extranjero); --giro-destino: 4deg; }
+@media (hover: hover) {
+  .sello-destino:not([aria-pressed="true"]):hover {
+    border-color: var(--tinta-destino);
+    background-color: color-mix(in oklab, var(--tinta-destino) 10%, var(--color-card));
+    color: var(--color-ink);
+  }
+  .sello-destino:not([aria-pressed="true"]):hover .sello-destino-arte {
+    color: var(--tinta-destino);
+    opacity: 1;
+  }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .sello-destino-arte {
+    transition:
+      rotate var(--dur-media) var(--ease-salida),
+      scale var(--dur-media) var(--ease-salida),
+      color var(--dur-rapida) var(--ease-salida),
+      opacity var(--dur-rapida) var(--ease-salida);
+  }
+  .sello-destino:not([aria-pressed="true"]):hover .sello-destino-arte {
+    rotate: var(--giro-destino);
+    scale: 1.1;
   }
 }
 @keyframes valor-sube {

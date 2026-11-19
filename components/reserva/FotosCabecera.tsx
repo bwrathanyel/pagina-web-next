@@ -15,11 +15,13 @@ export function FotosCabecera({ hotelId, nombre, fotos }: { hotelId: number; nom
   const [visor, setVisor] = useState(false);
   const n = fotos.length;
   return (
-    <span className="absolute inset-0 lg:relative lg:inset-auto lg:block lg:h-14 lg:w-24 lg:shrink-0 lg:overflow-hidden lg:rounded-media lg:bg-sand-2">
+    // lg+: a sangre del borde izquierdo y todo el alto de la cabecera (los -my/-ml anulan su p-2;
+    // el overflow-hidden + rounded-card de la cabecera redondea las esquinas). Más foto sin subir el alto.
+    <span className="absolute inset-0 lg:relative lg:inset-auto lg:-my-2 lg:-ml-2 lg:block lg:w-44 lg:shrink-0 lg:self-stretch lg:overflow-hidden lg:bg-sand-2 xl:w-52">
       {n ? (
         <>
           <ViewTransition name={nombreFoto(hotelId)} share="morph" default="none">
-            <FotoRotativa fotos={fotos} sizes="(min-width: 1024px) 8rem, 100vw" apagada={false} encima={!visor} prioridad pasoMs={PASO_CABECERA_MS} />
+            <FotoRotativa fotos={fotos} sizes="(min-width: 1280px) 13rem, (min-width: 1024px) 11rem, 100vw" apagada={false} encima={!visor} prioridad pasoMs={PASO_CABECERA_MS} />
           </ViewTransition>
           <button
             type="button"

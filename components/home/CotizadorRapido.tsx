@@ -8,6 +8,7 @@ import { CLASE_CONTROL, Campo, Selector } from "@/components/ui/Campo";
 import { Hoja } from "@/components/ui/Hoja";
 import { Icono, type NombreIcono } from "@/components/ui/Icono";
 import { SelloDestino } from "@/components/ui/SelloDestino";
+import { selloDestino } from "@/lib/arte";
 import { SelectorFecha, seguirCon } from "@/components/ui/SelectorFecha";
 import { SelectorViajeros, type Viajeros } from "@/components/ui/SelectorViajeros";
 import {
@@ -88,13 +89,16 @@ function Sello({
 }) {
   // La key cambia al marcar: así la animación `estampa` vuelve a correr.
   const tinta = activo ? "estampa -rotate-8 text-acento" : "-rotate-8 opacity-60";
+  // Tinta y giro propios al pasar el puntero (`.sello-destino` en globals.css).
+  const slugSello = destino && !compacto ? selloDestino(destino) : undefined;
   return (
     <button
       type="button"
       aria-pressed={activo}
       onClick={onClick}
+      data-destino={slugSello}
       style={orden === undefined ? undefined : ({ "--n": orden } as CSSProperties)}
-      className={`${compacto ? `pestana ${CLASE_PESTANA}` : CLASE_SELLO} ${orden === undefined ? "" : "op-cae"} ${
+      className={`${compacto ? `pestana ${CLASE_PESTANA}` : CLASE_SELLO} ${orden === undefined ? "" : "op-cae"} ${slugSello ? "sello-destino" : ""} ${
         activo ? "border-acento bg-acento-suave text-ink" : "border-linea-fuerte bg-card text-ink-soft hover:border-ink/40 hover:text-ink"
       }`}
     >
@@ -104,7 +108,7 @@ function Sello({
         </span>
       ) : null}
       {destino ? (
-        <SelloDestino key={String(activo)} destino={destino} tamano={36} className={tinta} />
+        <SelloDestino key={String(activo)} destino={destino} tamano={36} className={`sello-destino-arte ${tinta}`} />
       ) : icono ? (
         <span key={String(activo)} aria-hidden="true" className={`inline-flex ${compacto ? "pestana-icono" : ""} ${tinta}`}>
           <Icono nombre={icono} tamano={compacto ? 18 : 28} />
@@ -315,8 +319,11 @@ function DestinoBarra({
         style={{ anchorName: ancla } as CSSProperties}
         className={`flex items-center gap-2 text-left ${CONTROL_TRAMO_BASE} ${sobreFoto ? "banner-control text-dusk-text" : "text-ink"}`}
       >
-        <SelloDestino key={destino} destino={destino} tamano={24} className={`estampa -rotate-8 shrink-0 ${sobreFoto ? "text-gold" : "text-acento"}`} />
-        <span key={texto} className="valor-cambia min-w-0 truncate">
+        {/* Keys con prefijo: valor y etiqueta del destino suelen coincidir
+            («Canaima»), y dos hermanos con la misma key dejaban sellos viejos
+            sin desmontar (se acumulaban en el botón). */}
+        <SelloDestino key={`sello-${destino}`} destino={destino} tamano={24} className={`estampa -rotate-8 shrink-0 ${sobreFoto ? "text-gold" : "text-acento"}`} />
+        <span key={`texto-${texto}`} className="valor-cambia min-w-0 truncate">
           {texto}
         </span>
         <Icono nombre="chevron-abajo" tamano={18} className={`ml-auto shrink-0 ${sobreFoto ? "text-dusk-text-soft" : "text-ink-soft"}`} />
