@@ -823,9 +823,9 @@ html {
   }
 }
 
-/* Escena del sello (panel de destinos, pedido del dueño 2026-11-19): al abrir el panel, cascada
-   diagonal UNA vez (retraso por --n, después de que caen las opciones). Cada sello brilla con su
-   tinta, se apaga y deja ver la foto de su destino, y vuelve. 2,5 s por sello, solo opacity y
+/* Escena del sello (panel de destinos, pedido del dueño 2026-11-19): al abrir el panel corre UNA
+   vez, cada sello a su ritmo (abajo). Cada sello brilla con su
+   tinta, se apaga y deja ver la foto de su destino, y vuelve. 2-3,4 s por sello, solo opacity y
    transform; el brillo es una capa con opacity (nada de box-shadow animado). Capas invisibles y
    quietas con reduced-motion. Se repite en cada apertura porque el popover cerrado no se pinta. */
 .sello-brillo {
@@ -835,18 +835,31 @@ html {
 .sello-escena {
   opacity: 0;
 }
+/* Cada destino a su ritmo (pedido del dueño 2026-11-19: que no se lean como un solo movimiento):
+   duración y desfase propios, sin orden de grilla, para que arranquen y terminen desparejos. */
+.sello-con-escena[data-destino="margarita"] { --ritmo-escena: 2.6s; --desfase-escena: 0.35s; }
+.sello-con-escena[data-destino="coche"] { --ritmo-escena: 3.2s; --desfase-escena: 1.1s; }
+.sello-con-escena[data-destino="morrocoy"] { --ritmo-escena: 2.2s; --desfase-escena: 0.6s; }
+.sello-con-escena[data-destino="los-roques"] { --ritmo-escena: 2.9s; --desfase-escena: 0.15s; }
+.sello-con-escena[data-destino="merida"] { --ritmo-escena: 3.4s; --desfase-escena: 0.9s; }
+.sello-con-escena[data-destino="canaima"] { --ritmo-escena: 2.4s; --desfase-escena: 1.45s; }
+.sello-con-escena[data-destino="catatumbo"] { --ritmo-escena: 2s; --desfase-escena: 0.5s; }
+.sello-con-escena[data-destino="colonia-tovar"] { --ritmo-escena: 3s; --desfase-escena: 1.25s; }
+.sello-con-escena[data-destino="caracas"] { --ritmo-escena: 2.7s; --desfase-escena: 0.75s; }
+.sello-con-escena[data-destino="extranjero"] { --ritmo-escena: 2.3s; --desfase-escena: 1.65s; }
 @media (prefers-reduced-motion: no-preference) {
-  .calendario-flotante:popover-open .sello-con-escena {
-    --retraso-escena: calc(200ms + var(--n, 0) * 160ms);
+  /* Escritorio: popover abierto. Móvil: la grilla de DestinoPlegable se monta al desplegarse. */
+  :is(.calendario-flotante:popover-open, .escena-al-abrir) .sello-con-escena {
+    --retraso-escena: calc(200ms + var(--desfase-escena, 0s));
   }
-  .calendario-flotante:popover-open .sello-con-escena .sello-brillo {
-    animation: sello-brilla 2.5s var(--ease-entrada-salida) var(--retraso-escena) both;
+  :is(.calendario-flotante:popover-open, .escena-al-abrir) .sello-con-escena .sello-brillo {
+    animation: sello-brilla var(--ritmo-escena, 2.5s) var(--ease-entrada-salida) var(--retraso-escena) both;
   }
-  .calendario-flotante:popover-open .sello-con-escena .sello-escena {
-    animation: sello-escena 2.5s var(--ease-entrada-salida) var(--retraso-escena) both;
+  :is(.calendario-flotante:popover-open, .escena-al-abrir) .sello-con-escena .sello-escena {
+    animation: sello-escena var(--ritmo-escena, 2.5s) var(--ease-entrada-salida) var(--retraso-escena) both;
   }
-  .calendario-flotante:popover-open .sello-con-escena .sello-contenido {
-    animation: sello-se-funde 2.5s var(--ease-entrada-salida) var(--retraso-escena) both;
+  :is(.calendario-flotante:popover-open, .escena-al-abrir) .sello-con-escena .sello-contenido {
+    animation: sello-se-funde var(--ritmo-escena, 2.5s) var(--ease-entrada-salida) var(--retraso-escena) both;
   }
 }
 @keyframes sello-brilla {

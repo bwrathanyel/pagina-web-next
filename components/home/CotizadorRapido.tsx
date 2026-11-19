@@ -91,14 +91,14 @@ function Sello({
   /** Posición en el panel de destinos: las opciones caen escalonadas al abrir. */
   orden?: number;
   /** Panel de destinos: al abrir, el sello brilla con su tinta, se funde a la
-   * foto de su destino y vuelve (una vez, en cascada por `orden`). */
+   * foto de su destino y vuelve (una vez, cada destino a su ritmo). */
   escena?: boolean;
 }) {
   // La key cambia al marcar: así la animación `estampa` vuelve a correr.
   const tinta = activo ? "estampa -rotate-8 text-acento" : "-rotate-8 opacity-60";
   // Tinta y giro propios al pasar el puntero (`.sello-destino` en globals.css).
   const slugSello = destino && !compacto ? selloDestino(destino) : undefined;
-  const conEscena = Boolean(escena && slugSello && orden !== undefined);
+  const conEscena = Boolean(escena && slugSello);
   const foto = conEscena && destino ? portadaDestino(destino) : undefined;
   return (
     <button
@@ -353,6 +353,7 @@ function DestinoPlegable({
   opciones,
   onElegir,
   abiertoAlInicio = false,
+  escena = false,
 }: {
   idRotulo: string;
   valor: string;
@@ -360,6 +361,8 @@ function DestinoPlegable({
   onElegir: (v: string) => void;
   /** «Combinar»: recién pedido no hay nada elegido, la grilla arranca abierta. */
   abiertoAlInicio?: boolean;
+  /** Escena de los sellos al desplegar (como el popover de escritorio). */
+  escena?: boolean;
 }) {
   const [abierto, setAbierto] = useState(abiertoAlInicio && !valor);
   const idGrilla = useId();
@@ -386,10 +389,11 @@ function DestinoPlegable({
         />
       </button>
       {abierto ? (
-        <div id={idGrilla} role="group" aria-labelledby={idRotulo} className={`mt-2 ${FILA_SELLOS}`}>
+        <div id={idGrilla} role="group" aria-labelledby={idRotulo} className={`mt-2 ${FILA_SELLOS} ${escena ? "escena-al-abrir" : ""}`}>
           {opciones.map((d) => (
             <Sello
               key={d.valor}
+              escena={escena}
               activo={valor === d.valor}
               onClick={() => {
                 onElegir(d.valor);
@@ -714,6 +718,7 @@ export function CotizadorRapidoMovil({ ninoGratis = null }: PropsCotizador) {
               valor={c.destino}
               opciones={DESTINOS_RAPIDOS}
               onElegir={c.setDestino}
+              escena
             />
             <input type="hidden" name="destino" value={c.destino} />
             {conOtro ? (
