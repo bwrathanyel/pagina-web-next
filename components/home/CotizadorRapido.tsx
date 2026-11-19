@@ -343,6 +343,68 @@ function fotoDelDestino(fotos: readonly FotoHero[], destino: string): string | n
 }
 const etiquetaDestino = (valor: string) => DESTINOS_RAPIDOS.find((d) => d.valor === valor)?.label ?? valor;
 
+/** Móvil (hoja «Cotice su viaje»): los 10 sellos abiertos ocupaban tres filas
+ * (pedido del dueño, 2026-11-19). Cerrado es un campo con el destino elegido;
+ * al tocarlo despliega la grilla y elegir la vuelve a plegar, como el popover
+ * de escritorio. */
+function DestinoPlegable({
+  idRotulo,
+  valor,
+  opciones,
+  onElegir,
+  abiertoAlInicio = false,
+}: {
+  idRotulo: string;
+  valor: string;
+  opciones: readonly { valor: string; label: string }[];
+  onElegir: (v: string) => void;
+  /** «Combinar»: recién pedido no hay nada elegido, la grilla arranca abierta. */
+  abiertoAlInicio?: boolean;
+}) {
+  const [abierto, setAbierto] = useState(abiertoAlInicio && !valor);
+  const idGrilla = useId();
+  return (
+    <>
+      <button
+        type="button"
+        aria-expanded={abierto}
+        aria-controls={idGrilla}
+        aria-describedby={idRotulo}
+        onClick={() => setAbierto(!abierto)}
+        className="flex min-h-12 w-full items-center gap-2 rounded-control border border-linea-fuerte bg-card px-3 text-left text-base font-semibold text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento"
+      >
+        {valor ? (
+          <SelloDestino key={`sello-${valor}`} destino={valor} tamano={24} className="estampa -rotate-8 shrink-0 text-acento" />
+        ) : null}
+        <span key={`texto-${valor}`} className={`valor-cambia min-w-0 truncate ${valor ? "" : "font-normal text-ink-soft"}`}>
+          {valor ? etiquetaDestino(valor) : "Elija un destino"}
+        </span>
+        <Icono
+          nombre="chevron-abajo"
+          tamano={18}
+          className={`ml-auto shrink-0 text-ink-soft transition-transform duration-150 ease-salida motion-reduce:transition-none ${abierto ? "rotate-180" : ""}`}
+        />
+      </button>
+      {abierto ? (
+        <div id={idGrilla} role="group" aria-labelledby={idRotulo} className={`mt-2 ${FILA_SELLOS}`}>
+          {opciones.map((d) => (
+            <Sello
+              key={d.valor}
+              activo={valor === d.valor}
+              onClick={() => {
+                onElegir(d.valor);
+                setAbierto(false);
+              }}
+              etiqueta={d.label}
+              destino={d.valor}
+            />
+          ))}
+        </div>
+      ) : null}
+    </>
+  );
+}
+
 /** Escritorio: el destino abre un popover ancho con los sellos (opción
  * única) y «Combinar con otro destino». Esc y clic afuera lo cierra el
  * navegador (popover="auto"); elegir destino también lo cierra. */
@@ -647,32 +709,23 @@ export function CotizadorRapidoMovil({ ninoGratis = null }: PropsCotizador) {
 
           <div>
             <Rotulo id={`${idRotulo}-destino`}>Destino</Rotulo>
-            <div role="group" aria-labelledby={`${idRotulo}-destino`} className={FILA_SELLOS}>
-              {DESTINOS_RAPIDOS.map((d) => (
-                <Sello
-                  key={d.valor}
-                  activo={c.destino === d.valor}
-                  onClick={() => c.setDestino(d.valor)}
-                  etiqueta={d.label}
-                  destino={d.valor}
-                />
-              ))}
-            </div>
+            <DestinoPlegable
+              idRotulo={`${idRotulo}-destino`}
+              valor={c.destino}
+              opciones={DESTINOS_RAPIDOS}
+              onElegir={c.setDestino}
+            />
             <input type="hidden" name="destino" value={c.destino} />
             {conOtro ? (
               <div className="mt-3">
                 <Rotulo id={`${idRotulo}-combinar`}>¿Con qué otro destino?</Rotulo>
-                <div role="group" aria-labelledby={`${idRotulo}-combinar`} className={FILA_SELLOS}>
-                  {DESTINOS_RAPIDOS.filter((d) => d.valor !== c.destino).map((d) => (
-                    <Sello
-                      key={d.valor}
-                      activo={c.combinar === d.valor}
-                      onClick={() => c.setCombinar(c.combinar === d.valor ? "" : d.valor)}
-                      etiqueta={d.label}
-                      destino={d.valor}
-                    />
-                  ))}
-                </div>
+                <DestinoPlegable
+                  idRotulo={`${idRotulo}-combinar`}
+                  valor={c.combinar}
+                  opciones={DESTINOS_RAPIDOS.filter((d) => d.valor !== c.destino)}
+                  onElegir={(v) => c.setCombinar(c.combinar === v ? "" : v)}
+                  abiertoAlInicio
+                />
                 {c.combinar ? <input type="hidden" name="combinar" value={c.combinar} /> : null}
               </div>
             ) : null}
