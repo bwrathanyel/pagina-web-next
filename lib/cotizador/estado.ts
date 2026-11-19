@@ -16,12 +16,14 @@ export const SERVICIOS: readonly { id: Servicio; etiqueta: string }[] = [
 
 export const DESTINOS: readonly string[] = [
   "Isla de Margarita",
+  "Isla de Coche",
   "Morrocoy",
   "Los Roques",
   "Mérida",
   "Canaima",
   "Catatumbo",
   "Colonia Tovar",
+  "Caracas",
   "Extranjero",
 ];
 export const DESTINO_INICIAL = DESTINOS[0];

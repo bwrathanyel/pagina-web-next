@@ -61,6 +61,8 @@ const CLASE_SELLO =
   "relative flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-card border px-1.5 py-2.5 text-center text-xs font-semibold leading-tight text-balance " +
   "transition-[background-color,border-color,color] duration-150 ease-salida motion-reduce:transition-none " +
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento";
+// Hoja móvil: 4 sellos por fila y la última centrada (10 destinos = 4+4+2, sin fila coja).
+const FILA_SELLOS = "flex flex-wrap justify-center gap-2 *:min-w-0 *:basis-[calc((100%-1.5rem)/4)]";
 /** Variante pestaña: los sellos de servicio sobre la barra de escritorio. */
 const CLASE_PESTANA =
   "relative flex h-10 items-center gap-2 rounded-t-card border border-b-0 px-4 text-sm font-semibold " +
@@ -284,7 +286,7 @@ function fotoDelDestino(fotos: readonly FotoHero[], destino: string): string | n
 }
 const etiquetaDestino = (valor: string) => DESTINOS_RAPIDOS.find((d) => d.valor === valor)?.label ?? valor;
 
-/** Escritorio: el destino abre un popover ancho con los 8 sellos (opción
+/** Escritorio: el destino abre un popover ancho con los sellos (opción
  * única) y «Combinar con otro destino». Esc y clic afuera lo cierra el
  * navegador (popover="auto"); elegir destino también lo cierra. */
 function DestinoBarra({
@@ -343,11 +345,11 @@ function DestinoBarra({
         style={{ positionAnchor: ancla } as CSSProperties}
         className="calendario-flotante w-[min(36rem,calc(100vw-2rem))] rounded-card bg-card p-4 text-ink shadow-chrome"
       >
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-5 gap-2">
           {DESTINOS_RAPIDOS.map((d, i) => (
             <Sello
               key={d.valor}
-              orden={(i % 4) + Math.floor(i / 4)}
+              orden={(i % 5) + Math.floor(i / 5)}
               activo={destino === d.valor}
               onClick={() => {
                 setDestino(d.valor);
@@ -361,11 +363,11 @@ function DestinoBarra({
         {conOtro ? (
           <div className="mt-3 border-t border-linea pt-3">
             <p className="mb-1.5 text-sm font-semibold text-ink">¿Con qué otro destino?</p>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-5 gap-2">
               {DESTINOS_RAPIDOS.filter((d) => d.valor !== destino).map((d, i) => (
                 <Sello
                   key={d.valor}
-                  orden={(i % 4) + Math.floor(i / 4)}
+                  orden={(i % 5) + Math.floor(i / 5)}
                   activo={combinar === d.valor}
                   onClick={() => {
                     setCombinar(combinar === d.valor ? "" : d.valor);
@@ -587,7 +589,7 @@ export function CotizadorRapidoMovil({ ninoGratis = null }: PropsCotizador) {
 
           <div>
             <Rotulo id={`${idRotulo}-destino`}>Destino</Rotulo>
-            <div role="group" aria-labelledby={`${idRotulo}-destino`} className="grid grid-cols-4 gap-2">
+            <div role="group" aria-labelledby={`${idRotulo}-destino`} className={FILA_SELLOS}>
               {DESTINOS_RAPIDOS.map((d) => (
                 <Sello
                   key={d.valor}
@@ -602,7 +604,7 @@ export function CotizadorRapidoMovil({ ninoGratis = null }: PropsCotizador) {
             {conOtro ? (
               <div className="mt-3">
                 <Rotulo id={`${idRotulo}-combinar`}>¿Con qué otro destino?</Rotulo>
-                <div role="group" aria-labelledby={`${idRotulo}-combinar`} className="grid grid-cols-4 gap-2">
+                <div role="group" aria-labelledby={`${idRotulo}-combinar`} className={FILA_SELLOS}>
                   {DESTINOS_RAPIDOS.filter((d) => d.valor !== c.destino).map((d) => (
                     <Sello
                       key={d.valor}

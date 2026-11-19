@@ -79,7 +79,7 @@ export function SelectorDestino({
             panel.current?.querySelector<HTMLButtonElement>('[aria-checked="true"]')?.focus();
         }}
         style={{ positionAnchor: ancla } as CSSProperties}
-        className="calendario-flotante w-[min(46rem,calc(100vw-2rem))] rounded-card bg-card p-4 text-ink shadow-chrome"
+        className="calendario-flotante w-[min(52rem,calc(100vw-2rem))] rounded-card bg-card p-4 text-ink shadow-chrome"
       >
         <p id={`${idPanel}-titulo`} className="mb-3 font-semibold">
           ¿A dónde quiere viajar?
@@ -88,7 +88,7 @@ export function SelectorDestino({
           role="radiogroup"
           aria-labelledby={`${idPanel}-titulo`}
           onKeyDown={mover}
-          className="grid grid-cols-2 gap-3 sm:grid-cols-4"
+          className="flex flex-wrap items-start justify-center gap-3 *:basis-[calc((100%-0.75rem)/2)] sm:*:basis-[calc((100%-2.25rem)/4)] lg:*:basis-[calc((100%-3rem)/5)]"
         >
           {DESTINOS.map((d) => {
             const foto = portadaDestino(d);

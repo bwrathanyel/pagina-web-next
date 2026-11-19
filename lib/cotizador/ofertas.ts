@@ -45,6 +45,7 @@ const clave = (s: string | null | undefined) =>
 // aparece con otro nombre, o por su pueblo ("Chichiriviche" es Morrocoy).
 const ALIAS: Record<string, string[]> = {
   "Isla de Margarita": ["margarita", "isla margarita", "isla de margarita"],
+  "Isla de Coche": ["coche", "isla de coche", "isla coche"],
   Morrocoy: ["morrocoy", "chichiriviche", "tucacas"],
 };
 const DESTINO_DE = new Map<string, string>(

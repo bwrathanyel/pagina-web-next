@@ -142,7 +142,9 @@ test("sin ruta no hay total; un hotel en euros suma su número en $", () => {
 test("destino de /cotizar", () => {
   assert.equal(destinoCotizador("Margarita"), "Isla de Margarita");
   assert.equal(destinoCotizador("Los Roques"), "Los Roques");
-  assert.equal(destinoCotizador("Caracas"), null);
+  assert.equal(destinoCotizador("Coche"), "Isla de Coche");
+  assert.equal(destinoCotizador("Caracas"), "Caracas");
+  assert.equal(destinoCotizador("Puerto La Cruz"), null);
 });
 
 test("el enlace a /cotizar llega con todo precargado", () => {

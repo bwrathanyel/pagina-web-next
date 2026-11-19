@@ -159,6 +159,7 @@ export function tarifaInicial(
 export function destinoCotizador(destino: string | null | undefined): string | null {
   if (!destino) return null;
   if (/^(isla de )?margarita$/i.test(destino.trim())) return "Isla de Margarita";
+  if (/^(isla de )?coche$/i.test(destino.trim())) return "Isla de Coche";
   return DESTINOS.includes(destino) ? destino : null;
 }
 

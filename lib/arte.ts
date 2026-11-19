@@ -5,12 +5,14 @@ export type EstadoArte = "sin-resultados" | "sin-cupo" | "error" | "no-encontrad
 
 const SELLOS = new Set([
   "margarita",
+  "coche",
   "morrocoy",
   "los-roques",
   "merida",
   "canaima",
   "catatumbo",
   "colonia-tovar",
+  "caracas",
   "extranjero",
 ]);
 
