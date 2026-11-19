@@ -212,3 +212,34 @@ test("rutaCotizar: el hotel pasa a la ruta y el resto queda en la query", () => 
   assert.equal(rutaCotizar("hotel=12&adultos=2", null), "/cotizar?hotel=12&adultos=2");
   assert.equal(rutaCotizar("", undefined), "/cotizar");
 });
+
+test("extranjero: la solicitud va y vuelve por la URL, solo con ese destino", () => {
+  const e = parsearEstado(
+    {
+      destino: "Extranjero",
+      ext_pais: "Punta Cana",
+      ext_ideas: "1",
+      ext_tipo: "playa,luna-de-miel,nada,playa",
+      ext_ppto: "1500",
+      ext_salida: "otra",
+      ext_salida_otra: "Barquisimeto",
+      ext_extras: "seguro,visa,x",
+    },
+    HOY,
+  );
+  assert.deepEqual(e.ext, {
+    pais: "Punta Cana",
+    ideas: false,
+    tipos: ["playa", "luna-de-miel"],
+    presupuesto: "1500",
+    salida: "otra",
+    salidaOtra: "Barquisimeto",
+    extras: ["seguro", "visa"],
+  });
+  assert.deepEqual(parsearEstado(Object.fromEntries(new URLSearchParams(serializarEstado(e))), HOY).ext, e.ext);
+  assert.doesNotMatch(serializarEstado({ ...e, destino: "Morrocoy" }), /ext_/);
+  const ideas = parsearEstado({ destino: "Extranjero", ext_ideas: "1", ext_ppto: "99", ext_salida: "Lima" }, HOY).ext;
+  assert.equal(ideas.ideas, true);
+  assert.equal(ideas.presupuesto, "");
+  assert.equal(ideas.salida, "");
+});

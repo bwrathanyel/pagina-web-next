@@ -1,4 +1,13 @@
-import { EQUIPAJES, fechasVuelo, nochesDe, SERVICIOS, textoViajeros, type EstadoViaje } from "@/lib/cotizador/estado";
+import {
+  DESTINO_EXTRANJERO,
+  EQUIPAJES,
+  fechasVuelo,
+  nochesDe,
+  SERVICIOS,
+  textoExtranjero,
+  textoViajeros,
+  type EstadoViaje,
+} from "@/lib/cotizador/estado";
 import type { VueloViaje } from "@/lib/cotizador/vuelo";
 
 export interface ResultadoCotizacion {
@@ -162,12 +171,19 @@ export function armarCotizacionViaje(
       : "Precio: a confirmar por el asesor";
   const combinar = e.combinar && e.combinar !== e.destino ? e.combinar : "";
   const destino = soloVuelo ? `${e.origen} a ${vueloInfo?.destino ? destinoVuelo : e.destino}` : e.destino;
+  // El campo `destino` del lead no cambia (el reparto del CRM lo lee): lo pedido va en `consulta`.
+  const ext = e.destino === DESTINO_EXTRANJERO ? textoExtranjero(e.ext) : null;
 
   const consulta = [
     "Cotización web: Arme su viaje",
     `Servicios: ${servicio}${hospedaje && vuelo ? " (hospedaje con vuelo)" : ""}`,
     `Destino: ${soloVuelo ? destinoVuelo : e.destino}`,
     combinar ? `También quiere: ${combinar}` : "",
+    ext?.destino ? `País o ciudad: ${ext.destino}` : "",
+    ext?.tipos ? `Tipo de viaje: ${ext.tipos}` : "",
+    ext?.presupuesto ? `Presupuesto: ${ext.presupuesto} por persona` : "",
+    ext?.salida ? `Sale desde: ${ext.salida}` : "",
+    ext?.extras ? `También necesita: ${ext.extras}` : "",
     `Fechas: ${fechas}`,
     `Viajeros: ${viajeros}`,
     edades ? `Edades de niños: ${edades}` : "",
@@ -203,6 +219,11 @@ export function armarCotizacionViaje(
       ["📋", `*Servicios:* ${servicio}`],
       ["📍", `*Destino:* ${e.destino}`],
       combinar ? ["", `También quiere: ${combinar}`] : null,
+      ext?.destino ? ["", `País o ciudad: ${ext.destino}`] : null,
+      ext?.tipos ? ["", `Tipo de viaje: ${ext.tipos}`] : null,
+      ext?.presupuesto ? ["", `Presupuesto: ${ext.presupuesto} por persona`] : null,
+      ext?.salida ? ["", `Sale desde: ${ext.salida}`] : null,
+      ext?.extras ? ["", `También necesito: ${ext.extras}`] : null,
       ["📅", `*Fechas:* ${fechas}`],
       ["👥", `*Viajeros:* ${viajeros}`],
       edades ? ["👶", `*Edades de niños:* ${edades}`] : null,

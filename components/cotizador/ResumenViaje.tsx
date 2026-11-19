@@ -5,7 +5,7 @@ import { Boleto } from "@/components/ui/Boleto";
 import { Boton } from "@/components/ui/Boton";
 import { PrecioMostrado, usePrecioSuma } from "@/components/ui/PrecioMostrado";
 import { SelloDestino } from "@/components/ui/SelloDestino";
-import { fechasVuelo, nochesDe, textoViajeros, type EstadoViaje } from "@/lib/cotizador/estado";
+import { DESTINO_EXTRANJERO, fechasVuelo, nochesDe, textoExtranjero, textoViajeros, type EstadoViaje } from "@/lib/cotizador/estado";
 import type { Estimado } from "@/lib/cotizador/estimado";
 import { textoBoletos, type VueloViaje } from "@/lib/cotizador/vuelo";
 import { montoConMoneda } from "@/lib/tarifas";
@@ -123,6 +123,9 @@ export function ResumenViaje({
   // Sin fechas no hay estimado: se muestra el precio anunciado de la oferta, con su unidad.
   const referencia = !montoTalon && hospedaje && desde ? desde : null;
   const vueloFechas = fechasVuelo(estado);
+  const extranjero = estado.destino === DESTINO_EXTRANJERO;
+  const ext = extranjero ? textoExtranjero(estado.ext) : null;
+  const enDestino = extranjero ? "el extranjero" : estado.destino;
   let n = 0;
 
   // Escritorio: nombre y WhatsApp justo bajo el talón, antes del detalle, para que se vean y se
@@ -176,11 +179,21 @@ export function ResumenViaje({
       {datosArriba}
       {conTitulo ? <h2 className="px-5 pt-4 font-display text-2xl font-bold leading-none text-ink">Su cotización</h2> : null}
       <ul className={(conTitulo ? "mt-2 " : "") + "divide-y divide-dashed divide-linea-fuerte"}>
+        {extranjero ? (
+          <Linea numero={++n} precio={null} titulo={ext?.destino && !estado.ext.ideas ? `Viaje a ${ext.destino}` : "Viaje al extranjero"}>
+            {!ext ? <span>Cuéntenos su viaje y un asesor le arma opciones</span> : null}
+            {estado.ext.ideas ? <span>Quiere ideas de destino</span> : null}
+            {ext?.tipos ? <span>{ext.tipos}</span> : null}
+            {ext?.presupuesto ? <span>{ext.presupuesto} por persona</span> : null}
+            {ext?.salida ? <span>Sale desde {ext.salida}</span> : null}
+            {ext?.extras ? <span>Con {ext.extras.toLowerCase()}</span> : null}
+          </Linea>
+        ) : null}
         {estado.servicios.includes("hospedaje") ? (
           <Linea
             numero={++n}
             foto={hotel?.foto}
-            titulo={hotel?.nombre ?? `Hospedaje en ${estado.destino}`}
+            titulo={hotel?.nombre ?? `Hospedaje en ${enDestino}`}
             precio={
               unico ? null : monto ? (
                 <>
@@ -225,7 +238,7 @@ export function ResumenViaje({
           </Linea>
         ) : null}
         {estado.servicios.includes("tours") ? (
-          <Linea numero={++n} precio={unico ? null : undefined} titulo={`Full day y tours en ${estado.destino}`}>
+          <Linea numero={++n} precio={unico ? null : undefined} titulo={`Full day y tours en ${enDestino}`}>
             {tours.length ? tours.map((t) => <span key={t}>{t}</span>) : <span>Un asesor propone los disponibles</span>}
             <span>Grupo mínimo de 15 personas</span>
           </Linea>

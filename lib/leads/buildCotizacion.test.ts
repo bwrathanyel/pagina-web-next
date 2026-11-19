@@ -63,3 +63,18 @@ test("rango que cruza de mes y de año", () => {
   const anio = armarCotizacionViaje(viaje({ desde: "2026-12-30", hasta: "2027-01-02" }), contacto, null);
   assert.match(anio.consulta, /Fechas: 30 de diciembre de 2026 al 2 de enero de 2027/);
 });
+
+test("extranjero: lo que contó el cliente llega en consulta y en el WhatsApp, el destino del lead no cambia", () => {
+  const e: EstadoViaje = {
+    ...estadoInicial(),
+    destino: "Extranjero",
+    ext: { pais: "Cancún", ideas: false, tipos: ["playa"], presupuesto: "mas", salida: "Caracas", salidaOtra: "", extras: ["seguro", "traslados"] },
+  };
+  const r = armarCotizacionViaje(e, contacto, null);
+  assert.equal(r.destino, "Extranjero");
+  assert.match(r.consulta, /País o ciudad: Cancún \| Tipo de viaje: Playa \| Presupuesto: Más de \$2\.500 por persona \| Sale desde: Caracas \| También necesita: Seguro de viaje, Traslados/);
+  assert.match(r.mensajeTexto, /País o ciudad: Cancún/);
+  assert.match(r.mensajeTexto, /También necesito: Seguro de viaje, Traslados/);
+  const otro = armarCotizacionViaje({ ...e, destino: "Morrocoy" }, contacto, null);
+  assert.doesNotMatch(otro.consulta, /País o ciudad/);
+});

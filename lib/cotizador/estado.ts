@@ -50,6 +50,85 @@ export const EQUIPAJE_INICIAL: Equipaje = "maleta";
 /** Tours que caben en un viaje: el asesor arma la propuesta, no un catálogo entero. */
 export const TOURS_MAX = 6;
 
+// ---- solicitud «Viajar al extranjero» (campos decididos por el dueño 2026-11-19) ----
+
+export const DESTINO_EXTRANJERO = "Extranjero";
+export const EXT_SUGERENCIAS: readonly string[] = ["Punta Cana", "Cancún", "Miami", "Orlando", "Madrid", "Aruba", "Curazao", "Panamá"];
+export type TipoViajeExt = "playa" | "ciudad" | "crucero" | "luna-de-miel" | "parques";
+export const EXT_TIPOS: readonly { valor: TipoViajeExt; etiqueta: string }[] = [
+  { valor: "playa", etiqueta: "Playa" },
+  { valor: "ciudad", etiqueta: "Ciudad" },
+  { valor: "crucero", etiqueta: "Crucero" },
+  { valor: "luna-de-miel", etiqueta: "Luna de miel" },
+  { valor: "parques", etiqueta: "Parques temáticos" },
+];
+export type PresupuestoExt = "800" | "1500" | "2500" | "mas";
+export const EXT_PRESUPUESTOS: readonly { valor: PresupuestoExt; etiqueta: string }[] = [
+  { valor: "800", etiqueta: "Hasta $800" },
+  { valor: "1500", etiqueta: "$800 a $1.500" },
+  { valor: "2500", etiqueta: "$1.500 a $2.500" },
+  { valor: "mas", etiqueta: "Más de $2.500" },
+];
+export const EXT_SALIDA_OTRA = "otra";
+export const EXT_SALIDAS: readonly { valor: string; etiqueta: string }[] = [
+  { valor: "Caracas", etiqueta: "Caracas" },
+  { valor: "Valencia", etiqueta: "Valencia" },
+  { valor: "Maracaibo", etiqueta: "Maracaibo" },
+  { valor: "Margarita", etiqueta: "Margarita" },
+  { valor: EXT_SALIDA_OTRA, etiqueta: "Otra" },
+];
+export type ExtraExt = "seguro" | "traslados" | "tours" | "visa";
+export const EXT_EXTRAS: readonly { valor: ExtraExt; etiqueta: string }[] = [
+  { valor: "seguro", etiqueta: "Seguro de viaje" },
+  { valor: "traslados", etiqueta: "Traslados" },
+  { valor: "tours", etiqueta: "Tours" },
+  { valor: "visa", etiqueta: "Asesoría de pasaporte y visa" },
+];
+
+export interface SolicitudExtranjero {
+  /** País o ciudad, texto libre. */
+  pais: string;
+  /** «Aún no sé, quiero ideas»: excluye a `pais`. */
+  ideas: boolean;
+  tipos: TipoViajeExt[];
+  presupuesto: PresupuestoExt | "";
+  /** Valor de EXT_SALIDAS o vacío. */
+  salida: string;
+  /** Texto libre cuando `salida` es "otra". */
+  salidaOtra: string;
+  extras: ExtraExt[];
+}
+
+export const solicitudExtranjeroVacia = (): SolicitudExtranjero => ({
+  pais: "",
+  ideas: false,
+  tipos: [],
+  presupuesto: "",
+  salida: "",
+  salidaOtra: "",
+  extras: [],
+});
+
+/** Lo pedido en limpio, en el orden en que lo lee el asesor; null = no contó nada. */
+export function textoExtranjero(x: SolicitudExtranjero): {
+  destino: string;
+  tipos: string;
+  presupuesto: string;
+  salida: string;
+  extras: string;
+} | null {
+  const etiquetas = <T extends string>(lista: readonly { valor: T; etiqueta: string }[], elegidos: readonly T[]) =>
+    lista.filter((o) => elegidos.includes(o.valor)).map((o) => o.etiqueta).join(", ");
+  const r = {
+    destino: x.pais.trim() || (x.ideas ? "Aún no sabe, quiere ideas" : ""),
+    tipos: etiquetas(EXT_TIPOS, x.tipos),
+    presupuesto: EXT_PRESUPUESTOS.find((p) => p.valor === x.presupuesto)?.etiqueta ?? "",
+    salida: x.salida === EXT_SALIDA_OTRA ? x.salidaOtra.trim() || "otra ciudad" : x.salida,
+    extras: etiquetas(EXT_EXTRAS, x.extras),
+  };
+  return Object.values(r).some(Boolean) ? r : null;
+}
+
 export const ADULTOS_MAX = 20;
 export const NINOS_MAX = 4;
 export const BEBES_MAX = 2;
@@ -84,6 +163,8 @@ export interface EstadoViaje {
   flexible: boolean;
   /** Ids de productos (full day y tours) agregados al viaje. */
   tours: number[];
+  /** Solicitud personalizada; solo viaja en la URL con destino «Extranjero». */
+  ext: SolicitudExtranjero;
 }
 
 export type ParamsBusqueda = Record<string, string | string[] | undefined>;
@@ -219,7 +300,38 @@ export function estadoInicial(): EstadoViaje {
     equipaje: EQUIPAJE_INICIAL,
     flexible: false,
     tours: [],
+    ext: solicitudExtranjeroVacia(),
   };
+}
+
+/** Lista separada por comas de la URL, solo valores conocidos y sin repetir. */
+function leerLista<T extends string>(v: string | undefined, validos: readonly { valor: T }[]): T[] {
+  const ok = validos.map((o) => o.valor) as string[];
+  return [...new Set((v ?? "").split(",").map((s) => s.trim()))].filter((s): s is T => ok.includes(s));
+}
+
+function leerExtranjero(sp: ParamsBusqueda): SolicitudExtranjero {
+  const pais = limpiarDestinoOtro(uno(sp.ext_pais) ?? "").trim();
+  const salida = EXT_SALIDAS.find((s) => s.valor === uno(sp.ext_salida))?.valor ?? "";
+  return {
+    pais,
+    ideas: !pais && uno(sp.ext_ideas) === "1",
+    tipos: leerLista(uno(sp.ext_tipo), EXT_TIPOS),
+    presupuesto: EXT_PRESUPUESTOS.find((p) => p.valor === uno(sp.ext_ppto))?.valor ?? "",
+    salida,
+    salidaOtra: salida === EXT_SALIDA_OTRA ? limpiarDestinoOtro(uno(sp.ext_salida_otra) ?? "").trim() : "",
+    extras: leerLista(uno(sp.ext_extras), EXT_EXTRAS),
+  };
+}
+
+function ponerExtranjero(q: URLSearchParams, x: SolicitudExtranjero): void {
+  if (x.pais.trim()) q.set("ext_pais", x.pais.trim());
+  else if (x.ideas) q.set("ext_ideas", "1");
+  if (x.tipos.length) q.set("ext_tipo", x.tipos.join(","));
+  if (x.presupuesto) q.set("ext_ppto", x.presupuesto);
+  if (x.salida) q.set("ext_salida", x.salida);
+  if (x.salida === EXT_SALIDA_OTRA && x.salidaOtra.trim()) q.set("ext_salida_otra", x.salidaOtra.trim());
+  if (x.extras.length) q.set("ext_extras", x.extras.join(","));
 }
 
 /** searchParams -> estado. Sin parámetros válidos devuelve el estado inicial. */
@@ -271,6 +383,7 @@ export function parsearEstado(sp: ParamsBusqueda, hoy = hoyCaracas()): EstadoVia
     equipaje: EQUIPAJES.find((q) => q.valor === uno(sp.equipaje))?.valor ?? EQUIPAJE_INICIAL,
     flexible: uno(sp.flex) === "1",
     tours,
+    ext: leerExtranjero(sp),
   };
 }
 
@@ -295,6 +408,7 @@ export function serializarEstado(e: EstadoViaje): string {
   if (e.tarifa) q.set("tarifa", String(e.tarifa));
   if (e.servicios.includes("vuelo")) ponerVuelo(q, e);
   if (e.servicios.includes("tours") && e.tours.length) q.set("tour", e.tours.join(","));
+  if (e.destino === DESTINO_EXTRANJERO) ponerExtranjero(q, e.ext);
   return q.toString();
 }
 

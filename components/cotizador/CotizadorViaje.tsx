@@ -9,6 +9,7 @@ import { DetalleHotel } from "@/components/cotizador/DetalleHotel";
 import { OfertasHospedaje } from "@/components/cotizador/OfertasHospedaje";
 import { RecomendacionesHospedaje, type PrecioViaje } from "@/components/cotizador/RecomendacionesHospedaje";
 import { ResumenViaje, textoFechas } from "@/components/cotizador/ResumenViaje";
+import { SeccionExtranjero } from "@/components/cotizador/SeccionExtranjero";
 import { SeccionTours } from "@/components/cotizador/SeccionTours";
 import { SeccionVuelo } from "@/components/cotizador/SeccionVuelo";
 import { PrecioMostrado, usePrecioSuma } from "@/components/ui/PrecioMostrado";
@@ -50,6 +51,7 @@ import {
   alternarTour,
   atajosFinde,
   correoValido,
+  DESTINO_EXTRANJERO,
   fechasVuelo,
   hoyCaracas,
   nochesDe,
@@ -1056,8 +1058,10 @@ export function CotizadorViaje({
     boton.scrollIntoView({ block: "nearest", behavior: comportamientoScroll() });
     boton.click();
   };
+  const extranjero = estado.destino === DESTINO_EXTRANJERO;
+  const enDestino = extranjero ? "el extranjero" : estado.destino;
   const noches = nochesDe(estado);
-  const textoNoches = `${noches} ${noches === 1 ? "noche" : "noches"}`;
+  const textoNoches =`${noches} ${noches === 1 ? "noche" : "noches"}`;
   const montoBarra = estimado?.ok ? montoConMoneda(estimado.total, estimado.moneda) : null;
   const hayRegalo = ofertasVista.some((o) => o.ninosGratis);
   // Móvil: en qué paso va (1 viaje, 2 elegir, 3 enviar), solo para orientar.
@@ -1175,6 +1179,10 @@ export function CotizadorViaje({
           onVerHabitaciones={(o) => setVerHotel({ id: o.hotelId, nombre: o.nombre })}
           onVerTodos={() => setVerTodos(true)}
         />
+      ) : extranjero ? (
+        <p className="text-ink-soft">
+          Un asesor le propone hoteles y paquetes según lo que nos cuente en «Cuéntenos su viaje».
+        </p>
       ) : (
         <p className="text-ink-soft">
           Aún no tenemos ofertas publicadas en {estado.destino}. Cuéntele al asesor qué busca (plan, presupuesto,
@@ -1270,6 +1278,10 @@ export function CotizadorViaje({
             </Aviso>
           ) : null}
 
+          {extranjero ? (
+            <SeccionExtranjero valor={estado.ext} onCambio={(ext) => cambiar({ ...estado, ext })} idBase={`${formId}-ext`} />
+          ) : null}
+
           <Pestanas
             base={formId}
             activa={activa}
@@ -1277,9 +1289,9 @@ export function CotizadorViaje({
             items={estado.servicios.map((s) => ({
               id: s,
               titulo:
-                s === "hospedaje" ? `Hospedaje en ${estado.destino}`
+                s === "hospedaje" ? `Hospedaje en ${enDestino}`
                 : s === "vuelo" ? "Vuelo"
-                : `Full day y tours en ${estado.destino}`,
+                : `Full day y tours en ${enDestino}`,
               estado: estadoPestana[s],
               panel: s === "hospedaje" ? panelHospedaje : s === "vuelo" ? panelVuelo : panelTours,
             }))}
