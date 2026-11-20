@@ -344,8 +344,21 @@ export function Hero({ fotos, ninoGratis = null }: { fotos: FotoHero[]; ninoGrat
         </div>
       ) : null}
 
-      {/* Clima del destino en pantalla (viento, sol...): bajo los velos, cruza
-          junto con la foto. */}
+      {/* Velos: solo a la izquierda (donde va el texto) y abajo (donde va el
+          cotizador), no un velo plano sobre toda la foto. En el teléfono el
+          texto ocupa todo el ancho: el de la izquierda no va (el texto tiene
+          su propio velo, abajo) y el de abajo cubre solo el enlace y los
+          segmentos, así el medio deja ver la foto (pedido del dueño,
+          2026-09-25: se veía casi negro). */}
+      <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-dusk/85 via-dusk/70 to-transparent lg:h-3/5 lg:from-dusk lg:via-dusk/40" />
+      <div aria-hidden="true" className="absolute inset-y-0 left-0 hidden w-3/4 bg-gradient-to-r from-dusk/70 via-dusk/20 to-transparent lg:block" />
+      {/* Bajo la barra transparente: sin esto, la tinta clara de la barra se
+          pierde sobre un cielo o una arena clara. */}
+      <div aria-hidden="true" className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-dusk/70 to-transparent" />
+
+      {/* Clima del destino en pantalla (viento, sol...): sobre los velos (bajo
+          ellos no se veía, 2026-11-20) y debajo del texto; cruza junto con la
+          foto. */}
       <AnimatePresence initial={false}>
         {clima ? (
           <m.div
@@ -361,18 +374,6 @@ export function Hero({ fotos, ninoGratis = null }: { fotos: FotoHero[]; ninoGrat
           </m.div>
         ) : null}
       </AnimatePresence>
-
-      {/* Velos: solo a la izquierda (donde va el texto) y abajo (donde va el
-          cotizador), no un velo plano sobre toda la foto. En el teléfono el
-          texto ocupa todo el ancho: el de la izquierda no va (el texto tiene
-          su propio velo, abajo) y el de abajo cubre solo el enlace y los
-          segmentos, así el medio deja ver la foto (pedido del dueño,
-          2026-09-25: se veía casi negro). */}
-      <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-dusk/85 via-dusk/70 to-transparent lg:h-3/5 lg:from-dusk lg:via-dusk/40" />
-      <div aria-hidden="true" className="absolute inset-y-0 left-0 hidden w-3/4 bg-gradient-to-r from-dusk/70 via-dusk/20 to-transparent lg:block" />
-      {/* Bajo la barra transparente: sin esto, la tinta clara de la barra se
-          pierde sobre un cielo o una arena clara. */}
-      <div aria-hidden="true" className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-dusk/70 to-transparent" />
 
       {/* max-lg:will-change-transform: el texto y el cotizador en su propia
           capa, fija. Sin esto, cada cruce reordena las capas de foto de abajo
