@@ -8,7 +8,6 @@ import { Icono } from "@/components/ui/Icono";
 import { SelectorFecha, seguirCon, type SinCupo } from "@/components/ui/SelectorFecha";
 import { resumenViajeros } from "@/components/ui/SelectorViajeros";
 import { MAX_BEBES, MAX_PAX } from "@/lib/checkout/calculo";
-import { rangoFechas } from "@/lib/checkout/formato";
 import { sumarDias } from "@/lib/cotizador/cotizacionRapida";
 
 // «El pase» de /reservar: fechas y viajeros en una sola tarjeta compacta arriba. En el teléfono
@@ -242,11 +241,8 @@ export function PaseFechas({
         <p id={idError} role="alert" className="text-sm font-medium text-peligro">
           {errorFechas}
         </p>
-      ) : desde && hasta && noches ? (
-        <p className="font-mono text-sm text-ink-soft">
-          {noches} {noches === 1 ? "noche" : "noches"} · {rangoFechas(desde, hasta)}
-        </p>
       ) : null}
+      {/* Las noches y el rango van junto al título del tramo (ReservarCliente → Tramo `extra`). */}
 
       <Hoja
         abierta={hojaAbierta}

@@ -19,8 +19,11 @@ export function Tramo({
   editando,
   onCambiar,
   onListo,
+  extra = null,
   children,
 }: {
+  /** A la derecha del título (p. ej. «3 noches · 16 al 19 feb»): ahorra un renglón. */
+  extra?: ReactNode;
   id: TramoId;
   numero: number;
   titulo: string;
@@ -58,6 +61,10 @@ export function Tramo({
           {titulo}
           {completo ? <span className="sr-only"> (listo)</span> : null}
         </h2>
+        {/* Plegado en el teléfono ya lo dice el resumen. */}
+        {extra ? (
+          <span className={"shrink-0 font-mono text-xs text-ink-soft lg:text-sm " + (!abierto ? "max-lg:hidden" : "")}>{extra}</span>
+        ) : null}
       </div>
 
       {!abierto ? (

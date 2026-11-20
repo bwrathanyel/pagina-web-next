@@ -27,6 +27,7 @@ import { PLAN_ABONOS_VERSION } from "@/lib/checkout/politica";
 import { hoyCaracas } from "@/lib/cotizador/cotizacionRapida";
 import { usePaneles } from "@/lib/layout/paneles";
 import { nochesDeEstadia, tarjetasPorHabitacion } from "@/lib/cotizador/estimado";
+import { bloqueDe } from "@/lib/tarifas";
 import { buscarPais, PAIS_POR_DEFECTO, separarTelefono, telefonoInternacional } from "@/lib/paises";
 import { whatsappHref } from "@/lib/whatsapp";
 import { ORDEN_TRAMOS, siguienteTramo, tramosCompletos, type TramoId } from "@/lib/checkout/tramos";
@@ -40,6 +41,28 @@ import type { Totales } from "./ResumenBoleto";
 // `precio_cambio` con el precio real.
 
 const NOMBRE_RIEL: Record<Riel, string> = { zelle: "Zelle", pago_movil: "Pago Móvil", binance: "Binance" };
+
+/** Qué trae cada plan cuando el bloque no lo dice en limpio. */
+const TRAE_POR_PLAN: [RegExp, string][] = [
+  [/todo\s*incluido|all\s*inclusive/i, "Todas las comidas · Bebidas nacionales · Actividades del hotel"],
+  [/pensi[oó]n\s*completa|full\s*board/i, "Desayuno, almuerzo y cena"],
+  [/media\s*pensi[oó]n|half\s*board/i, "Desayuno y cena"],
+  [/desayuno|breakfast/i, "Desayuno incluido"],
+  [/solo\s*(alojamiento|habitaci[oó]n)|room\s*only/i, "Sin comidas"],
+];
+
+/** Lo que trae el plan en una o dos líneas cortas (pedido del dueño, 2026-11-20). Del recuadro azul del
+ * PDF salen solo los ítems cortos: algunos hoteles cargan ahí párrafos de extras (club de playa, pet
+ * friendly) que no explican el plan; sin ítems útiles, se explica por el nombre del plan. */
+function queTraeElPlan(incluye: string[] | null | undefined, plan: string | null): string | null {
+  const items = (incluye ?? [])
+    .map((x) => x.replace(/\s*\([^)]*\)/g, "").replace(/[.\s]+$/, "").trim())
+    .filter((x) => x && x.length <= 50 && !/^alojamiento\b/i.test(x))
+    .map((x) => (x === x.toUpperCase() ? x.charAt(0) + x.slice(1).toLowerCase() : x))
+    .slice(0, 4);
+  if (items.length) return items.join(" · ");
+  return plan ? (TRAE_POR_PLAN.find(([re]) => re.test(plan))?.[1] ?? null) : null;
+}
 
 const desdeFirma = (s: string) => Object.fromEntries(ORDEN_TRAMOS.map((t, i) => [t, s[i] === "1"])) as Record<TramoId, boolean>;
 
@@ -344,11 +367,13 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial, alCrear, 
     const r = resultados.get(c.tarifa.id);
     const ficha = porPlan ? undefined : habitacionDeTarifa(habitaciones, c.tarifa);
     const plan = c.tarifa.plan?.trim() || null;
+    const trae = queTraeElPlan(bloqueDe(c.tarifa)?.incluye, plan);
     if (porPlan) {
+      const acomodo = todoIncluido ? "Lo acomodan según cuántas personas viajan" : plan ? "Habitación base del hotel" : null;
       return {
         id: c.tarifa.id,
         titulo: plan ?? "Habitación",
-        plan: todoIncluido ? "Lo acomodan según cuántas personas viajan" : plan ? "Habitación base del hotel" : null,
+        plan: trae ?? acomodo,
         fotos: fotosHotel,
         fotoPropia: false,
         detalles: [],
@@ -360,7 +385,7 @@ export function useReserva({ hotel, habitaciones, fotosHotel, inicial, alCrear, 
     return {
       id: c.tarifa.id,
       titulo: nombreDeHabitacion(c.tarifa, hotel.nombre),
-      plan,
+      plan: plan && trae ? `${plan}: ${trae}` : plan,
       fotos: ficha?.fotos.length ? ficha.fotos : fotosHotel,
       fotoPropia: !!ficha?.fotos.length,
       detalles: [

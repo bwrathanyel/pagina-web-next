@@ -6,7 +6,7 @@ import { esDestinoCompraDirecta } from "@/lib/checkout/destinos";
 import { Boton } from "@/components/ui/Boton";
 import { WhatsAppIcon } from "@/components/ui/icons/WhatsAppIcon";
 import type { HotelParaCobrar } from "@/lib/checkout/calculo";
-import { horaAmPm } from "@/lib/checkout/formato";
+import { horaAmPm, rangoFechas } from "@/lib/checkout/formato";
 import { AvisoAbierta } from "./AvisoAbierta";
 import type { HabitacionWeb } from "@/lib/cotizador/hotel";
 import { AccionReserva, CierreReserva } from "./CierreReserva";
@@ -212,7 +212,18 @@ export function ReservarCliente({
           y política | datos y cierre); la columna derecha se disuelve con `xl:contents`. */}
       <div className="grid gap-4 lg:grid-cols-2 lg:items-start lg:gap-8 xl:grid-cols-3">
         <div className="flex min-w-0 flex-col gap-4 lg:gap-5">
-          <Tramo {...propsTramo("fechas", 1, "Fechas y viajeros")}>
+          <Tramo
+            {...propsTramo("fechas", 1, "Fechas y viajeros")}
+            extra={
+              r.desde && r.hasta && r.noches ? (
+                <>
+                  {r.noches} {r.noches === 1 ? "noche" : "noches"}
+                  {/* En el teléfono no cabe el rango junto al título; las fechas ya se ven en los campos. */}
+                  <span className="max-sm:hidden"> · {rangoFechas(r.desde, r.hasta)}</span>
+                </>
+              ) : null
+            }
+          >
             <TramoFechas r={r} />
           </Tramo>
 

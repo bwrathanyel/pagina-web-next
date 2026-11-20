@@ -165,7 +165,11 @@ export function OpcionesHabitacion({
                 <MarcaElegida />
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="line-clamp-2 font-semibold leading-snug text-ink">{o.titulo}</span>
-                  {o.plan ? <span className="truncate text-sm text-ink-soft">{o.plan}</span> : null}
+                  {o.plan ? (
+                    <span className="line-clamp-2 text-xs leading-snug text-ink-soft" title={o.plan}>
+                      {o.plan}
+                    </span>
+                  ) : null}
                   {detalle ? (
                     <span className="truncate text-xs text-ink-soft" title={o.descripcion ?? undefined}>
                       {detalle}
@@ -203,29 +207,28 @@ const RIELES: { id: Riel; titulo: string; moneda: string; enBs: boolean }[] = [
   { id: "binance", titulo: "Binance", moneda: "USDT", enBs: false },
 ];
 
-/** Una línea que explica el método elegido: moneda, IGTF y cuánto se guarda el cupo. */
+/** Una línea que explica el método elegido: moneda e IGTF. El cupo no se repite: ya lo dice la tarjeta
+ * del método («Cupo 2 h») y el sello de la cabecera (pedido del dueño, 2026-11-20: menos alto). */
 export function detalleRiel(
   riel: Riel,
-  c: { igtf_pct: number; hold_horas_usd: number; hold_horas_ves: number },
+  c: { igtf_pct: number },
   tasa: TasaBcv | null,
   bs: { monto: string; tasa: string } | null = null,
   ivaEnBs = false,
 ): string {
-  const horas = riel === "pago_movil" ? c.hold_horas_ves : c.hold_horas_usd;
-  const cupo = horas > 0 ? ` Le guardamos el cupo ${horas} ${horas === 1 ? "hora" : "horas"}.` : "";
   const igtf = c.igtf_pct > 0 ? ` Se suma ${c.igtf_pct} % de IGTF.` : "";
-  if (riel === "zelle") return `Pague en dólares desde su banco.${igtf}${cupo}`;
-  if (riel === "binance") return `Pague en USDT.${igtf}${cupo}`;
+  if (riel === "zelle") return `Pague en dólares desde su banco.${igtf}`;
+  if (riel === "binance") return `Pague en USDT.${igtf}`;
   // «EUR» en el tarifario es la tasa con que se pasa a bolívares, no otra moneda.
   const sinIgtf = c.igtf_pct > 0 ? " Sin IGTF." : "";
   const iva = ivaEnBs ? ", más 16% de IVA" : "";
   // Con la tasa cargada se muestra cuánto sería hoy; el monto que se cobra lo fija el servidor al reservar.
   if (bs) {
     const nombre = tasa === "EUR" ? "tasa euro del BCV" : "tasa del BCV";
-    return `Hoy serían ${bs.monto} (${nombre}: ${bs.tasa}${iva}). El monto exacto lo verá en el siguiente paso.${sinIgtf}${cupo}`;
+    return `Hoy serían ${bs.monto} (${nombre}: ${bs.tasa}${iva}). El monto exacto lo verá en el siguiente paso.${sinIgtf}`;
   }
   const aTasa = tasa === "EUR" ? "a la tasa euro del BCV del día" : "a la tasa del BCV del día";
-  return `Pague en bolívares ${aTasa}${iva}; el monto exacto lo verá en el siguiente paso.${sinIgtf}${cupo}`;
+  return `Pague en bolívares ${aTasa}${iva}; el monto exacto lo verá en el siguiente paso.${sinIgtf}`;
 }
 
 export function OpcionesRiel({
