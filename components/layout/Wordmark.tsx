@@ -18,7 +18,7 @@ export function Wordmark() {
   const [arriba, abajo] = dosLineas(content.brand.name);
 
   return (
-    <span className="flex min-w-0 flex-col leading-none">
+    <span className="flex min-w-0 flex-col overflow-x-clip leading-none">
       <span
         style={{ "--retraso": "0ms" } as React.CSSProperties}
         className="animate-wordmark-line whitespace-nowrap font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-ink-soft sm:text-[10px]"

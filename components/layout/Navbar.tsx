@@ -107,7 +107,7 @@ export function Navbar() {
         }
       >
         {/* Móvil: barra compacta en todas las rutas. En Home, marca completa; en
-            el resto, atrás + símbolo. Buscar y carrito a la derecha, y "Más"
+            el resto, atrás + marca. Buscar y carrito a la derecha, y "Más"
             para lo que no cabe en las pestañas de abajo. */}
         <div
           className={
@@ -122,9 +122,11 @@ export function Navbar() {
               <Icono nombre="flecha-izq" />
             </button>
           )}
+          {/* El nombre va en todas las rutas: sin él la barra se veía vacía (pedido del dueño, 2026-11-20).
+              Cabe con atrás + buscar + carrito + «Más» desde 360 px; más angosto, se recorta. */}
           <Link href="/" className="flex min-w-0 items-center gap-2.5">
             <BrandMark size="sm" priority={esHome} />
-            {esHome ? <Wordmark /> : null}
+            <Wordmark />
           </Link>
           <div className="ml-auto flex items-center">
             <HeaderControls compacto />
