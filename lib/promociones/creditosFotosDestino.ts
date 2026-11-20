@@ -223,5 +223,32 @@ export const CREDITOS_FOTOS_DESTINO = [
     "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a3/Airplane_wing_sky_and_clouds.jpg",
     "anchoOriginal": 4160,
     "altoOriginal": 3120
-  }
+  },
+  ...(
+    [
+      // Banco libre (Unsplash/Pexels), sumadas el 2026-11-20 para dar más variedad al hero.
+      ["merida-teleferico", "Mérida", "Teleférico de Mérida", "Cabina del teleférico de Mérida sobre el bosque nublado de la Sierra Nevada", "Pedro Romero", "https://unsplash.com/@pedrox99", "https://unsplash.com/photos/qAzywO3HoIc", "https://images.unsplash.com/photo-1692973497137-965d160c4abe", 4928, 3264],
+      ["merida-paramo-flores", "Mérida", "Páramo merideño", "Campo de flores amarillas al pie de las montañas del páramo de Mérida", "Solanger Mendoza", "https://unsplash.com/@solangerm", "https://unsplash.com/photos/e7xTYFSjy8c", "https://images.unsplash.com/photo-1634520009705-8f732d945c64", 6000, 4000],
+      ["merida-montanas-nubes", "Mérida", "Montañas de Mérida entre nubes", "Laderas verdes de los Andes merideños cubiertas de nubes", "Pedro Romero", "https://unsplash.com/@pedrox99", "https://unsplash.com/photos/3W3rqowkz3o", "https://images.unsplash.com/photo-1692847956960-b82dd2f1a927", 4928, 3264],
+      ["colonia-tovar-arco", "Colonia Tovar", "Arco de entrada a la Colonia Tovar", "Arco de entrada de la Colonia Tovar con torres de techo rojo sobre la carretera de montaña", "Jorge Salvador", "https://unsplash.com/@jsshotz", "https://unsplash.com/photos/RgjPNmBOjX0", "https://images.unsplash.com/photo-1571278103379-a398a4baad21", 3264, 2448],
+      ["colonia-tovar-cerros", "Colonia Tovar", "Cerros de la Colonia Tovar", "Cerros cubiertos de pasto verde bajo nubes blancas en la Colonia Tovar", "Victor Tortolero", "https://unsplash.com/@vartux", "https://unsplash.com/photos/PJY_wu1vRKc", "https://images.unsplash.com/photo-1578496034584-2d95250334b5", 3504, 1971],
+      ["morrocoy-palmeras", "Morrocoy", "Palmeras en Morrocoy", "Cocoteros sobre la arena frente al mar en el Parque Nacional Morrocoy", "Eduardo Juhyun Kim", "https://unsplash.com/@eduardocde", "https://unsplash.com/photos/2bbd2n4ccjI", "https://images.unsplash.com/photo-1722532354250-cdcc00a6f7fa", 5401, 3601],
+      ["morrocoy-lancha", "Morrocoy", "Embarcadero en Morrocoy", "Lanchas en el agua turquesa junto al embarcadero, Parque Nacional Morrocoy", "Eduardo Juhyun Kim", "https://unsplash.com/@eduardocde", "https://unsplash.com/photos/Ptw1WGJfJF8", "https://images.unsplash.com/photo-1722272983424-f3080194f43f", 6240, 4160],
+      ["margarita-atardecer", "Isla de Margarita", "Atardecer en Margarita", "Atardecer dorado sobre la playa y los cerros de la Isla de Margarita", "lalo Hernandez", "https://unsplash.com/@lalonchera", "https://unsplash.com/photos/iWzu4xePEo4", "https://images.unsplash.com/photo-1536006630892-d469c92fea2c", 5958, 3977],
+      ["margarita-pampatar", "Isla de Margarita", "Bahía de Pampatar", "Peñeros en la bahía turquesa de Pampatar entre cardones, Isla de Margarita", "Vika Glitter", "https://www.pexels.com/@vika-glitter-392079/", "https://www.pexels.com/photo/26241556/", "https://images.pexels.com/photos/26241556/pexels-photo-26241556.jpeg", 6016, 4000],
+      ["margarita-costa-cerros", "Isla de Margarita", "Costa y cerros de Nueva Esparta", "Pueblo junto a una laguna costera entre cerros verdes, Nueva Esparta", "RITRATTO VISUAL", "https://www.pexels.com/@ritratto-visual-704627165/", "https://www.pexels.com/photo/32690921/", "https://images.pexels.com/photos/32690921/pexels-photo-32690921.jpeg", 6720, 4480],
+      ["los-roques-gran-roque-cerros", "Los Roques", "Gran Roque", "Cerros del Gran Roque sobre aguas turquesa, Archipiélago Los Roques", "Fuka jaz", "https://www.pexels.com/@fukajaz/", "https://www.pexels.com/photo/16230240/", "https://images.pexels.com/photos/16230240/pexels-photo-16230240.jpeg", 5287, 3525],
+      ["los-roques-playa-turquesa", "Los Roques", "Cayo en Los Roques", "Cayo con palmeras y posada frente a aguas cristalinas en Los Roques", "Fuka jaz", "https://www.pexels.com/@fukajaz/", "https://www.pexels.com/photo/30587633/", "https://images.pexels.com/photos/30587633/pexels-photo-30587633.jpeg", 5184, 3456],
+      ["los-roques-playa-blanca", "Los Roques", "Playa del Gran Roque", "Orilla de arena blanca y mar turquesa en el Gran Roque, Los Roques", "Maria Isabella Bernotti", "https://www.pexels.com/@maribernotti/", "https://www.pexels.com/photo/2570473/", "https://images.pexels.com/photos/2570473/pexels-photo-2570473.jpeg", 5668, 3769],
+      ["canaima-gran-sabana", "Canaima", "Gran Sabana", "Cascada entre rocas y sabana con un tepuy al fondo en la Gran Sabana, Parque Nacional Canaima", "Ederik Palencia Ferreira", "https://www.pexels.com/@ederik-palencia-ferreira-41034477/", "https://www.pexels.com/photo/7360544/", "https://images.pexels.com/photos/7360544/pexels-photo-7360544.jpeg", 5184, 3456],
+    ] as const
+  ).map(([archivo, destino, titulo, alt, autor, autorUrl, fuente, originalUrl, anchoOriginal, altoOriginal]) => {
+    const pexels = fuente.includes("pexels.com");
+    return {
+      archivo, destino, titulo, alt, autor, autorUrl, fuente,
+      licencia: pexels ? "Licencia Pexels" : "Licencia Unsplash",
+      licenciaUrl: pexels ? "https://www.pexels.com/license/" : "https://unsplash.com/license",
+      originalUrl, anchoOriginal, altoOriginal,
+    };
+  }),
 ];

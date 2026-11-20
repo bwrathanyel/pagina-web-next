@@ -2,7 +2,8 @@
  * Curaduría turística renovada el 2026-10-23: originales de al menos 2560 px,
  * sin personas reconocibles como protagonistas. Créditos y licencias de la
  * selección en creditosFotosDestino.ts y /creditos-fotograficos; Caracas
- * conserva las fotos de Pexels. Los derivados locales tienen nombres nuevos
+ * conserva las fotos de Pexels. El 2026-11-20 se sumaron fotos de Unsplash/Pexels
+ * (al final de cada destino) para más variedad en el hero. Los derivados locales tienen nombres nuevos
  * para evitar que la caché siga mostrando la selección anterior.
  * Clave: destino normalizado con claveDestino. Sin imports: también va al cliente. */
 export interface FotoDestino {
@@ -16,14 +17,21 @@ export const FOTOS_DESTINO: Record<string, FotoDestino[]> = {
   canaima: [
     { archivo: "canaima-salto-angel", alt: "Salto Ángel cayendo desde el Auyantepuy entre nubes, Parque Nacional Canaima" },
     { archivo: "canaima-auyantepuy", alt: "Auyantepuy y Salto Ángel sobre la selva del Parque Nacional Canaima" },
+    { archivo: "canaima-gran-sabana", alt: "Cascada entre rocas y sabana con un tepuy al fondo en la Gran Sabana, Parque Nacional Canaima" },
   ],
   "los roques": [
     { archivo: "los-roques-cayo-agua", alt: "Lengua de arena blanca entre aguas turquesa en Cayo de Agua, Los Roques" },
     { archivo: "los-roques-puente-arena", alt: "Puente de arena entre dos playas de Cayo de Agua, Archipiélago Los Roques" },
+    { archivo: "los-roques-gran-roque-cerros", alt: "Cerros del Gran Roque sobre aguas turquesa, Archipiélago Los Roques" },
+    { archivo: "los-roques-playa-turquesa", alt: "Cayo con palmeras y posada frente a aguas cristalinas en Los Roques" },
+    { archivo: "los-roques-playa-blanca", alt: "Orilla de arena blanca y mar turquesa en el Gran Roque, Los Roques" },
   ],
   margarita: [
     { archivo: "margarita-el-agua", alt: "Oleaje, arena blanca y palmeras en Playa El Agua, Isla de Margarita" },
     { archivo: "margarita-palmeras", alt: "Palmeras y sombrillas junto al mar en Playa El Agua, Isla de Margarita" },
+    { archivo: "margarita-pampatar", alt: "Peñeros en la bahía turquesa de Pampatar entre cardones, Isla de Margarita" },
+    { archivo: "margarita-costa-cerros", alt: "Pueblo junto a una laguna costera entre cerros verdes, Nueva Esparta" },
+    { archivo: "margarita-atardecer", alt: "Atardecer dorado sobre la playa y los cerros de la Isla de Margarita" },
   ],
   // Agregada el 2026-11-19 (Wilfredor, CC0): antes Coche iba sin foto.
   coche: [
@@ -32,6 +40,9 @@ export const FOTOS_DESTINO: Record<string, FotoDestino[]> = {
   ],
   merida: [
     { archivo: "merida-pico-bolivar", alt: "Cumbres rocosas del Pico Bolívar en la Sierra Nevada de Mérida" },
+    { archivo: "merida-teleferico", alt: "Cabina del teleférico de Mérida sobre el bosque nublado de la Sierra Nevada" },
+    { archivo: "merida-paramo-flores", alt: "Campo de flores amarillas al pie de las montañas del páramo de Mérida" },
+    { archivo: "merida-montanas-nubes", alt: "Laderas verdes de los Andes merideños cubiertas de nubes" },
   ],
   caracas: [
     { archivo: "caracas", alt: "Caracas con El Ávila al fondo" }, // 38556235
@@ -43,6 +54,8 @@ export const FOTOS_DESTINO: Record<string, FotoDestino[]> = {
   morrocoy: [
     { archivo: "morrocoy-sombrero", alt: "Agua cristalina y palmeras en Cayo Sombrero, Parque Nacional Morrocoy" },
     { archivo: "morrocoy-orilla", alt: "Arena blanca y cocoteros junto al agua turquesa de Cayo Sombrero, Morrocoy" },
+    { archivo: "morrocoy-palmeras", alt: "Cocoteros sobre la arena frente al mar en el Parque Nacional Morrocoy" },
+    { archivo: "morrocoy-lancha", alt: "Lanchas en el agua turquesa junto al embarcadero, Parque Nacional Morrocoy" },
   ],
   catatumbo: [
     { archivo: "catatumbo-relampagos", alt: "Relámpagos iluminando el cielo sobre el Lago de Maracaibo, Catatumbo" },
@@ -57,6 +70,8 @@ export const FOTOS_DESTINO: Record<string, FotoDestino[]> = {
         alt: "Arquitectura de tradición alemana entre jardines y montañas de la Colonia Tovar",
       },
     },
+    { archivo: "colonia-tovar-arco", alt: "Arco de entrada de la Colonia Tovar con torres de techo rojo sobre la carretera de montaña" },
+    { archivo: "colonia-tovar-cerros", alt: "Cerros cubiertos de pasto verde bajo nubes blancas en la Colonia Tovar" },
   ],
   // Genérica a propósito: "Viajar al extranjero" no es un lugar.
   extranjero: [
